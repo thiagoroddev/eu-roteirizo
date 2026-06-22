@@ -45,6 +45,10 @@ export const RouteTable: React.FC<Props> = ({ rows, selectedRoute, onClose }) =>
               </tr>
             </thead>
             <tbody className="text-center align-middle">
+              {/* Index key is safe here: this list is static — built once per route,
+                  deterministically sorted in excelProcessor, and never reordered or
+                  filtered in this component. No row field is guaranteed unique
+                  (only Corridor Cage/Latitude/Longitude are mandatory, and they repeat). */}
               {rows.map((row, idx) => (
                 <tr key={idx} className="odd:bg-slate-50">
                   {colums.map((col) => (

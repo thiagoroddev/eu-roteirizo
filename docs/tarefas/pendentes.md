@@ -33,7 +33,6 @@
 
 | TASK-DOC-001 | Criar docs/contexto-projeto-ai.md (ponto de entrada do projeto) | Standard | Importante | Normal | M/M | - | REV-001-A02, ADR-001 | `[ ]` | 22/06/26 11:05 |
 | TASK-TEST-001 | Testes de integração: fluxo RouteViewer + interações RouteSelector | Standard | Importante | Normal | M/G | - | REV-001-A11 | `[ ]` | 22/06/26 11:05 |
-| TASK-REF-002 | Usar chave estável (Sequência/Parada) nas linhas de tabela em vez de key={idx} | Standard | Desejável | Normal | P/P | - | REV-001-A09 | `[ ]` | 22/06/26 11:05 |
 | TASK-REF-003 | Usar ou remover hasValidFileExtension (código morto em produção) | Standard | Desejável | Normal | P/P | - | REV-001-A10 | `[ ]` | 22/06/26 11:05 |
 
 > **TASK-CHORE-001** saiu daqui em 22/06/26 11:15 → ver `docs/tarefas/em-andamento.md`.
