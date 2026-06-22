@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Protótipo — roteamento local (Ipanema)</title>
+
+  <!-- Leaflet: só pra desenhar o mapa e os traços. NÃO calcula rota. -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root { --bg:#0f1115; --panel:#1a1d24; --ink:#e8e8ea; --muted:#9aa0aa; --teal:#1d9e75; --coral:#d85a30; --line:#2a2e37; }
+    * { box-sizing: border-box; }
+    html, body { margin:0; height:100%; font-family: system-ui, sans-serif; background:var(--bg); color:var(--ink); }
+    #app { display:flex; height:100%; }
+    #map { flex:1; height:100%; }
+    #side { width:320px; padding:18px; overflow-y:auto; background:var(--panel); border-left:1px solid var(--line); }
+    h1 { font-size:16px; font-weight:600; margin:0 0 4px; }
+    .sub { font-size:12px; color:var(--muted); margin:0 0 16px; line-height:1.5; }
+    .card { background:#11141a; border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:12px; }
+    .label { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:4px; }
+    .big { font-size:26px; font-weight:600; }
+    .big small { font-size:13px; color:var(--muted); font-weight:400; }
+    button { width:100%; padding:10px; border:0; border-radius:8px; background:var(--teal); color:#fff; font-size:13px; font-weight:600; cursor:pointer; }
+    button.ghost { background:transparent; border:1px solid var(--line); color:var(--ink); }
+    button + button { margin-top:8px; }
+    ol { margin:6px 0 0; padding-left:18px; font-size:13px; line-height:1.6; }
+    .status { font-size:12px; color:var(--muted); min-height:18px; }
+    .pill { display:inline-block; font-size:11px; padding:2px 8px; border-radius:99px; background:#11141a; border:1px solid var(--line); color:var(--muted); }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="map"></div>
+    <div id="side">
+      <h1>Roteamento local — Ipanema</h1>
+      <p class="sub">
+        Sem API de roteirização. As ruas vêm do OpenStreetMap; o caminho é calculado
+        aqui no navegador com A* sobre um grafo direcionado que respeita a mão de direção.
+      </p>
+
+      <div class="card">
+        <div class="label">Como usar</div>
+        <div style="font-size:13px; line-height:1.6;">
+          1º clique = <b style="color:var(--teal)">partida</b>.<br>
+          Cliques seguintes = <b style="color:var(--coral)">destino</b> (recalcula na hora).
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label">Distância pela rua</div>
+        <div class="big" id="dist">—</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Ruas no trajeto</div>
+        <ol id="streets"><li style="color:var(--muted); list-style:none; margin-left:-18px;">defina partida e destino</li></ol>
+      </div>
+
+      <button class="ghost" id="reset">Definir nova partida</button>
+
+      <p class="status" id="status" style="margin-top:14px;"></p>
+      <p style="margin-top:10px;"><span class="pill" id="graphInfo">carregando malha…</span></p>
+    </div>
+  </div>
+
+  <script>
+  // ======================================================================
+  // NÚCLEO DE ROTEAMENTO (mesma lógica validada em Node, sem dependências)
+  // ======================================================================
+
+  // Distância real em metros entre dois pontos (haversine, sobre a esfera).
+  function haversine(aLat, aLon, bLat, bLon) {
+    const R = 6371000, toRad = (d) => d * Math.PI / 180;
+    const dLat = toRad(bLat - aLat), dLon = toRad(bLon - aLon);
+    const h = Math.sin(dLat/2)**2 + Math.cos(toRad(aLat))*Math.cos(toRad(bLat))*Math.sin(dLon/2)**2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+
+  // Lê as tags do OSM e diz o sentido navegável da via.
+  // É AQUI que a mão única entra no sistema.
+  function onewayDirection(tags = {}) {
+    const v = String(tags.oneway ?? "").toLowerCase();
+    if (v === "yes" || v === "true" || v === "1") return "forward";
+    if (v === "-1" || v === "reverse") return "backward";
+    if (String(tags.junction ?? "").toLowerCase() === "roundabout") return "forward";
+    return "both";
+  }
+
+  // Transforma a resposta do Overpass num GRAFO DIRECIONADO.
+  // Numa rua de mão única, a aresta do sentido proibido simplesmente NÃO é criada.
+  // Por isso nenhum algoritmo consegue, depois, sugerir a contramão: não há por onde.
+  function buildGraph(elements) {
+    const coords = new Map();   // nodeId -> {lat, lon}
+    const adj = new Map();      // nodeId -> [{to, weight, wayName}]
+    const addEdge = (from, to, w, name) => {
+      if (!adj.has(from)) adj.set(from, []);
+      adj.get(from).push({ to, weight: w, wayName: name });
+    };
+    for (const el of elements) {
+      if (el.type !== "way" || !el.geometry || !el.nodes) continue;
+      const dir = onewayDirection(el.tags);
+      const name = (el.tags && (el.tags.name || el.tags.highway)) || "via";
+      for (let i = 0; i < el.nodes.length; i++) {
+        const g = el.geometry[i];
+        if (g) coords.set(el.nodes[i], { lat: g.lat, lon: g.lon });
+      }
+      for (let i = 0; i < el.nodes.length - 1; i++) {
+        const a = el.nodes[i], b = el.nodes[i + 1];
+        const ga = el.geometry[i], gb = el.geometry[i + 1];
+        if (!ga || !gb) continue;
+        const w = haversine(ga.lat, ga.lon, gb.lat, gb.lon);
+        if (dir === "both" || dir === "forward") addEdge(a, b, w, name);
+        if (dir === "both" || dir === "backward") addEdge(b, a, w, name);
+      }
+    }
+    return { coords, adj };
+  }
+
+  // Encaixa um clique do usuário no nó de rua mais próximo (map matching simples).
+  function nearestNode(graph, lat, lon) {
+    let best = null, bestD = Infinity;
+    for (const [id, c] of graph.coords) {
+      const d = haversine(lat, lon, c.lat, c.lon);
+      if (d < bestD) { bestD = d; best = id; }
+    }
+    return { node: best, dist: bestD };
+  }
+
+  // A* — Dijkstra guiado pela distância em linha reta até o destino.
+  // Heurística admissível => caminho retornado é o ÓTIMO.
+  // (Versão didática: a fronteira é varrida linearmente. Com heap fica mais rápido.)
+  function aStar(graph, startId, goalId) {
+    const { coords, adj } = graph;
+    const goal = coords.get(goalId);
+    const h = (id) => { const c = coords.get(id); return c ? haversine(c.lat, c.lon, goal.lat, goal.lon) : 0; };
+    const gScore = new Map([[startId, 0]]);
+    const fScore = new Map([[startId, h(startId)]]);
+    const cameFrom = new Map();
+    const open = new Set([startId]);
+
+    while (open.size) {
+      let current = null, bestF = Infinity;
+      for (const id of open) { const f = fScore.get(id) ?? Infinity; if (f < bestF) { bestF = f; current = id; } }
+      if (current === goalId) {
+        const path = [current];
+        while (cameFrom.has(current)) { current = cameFrom.get(current); path.unshift(current); }
+        return { path, distance: gScore.get(goalId) };
+      }
+      open.delete(current);
+      for (const edge of (adj.get(current) || [])) {
+        const tentative = (gScore.get(current) ?? Infinity) + edge.weight;
+        if (tentative < (gScore.get(edge.to) ?? Infinity)) {
+          cameFrom.set(edge.to, current);
+          gScore.set(edge.to, tentative);
+          fScore.set(edge.to, tentative + h(edge.to));
+          open.add(edge.to);
+        }
+      }
+    }
+    return { path: null, distance: Infinity };
+  }
+
+  // Lista, em ordem, as ruas percorridas (deduplicando repetições consecutivas).
+  function streetsAlong(graph, path) {
+    const names = [];
+    for (let i = 0; i < path.length - 1; i++) {
+      const edge = (graph.adj.get(path[i]) || []).find((e) => e.to === path[i + 1]);
+      const n = edge ? edge.wayName : "via";
+      if (n !== names[names.length - 1]) names.push(n);
+    }
+    return names;
+  }
+
+  // ======================================================================
+  // MAPA E INTERAÇÃO
+  // ======================================================================
+  const IPANEMA = [-22.9840, -43.2040];
+  // Área de teste (bbox): sul, oeste, norte, leste
+  const BBOX = [-22.9905, -43.2150, -22.9805, -43.1965];
+
+  const map = L.map("map").setView(IPANEMA, 16);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap", maxZoom: 19,
+  }).addTo(map);
+
+  let GRAPH = null;
+  let startNode = null, startLatLng = null;
+  let startMarker = null, destMarker = null, routeLine = null;
+
+  const $ = (id) => document.getElementById(id);
+  const setStatus = (t) => { $("status").textContent = t; };
+
+  // Busca a malha viária do Overpass (só vias navegáveis da bbox).
+  async function loadGraph() {
+    const [s, w, n, e] = BBOX;
+    const query = `[out:json][timeout:30];
+      way["highway"~"^(motorway|trunk|primary|secondary|tertiary|residential|unclassified|living_street|service)$"](${s},${w},${n},${e});
+      out geom;`;
+    setStatus("Baixando ruas do OpenStreetMap…");
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: "data=" + encodeURIComponent(query),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+    if (!res.ok) throw new Error("Overpass respondeu " + res.status);
+    const data = await res.json();
+    GRAPH = buildGraph(data.elements || []);
+    $("graphInfo").textContent = GRAPH.coords.size + " nós · " +
+      [...GRAPH.adj.values()].reduce((a, v) => a + v.length, 0) + " arestas dirigidas";
+    setStatus("Pronto. Clique no mapa para definir a partida.");
+  }
+
+  function clearRoute() {
+    if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+    if (destMarker) { map.removeLayer(destMarker); destMarker = null; }
+    $("dist").textContent = "—";
+    $("streets").innerHTML = '<li style="color:#9aa0aa; list-style:none; margin-left:-18px;">defina partida e destino</li>';
+  }
+
+  function resetStart() {
+    if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
+    startNode = null; startLatLng = null;
+    clearRoute();
+    setStatus("Clique no mapa para definir a partida.");
+  }
+  $("reset").addEventListener("click", resetStart);
+
+  function route(toNode, toLatLng) {
+    const t0 = performance.now();
+    const { path, distance } = aStar(GRAPH, startNode, toNode);
+    const ms = (performance.now() - t0).toFixed(0);
+    if (!path) { setStatus("Sem caminho possível respeitando os sentidos."); return; }
+
+    const latlngs = path.map((id) => { const c = GRAPH.coords.get(id); return [c.lat, c.lon]; });
+    if (routeLine) map.removeLayer(routeLine);
+    routeLine = L.polyline(latlngs, { color: "#1d9e75", weight: 5, opacity: 0.9 }).addTo(map);
+
+    $("dist").innerHTML = (distance / 1000).toFixed(2) + ' <small>km · ' + ms + ' ms</small>';
+    const names = streetsAlong(GRAPH, path);
+    $("streets").innerHTML = names.map((n) => "<li>" + n + "</li>").join("");
+    setStatus("Trajeto calculado localmente (" + path.length + " nós).");
+  }
+
+  map.on("click", (ev) => {
+    if (!GRAPH) return;
+    const { lat, lng } = ev.latlng;
+    const snap = nearestNode(GRAPH, lat, lng);
+    if (snap.dist > 120) { setStatus("Clique a ~" + snap.dist.toFixed(0) + "m de qualquer rua — tente mais perto de uma via."); return; }
+    const c = GRAPH.coords.get(snap.node);
+
+    if (!startNode) {
+      startNode = snap.node; startLatLng = [c.lat, c.lon];
+      startMarker = L.circleMarker(startLatLng, { radius: 9, color: "#1d9e75", fillColor: "#1d9e75", fillOpacity: 1 })
+        .addTo(map).bindTooltip("Partida");
+      setStatus("Partida definida. Clique num destino.");
+      return;
+    }
+    if (destMarker) map.removeLayer(destMarker);
+    destMarker = L.circleMarker([c.lat, c.lon], { radius: 9, color: "#d85a30", fillColor: "#d85a30", fillOpacity: 1 })
+      .addTo(map).bindTooltip("Destino");
+    route(snap.node, [c.lat, c.lon]);
+  });
+
+  loadGraph().catch((err) => {
+    setStatus("Erro ao carregar a malha: " + err.message + ". Tente recarregar (o Overpass às vezes está ocupado).");
+    $("graphInfo").textContent = "falha no download";
+  });
+  </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # Contexto do Projeto: Roteirizador (Pré-Rota)
 
-> PWA que lê um romaneio de entregas (XLSX/CSV) e visualiza as rotas num mapa Leaflet + tabelas, com seleção de rota, busca por código AT, resumo estatístico, status de entrega dos Correios e inferência de tipo de local (comercial/residencial).
+> PWA que lê um romaneio de entregas (XLSX/CSV) — em modo **multi-rota** (agrupado por `Corridor Cage`) ou **rota única** (planilha sem essa coluna) — e visualiza as rotas num mapa Leaflet + tabelas, com seleção de rota, busca por código AT, resumo estatístico, status de entrega dos Correios e inferência de tipo de local (comercial/residencial).
 > Web app (PWA instalável), client-side, foco em desktop com adaptação mobile.
 
 ## ⚙️ Nota de Origem
@@ -56,7 +56,7 @@ Não revisar sem ADR explícita:
 - **Idioma:** código, identificadores e comentários em **inglês**; textos de usuário em **português**, centralizados em `src/constants/uiLabels.ts` (`UI_LABELS`), estruturados para i18n. Decisão formal em **[ADR-001](./arquitetura/ADR/ADR-001.md)**.
 - **Estado:** `useState` + hooks de feature (`use*`). Sem biblioteca de estado global.
 - **Sem backend / sem banco / sem auth:** app é 100% client-side. Dados vêm do arquivo que o usuário sobe.
-- **Leitura de planilha:** isolada em `utils/excelProcessor.ts` (usa `xlsx` direto).
+- **Leitura de planilha:** isolada em `utils/excelProcessor.ts` (usa `xlsx` direto). Colunas **obrigatórias**: apenas `Latitude` e `Longitude` (sem coordenada não há o que plotar). A coluna `Corridor Cage` **não é obrigatória**: sua presença agrupa um romaneio em várias rotas (modo multi-rota); sua **ausência** indica uma **rota única** (o entregador envia a própria rota), agrupada sob o rótulo `UI_LABELS.ROUTE.SINGLE_ROUTE_NAME` ("Minha rota"), sinalizada por `ProcessedResult.isSingleRoute`. Ver TASK-RF-002.
 - **Correios:** lookup de JSON estático (`src/data/`) em `utils/correiosDelivery.ts` — não há chamada HTTP em produção.
 - **xlsx fixado na versão da CDN (0.20.3):** segurança (npm só tem a 0.18.5 vulnerável). `overrides` propaga p/ o xlsx interno do danfojs.
 - **Imports por alias:** `@/`, `@assets/`, `@components/`, `@utils/` (em `tsconfig.app.json` + `vite.config.ts`).
@@ -107,12 +107,12 @@ Nota: o pacote do agente vive em `.github/agents/geral-robusto/` (arquivos com e
 
 - **Fase:** MVP funcional de visualização de rotas.
 - **Maturidade:** estável no fluxo principal (upload → seleção → mapa/tabelas).
-- **Testes:** 235 passando (Vitest); cobertura boa em utils/hooks; integração do `RouteViewer` coberta.
+- **Testes:** ~240 (235 + 5 novos do modo rota única no `excelProcessor`); `excelProcessor` 14/14 e `tsc --noEmit` verdes. Suíte completa **pendente** de rodar em ambiente estável (TASK-CHORE-002) — o sandbox de dev travou no run completo.
 - **Segurança:** `npm audit` = 1 low (esbuild dev-server, fixado pela faixa do Vite); demais resolvidas nesta sessão.
 - **Dívidas técnicas:** sem `docs/dominios/divida-tecnica.md` ainda; itens conhecidos rastreados via REV-001.
 
 ## Última Atualização
 
 - **Data:** 22/06/26
-- **Por:** TASK-DOC-001 (origem REV-001-A02), consolidando a primeira revisão geral e a ADR-001.
-- **Próxima revisão sugerida:** ao mudar a stack (versão major / lib nova), ao implementar qualquer parte da visão "HubFlow", ou em ~3 meses.
+- **Por:** TASK-DOC-002, refletindo a leitura de rota única (TASK-RF-002 — colunas obrigatórias só `Latitude`/`Longitude`) e a direção do **roteirizador a pé** (visão em `docs/rascunhos/draft-roteirizador-a-pe.md`; decisão de roteamento local em **[ADR-002](./arquitetura/ADR/ADR-002.md)**). Anterior: TASK-DOC-001 (origem REV-001-A02), consolidando a REV-001 e a ADR-001.
+- **Próxima revisão sugerida:** ao mudar a stack (versão major / lib nova), ao iniciar a migração do roteamento (Nível B) para o app, ou em ~3 meses.

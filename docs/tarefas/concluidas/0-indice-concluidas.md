@@ -18,6 +18,9 @@
 | TASK-REF-004 | Usar UI_LABELS.ROUTE_SELECTOR no RouteSelector (strings hardcoded) | [abrir](./2026-06-22--15h21--TASK-REF-004.md) |
 | TASK-REF-005 | Limpezas da REV: guard clause duplicada, typo colums, setTimeout sem cleanup | [abrir](./2026-06-22--15h28--TASK-REF-005.md) |
 | TASK-DOC-001 | Criar docs/contexto-projeto-ai.md (ponto de entrada do projeto) | [abrir](./2026-06-22--15h47--TASK-DOC-001.md) |
+| TASK-RF-001 | Protótipo de viabilidade do roteamento local sobre OSM (Nível B) | [abrir](./2026-06-22--21h30--TASK-RF-001.md) |
+| TASK-RF-002 | Leitura de rota única (Corridor Cage opcional / detecção de modo) | [abrir](./2026-06-22--22h28--TASK-RF-002.md) |
+| TASK-DOC-002 | Atualizar contexto-projeto-ai.md: colunas obrigatórias e modo rota única | [abrir](./2026-06-22--22h40--TASK-DOC-002.md) |
 
 <!-- Exemplo:
 | TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [abrir](./2026-05-16--20h21--TASK-REF-03.md) |

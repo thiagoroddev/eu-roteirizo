@@ -157,11 +157,13 @@ export const COLUMN_NAMES = {
 
 /**
  * Columns that MUST be present in the Excel file.
- * Without these, the app cannot function properly.
+ * Without coordinates there is nothing to plot, so they are the only hard
+ * requirement. "Corridor Cage" is intentionally NOT here: its presence/absence
+ * switches the file between multi-route and single-route mode (see excelProcessor).
  *
- * @type {readonly ["Corridor Cage", "Latitude", "Longitude"]}
+ * @type {readonly ["Latitude", "Longitude"]}
  */
-export const MANDATORY_COLUMNS = [COLUMN_NAMES.CORRIDOR_CAGE, COLUMN_NAMES.LATITUDE, COLUMN_NAMES.LONGITUDE] as const;
+export const MANDATORY_COLUMNS = [COLUMN_NAMES.LATITUDE, COLUMN_NAMES.LONGITUDE] as const;
 
 /**
  * Columns that are nice to have but not required.

@@ -29,6 +29,8 @@
 
 | TASK-ID | Título | Modo | Valor | Urgência | Esforço-H/IA | Dependências | REQ/ADR/DT | Status | Data origem |
 |---|---|:---:|:---:|:---:|:---:|---|---|:---:|---|
+| TASK-RF-003 | Alias de cabeçalhos do arquivo real (Bairro→Neighborhood, Zipcode/Postal code→Zipcode; expor AT ID/SPX TN) para tabela/tooltip da rota única | Standard | Importante | Normal | M/M | - | TASK-RF-002 | [ ] | 22/06/26 22:28 |
+| TASK-CHORE-002 | Rodar a suíte completa (`npm run test`) em ambiente estável (Windows/CI) e registrar o verde | Light | Importante | Normal | P/P | - | TASK-RF-002 | [ ] | 22/06/26 22:28 |
 
 
 

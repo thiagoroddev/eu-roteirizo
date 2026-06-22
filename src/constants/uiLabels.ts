@@ -30,6 +30,11 @@ export const UI_LABELS = {
   ROUTE_VIEWER: {
     TITLE: "Pré-Rota",
   },
+  ROUTE: {
+    // Nome dado à rota quando a planilha não tem a coluna "Corridor Cage"
+    // (modo rota única: o próprio entregador envia uma rota só).
+    SINGLE_ROUTE_NAME: "Minha rota",
+  },
   ROUTE_MAP: {
     CLOSE: "Fechar Mapa",
     FULLSCREEN_ARIA: "Mapa em tela cheia",

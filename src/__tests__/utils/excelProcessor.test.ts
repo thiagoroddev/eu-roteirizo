@@ -13,7 +13,7 @@
 
 import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { processExcelFile } from "../../utils/excelProcessor";
-import { COLUMN_NAMES, MANDATORY_COLUMNS } from "../../constants";
+import { COLUMN_NAMES, MANDATORY_COLUMNS, UI_LABELS } from "../../constants";
 import * as XLSX from "xlsx";
 
 // =============================================================================
@@ -97,9 +97,9 @@ describe("processExcelFile", () => {
     expect(result.routes).toBeNull();
     expect(result.error).toContain("Colunas obrigatórias ausentes");
 
-    // LINTER FIX: We use MANDATORY_COLUMNS here to check correctness.
-    // Logic: We know 'badRow' has CORRIDOR_CAGE, so we expect the *others* to be missing.
-    const expectedMissing = MANDATORY_COLUMNS.filter((c) => c !== COLUMN_NAMES.CORRIDOR_CAGE);
+    // 'Corridor Cage' is no longer mandatory (it only switches multi/single mode),
+    // so the mandatory columns missing from badRow are exactly Latitude and Longitude.
+    const expectedMissing = [...MANDATORY_COLUMNS];
 
     // Verify if the missing columns reported match our expectations
     expect(result.missingCols).toEqual(expect.arrayContaining(expectedMissing));
@@ -237,5 +237,72 @@ describe("processExcelFile", () => {
     expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining("linhas possuem células vazias"));
 
     consoleWarnSpy.mockRestore();
+  });
+
+  // ==========================================================================
+  // 5. SINGLE-ROUTE MODE (file without "Corridor Cage" column)
+  // ==========================================================================
+
+  const createSingleRow = (overrides = {}) => ({
+    [COLUMN_NAMES.LATITUDE]: -22.9500637,
+    [COLUMN_NAMES.LONGITUDE]: -43.1908188,
+    [COLUMN_NAMES.SEQUENCE]: 1,
+    [COLUMN_NAMES.STOP]: 1,
+    [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Sao Clemente, 261",
+    ...overrides,
+  });
+
+  const SINGLE = UI_LABELS.ROUTE.SINGLE_ROUTE_NAME;
+
+  it("reads a file without 'Corridor Cage' as a single route", async () => {
+    const mockData = [createSingleRow({ [COLUMN_NAMES.SEQUENCE]: 1 }), createSingleRow({ [COLUMN_NAMES.SEQUENCE]: 2 })];
+    mockRead.mockReturnValue({ SheetNames: ["Sheet1"], Sheets: { Sheet1: {} } });
+    mockSheetToJson.mockReturnValue(mockData);
+    const result = await processExcelFile(createMockFile());
+    expect(result.error).toBeUndefined();
+    expect(result.isSingleRoute).toBe(true);
+    expect(Object.keys(result.routes!)).toEqual([SINGLE]);
+    expect(result.routes![SINGLE]).toHaveLength(2);
+  });
+
+  it("flags multi-route files as isSingleRoute === false", async () => {
+    const mockData = [createExcelRow({ [COLUMN_NAMES.CORRIDOR_CAGE]: "A-1" })];
+    mockRead.mockReturnValue({ SheetNames: ["Sheet1"], Sheets: { Sheet1: {} } });
+    mockSheetToJson.mockReturnValue(mockData);
+    const result = await processExcelFile(createMockFile());
+    expect(result.isSingleRoute).toBe(false);
+  });
+
+  it("drops rows without a plottable coordinate in single-route mode", async () => {
+    const mockData = [createSingleRow(), createSingleRow({ [COLUMN_NAMES.LATITUDE]: "" })];
+    mockRead.mockReturnValue({ SheetNames: ["Sheet1"], Sheets: { Sheet1: {} } });
+    mockSheetToJson.mockReturnValue(mockData);
+    const result = await processExcelFile(createMockFile());
+    expect(result.isSingleRoute).toBe(true);
+    expect(result.routes![SINGLE]).toHaveLength(1);
+  });
+
+  it("sorts single-route rows by Sequence", async () => {
+    const mockData = [
+      createSingleRow({ [COLUMN_NAMES.SEQUENCE]: 3 }),
+      createSingleRow({ [COLUMN_NAMES.SEQUENCE]: 1 }),
+      createSingleRow({ [COLUMN_NAMES.SEQUENCE]: 2 }),
+    ];
+    mockRead.mockReturnValue({ SheetNames: ["Sheet1"], Sheets: { Sheet1: {} } });
+    mockSheetToJson.mockReturnValue(mockData);
+    const result = await processExcelFile(createMockFile());
+    const rows = result.routes![SINGLE];
+    expect(rows[0][COLUMN_NAMES.SEQUENCE]).toBe(1);
+    expect(rows[1][COLUMN_NAMES.SEQUENCE]).toBe(2);
+    expect(rows[2][COLUMN_NAMES.SEQUENCE]).toBe(3);
+  });
+
+  it("still errors if coordinates are missing, even without 'Corridor Cage'", async () => {
+    const badRow = { [COLUMN_NAMES.SEQUENCE]: 1, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Sem coordenadas" };
+    mockRead.mockReturnValue({ SheetNames: ["Sheet1"], Sheets: { Sheet1: {} } });
+    mockSheetToJson.mockReturnValue([badRow]);
+    const result = await processExcelFile(createMockFile());
+    expect(result.routes).toBeNull();
+    expect(result.error).toContain("Colunas obrigatórias ausentes");
   });
 });

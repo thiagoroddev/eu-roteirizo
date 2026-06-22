@@ -12,7 +12,62 @@
 
 import * as XLSX from "xlsx";
 import type { ProcessedResult, RowData, RoutesMap } from "../types";
-import { COLUMN_NAMES, MANDATORY_COLUMNS, OPTIONAL_COLUMNS } from "../constants"; // <--- Importando constantes
+import { COLUMN_NAMES, MANDATORY_COLUMNS, OPTIONAL_COLUMNS, UI_LABELS } from "../constants"; // <--- Importando constantes
+import { parseCoordinate, isWithinRioBounds } from "./coordinates";
+
+/**
+ * Sorts the rows inside each route by the "Sequence" column, in place.
+ *
+ * Shared by both reading modes (multi-route and single-route). Extracted so the
+ * ordering rule lives in one place instead of being duplicated per mode.
+ *
+ * @param grouped - Routes map whose row arrays will be sorted in place.
+ * @param colNames - Column names found in the file (sort is skipped if "Sequence" is absent).
+ */
+const sortRowsBySequenceInPlace = (grouped: RoutesMap, colNames: string[]): void => {
+  if (!colNames.includes(COLUMN_NAMES.SEQUENCE)) return;
+  Object.values(grouped).forEach((rows) => {
+    rows.sort((a, b) => {
+      const valA = a[COLUMN_NAMES.SEQUENCE];
+      const valB = b[COLUMN_NAMES.SEQUENCE];
+      const numA = typeof valA === "number" ? valA : parseFloat(String(valA));
+      const numB = typeof valB === "number" ? valB : parseFloat(String(valB));
+      /** Treat NaN as 0 to maintain numeric ordering */
+      const safeA = isNaN(numA) ? 0 : numA;
+      const safeB = isNaN(numB) ? 0 : numB;
+      return safeA - safeB;
+    });
+  });
+};
+
+/**
+ * Builds the routes map for SINGLE-ROUTE mode (file without "Corridor Cage").
+ *
+ * Every row that has a plottable coordinate belongs to the one route. A point
+ * without a valid coordinate cannot be shown on the map, so it is dropped (and
+ * counted), mirroring how the multi-route path discards rows it cannot place.
+ * Coordinate validity reuses the same parsing/bounds check the map relies on.
+ *
+ * @param rows - All data rows from the spreadsheet.
+ * @param routeName - Display name for the single route (from UI_LABELS).
+ * @returns The routes map (one entry, or empty if no row had a valid coordinate) and how many rows were skipped.
+ */
+const buildSingleRoute = (rows: RowData[], routeName: string): { grouped: RoutesMap; skipped: number } => {
+  const valid: RowData[] = [];
+  let skipped = 0;
+
+  for (const row of rows) {
+    const lat = parseCoordinate(row[COLUMN_NAMES.LATITUDE]);
+    const lng = parseCoordinate(row[COLUMN_NAMES.LONGITUDE]);
+    if (lat === undefined || lng === undefined || !isWithinRioBounds(lat, lng)) {
+      skipped++;
+      continue;
+    }
+    valid.push(row);
+  }
+
+  return { grouped: valid.length > 0 ? { [routeName]: valid } : {}, skipped };
+};
 
 /** ==============================================================================
  * Processes an Excel file and extracts route data
@@ -68,6 +123,28 @@ export const processExcelFile = async (file: File): Promise<ProcessedResult> => 
         missingCols,
         error: `Colunas obrigatórias ausentes: ${missingMandatory.join(", ")}`,
       };
+    }
+
+    /**
+     * MODE DETECTION
+     * The "Corridor Cage" column is what groups a romaneio into many routes.
+     * Its absence means the file is a single delivery route (sent by the courier
+     * to plan their own run) — there is nothing to group by, so everything that
+     * can be plotted becomes one route.
+     */
+    const isSingleRoute = !colNames.includes(COLUMN_NAMES.CORRIDOR_CAGE);
+
+    if (isSingleRoute) {
+      const { grouped, skipped } = buildSingleRoute(jsonData, UI_LABELS.ROUTE.SINGLE_ROUTE_NAME);
+      sortRowsBySequenceInPlace(grouped, colNames);
+
+      /** DEV-only diagnostics — never logs cell values (PII). */
+      if (import.meta.env.DEV) {
+        const count = grouped[UI_LABELS.ROUTE.SINGLE_ROUTE_NAME]?.length ?? 0;
+        console.info(`processExcelFile: modo rota única — pontos válidos=${count}, ignorados (sem coordenada plotável)=${skipped}`);
+      }
+
+      return { routes: grouped, availableCols: colNames, missingCols, isSingleRoute: true };
     }
 
     /** Column containing route identifier */
@@ -160,23 +237,7 @@ export const processExcelFile = async (file: File): Promise<ProcessedResult> => 
     });
 
     /** Sort rows within each route by Sequence column (if available) */
-    if (colNames.includes(COLUMN_NAMES.SEQUENCE)) {
-      Object.values(grouped).forEach((rows) => {
-        rows.sort((a, b) => {
-          const valA = a[COLUMN_NAMES.SEQUENCE];
-          const valB = b[COLUMN_NAMES.SEQUENCE];
-
-          const numA = typeof valA === "number" ? valA : parseFloat(String(valA));
-          const numB = typeof valB === "number" ? valB : parseFloat(String(valB));
-
-          /** Treat NaN as 0 to maintain numeric ordering */
-          const safeA = isNaN(numA) ? 0 : numA;
-          const safeB = isNaN(numB) ? 0 : numB;
-
-          return safeA - safeB;
-        });
-      });
-    }
+    sortRowsBySequenceInPlace(grouped, colNames);
 
     /** Detailed console logging for debugging — DEV only, and never logs cell values (PII). */
     if (import.meta.env.DEV) {
@@ -229,6 +290,7 @@ export const processExcelFile = async (file: File): Promise<ProcessedResult> => 
       routes: grouped,
       availableCols: colNames,
       missingCols,
+      isSingleRoute: false,
     };
   } catch (err) {
     /** Catch any processing errors */
