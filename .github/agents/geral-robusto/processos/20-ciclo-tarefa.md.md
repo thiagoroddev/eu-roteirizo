@@ -206,7 +206,7 @@ Estrutura mínima:
 - **Observações:** Deu problema nisso e naquilo, agora precisa disso primeiro
 
 ## Planejamento Aprovado
-[Plano detalhado que o humano aprovou]
+[O MESMO plano apresentado ao humano no chat e por ele aprovado — texto integral, não um resumo]
 
 ## Execução
 - 14:15: Plano aprovado
@@ -224,6 +224,7 @@ Estrutura mínima:
 
 | Regra                                     | Detalhe                                                                                          |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **`Planejamento Aprovado` = o plano do chat** | A seção `## Planejamento Aprovado` reproduz **o mesmo plano que foi apresentado ao humano no chat e por ele aprovado** — texto integral (O que muda / Critérios de aceite / Impacto / Riscos / Dependências novas), **nunca um resumo**. É o contrato do que foi combinado; reproduzi-lo no registro garante rastreabilidade entre o que foi aprovado e o que foi feito. Vale tanto em `em-andamento.md` quanto no arquivo de `concluidas/` (copiado sem alteração). |
 | **Máximo 3 em andamento ao mesmo tempo**  | Mais que isso, foco é diluído. Termine uma antes de iniciar outra                                |
 | **Log com timestamp**                     | Cada entrada anota a hora. Permite reconstruir a sequência                                       |
 | **Bloqueios documentados**                | Quando empaca, anota o que tentou e o que faltou                                                 |

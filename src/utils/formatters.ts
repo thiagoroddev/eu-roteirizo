@@ -170,7 +170,7 @@ export function summarizeNeighborhoods(rows: RowData[], availableCols: string[] 
 
 /**
  * Gets the last stop number for the route.
- * Procura a última linha com valor na coluna STOP.
+ * Finds the last row that has a value in the STOP column.
  *
  * @param {RowData[]} rows - Array of delivery rows
  * @param {string[] | null} availableCols - Available columns in the data
@@ -178,7 +178,7 @@ export function summarizeNeighborhoods(rows: RowData[], availableCols: string[] 
  */
 export function getNumberOfStops(rows: RowData[], availableCols: string[] | null): string {
   if ((rows?.length ?? 0) > 0 && availableCols?.includes(COLUMN_NAMES.STOP)) {
-    // Busca reversa pela última linha com valor válido
+    // Reverse search for the last row with a valid value
     const lastStopCandidate = [...rows].reverse().find((r) => r[COLUMN_NAMES.STOP])?.[COLUMN_NAMES.STOP];
     if (isStatus(lastStopCandidate)) return presentStatus(lastStopCandidate);
     if (typeof lastStopCandidate === "string" || typeof lastStopCandidate === "number") {

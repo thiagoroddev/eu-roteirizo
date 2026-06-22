@@ -27,6 +27,22 @@ export const UI_LABELS = {
     PLACEHOLDER: "🔍 Busca por código AT (ex: AT2025...)",
     NOT_FOUND: "🚫 Rota não encontrada.",
   },
+  ROUTE_VIEWER: {
+    TITLE: "Pré-Rota",
+  },
+  ROUTE_MAP: {
+    CLOSE: "Fechar Mapa",
+    FULLSCREEN_ARIA: "Mapa em tela cheia",
+    TOOLTIP: {
+      SEQUENCE: "Sequência:",
+      STOP: "Parada:",
+      ADDRESS: "Endereço:",
+      NEIGHBORHOOD: "Bairro:",
+      ZIPCODE: "CEP:",
+      COMMERCIAL: "Horário comercial?",
+      CORREIOS: "Correios entrega aqui?",
+    },
+  },
   ROUTE_TABLE: {
     TITLE: (route: string) => `Tabela Original : ${route}`,
   },

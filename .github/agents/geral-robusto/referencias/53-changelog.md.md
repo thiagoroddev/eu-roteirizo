@@ -40,6 +40,20 @@ Cada versão organiza mudanças em até 6 categorias (omitir as não usadas):
 
 ---
 
+## [1.0.1] - 2026-06-22
+
+Reforço de regra: o planejamento apresentado ao humano no chat deve ser sempre registrado, integralmente, na tarefa.
+
+### Mudado
+
+- `processos/20-ciclo-tarefa.md` (§4.2): nova regra explícita na tabela de Regras — a seção `## Planejamento Aprovado` reproduz **o mesmo plano apresentado ao humano no chat e por ele aprovado** (texto integral: O que muda / Critérios de aceite / Impacto / Riscos / Dependências novas), **nunca um resumo**; vale em `em-andamento.md` e no arquivo de `concluidas/` (copiado sem alteração). Exemplo de §4.1 ajustado no mesmo sentido.
+- `templates/30-task-em-andamento.md`: Mini-FAQ #7 detalhando o que escrever em "Planejamento Aprovado" (plano integral do chat; se mudar durante a execução, voltar ao passo PLANEJAR, reaprovar e registrar a mudança em `## Execução`).
+- `templates/31-task-concluida.md`: placeholder de "Planejamento Aprovado" reforçado (o mesmo plano do chat, copiado de em-andamento sem alteração).
+
+**Origem:** solicitação do humano para garantir rastreabilidade entre o plano combinado no chat e o registrado na tarefa.
+
+---
+
 ## [1.0.0](https://claude.ai/chat/7ad9cd8a-fc76-4046-a5d6-651d4752358b# "Primeira liberação completa do pacote") - 2026-05-13
 
 Primeira liberação do pacote.

@@ -40,6 +40,7 @@ import { RouteMap } from "../components/RouteMap";
 import { RouteTable } from "../components/RouteTable";
 import { RouteSimpleTable } from "../components/RouteSimpleTable";
 import { RouteSearchByAT } from "../components/RouteSearchByAT";
+import { UI_LABELS } from "../constants/uiLabels";
 
 /**
  * ============================================================================
@@ -175,7 +176,7 @@ function RouteViewer() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col items-center justify-center">
       {/* ===== HEADER ===== */}
-      <h1 className="text-3xl font-bold text-center mb-4">Pré-Rota</h1>
+      <h1 className="text-3xl font-bold text-center mb-4">{UI_LABELS.ROUTE_VIEWER.TITLE}</h1>
 
       {/* ===== STEP 1: FILE UPLOAD =====
           Always visible. Receives functions and state from useRouteUploader hook.

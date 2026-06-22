@@ -1,4 +1,5 @@
 import React from "react";
+import { UI_LABELS } from "../constants/uiLabels";
 
 interface Props {
   searchAT: string;
@@ -12,7 +13,7 @@ export const RouteSearchByAT: React.FC<Props> = ({ searchAT, searchResult, onCha
   <div className="text-center m-4">
     <input
       className="w-80 inline-block mb-4 px-4 py-2 border border-primary rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-      placeholder="🔍 Busca por código AT (ex: AT2025...)"
+      placeholder={UI_LABELS.ROUTE_SEARCH.PLACEHOLDER}
       value={searchAT}
       onChange={(e) => onChange(e.target.value)}
     />
@@ -20,7 +21,7 @@ export const RouteSearchByAT: React.FC<Props> = ({ searchAT, searchResult, onCha
     {searchResult && (
       <div className="bg-white flex items-center justify-center">
         {searchResult === "NONE" ? (
-          <div className="p-2 bg-red-50 text-red-600 rounded-md border border-red-100 animate-pulse">🚫 Rota não encontrada.</div>
+          <div className="p-2 bg-red-50 text-red-600 rounded-md border border-red-100 animate-pulse">{UI_LABELS.ROUTE_SEARCH.NOT_FOUND}</div>
         ) : (
           <button
             onClick={() => {

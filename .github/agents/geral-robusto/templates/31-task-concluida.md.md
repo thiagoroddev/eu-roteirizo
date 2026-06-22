@@ -202,7 +202,7 @@ APROVADO COM RESSALVAS - TASK-REF-09 gerada como melhoria não-bloqueante.
 
 ## Planejamento Aprovado
 
-[Copiado de em-andamento.md, sem alteração. Adicione ✅/❌ aos critérios de aceite conforme o resultado.]
+[O MESMO plano apresentado ao humano no chat e por ele aprovado, copiado de em-andamento.md sem alteração — texto integral, não um resumo. Apenas adicione ✅/❌ aos critérios de aceite conforme o resultado.]
 
 ## Execução
 

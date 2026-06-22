@@ -7,16 +7,17 @@ import "leaflet/dist/leaflet.css";
 import type { RowData } from "../types";
 import { MAP_CONFIG, COLUMN_NAMES, UI_LABELS } from "../constants"; // <--- Importante: Constantes
 
-// Utils de Lógica de Negócio
+// Business logic utils
 import { getCommercialDisplayStatus, resolveLocationType } from "../utils/inferLocationType";
 import { getCorreiosDeliveryStatus } from "../utils/correiosDelivery";
 import { pickIconKey } from "../utils/iconPicker";
 import { formatDeliveryLabel } from "../utils/formatters";
 import { escapeHtml } from "../utils/escapeHtml";
 
-// Utils de Mapa e Ícones
+// Map and icon utils
 import { getScaleFactorFromWidth } from "../utils/map";
 import { getIcons } from "../utils/mapIcons";
+import { parseCoordinate, isWithinRioBounds } from "../utils/coordinates";
 
 /* ============================================================================
    GLOBAL CONFIGURATION (OUTSIDE COMPONENT)
@@ -28,15 +29,6 @@ const ICON_SCALE_FACTOR = getScaleFactorFromWidth(MAP_CONFIG.MARKER.TARGET_WIDTH
 
 // 2. Generate Icon Registry (memoized by scale)
 const ICONS = getIcons(ICON_SCALE_FACTOR);
-
-// 3. Helper for coordinate parsing
-const parseCoordinate = (value: unknown): number | undefined => {
-  if (!value) return undefined;
-  const cleanStr = String(value).replace(/\./g, "");
-  const num = parseFloat(cleanStr);
-  // Dividindo por 10M para ajustar formato lat/long sem ponto (ex: -229000000 -> -22.9)
-  return isNaN(num) ? undefined : num / 10000000;
-};
 
 /* ============================================================================
    ROUTEMAP COMPONENT
@@ -111,14 +103,17 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
     const latlngs: L.LatLng[] = [];
 
     rows.forEach((row) => {
-      // Usando COLUMN_NAMES para segurança contra erros de digitação
+      // Using COLUMN_NAMES to guard against typos
       const latVal = row[COLUMN_NAMES.LATITUDE];
       const lngVal = row[COLUMN_NAMES.LONGITUDE];
 
       const lat = parseCoordinate(latVal);
       const lng = parseCoordinate(lngVal);
 
-      if (lat !== undefined && lng !== undefined) {
+      // A point is only plotted if both coordinates parsed AND fall inside the
+      // map's Rio bounds. Out-of-range values (e.g. mis-parsed coordinates) are
+      // discarded instead of producing a misplaced marker.
+      if (lat !== undefined && lng !== undefined && isWithinRioBounds(lat, lng)) {
         const position = L.latLng(lat, lng);
         latlngs.push(position);
 
@@ -146,21 +141,22 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
         const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
 
         // --- TOOLTIP CONSTRUCTION ---
-        // Usando UI_LABELS.COMMON.NO_DATA para padronizar "Sem dados"
+        // Using UI_LABELS.COMMON.NO_DATA to standardize the empty-value text
         const noData = UI_LABELS.COMMON.NO_DATA;
         // Map internal Correios key to UI label (Portuguese)
         const correiosLabel = formatDeliveryLabel(correiosStatus);
 
         // All interpolated values are escaped: spreadsheet cells are untrusted and
         // bindTooltip renders this string as HTML (injection / XSS vector otherwise).
+        const tip = UI_LABELS.ROUTE_MAP.TOOLTIP;
         const tooltipContent = `
           <div style="font-family: sans-serif; font-size: 13px;">
-            <strong>Sequência:</strong> ${escapeHtml(row[COLUMN_NAMES.SEQUENCE] || noData)} | <strong>Parada:</strong> ${escapeHtml(row[COLUMN_NAMES.STOP] || noData)}<br/>
-            <strong>Endereço:</strong> ${escapeHtml(row[COLUMN_NAMES.DESTINATION_ADDRESS] || noData)}<br/>
-            <strong>Bairro:</strong> ${escapeHtml(row[COLUMN_NAMES.NEIGHBORHOOD] || noData)}<br/>
-            <strong>CEP:</strong> ${escapeHtml(zip || noData)}<br/>
-            <strong>Horário comercial?</strong> ${escapeHtml(getCommercialDisplayStatus(row))}<br/>
-            <strong>Correios entrega aqui?</strong> ${escapeHtml(correiosLabel)}
+            <strong>${tip.SEQUENCE}</strong> ${escapeHtml(row[COLUMN_NAMES.SEQUENCE] || noData)} | <strong>${tip.STOP}</strong> ${escapeHtml(row[COLUMN_NAMES.STOP] || noData)}<br/>
+            <strong>${tip.ADDRESS}</strong> ${escapeHtml(row[COLUMN_NAMES.DESTINATION_ADDRESS] || noData)}<br/>
+            <strong>${tip.NEIGHBORHOOD}</strong> ${escapeHtml(row[COLUMN_NAMES.NEIGHBORHOOD] || noData)}<br/>
+            <strong>${tip.ZIPCODE}</strong> ${escapeHtml(zip || noData)}<br/>
+            <strong>${tip.COMMERCIAL}</strong> ${escapeHtml(getCommercialDisplayStatus(row))}<br/>
+            <strong>${tip.CORREIOS}</strong> ${escapeHtml(correiosLabel)}
           </div>
         `;
 
@@ -176,6 +172,13 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
         marker.addTo(markersLayer);
       }
     });
+
+    // Warn (DEV only, no PII) when points were dropped for lacking a valid
+    // in-range coordinate, so a silent omission from the map is noticeable.
+    const discarded = rows.length - latlngs.length;
+    if (import.meta.env.DEV && discarded > 0) {
+      console.warn(`RouteMap: ${discarded} de ${rows.length} pontos sem coordenada válida (omitidos do mapa).`);
+    }
 
     // Auto-zoom logic
     if (latlngs.length > 0) {
@@ -200,12 +203,12 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
   }, [onClose]);
 
   return createPortal(
-    <div className="fixed inset-0 bg-white z-[2000]" aria-label="Mapa em tela cheia" role="dialog">
+    <div className="fixed inset-0 bg-white z-[2000]" aria-label={UI_LABELS.ROUTE_MAP.FULLSCREEN_ARIA} role="dialog">
       <div ref={mapContainerRef} data-testid="map-container" className="absolute inset-0 w-full h-full" />
 
       <button onClick={onClose} className="fixed top-4 right-4 z-[3000] px-3 py-2 rounded bg-primary/70 text-white shadow-lg flex items-center gap-2 border-0 hover:bg-primary" type="button">
         <span aria-hidden>×</span>
-        Fechar Mapa
+        {UI_LABELS.ROUTE_MAP.CLOSE}
       </button>
     </div>,
     document.body

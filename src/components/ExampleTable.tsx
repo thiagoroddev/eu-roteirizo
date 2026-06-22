@@ -1,5 +1,6 @@
 import React from "react";
 import { EXAMPLE_TABLE_DATA, EXAMPLE_TABLE_COLUMNS } from "../constants/exampleData";
+import { UI_LABELS } from "../constants/uiLabels";
 
 /**
  * ExampleTable - Displays sample Excel structure with fictional data
@@ -13,7 +14,7 @@ import { EXAMPLE_TABLE_DATA, EXAMPLE_TABLE_COLUMNS } from "../constants/exampleD
 export const ExampleTable: React.FC = () => {
   return (
     <div className="mt-8 w-screen max-w-6xl">
-      <h6 className="text-base font-semibold mb-1">Exemplo de planilha ideal (dados fictícios)</h6>
+      <h6 className="text-base font-semibold mb-1">{UI_LABELS.EXAMPLE_TABLE.TITLE}</h6>
 
       <div className="overflow-auto rounded-xl shadow-sm border border-slate-200 bg-primary/5 m-4">
         <table className="min-w-full border-collapse text-sm">
