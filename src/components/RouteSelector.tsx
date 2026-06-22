@@ -63,8 +63,8 @@ export const RouteSelector: React.FC<Props> = ({ routes, selectedRoute, onSelect
 
   // Get display text for the dropdown button
   const getDisplayText = () => {
-    if (!hasRoutes) return "-- Aguardando arquivo --";
-    if (!selectedRoute) return `-- Escolha uma das ${totalRoutes} rotas --`;
+    if (!hasRoutes) return UI_LABELS.ROUTE_SELECTOR.WAITING_FILE;
+    if (!selectedRoute) return UI_LABELS.ROUTE_SELECTOR.CHOOSE_ROUTE(totalRoutes);
     const vehicle = getVehicleType(routes[selectedRoute], availableCols);
     return `${selectedRoute}${vehicle && vehicle !== UI_LABELS.COMMON.NO_DATA ? ` (${vehicle})` : ""}`; // Display route name and vehicle type
   };
