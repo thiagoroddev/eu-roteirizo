@@ -32,9 +32,7 @@
 
 
 | TASK-DOC-001 | Criar docs/contexto-projeto-ai.md (ponto de entrada do projeto) | Standard | Importante | Normal | M/M | - | REV-001-A02, ADR-001 | `[ ]` | 22/06/26 11:05 |
-| TASK-TEST-001 | Testes de integração: fluxo RouteViewer + interações RouteSelector | Standard | Importante | Normal | M/G | - | REV-001-A11 | `[ ]` | 22/06/26 11:05 |
-
-> **TASK-CHORE-001** saiu daqui em 22/06/26 11:15 → ver `docs/tarefas/em-andamento.md`.
+| TASK-REF-004 | Usar UI_LABELS.ROUTE_SELECTOR.WAITING_FILE/CHOOSE_ROUTE no RouteSelector (strings hardcoded) | Standard | Desejável | Normal | P/P | - | REV-001-A05, ADR-001 | `[ ]` | 22/06/26 15:01 |
 
 ---
 
