@@ -1,3 +1,5 @@
+> ⚠️ **DRAFT — requisitos de um produto futuro, NÃO implementados.** Os 25 RFs abaixo ("HubFlow Logistics": IAM, escalas, marketplace, fila virtual, bipagem) descrevem um sistema-alvo hipotético. O código atual implementa apenas: upload de planilha → visualização de rota em mapa + tabelas. Mantido como rascunho de caminhos possíveis. (Origem: REV-001-A01.)
+
  Especificação de Requisitos: HubFlow Logistics (v2.0)
 1. Módulo: Gestão de Identidade e Acesso (IAM)
 Responsável por perfis, permissões e segurança.
