@@ -178,58 +178,51 @@ export const processExcelFile = async (file: File): Promise<ProcessedResult> => 
       });
     }
 
-    /** Detailed console logging for debugging */
-    try {
-      const totalRead = jsonData.length;
-      const routesCount = Object.keys(grouped).length;
-      console.info(
-        `processExcelFile: linhas lidas=${totalRead}, rotas extraídas=${routesCount}, linhas ignoradas (Corridor inválido)=${skippedRows.length}, células vazias (outras colunas)=${missingCells.length}`
-      );
+    /** Detailed console logging for debugging — DEV only, and never logs cell values (PII). */
+    if (import.meta.env.DEV) {
+      try {
+        const totalRead = jsonData.length;
+        const routesCount = Object.keys(grouped).length;
+        console.info(
+          `processExcelFile: linhas lidas=${totalRead}, rotas extraídas=${routesCount}, linhas ignoradas (Corridor inválido)=${skippedRows.length}, células vazias (outras colunas)=${missingCells.length}`
+        );
 
-      /** Log first N skipped rows for inspection */
-      const SHOW_MAX = 50;
-      if (skippedRows.length > 0) {
-        console.warn(`processExcelFile: exibindo até ${SHOW_MAX} linhas ignoradas (de ${skippedRows.length}).`);
-        skippedRows.slice(0, SHOW_MAX).forEach((s) => {
-          const reason = s.reason;
-          /** Build object with only filled columns for cleaner log */
-          const dataRows: Record<string, unknown> = {};
-          for (const [key, value] of Object.entries(s.row)) {
-            if (value !== null && value !== undefined && String(value).trim() !== "") {
-              dataRows[key] = value;
+        /** Log first N skipped rows for inspection — only the names of the filled columns, never their values (which may contain PII: addresses, ZIP codes). */
+        const SHOW_MAX = 50;
+        if (skippedRows.length > 0) {
+          console.warn(`processExcelFile: exibindo até ${SHOW_MAX} linhas ignoradas (de ${skippedRows.length}).`);
+          skippedRows.slice(0, SHOW_MAX).forEach((s) => {
+            const filledColumns = Object.entries(s.row)
+              .filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== "")
+              .map(([key]) => key);
+            console.warn(`  ignored idx=${s.idx} excelRow~=${s.estimatedExcelRow} reason="${s.reason}"`);
+            if (filledColumns.length > 0) {
+              console.warn(`    filledColumns = ${filledColumns.join(", ")}`);
             }
-          }
+          });
+          if (skippedRows.length > SHOW_MAX) console.warn(`  ... e mais ${skippedRows.length - SHOW_MAX} linhas ignoradas não exibidas.`);
+        }
 
-          const dataRowsStr = Object.entries(dataRows)
-            .map(([k, v]) => `"${k}": ${typeof v === "string" ? `"${v}"` : v}`)
-            .join(", ");
-          console.warn(`  ignored idx=${s.idx} excelRow~=${s.estimatedExcelRow} reason="${reason}"`);
-          if (dataRowsStr) {
-            console.warn(`    dataRows = ${dataRowsStr}`);
-          }
-        });
-        if (skippedRows.length > SHOW_MAX) console.warn(`  ... e mais ${skippedRows.length - SHOW_MAX} linhas ignoradas não exibidas.`);
+        /** Log rows that were NOT skipped but have empty cells */
+        const rowsWithMissing = missingCells.reduce<Record<number, string[]>>((acc, m) => {
+          if (!acc[m.idx]) acc[m.idx] = [];
+          acc[m.idx].push(m.column);
+          return acc;
+        }, {});
+
+        /** Convert to numbers */
+        const missingIdxs = Object.keys(rowsWithMissing).map((k) => parseInt(k, 10));
+        if (missingIdxs.length > 0) {
+          console.warn(`processExcelFile: ${missingIdxs.length} linhas possuem células vazias em colunas presentes; listando as primeiras ${Math.min(50, missingIdxs.length)}:`);
+          missingIdxs.slice(0, 50).forEach((i) => {
+            const excelRow = i + 2;
+            console.warn(`  excelRow~=${excelRow} missingColumns=${rowsWithMissing[i].join(",")}`);
+          });
+        }
+      } catch (e) {
+        /** Don't fail because of logging errors */
+        console.debug("processExcelFile: falha ao gerar logs detalhados", e);
       }
-
-      /** Log rows that were NOT skipped but have empty cells */
-      const rowsWithMissing = missingCells.reduce<Record<number, string[]>>((acc, m) => {
-        if (!acc[m.idx]) acc[m.idx] = [];
-        acc[m.idx].push(m.column);
-        return acc;
-      }, {});
-
-      /** Convert to numbers */
-      const missingIdxs = Object.keys(rowsWithMissing).map((k) => parseInt(k, 10));
-      if (missingIdxs.length > 0) {
-        console.warn(`processExcelFile: ${missingIdxs.length} linhas possuem células vazias em colunas presentes; listando as primeiras ${Math.min(50, missingIdxs.length)}:`);
-        missingIdxs.slice(0, 50).forEach((i) => {
-          const excelRow = i + 2;
-          console.warn(`  excelRow~=${excelRow} missingColumns=${rowsWithMissing[i].join(",")}`);
-        });
-      }
-    } catch (e) {
-      /** Don't fail because of logging errors */
-      console.debug("processExcelFile: falha ao gerar logs detalhados", e);
     }
 
     return {
