@@ -31,7 +31,6 @@
 |---|---|:---:|:---:|:---:|:---:|---|---|:---:|---|
 
 
-| TASK-DOC-001 | Criar docs/contexto-projeto-ai.md (ponto de entrada do projeto) | Standard | Importante | Normal | M/M | - | REV-001-A02, ADR-001 | `[ ]` | 22/06/26 11:05 |
 
 ---
 
