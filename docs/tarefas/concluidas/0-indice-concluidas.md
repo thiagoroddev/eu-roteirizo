@@ -13,6 +13,7 @@
 | TASK-BG-004 | Validar faixa de lat/lng e avisar coordenadas descartadas | [abrir](./2026-06-22--13h25--TASK-BG-004.md) |
 | TASK-REF-001 | Alinhar código à ADR-001 (UI em UI_LABELS; comentários PT→EN) | [abrir](./2026-06-22--14h03--TASK-REF-001.md) |
 | TASK-REF-002 | key={idx} nas tabelas: documentar e aceitar (sem campo único garantido) | [abrir](./2026-06-22--14h16--TASK-REF-002.md) |
+| TASK-REF-003 | Usar hasValidFileExtension no hook (remover duplicação / código morto) | [abrir](./2026-06-22--14h37--TASK-REF-003.md) |
 
 <!-- Exemplo:
 | TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [abrir](./2026-05-16--20h21--TASK-REF-03.md) |

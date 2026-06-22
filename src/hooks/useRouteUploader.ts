@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { processExcelFile } from "../utils/excelProcessor";
+import { hasValidFileExtension } from "../utils/validators";
 import type { RoutesMap } from "../types";
 import type { RouteUploaderReturn } from "../types/hooks";
 import { FILE_CONFIG, UI_LABELS } from "../constants";
@@ -75,7 +76,7 @@ export function useRouteUploader(): RouteUploaderReturn {
      * ===== VALIDATION 1: File Extension =====
      * Check if file ends with .xlsx or .csv
      */
-    const hasValidExtension = FILE_CONFIG.ACCEPTED_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext));
+    const hasValidExtension = hasValidFileExtension(file.name, FILE_CONFIG.ACCEPTED_EXTENSIONS);
 
     if (!hasValidExtension) {
       setError(UI_LABELS.ERRORS.INVALID_FILE);
