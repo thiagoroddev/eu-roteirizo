@@ -37,9 +37,8 @@
 | TASK-REF-001 | Alinhar código à ADR-001 (comentários PT→EN; nenhuma string de UI hardcoded) | Standard | Desejável | Normal | M/M | - | REV-001-A05, ADR-001 | `[ ]` | 22/06/26 11:05 |
 | TASK-REF-002 | Usar chave estável (Sequência/Parada) nas linhas de tabela em vez de key={idx} | Standard | Desejável | Normal | P/P | - | REV-001-A09 | `[ ]` | 22/06/26 11:05 |
 | TASK-REF-003 | Usar ou remover hasValidFileExtension (código morto em produção) | Standard | Desejável | Normal | P/P | - | REV-001-A10 | `[ ]` | 22/06/26 11:05 |
-| TASK-CHORE-001 | Mitigar ReDoS no xlsx interno empacotado pelo danfojs | Standard | Importante | Normal | P/M | - | REV-001-A07 | `[!]` | 22/06/26 10:41 |
 
-> **TASK-CHORE-001 — bloqueada por upstream.** O `danfojs@1.2.0` empacota `xlsx@0.19.3` (advisory [GHSA-5pgg-2g8v-p4x9](https://github.com/advisories/GHSA-5pgg-2g8v-p4x9), ReDoS). Não é corrigível sem o danfojs publicar versão com `xlsx ≥ 0.20.2`. **Gatilho:** quando o danfojs publicar release com xlsx corrigido (ou ao migrar leitura de planilha para o `xlsx` 0.20.3 direto, contornando o danfojs). Candidata a virar dívida técnica formal (`docs/dominios/divida-tecnica.md`) se a estrutura de domínios for criada.
+> **TASK-CHORE-001** saiu daqui em 22/06/26 11:15 → ver `docs/tarefas/em-andamento.md`.
 
 ---
 

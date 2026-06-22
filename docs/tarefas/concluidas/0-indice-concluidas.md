@@ -7,6 +7,7 @@
 | TASK-ID | Título | Arquivo |
 |---|---|---|
 | TASK-BG-001 | Dois testes de componente falhando (RouteSimpleTable e RouteSummary) | [abrir](./2026-06-22--10h49--TASK-BG-001.md) |
+| TASK-CHORE-001 | Mitigar ReDoS no xlsx interno empacotado pelo danfojs (npm overrides) | [abrir](./2026-06-22--12h36--TASK-CHORE-001.md) |
 
 <!-- Exemplo:
 | TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [abrir](./2026-05-16--20h21--TASK-REF-03.md) |
