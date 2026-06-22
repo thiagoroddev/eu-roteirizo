@@ -31,7 +31,6 @@
 |---|---|:---:|:---:|:---:|:---:|---|---|:---:|---|
 
 
-| TASK-BG-003 | Escapar HTML dos campos do Excel no tooltip do mapa | Standard | Importante | Normal | P/P | - | REV-001-A04 | `[ ]` | 22/06/26 11:05 |
 | TASK-BG-004 | Validar faixa de lat/lng e avisar coordenadas descartadas | Standard | Importante | Normal | P/M | - | REV-001-A06 | `[ ]` | 22/06/26 11:05 |
 | TASK-DOC-001 | Criar docs/contexto-projeto-ai.md (ponto de entrada do projeto) | Standard | Importante | Normal | M/M | - | REV-001-A02, ADR-001 | `[ ]` | 22/06/26 11:05 |
 | TASK-TEST-001 | Testes de integração: fluxo RouteViewer + interações RouteSelector | Standard | Importante | Normal | M/G | - | REV-001-A11 | `[ ]` | 22/06/26 11:05 |

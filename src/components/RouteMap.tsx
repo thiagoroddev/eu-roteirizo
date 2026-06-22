@@ -12,6 +12,7 @@ import { getCommercialDisplayStatus, resolveLocationType } from "../utils/inferL
 import { getCorreiosDeliveryStatus } from "../utils/correiosDelivery";
 import { pickIconKey } from "../utils/iconPicker";
 import { formatDeliveryLabel } from "../utils/formatters";
+import { escapeHtml } from "../utils/escapeHtml";
 
 // Utils de Mapa e Ícones
 import { getScaleFactorFromWidth } from "../utils/map";
@@ -150,14 +151,16 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
         // Map internal Correios key to UI label (Portuguese)
         const correiosLabel = formatDeliveryLabel(correiosStatus);
 
+        // All interpolated values are escaped: spreadsheet cells are untrusted and
+        // bindTooltip renders this string as HTML (injection / XSS vector otherwise).
         const tooltipContent = `
           <div style="font-family: sans-serif; font-size: 13px;">
-            <strong>Sequência:</strong> ${row[COLUMN_NAMES.SEQUENCE] || noData} | <strong>Parada:</strong> ${row[COLUMN_NAMES.STOP] || noData}<br/>
-            <strong>Endereço:</strong> ${row[COLUMN_NAMES.DESTINATION_ADDRESS] || noData}<br/>
-            <strong>Bairro:</strong> ${row[COLUMN_NAMES.NEIGHBORHOOD] || noData}<br/>
-            <strong>CEP:</strong> ${zip || noData}<br/>
-            <strong>Horário comercial?</strong> ${getCommercialDisplayStatus(row)}<br/>
-            <strong>Correios entrega aqui?</strong> ${correiosLabel}
+            <strong>Sequência:</strong> ${escapeHtml(row[COLUMN_NAMES.SEQUENCE] || noData)} | <strong>Parada:</strong> ${escapeHtml(row[COLUMN_NAMES.STOP] || noData)}<br/>
+            <strong>Endereço:</strong> ${escapeHtml(row[COLUMN_NAMES.DESTINATION_ADDRESS] || noData)}<br/>
+            <strong>Bairro:</strong> ${escapeHtml(row[COLUMN_NAMES.NEIGHBORHOOD] || noData)}<br/>
+            <strong>CEP:</strong> ${escapeHtml(zip || noData)}<br/>
+            <strong>Horário comercial?</strong> ${escapeHtml(getCommercialDisplayStatus(row))}<br/>
+            <strong>Correios entrega aqui?</strong> ${escapeHtml(correiosLabel)}
           </div>
         `;
 
