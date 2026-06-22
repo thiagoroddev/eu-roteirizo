@@ -188,9 +188,11 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
       });
     }
 
-    setTimeout(() => {
+    const resizeTimeout = setTimeout(() => {
       map.invalidateSize();
     }, 100);
+
+    return () => clearTimeout(resizeTimeout);
   }, [rows]);
 
   // 3) KEYBOARD HANDLER

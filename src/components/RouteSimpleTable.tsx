@@ -133,9 +133,6 @@ export const RouteSimpleTable: React.FC<Props> = ({ rows, selectedRoute, onClose
   // Guard clause - don't render if no data
   if (!rows || rows.length === 0) return null;
 
-  // Guard clause - don't render if no data
-  if (!rows || rows.length === 0) return null;
-
   return (
     <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center">
       <div className="bg-white w-full max-w-6xl h-[98vh] rounded-xl overflow-hidden flex flex-col shadow-lg">

@@ -16,6 +16,7 @@
 | TASK-REF-003 | Usar hasValidFileExtension no hook (remover duplicação / código morto) | [abrir](./2026-06-22--14h37--TASK-REF-003.md) |
 | TASK-TEST-001 | Testes de integração: fluxo RouteViewer + interações RouteSelector | [abrir](./2026-06-22--15h01--TASK-TEST-001.md) |
 | TASK-REF-004 | Usar UI_LABELS.ROUTE_SELECTOR no RouteSelector (strings hardcoded) | [abrir](./2026-06-22--15h21--TASK-REF-004.md) |
+| TASK-REF-005 | Limpezas da REV: guard clause duplicada, typo colums, setTimeout sem cleanup | [abrir](./2026-06-22--15h28--TASK-REF-005.md) |
 
 <!-- Exemplo:
 | TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [abrir](./2026-05-16--20h21--TASK-REF-03.md) |

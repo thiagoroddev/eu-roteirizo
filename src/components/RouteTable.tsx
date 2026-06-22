@@ -21,7 +21,7 @@ export const RouteTable: React.FC<Props> = ({ rows, selectedRoute, onClose }) =>
   if (!rows || rows.length === 0) return null;
 
   /** Dynamically get column names from first row */
-  const colums = Object.keys(rows[0]);
+  const columns = Object.keys(rows[0]);
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4">
@@ -37,7 +37,7 @@ export const RouteTable: React.FC<Props> = ({ rows, selectedRoute, onClose }) =>
           <table className="min-w-full border-collapse text-sm">
             <thead className="bg-primary/90 text-white text-center">
               <tr>
-                {colums.map((c) => (
+                {columns.map((c) => (
                   <th key={c} className="px-3 py-2 border border-slate-200">
                     {c}
                   </th>
@@ -51,7 +51,7 @@ export const RouteTable: React.FC<Props> = ({ rows, selectedRoute, onClose }) =>
                   (only Corridor Cage/Latitude/Longitude are mandatory, and they repeat). */}
               {rows.map((row, idx) => (
                 <tr key={idx} className="odd:bg-slate-50">
-                  {colums.map((col) => (
+                  {columns.map((col) => (
                     <td key={col} className="px-3 py-2 border border-slate-200">
                       {String(row[col] || UI_LABELS.COMMON.NO_DATA)}
                     </td>
