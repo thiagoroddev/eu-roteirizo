@@ -1,0 +1,16 @@
+{
+  "name": "Pré-Rota",
+  "short_name": "pre-rota",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "description": "Aplicação para auxiliar na visualização de rotas de entregas",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

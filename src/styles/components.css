@@ -1,0 +1,9 @@
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition;
+  }
+
+  .card {
+    @apply bg-surface border border-border rounded-lg p-4 shadow-sm;
+  }
+}

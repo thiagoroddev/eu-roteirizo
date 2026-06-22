@@ -1,0 +1,100 @@
+{
+  "compilerOptions": {
+    // -----------------------------------------------------
+    // 📌 ARQUIVO DE CACHE DO TYPESCRIPT
+    // -----------------------------------------------------
+    // O TS salva informações de build para acelerar recompilações.
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+
+    // -----------------------------------------------------
+    // 🎯 JAVASCRIPT VERSION THAT TS WILL GENERATE
+    // -----------------------------------------------------
+    // ES2022: Supports modern features like advanced async/await.
+    "target": "ES2022",
+
+    // Causes class fields to follow the behavior
+    // of the JavaScript language standard.
+    "useDefineForClassFields": true,
+
+    // Standard libraries included in the project:
+    // -ES2022 → funções modernas (Promise, Array methods etc.)
+    // -DOM → Browser APIs
+    // -DOM.Iterable → allows `for...of` in lists of elements
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+
+    // Modern modules, used by bundlers like Vite.
+    "module": "ESNext",
+
+    // Includes global variable typings that Vite creates.
+    "types": ["vite/client"],
+
+    // Skips type checking of external libraries.
+    // This avoids annoying errors in third-party libs.
+    "skipLibCheck": true,
+
+    // -----------------------------------------------------
+    // 🔀 ALIAS CONFIGURATION (CLEANER IMPORTS)
+    // -----------------------------------------------------
+    "baseUrl": ".",
+    "paths": {
+      // Allows you to:
+      // import Botao from "@/components/Botao"
+      // instead of:
+      // import Botao from "../../../components/Botao"
+      "@/*": ["./src/*"], // Main alias
+      "@assets/*": ["./src/assets/*"], // Assets (images, styles, etc.)
+      "@components/*": ["./src/components/*"], // React components
+      "@utils/*": ["./src/utils/*"] //
+    },
+
+    // -----------------------------------------------------
+    // 📦 BUNDLER MODE (IDEAL FOR VITE)
+    // -----------------------------------------------------
+    // It tells the TS that the bundler (Vite) resolves modules.
+    "moduleResolution": "bundler",
+
+    // Allows you to import .ts files directly (rare but useful).
+    "allowImportingTsExtensions": true,
+
+    // Allows TypeScript to understand JSON imports used for Correios data.
+    "resolveJsonModule": true,
+
+    // Keeps the imports the way you wrote them, without TS trying to “optimize”.
+    "verbatimModuleSyntax": true,
+
+    // Forces TS to detect modules in any file with import/export.
+    "moduleDetection": "force",
+
+    // Does not generate JS files on output (Vite takes care of this).
+    "noEmit": true,
+
+    // Defines that .tsx files will use modern React (without importing React at the top).
+    "jsx": "react-jsx",
+
+    // -----------------------------------------------------
+    // 🧹 CODE QUALITY RULES (LINTING)
+    // -----------------------------------------------------
+
+    // Enables strict mode → more security and fewer bugs.
+    "strict": true,
+
+    // Warns you if you created a variable that you don't use.
+    "noUnusedLocals": true,
+
+    // Warn if you added a parameter that you don't use.
+    "noUnusedParameters": true,
+
+    // It only allows syntax that can be deleted without breaking the code.
+    "erasableSyntaxOnly": true,
+
+    // Prevents one switch case from “falling” into the next one without breaking.
+    "noFallthroughCasesInSwitch": true,
+
+    // Blocks imports that have side effects and are not used.
+    // This avoids code that only works “by magic”.
+    "noUncheckedSideEffectImports": true
+  },
+
+  // The Terminal Server only looks at files inside the src folder.
+  "include": ["src", "__utilidades-back-office__"]
+}

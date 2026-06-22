@@ -1,0 +1,35 @@
+:root {
+  /* 🎨 CORES PRINCIPAIS (Shopee) */
+  --color-primary: 238 77 45; /* Laranja Shopee */
+  --color-secondary: 26 156 255; /* Azul Vibrante */
+  --color-success: 38 170 153; /* Verde Sucesso */
+  --color-warning: 255 191 0; /* Amarelo Aviso */
+  --color-danger: 238 44 74; /* Vermelho Erro */
+
+  /* ⚪ NEUTROS */
+  --color-bg: 255 255 255; /* Branco */
+  --color-surface: 245 245 245; /* Cinza Claro */
+  --color-text: 34 34 34; /* Cinza Escuro */
+  --color-muted: 140 140 140; /* Cinza Médio */
+  --color-border: 229 229 229; /* Cinza Borda */
+
+  /* 📐 RAIOS */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  /* INPUTS */
+  --input-padding: 0.5rem 0.75rem;
+  --input-border-radius: var(--radius-md);
+  --input-border-color: var(--color-border);
+  --input-focus-border-color: var(--color-primary);
+  --input-focus-ring-color: rgba(238, 77, 45, 0.3);
+}
+
+[data-theme="dark"] {
+  --color-bg: 18 18 18;
+  --color-surface: 28 28 28;
+  --color-text: 240 240 240;
+  --color-muted: 160 160 160;
+  --color-border: 50 50 50;
+}

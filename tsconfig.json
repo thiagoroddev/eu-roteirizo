@@ -1,0 +1,35 @@
+{
+  /*
+  // -------------------------------------------------------
+  // 📁 "files": []
+  // -------------------------------------------------------
+  // Here you could list specific files you want
+  // for TypeScript to parse.
+  //
+  // Leave it empty when you want the TS to follow only the
+  // files defined in the "includes" of the referenced tsconfigs.
+  */
+  "files": [],
+  /*
+  // -------------------------------------------------------
+  // 📌 "references": [...]
+  // -------------------------------------------------------
+  // This file is the **root**tsconfig (tsconfig.json).
+  // It doesn't configure anything by itself — it just points to
+  // other tsconfigs.
+  //
+  // This is called "Project References".
+  //
+  // In practice:
+  // 🔹 your main tsconfig becomes an "organizer"
+  // 🔹 and each tsconfig referenced takes care of a part of the project.
+  //
+  // Here you are saying:
+  // -"tsconfig.app.json" takes care of the app part (React, client code)
+  // -"tsconfig.node.json" takes care of the Node environment (scripts, Vite config)
+  */
+  "references": [
+    { "path": "./tsconfig.app.json" }, // Config do app (React)
+    { "path": "./tsconfig.node.json" } // Config do Node (build, Vite, scripts etc.)
+  ]
+}

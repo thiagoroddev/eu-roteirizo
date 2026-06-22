@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "ES2023", // Modern JavaScript for Node.js
+    "lib": ["ES2023"], // No DOM needed for Node.js
+    "module": "ESNext", // Modern modules for Node.js ESM
+    "types": ["node"], // Node.js global types
+    "skipLibCheck": true, // Skip type checking of external libraries
+
+    /* Bundler mode */
+    "moduleResolution": "bundler", // Let bundler handle module resolution
+    "allowImportingTsExtensions": true, // Import .ts files directly
+    "resolveJsonModule": true, // Support JSON imports
+    "verbatimModuleSyntax": true, // Keep imports as written
+    "moduleDetection": "force", // Detect modules in all files
+    "noEmit": true, // Do not emit output files
+
+    /* Linting */
+    "strict": true, // Enable all strict type-checking options
+    "noUnusedLocals": true, // Error on unused local variables
+    "noUnusedParameters": true, // Error on unused parameters
+    "erasableSyntaxOnly": true, // Only erase syntax, do not alter semantics
+    "noFallthroughCasesInSwitch": true, // Error on fallthrough cases in switch
+    "noUncheckedSideEffectImports": true // Error on imports with side effects
+  },
+  "include": ["vite.config.ts"]
+}

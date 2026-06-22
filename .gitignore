@@ -1,0 +1,60 @@
+# ------------------------------------------------------
+# 📦 Dependências e Build
+# ------------------------------------------------------
+node_modules/
+dist/
+dist-ssr/
+*.local
+arquivos-testes/
+
+
+# Cache do TypeScript (visto no seu tsconfig)
+*.tsbuildinfo
+
+# ------------------------------------------------------
+# 🔒 Segurança e Ambiente (MUITO IMPORTANTE)
+# ------------------------------------------------------
+# Nunca suba suas chaves de API ou senhas
+.env
+.env.local
+.env.*.local
+*.pem
+
+# ------------------------------------------------------
+# 📊 Arquivos de Dados e Temporários
+# ------------------------------------------------------
+# Vi que você tem planilhas. Geralmente não queremos versionar 
+# dados de teste ou relatórios reais, apenas o código.
+*.xlsx
+*.xls
+*.csv
+*.pdf
+
+# Se você tiver uma pasta só para dados brutos, ignore ela toda:
+# /data/
+
+# ------------------------------------------------------
+# 📝 Logs
+# ------------------------------------------------------
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ------------------------------------------------------
+# 💻 Arquivos de Sistema e Editor
+# ------------------------------------------------------
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
