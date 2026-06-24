@@ -153,6 +153,8 @@ export const COLUMN_NAMES = {
   PLANNED_AT: "Planned AT",
   PLANNED_VEHICLE_TYPE: "Planned Vehicle Type",
   HUB: "Destination Station",
+  /** Shopee single-route export: per-package tracking number (one row = one package). */
+  SPX_TN: "SPX TN",
 } as const;
 
 /**

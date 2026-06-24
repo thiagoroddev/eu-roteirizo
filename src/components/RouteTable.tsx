@@ -1,6 +1,8 @@
 import React from "react";
 import type { RowData } from "../types";
 import { UI_LABELS } from "../constants/uiLabels";
+import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogTitle, DialogClose } from "./ui/dialog";
 
 interface Props {
   rows: RowData[]; // All deliveries for selected route
@@ -15,7 +17,6 @@ interface Props {
  * @param selectedRoute Currently selected route.
  * @param onClose Function that closes the modal.
  */
-
 export const RouteTable: React.FC<Props> = ({ rows, selectedRoute, onClose }) => {
   /** Guard clause - don't render if no data */
   if (!rows || rows.length === 0) return null;
@@ -24,21 +25,28 @@ export const RouteTable: React.FC<Props> = ({ rows, selectedRoute, onClose }) =>
   const columns = Object.keys(rows[0]);
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-6xl h-[98vh] rounded-xl overflow-hidden flex flex-col shadow-lg">
-        <div className="flex items-center justify-between p-3 border-b">
-          <h5 className="text-lg font-semibold">{UI_LABELS.ROUTE_TABLE.TITLE(selectedRoute || "")}</h5>
-          <button className="px-3 py-1 text-sm rounded bg-primary hover:bg-primary/80 text-white shadow-sm" onClick={onClose}>
-            {UI_LABELS.COMMON.CLOSE}
-          </button>
+    <Dialog
+      open
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
+    >
+      <DialogContent showClose={false} className="flex h-[98vh] w-full max-w-6xl flex-col gap-0 overflow-hidden p-0">
+        <div className="flex items-center justify-between border-b p-3">
+          <DialogTitle className="text-lg font-semibold">{UI_LABELS.ROUTE_TABLE.TITLE(selectedRoute || "")}</DialogTitle>
+          <DialogClose asChild>
+            <Button variant="secondary" size="sm">
+              {UI_LABELS.COMMON.CLOSE}
+            </Button>
+          </DialogClose>
         </div>
 
         <div className="flex-1 overflow-auto">
           <table className="min-w-full border-collapse text-sm">
-            <thead className="bg-primary/90 text-white text-center">
+            <thead className="sticky top-0 bg-primary/90 text-center text-primary-foreground">
               <tr>
                 {columns.map((c) => (
-                  <th key={c} className="px-3 py-2 border border-slate-200">
+                  <th key={c} className="border border-border px-3 py-2">
                     {c}
                   </th>
                 ))}
@@ -50,9 +58,9 @@ export const RouteTable: React.FC<Props> = ({ rows, selectedRoute, onClose }) =>
                   filtered in this component. No row field is guaranteed unique
                   (only Corridor Cage/Latitude/Longitude are mandatory, and they repeat). */}
               {rows.map((row, idx) => (
-                <tr key={idx} className="odd:bg-slate-50">
+                <tr key={idx} className="odd:bg-muted">
                   {columns.map((col) => (
-                    <td key={col} className="px-3 py-2 border border-slate-200">
+                    <td key={col} className="border border-border px-3 py-2">
                       {String(row[col] || UI_LABELS.COMMON.NO_DATA)}
                     </td>
                   ))}
@@ -61,7 +69,7 @@ export const RouteTable: React.FC<Props> = ({ rows, selectedRoute, onClose }) =>
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

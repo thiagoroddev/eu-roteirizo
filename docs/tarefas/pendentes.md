@@ -20,39 +20,7 @@
 
 ---
 
-## TASK-RF-004 - Modelo de dados do roteirizador (Ponto / Parada / Rota planejada)
-
-- **Status:** Pendente
-- **Modo:** Standard
-- **Valor:** Crítico
-- **Urgência:** IMEDIATA
-- **Esforço-H/IA:** M/M
-- **Data-hora origem:** 22/06/26 22:45
-- **Dependências:** TASK-RF-002 (concluída)
-- **REQ/ADR/DT:** draft §5; ADR-002
-- **Observações:** Fundação do épico. É a decisão "mais barata de mudar agora, cara depois" — fechar antes de qualquer tela.
-
-**Objetivo:** definir as três entidades centrais e os seletores derivados, sem UI.
-
-**Subtarefas:**
-- Criar `src/types/routing.ts` com:
-  - `DeliveryPoint` { id: string; lat: number; lng: number; address: string; packageCount: number; rawData: RowData }
-  - `RouteStop` { order: number; centroidLat: number; centroidLng: number; pointIds: string[]; radiusMeters: number }
-  - `PlannedRoute` { id: string; startPoint: { lat; lng } | null; stops: RouteStop[]; config: RoutingConfig }
-  - `RoutingConfig` { walkingMinutesPerDelivery: number; vehicleSpeedKmh: number }
-- `src/utils/routing/points.ts`: `rowToDeliveryPoint(row, index)` — usa `parseCoordinate`; `packageCount` de `Num of Order` (fallback 1); `id` estável (preferir `SPX TN`, senão `seq/index`).
-- `src/utils/routing/selectors.ts` (puros): `totalPoints`, `totalPackages`, `assignedPointIds`, `unassignedPoints`, `stopCentroid(points)`, `packagesInStop`.
-- Testes: conversão a partir da estrutura real do arquivo Shopee + cada seletor.
-
-**Critérios de aceite:**
-- Tipos compilam (`tsc --noEmit`); zero `any`.
-- Conversor mapeia corretamente o arquivo real (`15-05-2026...xlsx`).
-- Seletores cobertos por teste (atribuídos/não-atribuídos, centroide, contagens).
-
-**Dependências novas:** nenhuma.
-**Riscos:** `id` estável quando não há `SPX TN` — definir regra determinística e testá-la.
-
----
+> ✅ **TASK-RF-004 concluída** — ver `concluidas/2026-06-22--23h35--TASK-RF-004.md`.
 
 ## TASK-RF-005 - Motor de roteamento local (port do protótipo → módulo TS) [XG, dividir]
 
@@ -269,6 +237,78 @@
 
 ---
 
+## TASK-RF-011 - App shell mobile-first (header + bottom nav + React Router)
+
+- **Status:** Pendente
+- **Modo:** Strict
+- **Valor:** Crítico
+- **Urgência:** IMEDIATA
+- **Esforço-H/IA:** G/M
+- **Data-hora origem:** 22/06/26 23:50
+- **Dependências:** ADR-003
+- **REQ/ADR/DT:** ADR-003; `analise-comercial-2.0.md` §10; `fluxo-roteirizacao.md` §11
+- **Observações:** Reescreve o shell do `App.tsx`; o `RouteViewer` atual vira a tela do Mapa. Dependência nova `react-router-dom` (aprovada). Base das demais telas — priorizar cedo (antes/junto da RF-006).
+
+**Objetivo:** dar ao app um shell mobile-first com navegação por abas.
+
+**Subtarefas:**
+- Instalar e configurar `react-router-dom`.
+- `AppShell`: header (título + engrenagem → Configurações de Rota + voltar) e **bottom tab bar** (Mapa `/`, Rotas `/rotas`); Relatórios/Perfil como stubs.
+- `RouteViewer` vira a rota `/` (Mapa); dentro dela, o toggle **Visualizar | Roteirizar** só em rota única (liga com RF-010).
+- Garantir botão **voltar do Android** previsível.
+
+**Critérios de aceite:** navega entre Mapa/Rotas; voltar do Android funciona; multi-rota (visualizador) intocado.
+**Dependências novas:** `react-router-dom` (propor/instalar com aprovação — já aprovada na ADR-003).
+**Riscos:** mexer no `App.tsx` sem quebrar o fluxo atual (cobrir com os testes de `RouteViewer`).
+
+---
+
+## TASK-RF-012 - Auto-roteirizar (agrupamento por raio)
+
+- **Status:** Pendente
+- **Modo:** Standard
+- **Valor:** Importante
+- **Urgência:** IMEDIATA
+- **Esforço-H/IA:** M/M
+- **Data-hora origem:** 22/06/26 23:50
+- **Dependências:** TASK-RF-004, TASK-RF-005 (distância), TASK-RF-006 (estado)
+- **REQ/ADR/DT:** `fluxo-roteirizacao.md` §12
+- **Observações:** Reusa as funções do modo manual; gera rascunho editável (não final).
+
+**Objetivo:** botão que monta a rota sozinho, a partir do início, agrupando por proximidade + raio configurado.
+
+**Subtarefas:**
+- `autoBuildStops(points, start, config)` em `src/utils/routing/`: vizinho-mais-próximo + inclusão por raio até atribuir todos; usa a ordem a pé (§6).
+- Botão "Auto-roteirizar" na tela Mapa; resultado entra no estado da RF-006 como rascunho editável.
+
+**Critérios de aceite:** 1 clique cobre todos os endereços em paradas; usuário pode editar depois; função coberta por teste.
+**Dependências novas:** nenhuma.
+
+---
+
+## TASK-RF-013 - Export/import de rota configurada (JSON autocontido)
+
+- **Status:** Pendente
+- **Modo:** Standard
+- **Valor:** Importante
+- **Urgência:** IMEDIATA
+- **Esforço-H/IA:** M/M
+- **Data-hora origem:** 22/06/26 23:50
+- **Dependências:** TASK-RF-004, TASK-RF-008
+- **REQ/ADR/DT:** `fluxo-roteirizacao.md` §13
+- **Observações:** Caso de uso central: passar a rota pronta para um **ajudante** ou trocar de aparelho (modelo é por dispositivo, sem nuvem).
+
+**Objetivo:** exportar/importar um `PlannedRoute` completo (pontos + paradas + âncoras + config) como arquivo JSON.
+
+**Subtarefas:**
+- Serializar/parsear `PlannedRoute` (+ pontos) em JSON versionado; validar no import.
+- Exportar (download de arquivo) e importar (seleção de arquivo) — distinto do import de planilha Shopee.
+
+**Critérios de aceite:** exportar e reimportar (outro aparelho) reconstrói a rota idêntica, com config; testes de round-trip serialize/parse.
+**Dependências novas:** nenhuma.
+
+---
+
 <!--
 ## TASK-PREFIXO-XXX - Título
 - **Status:** Pendente
@@ -290,6 +330,7 @@
 |---|---|:---:|:---:|:---:|:---:|---|---|:---:|---|
 | TASK-RF-003 | Alias de cabeçalhos do arquivo real (Bairro→Neighborhood, Zipcode/Postal code→Zipcode; expor AT ID/SPX TN) para tabela/tooltip da rota única | Standard | Importante | Normal | M/M | - | TASK-RF-002 | [ ] | 22/06/26 22:28 |
 | TASK-CHORE-002 | Rodar a suíte completa (`npm run test`) em ambiente estável (Windows/CI) e registrar o verde | Light | Importante | Normal | P/P | - | TASK-RF-002 | [ ] | 22/06/26 22:28 |
+| TASK-DOC-003 | Sincronizar `contexto-projeto-ai.md`: deixa de ser "SPA de página única sem router" (ADR-003) | Standard | Importante | Normal | P/P | TASK-RF-011 | ADR-003 | [ ] | 22/06/26 23:50 |
 
 
 

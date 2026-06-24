@@ -5,6 +5,8 @@ import { UI_LABELS } from "../constants/uiLabels";
 import { getCommercialDisplayStatus, resolveLocationType } from "../utils/inferLocationType";
 import { getCorreiosDeliveryStatus } from "../utils/correiosDelivery";
 import { formatDeliveryLabel } from "../utils/formatters";
+import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogTitle, DialogClose } from "./ui/dialog";
 
 /**
  * Simplified modal that displays essential route information.
@@ -134,23 +136,30 @@ export const RouteSimpleTable: React.FC<Props> = ({ rows, selectedRoute, onClose
   if (!rows || rows.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center">
-      <div className="bg-white w-full max-w-6xl h-[98vh] rounded-xl overflow-hidden flex flex-col shadow-lg">
+    <Dialog
+      open
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
+    >
+      <DialogContent showClose={false} className="flex h-[98vh] w-full max-w-6xl flex-col gap-0 overflow-hidden p-0">
         {/* Header */}
-        <div className="flex items-center justify-between p-3 border-b">
-          <h5 className="text-lg font-semibold">{UI_LABELS.ROUTE_SIMPLE_TABLE.TITLE(selectedRoute ?? "")}</h5>
-          <button className="px-3 py-1 text-sm rounded bg-primary hover:bg-primary/80 text-white shadow-sm" onClick={onClose}>
-            {UI_LABELS.COMMON.CLOSE}
-          </button>
+        <div className="flex items-center justify-between border-b p-3">
+          <DialogTitle className="text-lg font-semibold">{UI_LABELS.ROUTE_SIMPLE_TABLE.TITLE(selectedRoute ?? "")}</DialogTitle>
+          <DialogClose asChild>
+            <Button variant="secondary" size="sm">
+              {UI_LABELS.COMMON.CLOSE}
+            </Button>
+          </DialogClose>
         </div>
 
         {/* Table */}
         <div className="flex-1 overflow-auto">
           <table className="min-w-full border-collapse text-sm">
-            <thead className="bg-primary/90 text-white sticky top-0">
+            <thead className="sticky top-0 bg-primary/90 text-primary-foreground">
               <tr className="text-center align-middle">
                 {COLUMNS.map((col) => (
-                  <th key={col.key} className="px-3 py-2 border border-slate-200" title={getColumnTooltip(col.key)}>
+                  <th key={col.key} className="border border-border px-3 py-2" title={getColumnTooltip(col.key)}>
                     {col.label}
                   </th>
                 ))}
@@ -162,9 +171,9 @@ export const RouteSimpleTable: React.FC<Props> = ({ rows, selectedRoute, onClose
                   filtered in this component. No row field is guaranteed unique
                   (only Corridor Cage/Latitude/Longitude are mandatory, and they repeat). */}
               {rows.map((row, idx) => (
-                <tr key={idx} className="text-center align-middle odd:bg-slate-50">
+                <tr key={idx} className="text-center align-middle odd:bg-muted">
                   {COLUMNS.map((col) => (
-                    <td key={col.key} className="px-3 py-2 border border-slate-200" title={getColumnTooltip(col.key)}>
+                    <td key={col.key} className="border border-border px-3 py-2" title={getColumnTooltip(col.key)}>
                       {renderCellContent(col.key, row)}
                     </td>
                   ))}
@@ -173,7 +182,7 @@ export const RouteSimpleTable: React.FC<Props> = ({ rows, selectedRoute, onClose
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

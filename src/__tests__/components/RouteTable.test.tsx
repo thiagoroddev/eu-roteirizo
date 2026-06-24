@@ -99,10 +99,12 @@ describe("RouteTable Internationalization", () => {
     expect(rows.length).toBe(3); // 1 header + 2 data rows
   });
 
-  it("deve aplicar classes de estilo zebrado (odd:bg-slate-50) às linhas", () => {
-    const { container } = render(<RouteTable {...defaultProps} />);
-    const dataRows = container.querySelectorAll("tbody tr");
-    expect(dataRows[0]).toHaveClass("odd:bg-slate-50");
-    expect(dataRows[1]).toHaveClass("odd:bg-slate-50");
+  it("deve aplicar classes de estilo zebrado (odd:bg-muted) às linhas", () => {
+    // RouteTable renders inside a Radix Dialog portal (document.body), not the
+    // render container — query the document.
+    render(<RouteTable {...defaultProps} />);
+    const dataRows = document.querySelectorAll("tbody tr");
+    expect(dataRows[0]).toHaveClass("odd:bg-muted");
+    expect(dataRows[1]).toHaveClass("odd:bg-muted");
   });
 });

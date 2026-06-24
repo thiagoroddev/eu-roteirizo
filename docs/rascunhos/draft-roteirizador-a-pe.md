@@ -2,7 +2,7 @@
 
 # 🧭 Roteirizador a Pé — Planejamento Conceitual
 
-> Transformar o visualizador atual num **planejador de rota com paradas personalizadas**, pensado para a realidade de quem entrega a pé (caso de uso: entregador Shopee). O diferencial é não depender de API paga de roteirização: os cálculos são funções locais sobre dados de via abertos (OpenStreetMap).
+> Transformar o visualizador atual num **planejador de rota com paradas personalizadas**, pensado para a realidade de quem entrega a com veículo mas precisa andar partes a pé (caso de uso: entregador Shopee). O diferencial é não depender de API paga de roteirização: os cálculos são funções locais sobre dados de via abertos (OpenStreetMap).
 
 ---
 

@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
 import type { RoutesMap } from "../types";
 import { getVehicleType } from "../utils/formatters";
 import { UI_LABELS } from "../constants";
+import { Button } from "./ui/button";
+import { cn } from "../lib/utils";
 
 interface Props {
   /** All routes extracted from Excel file */
@@ -73,36 +76,35 @@ export const RouteSelector: React.FC<Props> = ({ routes, selectedRoute, onSelect
     <div className="flex justify-center">
       <div className="w-full max-w-lg flex justify-center">
         <div className="relative" ref={dropdownRef}>
-          {/* Custom dropdown button */}
-          <button
-            className={`w-80 border border-primary text-primary rounded px-4 py-2 flex items-center justify-between transition focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 ${
-              isOpen ? "bg-primary/10" : "bg-white"
-            }`}
-            type="button"
+          {/* Dropdown trigger */}
+          <Button
+            variant="outline"
+            className={cn("w-80 justify-between border-primary/40 text-foreground", isOpen && "bg-accent")}
             onClick={() => setIsOpen(!isOpen)}
             disabled={!hasRoutes}
+            aria-expanded={isOpen}
           >
-            <span className="flex-1 text-sm md:text-base text-center">{getDisplayText()}</span>
-            <span className={`ml-2 text-xs transition-transform ${!isOpen ? "rotate-90" : ""}`}>▼</span>
-          </button>
+            <span className="flex-1 text-center text-sm md:text-base">{getDisplayText()}</span>
+            <ChevronDown aria-hidden className={cn("transition-transform", isOpen && "rotate-180")} />
+          </Button>
 
-          {/* Custom dropdown menu */}
+          {/* Dropdown menu */}
           {isOpen && hasRoutes && (
-            <div className="absolute z-50 w-full bg-white border border-primary rounded-b-lg shadow-lg shadow-primary/40 max-h-52 overflow-y-auto">
+            <div className="absolute z-50 max-h-52 w-full overflow-y-auto rounded-b-lg border border-border bg-popover shadow-lg">
               {sortedRoutes.map((route) => {
                 const vehicle = getVehicleType(routes[route], availableCols);
                 const isSelected = route === selectedRoute;
 
                 return (
-                  <button
+                  <Button
                     key={route}
-                    className={`w-full text-center px-3 py-2 text-sm md:text-base transition ${isSelected ? "bg-primary text-white" : "hover:bg-primary/10 text-gray-800"}`}
-                    type="button"
+                    variant="ghost"
+                    className={cn("w-full justify-center rounded-none text-sm md:text-base", isSelected && "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground")}
                     onClick={() => handleSelect(route)}
                   >
                     {route}
                     {vehicle && vehicle !== UI_LABELS.COMMON.NO_DATA ? ` (${vehicle})` : ""}
-                  </button>
+                  </Button>
                 );
               })}
             </div>

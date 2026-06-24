@@ -15,7 +15,8 @@ Este `contexto-projeto-ai.md` foi criado em 22/06/26 (via TASK-DOC-001, achado R
 | TypeScript | ~5.9.3 | strict; `types: ["vite/client"]` |
 | Vite | ^7.2.4 | build tool + dev server |
 | vite-plugin-pwa | ^1.2.0 | **é PWA** (manifest + service worker `autoUpdate`) |
-| Tailwind CSS | ^3.4.13 | utility puro (sem shadcn); token `primary` |
+| Tailwind CSS | ^3.4.13 | base do design system |
+| shadcn/ui | — | **biblioteca de UI padrão** (Radix + `cva` + `cn`); componentes em `src/components/ui/`; tokens via CSS variables. Ver **[ADR-004](./arquitetura/ADR/ADR-004.md)** |
 | Leaflet | ^1.9.4 | mapa; tiles via Cloudflare Worker proxy |
 | react-leaflet | ^4.2.1 | (uso pontual; o mapa principal usa Leaflet direto em `RouteMap`) |
 | react-select | ^5.10.2 | dependência presente |
@@ -60,6 +61,7 @@ Não revisar sem ADR explícita:
 - **Correios:** lookup de JSON estático (`src/data/`) em `utils/correiosDelivery.ts` — não há chamada HTTP em produção.
 - **xlsx fixado na versão da CDN (0.20.3):** segurança (npm só tem a 0.18.5 vulnerável). `overrides` propaga p/ o xlsx interno do danfojs.
 - **Imports por alias:** `@/`, `@assets/`, `@components/`, `@utils/` (em `tsconfig.app.json` + `vite.config.ts`).
+- **UI / Design System (ADR-004):** **shadcn/ui** é a biblioteca padrão. Componentes em `src/components/ui/` (em inglês, ADR-001), texto via `UI_LABELS`. **Componentizar e DRY são lei** (módulo 13 + Regra de Três): nada de classes hardcoded fora dos tokens; criar componente novo em `components/ui/` quando faltar; usar `cn()`/`cva`; primitivos complexos (modal, dropdown, combobox) via Radix — **não reinventar**. Componente de domínio (ex.: marcadores do mapa) fica em `components/[domínio]/`.
 
 ## Convenções Específicas
 
@@ -90,8 +92,9 @@ Existentes neste repo:
 - **Revisões gerais:** [`docs/arquitetura/revisoes-gerais/REV-001.md`](./arquitetura/revisoes-gerais/REV-001.md)
 - **Tarefas:** [`docs/tarefas/`](./tarefas/) (pendentes / em-andamento / concluidas)
 - **Rascunhos (visão futura):** [`docs/rascunhos/`](./rascunhos/)
+- **Dívida técnica:** [`docs/dominios/divida-tecnica.md`](./dominios/divida-tecnica.md) (DT-001 TWA, DT-002 billing × sem-backend)
 
-> Ainda **não existem** `docs/requisitos/`, `docs/dominios/` nem `docs/design/` — criar quando houver necessidade real.
+> Ainda **não existem** `docs/requisitos/` nem `docs/design/` — criar quando houver necessidade real.
 
 ## Hierarquia de Regras
 

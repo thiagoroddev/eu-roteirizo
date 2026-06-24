@@ -15,11 +15,16 @@ Roteirizador **manual** para entregador Shopee: importa a planilha (70 a 150 end
 | Termo | O que é |
 |---|---|
 | **Endereço** (ponto) | Uma linha da planilha. Tem número (do pacote), rua + número, complemento, bairro e CEP. |
-| **Endereço multi-pacote** | Mesmo endereço/número com mais de um pacote. Conta como um ponto no mapa, com vários pacotes. |
+| **Endereço multi-pacote** | Mesmo endereço/número com mais de um pacote. Conta como **um ponto** no mapa, com vários pacotes. |
+| **Pacote** | Uma encomenda individual (uma linha/etiqueta da planilha, com `SPX TN`). Vários pacotes podem estar no mesmo endereço (Vol 1, Vol 2…). |
 | **Parada** | Agrupamento de endereços próximos, atendidos **a pé** a partir de onde o veículo para. Rotulada `P1`, `P2`… |
 | **Âncora (da parada)** | O ponto **onde o veículo fica parado** — partida e retorno da caminhada (ida e volta) e o ponto que o veículo visita ao saltar de uma parada à outra. Padrão = o endereço que originou a parada; **trocável a qualquer momento**, e **não precisa ser um endereço** (pode ser a posição do GPS ou um toque no mapa). Trocar a âncora **recalcula automaticamente a ordem de visita a pé**. |
 | **Ponto inicial** | De onde a rota começa (referência da primeira sugestão). |
 | **a pé × veículo** | Deslocamento **dentro** de uma parada = a pé (ida e volta a partir da âncora); deslocamento **entre** paradas = veículo (âncora → âncora). |
+
+> **Hierarquia (3 níveis) — espinha dorsal do app:** uma **Parada** contém **Endereços**; um **Endereço** contém **Pacotes**. Reflete o modelo (`RouteStop` → `DeliveryPoint` → `DeliveryPackage`) e o **drill-down da UI**: o mapa mostra **paradas** → expandir uma parada mostra seus **endereços** → selecionar um endereço mostra seus **pacotes** (card "Etiqueta do Pacote", §9/§14).
+>
+> **Vocabulário único (i18n):** usar sempre **Parada · Endereço · Pacote · Âncora** (não "agrupamento", "circuit" etc.), centralizado em `UI_LABELS`.
 
 ---
 
@@ -46,10 +51,16 @@ Quatro variáveis visuais, cada uma com **um** significado (sem sobreposição):
 | Início | marcador verde próprio |
 | Sugestão do próximo | **linha tracejada** até o mais próximo (some ao escolher) |
 | Trecho configurado | **linha contínua** veículo (âncora→âncora) + **laço tracejado** a pé dentro da parada |
+| Círculo de raio (ao criar parada) | **círculo tracejado** do raio configurado, centrado na semente/âncora — mostra quem está no alcance |
+| Candidato no raio | endereço **dentro** do círculo, destacado (entra na parada ao criar) |
 
 > Regra de leitura: **geometria = o quê (parada/endereço); número = ordem; cor = a que parada pertence; borda grossa = âncora; badge amarelo = quantos.** Na visão geral (nada selecionado) eu já vejo as paradas numeradas e, pelo badge amarelo, quantos endereços cada uma tem — sem clicar.
 
 > **i18n:** os marcadores no mapa **nunca** carregam letra/texto traduzível — só número. A palavra "Parada"/"Stop"/etc. vive apenas em `UI_LABELS` (legenda, painel, botões). Assim o mapa serve qualquer idioma sem mudança (Shopee em outros países). Decisão alinhada à ADR-001.
+
+### Legenda do mapa
+
+Com o sistema de ícones denso, o mapa traz uma **legenda colapsável** (um "?" no canto que abre/fecha — não rouba espaço no celular). Ela **espelha exatamente esta seção** (geometria · cor · badge amarelo · borda grossa · linhas de veículo/a pé/sugestão), para **nunca divergir** do que é desenhado. Textos via `UI_LABELS` (i18n).
 
 ---
 
@@ -100,6 +111,17 @@ A **âncora** organiza o cálculo em duas camadas:
 - **Override manual (essencial):** a ordem automática é só sugestão. O usuário **reordena à mão** sempre que quiser — nenhum algoritmo sabe que "a entrada do prédio é pelos fundos". O controle manual é o diferencial; o auto-ordenamento só precisa ser "bom o bastante".
 - **Trocar a âncora recalcula a ordem:** mudou a âncora (outro endereço, GPS ou toque no mapa), a varredura horária é refeita a partir dela. Custo zero.
 
+### Sugestão do próximo (linha tracejada)
+
+- **Referência = último configurado:** a sugestão parte do último elemento configurado (endereço/parada).
+- **Auto-seleciona o mais próximo:** a linha tracejada já aponta o mais próximo (desempate pela varredura horária; ao montar parada, prioriza quem está dentro do raio).
+- **Clicar em outro re-direciona:** tocar em qualquer endereço move a linha tracejada para ele e mostra a distância até ele — comparar destinos é só tocar.
+
+### Distância a pé pelas ruas (não em linha reta)
+
+- A distância a pé exibida é a de **caminhada pelas ruas** (grafo, pedestre — ignora mão única), **não linha reta**.
+- **Performance:** rankeia o "mais próximo" por linha reta (barato) e calcula o **caminho de rua + distância real só para o alvo selecionado** (um A* por alvo). Linha reta só como **fallback** enquanto o grafo não carregou.
+
 ### Âncora no planejamento × na execução
 
 - **Planejamento:** âncora = endereço escolhido (palpite de onde vai parar).
@@ -114,7 +136,7 @@ A **âncora** organiza o cálculo em duas camadas:
 
 ## 7. HUD — contadores sempre visíveis
 
-- **Endereços faltantes** — ex.: `23/90`.
+- **Faltando** — com a **unidade explícita** (evita confundir cliques com volume): progresso de atribuição em **endereços** (ex.: `40/52` endereços, recomendado como número principal — é o que falta *fazer*) e o **volume** em **pacotes** (ex.: `86/88` pacotes, secundário). Um endereço multi-pacote é **uma** atribuição.
 - **Paradas criadas** — ex.: `3`.
 - **Distância total** (veículo + a pé) — ex.: `4,1 km`.
 - **Tempo total estimado** (veículo + a pé) — ex.: `1h12`.
@@ -139,6 +161,8 @@ Os botões dependem do que está selecionado:
 | Parada (fechada / selecionada) | **Adicionar endereço** · **Desfazer parada** · trocar âncora (no painel) |
 | Endereço dentro de uma parada | **Remover da parada** · **Tornar âncora** |
 
+**Card "Etiqueta do Pacote":** ao selecionar um endereço no Roteirizar, suas infos aparecem num card titulado **"Etiqueta do Pacote"** — endereço + `Parada {Stop} · Seq {Sequence}` + código (`SPX TN`) — **separado** dos botões de ação. Mesmos dados da execução (§14), mas sem misturar com as ações de montar parada.
+
 **Remoção — regra de ouro: endereço nunca some (é entrega real).**
 
 - **Desfazer parada:** desagrupa; os endereços voltam a **livres**. Avisa que a parada será desfeita — mas as entregas permanecem.
@@ -152,7 +176,7 @@ Os botões dependem do que está selecionado:
 
 ## 10. Decisões fechadas
 
-1. **Numeração — Shopee × nossa:** ✅ o **ponto cinza mostra o nº do pacote da planilha**; `Pn`/`En` (com cor) são a **numeração nova da rota manual** montada no app. A "Stop" da Shopee é ignorada no modo manual.
+1. **Numeração — Shopee × nossa:** ✅ no mapa, `Pn`/`En` (com cor) são a **numeração nova da rota manual**. A numeração da Shopee (`Stop` + `Sequence`) é ignorada **apenas para a ordem da rota** — mas é **preservada como identidade da etiqueta** do pacote e **exibida na execução** (ver §14): é por ela que o entregador acha o pacote na sacola. O **código** (`SPX TN`) também é preservado para chamados/problemas.
 2. **Ordem dos endereços a pé na parada:** ✅ o app **ordena automaticamente** (varredura horária a partir da âncora) **e** o usuário pode **reordenar à mão** a qualquer momento (ver §6).
 3. **Âncora:** ✅ cada parada tem uma âncora (onde o veículo para); base da ida e volta a pé e do salto de veículo entre paradas. Padrão = endereço que originou a parada; **trocável**, **não precisa ser endereço** (pode ser GPS ou toque no mapa), e ao trocar **recalcula a ordem a pé**.
 4. **Âncora ao vivo na execução:** ✅ na execução, a âncora pode ser a **posição real do GPS** (grátis) onde o veículo parou; se ficou mais perto de outro endereço, esse vira o primeiro. Pertence ao modo execução (TASK-RF-009).
@@ -161,15 +185,83 @@ Os botões dependem do que está selecionado:
 7. **Cor:** ✅ parada e seus endereços = **mesma cor**; seleção = **realce** (não outra cor); só a parada selecionada expande.
 8. **Contagem e âncora:** ✅ **badge amarelo** atrás do marcador mostra nº de endereços (parada fechada) ou nº de pacotes (endereço > 1), visível **sem clicar**; **borda grossa = âncora**.
 9. **Remoção e inclusão:** ✅ desfazer parada (endereços viram livres) · remover endereço (promove a próxima âncora) · incluir órfão via **select da parada mais próxima** · **sem trava de distância** (só aviso suave). Detalhe em §9.
+10. **Painéis de ação por contexto:** ✅ aprovados em protótipo (nada selecionado · órfão · parada · endereço na parada) — contrato de UI da TASK-RF-006.
+11. **Sugestão e raio:** ✅ ao criar parada, **círculo do raio** mostra os candidatos; **referência = último configurado**; a sugestão **auto-seleciona o mais próximo** (desempate horário) e **re-direciona ao clicar** em outro endereço; **distância a pé pelas ruas** (rank por linha reta, caminho/distância real só do alvo via A*; linha reta só como fallback enquanto o grafo carrega).
+12. **Etiqueta no Roteirizar:** ✅ card **"Etiqueta do Pacote"** (endereço + `Parada/Seq` + código), separado dos botões de ação.
 
 ### Ainda a confirmar
 
-- **"Mais próximo" (sugestão):** por **distância de rua** (grafo OSM, ADR-002), com **fallback em linha reta** quando o grafo ainda não carregou. Confirmar se o fallback é aceitável.
+- (nada pendente)
+
+---
+
+## 11. App shell e navegação (mobile-first)
+
+Decisão em **ADR-003** (React Router). O app passa a ter:
+
+- **Header:** título + engrenagem (Configurações de Rota, §8) + voltar quando aplicável.
+- **Bottom tab bar.** Abas no **MVP**: **Mapa** (`/` — importar, planejar manual/auto, salvar, executar) e **Rotas** (`/rotas` — rotas salvas, executar, importar/exportar). **Relatórios** e **Perfil** ficam como stubs para depois.
+- O `RouteViewer` atual vira a tela do **Mapa**.
+
+### Modos da aba Mapa (onde fica o toggle)
+
+O toggle **não é** uma aba do menu inferior — vive **dentro da aba Mapa**, como controle segmentado no topo do conteúdo (abaixo do header). O que aparece depende do arquivo importado:
+
+| Arquivo carregado | O que a aba Mapa mostra |
+|---|---|
+| **Multi-rota** (tem `Corridor Cage`) | **Só Visualizar** (visualizador atual + seletor de rotas, ícones PNG). **Sem toggle** — não há o que roteirizar. |
+| **Rota única** (`isSingleRoute`) | Toggle **`[Visualizar \| Roteirizar]`** no topo. Visualizar = read-only; Roteirizar = montar paradas (SVG). É o ramo da TASK-RF-010. |
+
+- **Execução** não é um terceiro segmento do toggle: é um **fluxo de tela cheia** (§14) lançado por **ação** ("Executar agora", a partir de uma rota salva ou após salvar) — entra-se de propósito, não por alternância.
+
+---
+
+## 12. Ciclo da rota: criar → salvar → executar
+
+- **Salvar rota:** botão no topo/HUD do Mapa, **desabilitado até `0 faltando`** (regra de completude, §4 passo 8). Salvar materializa um `PlannedRoute` (vai para a aba **Rotas**), com opção "Executar agora".
+- **Auto-roteirizar:** botão que monta tudo sozinho — a partir do início, agrupa o vizinho mais próximo + inclui quem está no **raio configurado**, criando paradas até acabar os endereços. **Reusa as funções do modo manual**; gera um **rascunho editável** (não final). É o "automático + ajuste à mão".
+
+---
+
+## 13. Persistência, lista e import/export
+
+- **Onde fica salvo:** IndexedDB **no aparelho** (local, offline, sem login). É **por dispositivo** — não sincroniza na nuvem (consequência do modelo sem backend).
+- **Importar planilha nova não apaga rotas salvas:** começa um novo planejamento; salvar cria uma nova rota. Nada é sobrescrito sem apagar.
+- **Onde encontrar:** aba **Rotas**.
+- **Dois imports distintos:** (a) **planilha Shopee** → planejamento do zero; (b) **JSON nosso** → rota já configurada, pronta para executar.
+- **Export/import = JSON autocontido** (pontos + paradas + âncoras + config). É como passar a rota pronta para um **ajudante** ou trocar de aparelho.
+
+---
+
+## 14. Execução da rota
+
+Tela focada em **uma entrega por vez** (motorista em movimento; botões grandes):
+
+- **Distância até a próxima entrega** + botão **"Abrir GPS"** (deep link Maps/Waze; a pé dentro da parada, veículo entre paradas).
+- Botão **"Entrega feita"** → confirma e **pula o foco para a próxima** automaticamente.
+- **% concluída** + contagem (ex.: `31/90`).
+- **Previsão de término** (agora + tempo estimado restante).
+- **Âncora ao vivo (GPS):** ao chegar na parada, a posição real reordena os endereços a pé (§6, decisão 4).
+
+### Identificação do pacote no card (vem da planilha)
+
+No mesmo card do endereço, aparecem os identificadores do pacote — cada um com um propósito:
+
+| Mostra | Para quê | Origem |
+|---|---|---|
+| **Etiqueta:** `Parada {Stop} · Seq {Sequence}` | achar o pacote na sacola pela etiqueta física | numeração **da Shopee** (`Stop`, `Sequence`) — não as `Pn/En` da rota |
+| **Código:** `SPX TN` | chamado/problema com o pacote | `SPX TN` (rastreio) |
+| Contexto da rota (ex.: "endereço 2 de 4 da parada") | saber onde está no trajeto | numeração **nossa** (`Pn/En`) |
+
+- **Multi-pacote:** se o endereço tem mais de um pacote, o card **lista cada um** com sua etiqueta + código (são entregas distintas no mesmo ponto).
+- Dados vêm do `rawData` de cada `DeliveryPackage` (`Stop`, `Sequence`, `SPX TN`) — **sem mudança no modelo** (RF-004 intacta).
+
+(Refина a TASK-RF-009.)
 
 ---
 
 ## Última Atualização
 
 - **Data:** 22/06/26
-- **Por:** especificação de fluxo do modo Roteirizar, base para protótipo e TASK-RF-006.
-- **Status:** rascunho de trabalho; resolver §9 antes de prototipar a tela final.
+- **Por:** spec do modo Roteirizar + app shell/navegação (ADR-003), ciclo da rota, persistência/export e execução. Base para TASK-RF-006/008/009/011/012/013.
+- **Status:** rascunho de trabalho; §9 (decisões) fechado; resta confirmar o fallback de "mais próximo" (§10).

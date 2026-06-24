@@ -1,0 +1,15 @@
+# Dívida Técnica
+
+> Riscos/pendências conhecidos, **aceitos e adiados** com um **gatilho** (quando revisitar). Não é backlog de features — é onde registramos decisões de adiar algo que tem custo/risco. Formato: módulo 20 §8.3 do pacote.
+
+| ID | Descrição | Impacto | Gatilho | ADR |
+|---|---|---|---|---|
+| DT-001 | App precisa ser empacotado como **TWA** (Trusted Web Activity) para publicar na Play Store. Empacotamento via **Bubblewrap** ou **PWABuilder** (gera AAB/APK do PWA). Ainda não feito; exige manifest + ícones + critérios de PWA installable (já somos PWA). | Médio — bloqueia o lançamento na loja, mas não afeta o app web. | Ao preparar o **primeiro release na Play Store**. | - (criar ADR de empacotamento/release) |
+| DT-002 | **Assinatura premium na Play Store exige Google Play Billing** (Digital Goods API + Payment Request, no TWA). A validação **segura** da assinatura pede verificação **server-side** (recibo / RTDN) — caso contrário o premium é burlável no cliente. Isso **conflita com a decisão inegociável "sem backend"** do `contexto-projeto-ai.md`. | Alto — segurança da monetização; premium sem validação server-side é facilmente burlado. | Ao iniciar a implementação de **premium/monetização**. | - (exigirá ADR de billing; provavelmente um **backend mínimo** só para validar assinatura) |
+
+---
+
+## Notas
+
+- **DT-002** é a mais relevante para o produto: a promessa de "premium" entra em rota de colisão com "sem backend". Decidir cedo (ADR) evita prometer algo que a arquitetura atual não sustenta com segurança.
+- Origem de ambas: discussão de biblioteca de UI / requisitos de Play Store + premium (23/06/26).

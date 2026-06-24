@@ -10,6 +10,7 @@ interface Props {
 }
 import { UPLOAD_INSTRUCTIONS } from "../constants";
 import { UI_LABELS } from "../constants/uiLabels";
+import { Button } from "./ui/button";
 
 /**
  * FileUploader - File input component with instructions and feedback
@@ -53,37 +54,34 @@ export const FileUploader: React.FC<Props> = ({ onFileUpload, loading, hasRoutes
         onClick={(e) => (e.currentTarget.value = "")}
       />
 
-      {/* Button that triggers file input */}
-      <label
-        htmlFor="file-input"
-        className="px-4 py-2 bg-primary rounded border border-primary text-white hover:bg-primary shadow-md hover:bg-primary/90 hover:border-white hover:shadow-primary transition  disabled:opacity-60"
-      >
-        {loading ? UI_LABELS.FILE_UPLOADER.PROCESSING : UI_LABELS.FILE_UPLOADER.UPLOAD}
-      </label>
+      {/* Button that triggers the hidden file input (label keeps the htmlFor behavior) */}
+      <Button asChild size="lg" className="cursor-pointer">
+        <label htmlFor="file-input">{loading ? UI_LABELS.FILE_UPLOADER.PROCESSING : UI_LABELS.FILE_UPLOADER.UPLOAD}</label>
+      </Button>
 
       {/* Show selected file name or format instructions */}
-      <div className="text-sm text-gray-700 pt-1 pb-4">{fileName ? UI_LABELS.FILE_UPLOADER.FILE_SELECTED(fileName) : UI_LABELS.FILE_UPLOADER.SELECT_FILE}</div>
+      <div className="text-sm text-muted-foreground pt-1 pb-4">{fileName ? UI_LABELS.FILE_UPLOADER.FILE_SELECTED(fileName) : UI_LABELS.FILE_UPLOADER.SELECT_FILE}</div>
 
       {/* Error alert if upload fails - always show if error exists (Arquivo inválido. Use XLSX ou CSV.)(src/utils/excelProcessor.ts) */}
       {error && (
-        <div className="m-2 p-2 rounded border border-danger bg-danger/10 text-danger font-semibold flex items-center justify-center">
+        <div className="m-2 p-2 rounded-md border border-destructive bg-destructive/10 text-destructive font-semibold flex items-center justify-center">
           <span>{error}</span>
         </div>
       )}
 
       {/* Warning if columns are missing from Excel file */}
       {missingCols.length > 0 && (
-        <div className="p-3 rounded border bg-warning/10 border-warning/80 mb-4 text-warning flex justify-center gap-1">
-          <span className="font-semibold text-warning ">{UI_LABELS.FILE_UPLOADER.INCOMPLETE_SHEET}</span> {missingCols.join(", ")}
+        <div className="p-3 rounded-md border border-warning/80 bg-warning/10 mb-4 text-warning-foreground flex justify-center gap-1">
+          <span className="font-semibold">{UI_LABELS.FILE_UPLOADER.INCOMPLETE_SHEET}</span> {missingCols.join(", ")}
         </div>
       )}
 
       {/* Show instructions only before file is uploaded */}
       {!loading && !hasRoutes && (
         <div className="items-center w-screen max-w-6xl">
-          <div className="mt-5 p-4 border rounded-lg bg-gray-50 text-left m-4">
+          <div className="mt-5 p-4 border rounded-lg bg-muted text-left m-4">
             <h5 className="mb-3 font-semibold text-lg text-primary">{UI_LABELS.FILE_UPLOADER.INSTRUCTIONS}</h5>
-            <ul className="text-sm text-gray-800 space-y-1 list-disc list-inside">
+            <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
               {/* Render instruction list from constants */}
               {UPLOAD_INSTRUCTIONS.map((text, index) => (
                 <li key={index}>{text}</li>

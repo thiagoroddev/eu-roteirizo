@@ -218,6 +218,10 @@ A Opção B não é o "plano B". É o **caminho de menor risco para o mesmo dest
 - **Custo de roteamento = zero** (cálculo local, ADR-002) — é o que faz R$5 cobrir os custos com folga em qualquer cenário.
 - **Quando trocar Play → Pix direto:** só quando a diferença (~R$0,70/usuário/mês) virar dinheiro relevante em escala (na casa das dezenas de milhares de pagantes) e pagar o trabalho de manter cobrança própria. No começo, a simplicidade da Play vence.
 
+> ⚠️ **Validação da assinatura premium (tensão real com "sem backend"):** o *entitlement* (saber se é premium) é checável **no cliente** via Digital Goods API. Mas a validação **segura, à prova de adulteração** (verificar recibo / RTDN) exige **servidor** — sem ela, um usuário determinado (app modificado, root) consegue burlar o premium.
+> - **MVP:** entitlement client-side é **bom o suficiente** (modelo de ameaça baixo: furar R$5/mês não compensa o esforço). Continua **sem backend**, aceitando vazamento marginal (alinha com §3.6 "alguns vão furar").
+> - **Futuro:** se a pirataria virar problema material, entra um **backend mínimo só para validar assinatura** — o que **conflita com o "sem backend" inegociável** do `contexto-projeto-ai.md` e por isso **vira uma ADR própria** (ver §10.5). **Não prometer "premium inquebrável".**
+
 > ⚠️ Não inclui impostos sobre a receita (MEI/empresa — assunto de contador). Taxas de pagamento mudam; confirmar as vigentes. Não é conselho financeiro.
 
 ### 10.5 O que vira ADR depois
@@ -225,6 +229,11 @@ A Opção B não é o "plano B". É o **caminho de menor risco para o mesmo dest
 - Empacotamento: TWA (Android) como alvo inicial; Capacitor como caminho de iOS.
 - Cobrança: Play Billing como gateway inicial.
 - Gatilhos de revisão: iOS passar a importar (→ Capacitor); escala justificar cobrança própria (→ Pix Automático); limite nativo real (→ avaliar RN).
+
+**ADRs futuras já mapeadas (não bloqueiam o MVP):**
+
+- **Empacotamento/release TWA** (Bubblewrap ou PWABuilder → AAB/APK): é etapa de *release*, não lib de UI. Exige manifest + ícones + critérios de PWA installable (já somos PWA ✅). Merece ADR própria quando for publicar.
+- **Validação segura de assinatura premium** → provável **backend mínimo** (Play Developer API + RTDN). **Conflita com o "sem backend" inegociável** do `contexto-projeto-ai.md`; quando (e se) a pirataria justificar, abrir ADR que revisa essa regra. Até lá, entitlement client-side (ver §10.4).
 
 ### 10.6 Anúncios (rewarded) como funil para o premium
 

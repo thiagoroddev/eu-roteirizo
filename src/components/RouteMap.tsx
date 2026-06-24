@@ -13,6 +13,7 @@ import { getCorreiosDeliveryStatus } from "../utils/correiosDelivery";
 import { pickIconKey } from "../utils/iconPicker";
 import { formatDeliveryLabel } from "../utils/formatters";
 import { escapeHtml } from "../utils/escapeHtml";
+import { Button } from "./ui/button";
 
 // Map and icon utils
 import { getScaleFactorFromWidth } from "../utils/map";
@@ -208,10 +209,10 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
     <div className="fixed inset-0 bg-white z-[2000]" aria-label={UI_LABELS.ROUTE_MAP.FULLSCREEN_ARIA} role="dialog">
       <div ref={mapContainerRef} data-testid="map-container" className="absolute inset-0 w-full h-full" />
 
-      <button onClick={onClose} className="fixed top-4 right-4 z-[3000] px-3 py-2 rounded bg-primary/70 text-white shadow-lg flex items-center gap-2 border-0 hover:bg-primary" type="button">
+      <Button onClick={onClose} type="button" className="fixed right-4 top-4 z-[3000] shadow-lg">
         <span aria-hidden>×</span>
         {UI_LABELS.ROUTE_MAP.CLOSE}
-      </button>
+      </Button>
     </div>,
     document.body
   );

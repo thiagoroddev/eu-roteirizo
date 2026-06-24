@@ -1,35 +1,73 @@
+/**
+ * Design tokens — shadcn/ui convention (ADR-004).
+ * HSL triplets consumed via hsl(var(--token)) in tailwind.config.js.
+ * Brand: laranja Shopee = --primary. `warning` is a project extension (shadcn has no warning).
+ */
 :root {
-  /* 🎨 CORES PRINCIPAIS (Shopee) */
-  --color-primary: 238 77 45; /* Laranja Shopee */
-  --color-secondary: 26 156 255; /* Azul Vibrante */
-  --color-success: 38 170 153; /* Verde Sucesso */
-  --color-warning: 255 191 0; /* Amarelo Aviso */
-  --color-danger: 238 44 74; /* Vermelho Erro */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 13%;
 
-  /* ⚪ NEUTROS */
-  --color-bg: 255 255 255; /* Branco */
-  --color-surface: 245 245 245; /* Cinza Claro */
-  --color-text: 34 34 34; /* Cinza Escuro */
-  --color-muted: 140 140 140; /* Cinza Médio */
-  --color-border: 229 229 229; /* Cinza Borda */
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 13%;
 
-  /* 📐 RAIOS */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 13%;
 
-  /* INPUTS */
-  --input-padding: 0.5rem 0.75rem;
-  --input-border-radius: var(--radius-md);
-  --input-border-color: var(--color-border);
-  --input-focus-border-color: var(--color-primary);
-  --input-focus-ring-color: rgba(238, 77, 45, 0.3);
+  --primary: 10 85% 55%; /* Laranja Shopee */
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 13%;
+
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
+
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 13%;
+
+  --destructive: 351 85% 55%; /* Vermelho erro */
+  --destructive-foreground: 0 0% 100%;
+
+  --warning: 45 100% 50%; /* Amarelo aviso (extensão do projeto) */
+  --warning-foreground: 0 0% 13%;
+
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --ring: 10 85% 55%;
+
+  --radius: 0.5rem;
 }
 
+.dark,
 [data-theme="dark"] {
-  --color-bg: 18 18 18;
-  --color-surface: 28 28 28;
-  --color-text: 240 240 240;
-  --color-muted: 160 160 160;
-  --color-border: 50 50 50;
+  --background: 0 0% 7%;
+  --foreground: 0 0% 94%;
+
+  --card: 0 0% 11%;
+  --card-foreground: 0 0% 94%;
+
+  --popover: 0 0% 11%;
+  --popover-foreground: 0 0% 94%;
+
+  --primary: 10 85% 55%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 0 0% 11%;
+  --secondary-foreground: 0 0% 94%;
+
+  --muted: 0 0% 11%;
+  --muted-foreground: 0 0% 63%;
+
+  --accent: 0 0% 16%;
+  --accent-foreground: 0 0% 94%;
+
+  --destructive: 351 85% 55%;
+  --destructive-foreground: 0 0% 100%;
+
+  --warning: 45 100% 50%;
+  --warning-foreground: 0 0% 13%;
+
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 10 85% 55%;
 }

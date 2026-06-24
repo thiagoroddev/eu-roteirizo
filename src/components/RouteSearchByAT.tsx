@@ -1,5 +1,7 @@
 import React from "react";
 import { UI_LABELS } from "../constants/uiLabels";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
 
 interface Props {
   searchAT: string;
@@ -11,31 +13,28 @@ interface Props {
 
 export const RouteSearchByAT: React.FC<Props> = ({ searchAT, searchResult, onChange, onSelectResult, clearSearch }) => (
   <div className="text-center m-4">
-    <input
-      className="w-80 inline-block mb-4 px-4 py-2 border border-primary rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-      placeholder={UI_LABELS.ROUTE_SEARCH.PLACEHOLDER}
-      value={searchAT}
-      onChange={(e) => onChange(e.target.value)}
-    />
+    <Input className="mx-auto w-80 max-w-full" placeholder={UI_LABELS.ROUTE_SEARCH.PLACEHOLDER} value={searchAT} onChange={(e) => onChange(e.target.value)} />
 
     {searchResult && (
-      <div className="bg-white flex items-center justify-center">
+      <div className="mt-3 flex items-center justify-center">
         {searchResult === "NONE" ? (
-          <div className="p-2 bg-red-50 text-red-600 rounded-md border border-red-100 animate-pulse">{UI_LABELS.ROUTE_SEARCH.NOT_FOUND}</div>
+          <div className="animate-pulse rounded-md border border-destructive/20 bg-destructive/10 p-2 text-destructive">{UI_LABELS.ROUTE_SEARCH.NOT_FOUND}</div>
         ) : (
-          <button
+          <Button
+            variant="outline"
+            size="lg"
+            className="group gap-2 font-bold"
             onClick={() => {
               onSelectResult(searchResult);
               onChange("");
               clearSearch();
             }}
-            className="group w-50 flex items-center justify-between p-2 bg-white border border-green-200 rounded-lg shadow-sm hover:shadow-md hover:border-green-400 hover:bg-green-50 transition-all duration-200 cursor-pointer"
           >
-            <div className="flex flex-col text-left">
-              <span className="text-lg font-bold text-gray-800 group-hover:text-green-700">{searchResult}</span>
-            </div>
-            <span className="text-green-500 text-2xl transform group-hover:translate-x-1 transition-transform">➔</span>
-          </button>
+            {searchResult}
+            <span aria-hidden className="text-primary transition-transform group-hover:translate-x-1">
+              ➔
+            </span>
+          </Button>
         )}
       </div>
     )}

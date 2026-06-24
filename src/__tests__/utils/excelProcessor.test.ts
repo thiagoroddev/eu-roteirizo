@@ -283,11 +283,7 @@ describe("processExcelFile", () => {
   });
 
   it("sorts single-route rows by Sequence", async () => {
-    const mockData = [
-      createSingleRow({ [COLUMN_NAMES.SEQUENCE]: 3 }),
-      createSingleRow({ [COLUMN_NAMES.SEQUENCE]: 1 }),
-      createSingleRow({ [COLUMN_NAMES.SEQUENCE]: 2 }),
-    ];
+    const mockData = [createSingleRow({ [COLUMN_NAMES.SEQUENCE]: 3 }), createSingleRow({ [COLUMN_NAMES.SEQUENCE]: 1 }), createSingleRow({ [COLUMN_NAMES.SEQUENCE]: 2 })];
     mockRead.mockReturnValue({ SheetNames: ["Sheet1"], Sheets: { Sheet1: {} } });
     mockSheetToJson.mockReturnValue(mockData);
     const result = await processExcelFile(createMockFile());

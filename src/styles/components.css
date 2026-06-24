@@ -1,9 +1,5 @@
-@layer components {
-  .btn-primary {
-    @apply bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition;
-  }
-
-  .card {
-    @apply bg-surface border border-border rounded-lg p-4 shadow-sm;
-  }
-}
+/**
+ * Reserved for project-wide @layer component classes.
+ * Currently empty — prefer composable components in src/components/ui/ (ADR-004),
+ * not global utility classes. The previous `.btn-primary`/`.card` were unused and removed.
+ */

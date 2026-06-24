@@ -2,6 +2,8 @@ import React from "react";
 import type { RowData } from "../types";
 import { useRouteSummary } from "../hooks/useRouteSummary";
 import { UI_LABELS } from "../constants/uiLabels";
+import { Card } from "./ui/card";
+import { Button } from "./ui/button";
 
 interface Props {
   rows: RowData[]; // All deliveries for selected route
@@ -40,10 +42,10 @@ export const RouteSummary: React.FC<Props> = ({ rows, availableCols, selectedRou
   const { totalPacks, lastStop, time, distance, city, at, commerceCount, neighborhoods, correiosDeliveryCount, shiftTime, dateRaw, hub } = useRouteSummary(rows, availableCols);
 
   return (
-    <div className="bg-white rounded-lg shadow-md shadow-primary/40 mb-6 overflow-hidden">
+    <Card className="mb-6 overflow-hidden">
       {/* Route heading with vehicle type */}
       {selectedRoute && (
-        <h2 className="text-xl text-white font-semibold mb-5 text-center bg-primary/90 p-2 ">
+        <h2 className="text-xl text-primary-foreground font-semibold mb-5 text-center bg-primary/90 p-2 ">
           {UI_LABELS.ROUTE_SUMMARY.TITLE(selectedRoute)}
           {UI_LABELS.ROUTE_SUMMARY.VEHICLE_TYPE(vehicleType || UI_LABELS.COMMON.NO_DATA)}
         </h2>
@@ -105,23 +107,21 @@ export const RouteSummary: React.FC<Props> = ({ rows, availableCols, selectedRou
 
       <div className="mt-6 flex justify-center flex-wrap gap-2 pb-2 m-4">
         {mapAvailable ? (
-          <button onClick={onViewMap} className="p-2 bg-primary/90 rounded border border-primary text-white hover:bg-primary shadow-md hover:border-white hover:shadow-primary transition ">
-            {UI_LABELS.ROUTE_SUMMARY.VIEW_MAP}
-          </button>
+          <Button onClick={onViewMap}>{UI_LABELS.ROUTE_SUMMARY.VIEW_MAP}</Button>
         ) : (
-          <button className="p-2 rounded border border-gray-300 text-gray-500 bg-gray-100 cursor-not-allowed" disabled>
+          <Button variant="secondary" disabled>
             {UI_LABELS.ROUTE_SUMMARY.NO_COORDINATES}
-          </button>
+          </Button>
         )}
 
-        <button onClick={onShowSimpleTable} type="button" className="p-2 rounded border border-primary text-primary shadow-md hover:border-white hover:shadow-primary transition  ">
+        <Button variant="outline" onClick={onShowSimpleTable}>
           {UI_LABELS.ROUTE_SUMMARY.SIMPLE_TABLE}
-        </button>
+        </Button>
 
-        <button onClick={onShowTable} className="p-2 rounded border border-primary text-primary shadow-md hover:border-white hover:shadow-primary transition ">
+        <Button variant="outline" onClick={onShowTable}>
           {UI_LABELS.ROUTE_SUMMARY.ORIGINAL_TABLE}
-        </button>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 };
