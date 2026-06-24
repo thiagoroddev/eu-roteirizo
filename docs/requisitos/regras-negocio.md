@@ -9,7 +9,7 @@
 | ID | Regra (invariante) | Onde é imposta | Status | Origem | Tarefas / ADR |
 |---|---|---|:---:|---|---|
 | RN-01 | Uma coordenada só é válida dentro dos limites do Rio; fora deles é descartada (nunca vira marcador) | `MAP_CONFIG.RIO_BOUNDS` + `isWithinRioBounds` | ✅ | `utils/coordinates.ts`, `constants/index.ts` | TASK-BG-004 |
-| RN-02 | `Latitude`/`Longitude` chegam como inteiro escalado (÷ 10.000.000); um valor já decimal não casa o formato e cai fora dos limites | `parseCoordinate` | ✅ | `utils/coordinates.ts` | - |
+| RN-02 | `parseCoordinate` remove pontos e divide por 10.000.000 — resolve inteiro escalado **e** decimal de **exatamente 7 casas** (round-trip por coincidência). Coordenada com ≠ 7 casas **quebra em silêncio** (cai fora dos limites e some) — a robustez é a TASK-BG-005 | `parseCoordinate` | 🟡 | `utils/coordinates.ts` | TASK-BG-005 |
 | RN-03 | As únicas colunas obrigatórias são `Latitude` e `Longitude`; sem elas o arquivo é rejeitado com erro | `MANDATORY_COLUMNS` + `processExcelFile` | ✅ | `utils/excelProcessor.ts`, `constants/index.ts` | TASK-RF-002 |
 | RN-04 | `Corridor Cage` define o modo de leitura: presente → multi-rota (agrupa); ausente → rota única (rótulo "Minha rota") | `isSingleRoute = !colNames.includes(CORRIDOR_CAGE)` | ✅ | `utils/excelProcessor.ts` | TASK-RF-002 |
 | RN-05 | No multi-rota, o identificador de rota deve casar `^[A-Z]+-\d+(?:NS)?$`; linha com valor inválido/vazio é ignorada (e contada) | `validPattern` no agrupamento | ✅ | `utils/excelProcessor.ts` | - |
@@ -31,7 +31,7 @@
 |---|---|---|:---:|---|---|
 | RN-10 | A unidade de planejamento é a **Parada** → contém **Endereços** → contêm **Pacotes** (hierarquia de 3 níveis) | modelo `RouteStop→DeliveryPoint→DeliveryPackage` | 🟡 | fluxo §2; `types/routing.ts` | TASK-RF-004 (feito) |
 | RN-11 | Endereços na mesma coordenada (~1 m) são **um ponto** com vários pacotes (= **uma** atribuição) | `utils/routing/points.ts` | 🟡 | fluxo §2/§3 | TASK-RF-004 (feito) |
-| RN-12 | Toda parada tem uma **âncora** (onde o veículo para); base da ida-e-volta a pé e do salto de veículo | a construir | 🔭 | fluxo §6/decisão 3 | TASK-RF-006 |
+| RN-12 | Toda parada tem uma **âncora** (onde o veículo para); ela é **sempre o 1º ponto** da ordem a pé, e trocá-la recalcula a ordem. Base da ida-e-volta a pé e do salto de veículo | a construir | 🔭 | fluxo §6 | TASK-RF-006 |
 | RN-13 | Endereço **nunca some** (é entrega real): desfazer parada → vira livre; remover a âncora → promove o próximo | a construir | 🔭 | fluxo §9 | TASK-RF-006 |
 | RN-14 | **Não se salva** a rota enquanto houver endereço/pacote não atribuído (completude) | a construir | 🔭 | fluxo §4/§12 | TASK-RF-006.7 |
 | RN-15 | `Pn/En` é a ordem **nova** da rota; a numeração Shopee (`Stop`/`Sequence`) é preservada como identidade da **etiqueta** | a construir | 🔭 | fluxo §10.1/§14 | TASK-RF-006, TASK-RF-009 |

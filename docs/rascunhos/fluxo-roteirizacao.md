@@ -20,7 +20,7 @@ Roteirizador **manual** para entregador Shopee: importa a planilha (70 a 150 end
 | **Endereço multi-pacote** | Mesmo endereço/número com mais de um pacote. Conta como **um ponto** no mapa, com vários pacotes. |
 | **Pacote** | Uma encomenda individual (uma linha/etiqueta da planilha, com `SPX TN`). Vários pacotes podem estar no mesmo endereço (Vol 1, Vol 2…). |
 | **Parada** | Agrupamento de endereços próximos, atendidos **a pé** a partir de onde o veículo para. Rotulada `P1`, `P2`… |
-| **Âncora (da parada)** | O ponto **onde o veículo fica parado** — partida e retorno da caminhada (ida e volta) e o ponto que o veículo visita ao saltar de uma parada à outra. Padrão = o endereço que originou a parada; **trocável a qualquer momento**, e **não precisa ser um endereço** (pode ser a posição do GPS ou um toque no mapa). Trocar a âncora **recalcula automaticamente a ordem de visita a pé**. |
+| **Âncora (da parada)** | O **endereço** da parada **onde o veículo fica parado** (o mais próximo de onde se para; assume-se mesma rua) — partida e retorno da caminhada (ida e volta) e o ponto que o veículo visita ao saltar de parada a parada. É **sempre o 1º** da ordem a pé. **Trocável** a qualquer momento para outro endereço da parada; trocar **recalcula automaticamente** a ordem a pé a partir dela. |
 | **Ponto inicial** | De onde a rota começa (referência da primeira sugestão). |
 | **a pé × veículo** | Deslocamento **dentro** de uma parada = a pé (ida e volta a partir da âncora); deslocamento **entre** paradas = veículo (âncora → âncora). |
 
@@ -124,10 +124,10 @@ A **âncora** organiza o cálculo em duas camadas:
 - A distância a pé exibida é a de **caminhada pelas ruas** (grafo, pedestre — ignora mão única), **não linha reta**.
 - **Performance:** rankeia o "mais próximo" por linha reta (barato) e calcula o **caminho de rua + distância real só para o alvo selecionado** (um A* por alvo). Linha reta só como **fallback** enquanto o grafo não carregou.
 
-### Âncora no planejamento × na execução
+### Âncora — sempre um endereço da parada
 
-- **Planejamento:** âncora = endereço escolhido (palpite de onde vai parar).
-- **Execução (vida real):** a âncora pode ser a **posição real do GPS** (grátis) onde o veículo de fato parou. Se não achou vaga e ficou mais perto de outro endereço, esse vira o **primeiro** — a ordem a pé se reajusta sozinha. (Recurso do modo execução — ver TASK-RF-009.)
+- A âncora é **um endereço da parada** (o 1º; onde o veículo para, assumido na mesma rua). **Não há** âncora "ao vivo" por GPS (decisão final 24/06/26).
+- O usuário **troca a âncora** para outro endereço da parada quando quiser; a ordem a pé é **reordenada automaticamente a partir dela**.
 
 ### Exibição — sempre em dois níveis
 
@@ -180,8 +180,8 @@ Os botões dependem do que está selecionado:
 
 1. **Numeração — Shopee × nossa:** ✅ no mapa, `Pn`/`En` (com cor) são a **numeração nova da rota manual**. A numeração da Shopee (`Stop` + `Sequence`) é ignorada **apenas para a ordem da rota** — mas é **preservada como identidade da etiqueta** do pacote e **exibida na execução** (ver §14): é por ela que o entregador acha o pacote na sacola. O **código** (`SPX TN`) também é preservado para chamados/problemas.
 2. **Ordem dos endereços a pé na parada:** ✅ o app **ordena automaticamente** (varredura horária a partir da âncora) **e** o usuário pode **reordenar à mão** a qualquer momento (ver §6).
-3. **Âncora:** ✅ cada parada tem uma âncora (onde o veículo para); base da ida e volta a pé e do salto de veículo entre paradas. Padrão = endereço que originou a parada; **trocável**, **não precisa ser endereço** (pode ser GPS ou toque no mapa), e ao trocar **recalcula a ordem a pé**.
-4. **Âncora ao vivo na execução:** ✅ na execução, a âncora pode ser a **posição real do GPS** (grátis) onde o veículo parou; se ficou mais perto de outro endereço, esse vira o primeiro. Pertence ao modo execução (TASK-RF-009).
+3. **Âncora:** ✅ cada parada tem uma âncora = **um endereço da parada** (o 1º; onde o veículo para). Base da ida e volta a pé e do salto de veículo entre paradas. **Trocável** para outro endereço da parada; ao trocar, **recalcula a ordem a pé a partir dela**. (Sem GPS/toque — decisão final 24/06/26.)
+4. **Âncora ao vivo na execução:** ❌ **Revertido (decisão final 24/06/26):** não há âncora por GPS. A âncora é sempre um endereço da parada, alterada apenas pelo usuário (que reordena a parada a partir dela).
 5. **Ponto inicial:** ✅ **GPS** (`navigator.geolocation`, grátis) como principal; **toque no mapa** como alternativa; opcional **partir de um endereço da planilha**. **Não** usar "digitar endereço" (exigiria geocoding pago/limitado).
 6. **Rótulo dos marcadores:** ✅ **só número, sem letra**; geometria distingue parada (quadrado) de endereço (círculo). Palavra "Parada/Stop" só em `UI_LABELS` (i18n — Shopee em outros países).
 7. **Cor:** ✅ parada e seus endereços = **mesma cor**; seleção = **realce** (não outra cor); só a parada selecionada expande.
@@ -211,8 +211,8 @@ O toggle **não é** uma aba do menu inferior — vive **dentro da aba Mapa**, c
 
 | Arquivo carregado | O que a aba Mapa mostra |
 |---|---|
-| **Multi-rota** (tem `Corridor Cage`) | **Só Visualizar** (visualizador atual + seletor de rotas, ícones PNG). **Sem toggle** — não há o que roteirizar. |
-| **Rota única** (`isSingleRoute`) | Toggle **`[Visualizar \| Roteirizar]`** no topo. Visualizar = read-only; Roteirizar = montar paradas (SVG). É o ramo da TASK-RF-010. |
+| **Multi-rota** (tem `Corridor Cage`) | Seletor de rotas; **ao escolher uma rota**, toggle **`[Visualizar \| Roteirizar]`** — pode-se montar um **Roteiro** dessa rota (decisão final 24/06/26; antes era "só visualizar"). |
+| **Rota única** (`isSingleRoute`) | Toggle **`[Visualizar \| Roteirizar]`** no topo. Visualizar = read-only; Roteirizar = montar paradas. Ramo da TASK-RF-010. |
 
 - **Execução** não é um terceiro segmento do toggle: é um **fluxo de tela cheia** (§14) lançado por **ação** ("Executar agora", a partir de uma rota salva ou após salvar) — entra-se de propósito, não por alternância.
 
@@ -244,7 +244,7 @@ Tela focada em **uma entrega por vez** (motorista em movimento; botões grandes)
 - **Sem botão de contato:** o app **não** tem contato/telefone do destinatário — essa ação não existe. (Só "Abrir GPS" + "Entrega feita".)
 - **% concluída** + contagem (ex.: `31/90`).
 - **Previsão de término** (agora + tempo estimado restante).
-- **Âncora ao vivo (GPS):** ao chegar na parada, a posição real reordena os endereços a pé (§6, decisão 4).
+- **Ordem da parada na execução:** segue a ordem definida no planejamento (a partir da âncora). **Sem** reordenação por GPS (decisão final 24/06/26).
 
 ### Identificação do pacote no card (vem da planilha)
 
@@ -273,8 +273,8 @@ O roteirizador **nasce dentro do app que já existe**, reaproveitando o máximo.
 
 - O **card de Sumário permanece** e **nenhuma info resumida do romaneio sai** (AT, Hub, pacotes, paradas, bairros, etc.). Na rota única, campos ausentes na planilha aparecem como "Sem dados"; pacotes/paradas/cidade seguem calculados.
 - Os **botões do Sumário se adaptam ao modo**:
-  - **Multi-rota:** Ver no Mapa · Tabela Simplificada · Tabela Original (como hoje).
-  - **Rota única:** + **Roteirizar** + **Executar** (este só se já houver roteirização salva).
+  - **Multi-rota:** Ver no Mapa · Tabela Simplificada · Tabela Original · **Roteirizar** (a rota selecionada) · **Executar** (se houver Roteiro salvo). *(Roteirizar no multi-rota: decisão final 24/06/26.)*
+  - **Rota única:** + **Roteirizar** + **Executar** (se já houver Roteiro salvo).
 - Dentro do mapa, **toggle mínimo** Visualizar↔Roteirizar (troca sem voltar ao Sumário). **Executar** é tela cheia (§14), entrada por botão. Decisão registrada.
 
 ### 15.2 Tela inicial
@@ -297,6 +297,7 @@ Princípio: **mapa dominante, overlay enxuto.** Os protótipos anteriores exager
 
 ## Última Atualização
 
-- **Data:** 22/06/26
-- **Por:** spec do modo Roteirizar + app shell/navegação (ADR-003), ciclo da rota, persistência/export e execução. Base para TASK-RF-006/008/009/011/012/013.
-- **Status:** rascunho de trabalho; §9 (decisões) fechado; resta confirmar o fallback de "mais próximo" (§10).
+- **Data:** 24/06/26
+- **Por:** spec do modo Roteirizar + app shell/navegação (ADR-003), ciclo da rota, persistência/export, execução e integração com legado (§15). Base para TASK-RF-006/008/009/011/012/013/014.
+- **Atualização 24/06/26 (decisões finais):** §11 — **multi-rota também roteirizável** (reverte "só visualizar"); §2/§6/§10/§14 — âncora é **um endereço da parada**, trocável pelo usuário, sem GPS ao vivo.
+- **Status:** rascunho de trabalho; §9 (decisões) fechado.

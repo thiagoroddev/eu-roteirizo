@@ -36,7 +36,7 @@
 | RNF-15 | A* com performance aceitável no navegador | Desempenho | <~150 ms por rota em bairro | 🔭 | fluxo §6 | TASK-RF-005.4 |
 | RNF-16 | Empacotamento **TWA** (Android-first) para a Play Store | Distribuição | AAB/APK instalável (já somos PWA ✅) | 🔭 | analise-comercial §10.2 | DT-001 |
 | RNF-17 | Cobrança via **Play Billing**; *entitlement* client-side no MVP | Monetização | sem backend no MVP; validação segura = ADR futura | 🔭 | analise-comercial §10.4/10.5 | DT-002 |
-| RNF-18 | Vocabulário único (Parada/Endereço/Pacote/Âncora) em `UI_LABELS` (i18n) | i18n | nenhum termo de domínio hardcoded | 🔭 | fluxo §2 | TASK-RF-006 |
+| RNF-18 | Vocabulário único em `UI_LABELS` (i18n): Parada · Endereço · Pacote · Âncora · **Romaneio (Único/Multi)** · **Roteiro** | i18n | nenhum termo de domínio hardcoded | 🔭 | fluxo §2/§15 | TASK-RF-006 |
 | RNF-19 | Estado da construção via `useReducer` dedicado (não componentão) | Manutenibilidade | reducer puro testável | 🔭 | draft §6 | TASK-RF-006.1 |
 | RNF-20 | LGPD/consentimento: endereços de terceiros no romaneio; consentimento de anúncios (Google UMP) | Privacidade | tela de consentimento antes do anúncio | 🔭 | analise-comercial §9/§10.6 | DT-002 |
 | RNF-21 | UI mínima sobre o mapa (overlay enxuto, mapa dominante) | UX | painéis compactos/colapsáveis | 🔭 | fluxo §15.4 | TASK-RF-006, TASK-RF-014 |

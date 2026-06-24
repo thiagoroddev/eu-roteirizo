@@ -27,6 +27,7 @@
 | RF-17 | Informar se os Correios entregam no CEP (ESEDC) — **descartado** | SHOULD | 🚫 | ADR-005 (remove `correiosDelivery.ts` + JSON) | TASK-REF-007 |
 | RF-18 | O sistema infere o tipo de local (comercial/residencial/indistinto) do endereço | SHOULD | 🟡 | `utils/inferLocationType.ts`, `constants/keywords.ts` | TASK-RF-003 |
 | RF-19 | O app é instalável (PWA) e o shell funciona offline | SHOULD | ✅ | `vite.config.ts` (vite-plugin-pwa), `public/manifest.json` | - |
+| RF-45 | Resolver o bairro pelo CEP quando houver (fallback: coluna Neighborhood) — cobertura **RJ/Ilha do Governador** | SHOULD | 🟡 | `summarizeNeighborhoods` (`utils/formatters.ts`); `data/CEPs-Hub_RJ_Ilha-do-Governador.json` | DT-003 |
 
 ## Critérios de Aceite (apenas os não triviais)
 
@@ -48,12 +49,12 @@
 
 | ID | Requisito | Prioridade | Status | Origem | Tarefas / ADR |
 |---|---|:---:|:---:|---|---|
-| RF-20 | Alternar Visualizar/Roteirizar quando o arquivo é rota única (toggle na aba Mapa) | MUST | 🔭 | fluxo §11; tela 1 | TASK-RF-010 |
+| RF-20 | Alternar Visualizar/Roteirizar — na **rota única** e numa **rota selecionada de um Romaneio (Multi)** | MUST | 🔭 | fluxo §11; tela 1 | TASK-RF-010 |
 | RF-21 | Definir o ponto inicial da rota (GPS, toque no mapa ou endereço da planilha) | MUST | 🔭 | fluxo §4/decisão 5; tela 1 | TASK-RF-006.3 |
 | RF-22 | Sugerir o próximo endereço/parada mais próximo (linha tracejada), re-selecionável ao tocar | MUST | 🔭 | fluxo §6; telas 1/3 | TASK-RF-006.3 |
 | RF-23 | Criar parada a partir de um endereço, incluindo automaticamente os que estão dentro do raio | MUST | 🔭 | fluxo §4/§7; tela 3 | TASK-RF-006.4 |
 | RF-24 | Ajustar a parada manualmente (adicionar/remover endereços) | MUST | 🔭 | fluxo §5/§9; telas 5/6 | TASK-RF-006.4 |
-| RF-25 | Trocar a âncora da parada (endereço/GPS/toque), recalculando a ordem a pé | SHOULD | 🔭 | fluxo §6/decisão 3; tela 6 | TASK-RF-006 |
+| RF-25 | Trocar a âncora da parada (botão "Trocar âncora") — a âncora é **sempre o 1º ponto** e a troca recalcula a ordem a pé | SHOULD | 🔭 | fluxo §6; tela 6 | TASK-RF-006 |
 | RF-26 | Ordenar os endereços a pé automaticamente (varredura horária) com reordenação manual | SHOULD | 🔭 | fluxo §6; tela 5 | TASK-RF-006 |
 | RF-27 | Expandir/colapsar parada (drill-down parada → endereços → pacotes) | MUST | 🔭 | fluxo §5; tela 5 | TASK-RF-006.5 |
 | RF-28 | Exibir card "Etiqueta do Pacote" (endereço + Parada/Seq + SPX TN); multi-pacote lista cada um | SHOULD | 🔭 | fluxo §9/§14; telas 3/4 | TASK-RF-006 |
@@ -63,8 +64,8 @@
 | RF-32 | HUD com contadores sempre visíveis (faltando endereços/pacotes, paradas, distância, tempo) | SHOULD | 🔭 | fluxo §7; telas 1/7 | TASK-RF-006.2 |
 | RF-33 | Habilitar "Salvar rota" só quando 0 endereços/pacotes faltando (completude) | MUST | 🔭 | fluxo §4/§12; tela 7 | TASK-RF-006.7 |
 | RF-34 | Auto-roteirizar: montar um rascunho editável (vizinho-mais-próximo + raio) | SHOULD | 🔭 | fluxo §12; telas 1/7 | TASK-RF-012 |
-| RF-35 | Salvar, listar e reabrir rotas planejadas localmente (IndexedDB) | MUST | 🔭 | fluxo §13; tela 8 | TASK-RF-008 |
-| RF-36 | Exportar/importar uma rota como JSON autocontido (passar p/ ajudante, trocar de aparelho) | SHOULD | 🔭 | fluxo §13; tela 8 | TASK-RF-013 |
+| RF-35 | Salvar, listar e reabrir **Roteiros** (rotas planejadas) localmente (IndexedDB) | MUST | 🔭 | fluxo §13; tela 8 | TASK-RF-008 |
+| RF-36 | Exportar/importar uma rota como JSON autocontido (passar p/ ajudante, trocar de aparelho) | MUST | 🔭 | fluxo §13; tela 8 | TASK-RF-013 |
 | RF-37 | Executar a rota (uma entrega por vez): Abrir GPS (deep link), Entrega feita, progresso e previsão | MUST | 🔭 | fluxo §14; tela 9 | TASK-RF-009 |
 | RF-38 | App shell mobile-first: header + bottom tabs (Mapa/Rotas) + acesso a Configurações | MUST | 🔭 | ADR-003; fluxo §11; telas 1/8 | TASK-RF-011 |
 | RF-39 | Configurações de Rota (raio, velocidade a pé, tempo/entrega, velocidade veículo) persistidas | SHOULD | 🔭 | fluxo §8; tela 10 | TASK-RF-007 |
@@ -72,6 +73,7 @@
 | RF-41 | Freemium: anúncio rewarded opt-in a cada importação; premium remove o anúncio | COULD | 🔭 | analise-comercial §10.6 | DT-002 |
 | RF-42 | Assinatura premium via Play Billing (entitlement client-side no MVP) | COULD | 🔭 | analise-comercial §10.4/10.5 | DT-002 |
 | RF-43 | Sumário reaproveitado como **lançador** com botões adaptativos (multi-rota: Ver no Mapa/Tabelas; rota única: +Roteirizar/+Executar) | MUST | 🔭 | fluxo §15.1; ADR-003 | TASK-RF-014 |
-| RF-44 | Tela inicial: instruções em **spoiler** atualizadas (+ bloco rota única "exporte no app oficial") + áreas de romaneios/rotas salvos | SHOULD | 🔭 | fluxo §15.2 | TASK-RF-014 |
+| RF-44 | Tela inicial: instruções em **spoiler** atualizadas (+ bloco rota única "exporte no app oficial") + áreas de **Romaneios (Único/Multi)** e **Roteiros** salvos | SHOULD | 🔭 | fluxo §15.2 | TASK-RF-014 |
+| RF-46 | Salvar os **Romaneios** importados (Único e Multi) para reabrir sem reenviar | SHOULD | 🔭 | fluxo §13/§15.2; tela 1 | TASK-RF-008, TASK-RF-014 |
 
-> **Não-objetivos (registrados para não reaparecerem):** TSP / otimização automática da ordem inteira (só vizinho-mais-próximo — fluxo §6); GPS em tempo real na execução (decisão consciente — draft §8); botão de contato/telefone do destinatário (não existe — fluxo §14).
+> **Não-objetivos (registrados para não reaparecerem):** TSP / otimização automática da ordem inteira (só vizinho-mais-próximo — fluxo §6); GPS em tempo real na execução (decisão consciente — draft §8); **re-ancoragem automática por GPS na execução** (a âncora muda só pelo botão "Trocar âncora", e é sempre o 1º ponto — decisão 24/06); botão de contato/telefone do destinatário (não existe — fluxo §14).

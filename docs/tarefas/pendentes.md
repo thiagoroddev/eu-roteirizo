@@ -36,7 +36,23 @@
 
 **Objetivo:** mapear/aliasar os cabeçalhos do arquivo real de rota única para os canônicos (Bairro→Neighborhood, Zipcode/Postal code→Zipcode; expor AT ID/SPX TN), destravando os recursos dependentes de coluna.
 
-**Critérios de aceite:** com um arquivo real de rota única, RF-09/11/12/15/17/18 funcionam como no multi-rota; o alias é coberto por testes; o caminho multi-rota fica intocado.
+**Critérios de aceite:** com um arquivo real de rota única, RF-09/11/12/15/18 funcionam como no multi-rota; o alias é coberto por testes; o caminho multi-rota fica intocado.
+
+## TASK-BG-005 - Robustecer `parseCoordinate` (decimal real × inteiro escalado)
+
+- **Status:** Pendente
+- **Modo:** Standard
+- **Valor:** Importante
+- **Urgência:** IMEDIATA
+- **Esforço-H/IA:** P/M
+- **Data-hora origem:** 24/06/26 14:50
+- **Dependências:** -
+- **REQ/ADR/DT:** RN-02
+- **Observações:** **Risco latente.** `parseCoordinate` remove pontos e divide por 1e7; o arquivo real de rota única passa **só por coincidência** (coordenadas com exatamente 7 casas decimais). Uma coordenada com ≠ 7 casas **quebra em silêncio** (vira ponto fora dos limites e some). Crítico para o lançamento nacional (formatos de planilha variados).
+
+**Objetivo:** distinguir decimal real de inteiro escalado em `parseCoordinate`, sem quebrar o formato atual; teste dedicado cobrindo ambos os casos e o de ≠ 7 casas.
+
+**Critérios de aceite:** decimal real (`-22.95`), inteiro escalado (`-229500637`) e decimais de 5/6/8 casas resolvem para a coordenada correta (ou são rejeitados **explicitamente**, não em silêncio); testes por caso; multi-rota e rota única intocados.
 
 ## TASK-RF-005 - Motor de roteamento local (port do protótipo → módulo TS) [XG, dividir]
 
@@ -373,6 +389,7 @@
 | TASK-CHORE-002 | Rodar a suíte completa (`npm run test`) em ambiente estável (Windows/CI) e registrar o verde | Light | Importante | Normal | P/P | - | TASK-RF-002 | [ ] | 22/06/26 22:28 |
 | TASK-DOC-003 | Sincronizar `contexto-projeto-ai.md`: deixa de ser "SPA de página única sem router" (ADR-003) | Standard | Importante | Normal | P/P | TASK-RF-011 | ADR-003 | [ ] | 22/06/26 23:50 |
 | TASK-REF-007 | Remover inferência de área de risco / ESEDC (Correios): código, dados, UI, labels + sync contexto | Standard | Importante | Normal | M/M | - | ADR-005 | [ ] | 22/06/26 23:55 |
+| TASK-TEST-002 | Testar o zoom do mapa e definir o limite mínimo ideal (detalhe de rua p/ roteirizar a pé); alinhar `MAP_CONFIG.ZOOM.MIN` com o bloqueio do tile worker (hoje z<14) | Standard | Importante | Normal | P/M | - | RNF-12, RNF-15 | [ ] | 24/06/26 14:50 |
 
 
 
