@@ -78,12 +78,14 @@ Não revisar sem ADR explícita:
 - ❌ **Não usa biblioteca de formulários** (react-hook-form/Zod). A única entrada é upload de arquivo.
 - ❌ **i18n não está ativa** — só português hoje, mas a camada `UI_LABELS` permite adicionar idiomas sem tocar componentes (ADR-001).
 - ❌ **Os experimentos `danfojs`** (`__utilidades-back-office__/DanfoTest*.tsx`) **não estão ligados** ao app.
-- ✅ **É PWA** (instalável, service worker) — ao contrário de muitos visualizadores simples.
+- ⚠️ **Modo rota única é parcial:** hoje só o mapa (ícones cinza) e a tabela completa funcionam; resumo, ícones por tipo, tooltip, tabela simplificada, Correios e inferência ficam sem dados (cabeçalhos não-canônicos). Correção priorizada em **TASK-RF-003**. Detalhe em `docs/requisitos/funcionais.md` (RF-09/11/12/15/18 🟡). RF-17/Correios não entra nessa correção — será **removido** (ADR-005, TASK-REF-007).
+- ✅ **É PWA** (instalável, service worker) — ao contrário de muitos visualizadores simples. Os **tiles do mapa** vêm de um Cloudflare Worker (proxy + cache + bloqueio de zoom < 14), versionado em [`infra/cloudflare-tile-worker/`](../infra/cloudflare-tile-worker/).
 
 ## Documentação de Referência
 
 Existentes neste repo:
 
+- **Requisitos (RF/RN/RNF):** [`docs/requisitos/`](./requisitos/) — estado atual + planejados do roteirizador (TASK-DOC-004)
 - **README (humanos):** [`docs/README.md`](./README.md)
 - **Código comentado / fluxo real:** [`docs/CODIGO_COMENTADO.md`](./CODIGO_COMENTADO.md)
 - **Boas práticas do projeto:** [`docs/BOAS_PRATICAS.md`](./BOAS_PRATICAS.md)
@@ -94,7 +96,7 @@ Existentes neste repo:
 - **Rascunhos (visão futura):** [`docs/rascunhos/`](./rascunhos/)
 - **Dívida técnica:** [`docs/dominios/divida-tecnica.md`](./dominios/divida-tecnica.md) (DT-001 TWA, DT-002 billing × sem-backend)
 
-> Ainda **não existem** `docs/requisitos/` nem `docs/design/` — criar quando houver necessidade real.
+> ✅ **`docs/requisitos/` criado** (TASK-DOC-004): RF/RN/RNF do **estado atual** + **planejados** do roteirizador, no formato do template 38 do pacote. `docs/design/` ainda não existe — criar quando necessário.
 
 ## Hierarquia de Regras
 
@@ -116,6 +118,6 @@ Nota: o pacote do agente vive em `.github/agents/geral-robusto/` (arquivos com e
 
 ## Última Atualização
 
-- **Data:** 22/06/26
-- **Por:** TASK-DOC-002, refletindo a leitura de rota única (TASK-RF-002 — colunas obrigatórias só `Latitude`/`Longitude`) e a direção do **roteirizador a pé** (visão em `docs/rascunhos/draft-roteirizador-a-pe.md`; decisão de roteamento local em **[ADR-002](./arquitetura/ADR/ADR-002.md)**). Anterior: TASK-DOC-001 (origem REV-001-A02), consolidando a REV-001 e a ADR-001.
-- **Próxima revisão sugerida:** ao mudar a stack (versão major / lib nova), ao iniciar a migração do roteamento (Nível B) para o app, ou em ~3 meses.
+- **Data:** 24/06/26
+- **Por:** TASK-DOC-004 — criação de `docs/requisitos/` (RF/RN/RNF do estado atual + planejados do roteirizador) + template de requisitos no pacote (módulo 38); preservação do tile worker em `infra/`; priorização da TASK-RF-003. Anterior: TASK-DOC-002 (leitura de rota única) e TASK-DOC-001 (origem REV-001-A02, consolidando REV-001 e ADR-001).
+- **Próxima revisão sugerida:** ao concluir a TASK-RF-003 (rota única full) ou ao iniciar a migração do roteamento (TASK-RF-005), ou em ~3 meses.

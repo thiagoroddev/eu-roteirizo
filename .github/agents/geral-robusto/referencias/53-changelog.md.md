@@ -40,6 +40,25 @@ Cada versão organiza mudanças em até 6 categorias (omitir as não usadas):
 
 ---
 
+> **Nota de versão (reconciliação):** a versão canônica do pacote é a registrada no núcleo (§11) e no `00-INDICE` — atualmente a **linha 3.x**. As entradas `1.0.x` abaixo são o histórico inicial *deste arquivo* e correspondem à fundação (≈ 3.0); a numeração seguiu adiante no núcleo (3.1 → 3.4). Daqui em diante, este changelog acompanha a linha **3.x**.
+
+## [3.4] - 2026-06-24
+
+Novo template de requisitos e correção da referência pendurada no módulo 26.
+
+### Adicionado
+
+- `templates/38-requisitos.md` — formato único dos 3 arquivos de `docs/requisitos/` (RF funcionais, RN regras-negócio, RNF não-funcionais): IDs `RF/RN/RNF-NN`, prioridade MoSCoW, status (✅/🟡/🔭/🚫), origem e **rastreabilidade requisito↔tarefa↔ADR**. Distingue requisito (`RF-NN`) de tarefa (`TASK-RF-xxx`).
+
+### Mudado
+
+- `processos/26-inicializacao-projeto.md` (§6.3): a estratégia de preenchimento dos requisitos agora referencia o `templates/38-requisitos.md` (antes a referência "ver templates" não tinha alvo; o formato vivia só como exemplo inline).
+- `00-INDICE.md` e `01-nucleo.md` (§9 tabela de carregamento; §11 changelog): catalogam o template 38.
+
+**Origem:** solicitação do humano — dar ao agente um ativo durável sobre requisitos, sem duplicar o método de extração já ensinado no módulo 26.
+
+---
+
 ## [1.0.1] - 2026-06-22
 
 Reforço de regra: o planejamento apresentado ao humano no chat deve ser sempre registrado, integralmente, na tarefa.

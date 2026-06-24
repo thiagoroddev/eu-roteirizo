@@ -10,7 +10,7 @@
 
 > Tarefas urgentes que carregam contexto extra. Bloco em lista, no topo.
 >
-> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). Ordem sugerida no VS Code: **RF-004 → RF-005 (.1→.5) → RF-006 (.1→.7) → RF-007 → RF-008 → RF-009 (.1→.4) → RF-010**. Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
+> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). Ordem sugerida no VS Code: **RF-004 → RF-003 (destrava a rota única) → RF-005 (.1→.5) → RF-006 (.1→.7) → RF-007 → RF-008 → RF-009 (.1→.4) → RF-010**. Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
 >
 > ⚠️ **Decisões transversais (valem para o épico todo):**
 > - **Estado:** `useReducer` por feature (conforme draft §6). Zustand só se a complexidade exigir — e **não instalar sem aprovação** (anti-padrão do núcleo §5).
@@ -21,6 +21,22 @@
 ---
 
 > ✅ **TASK-RF-004 concluída** — ver `concluidas/2026-06-22--23h35--TASK-RF-004.md`.
+
+## TASK-RF-003 - Alias de cabeçalhos da rota única (destrava recursos no modo rota única) [PRIORIZADA]
+
+- **Status:** Pendente
+- **Modo:** Standard
+- **Valor:** Crítico
+- **Urgência:** IMEDIATA
+- **Esforço-H/IA:** M/M
+- **Data-hora origem:** 22/06/26 22:28
+- **Dependências:** TASK-RF-002 (concluída)
+- **REQ/ADR/DT:** RF-09/11/12/15/17/18 (hoje 🟡 por causa disto); `draft-roteirizador-a-pe.md` §3
+- **Observações:** **Prioridade subida em 24/06/26** (pedido do humano). Hoje a rota única só mostra o mapa (ícones cinza) + a tabela completa; resumo, ícones por tipo, tooltip, tabela simplificada, Correios e inferência de local **ficam sem dados** porque o arquivo real de rota única usa cabeçalhos diferentes dos canônicos (`Bairro`, `Zipcode/Postal code`, etc.). Fazer **antes** do roteirizador, para a rota única funcionar **full, igual ao multi-rota** — é a fundação do épico.
+
+**Objetivo:** mapear/aliasar os cabeçalhos do arquivo real de rota única para os canônicos (Bairro→Neighborhood, Zipcode/Postal code→Zipcode; expor AT ID/SPX TN), destravando os recursos dependentes de coluna.
+
+**Critérios de aceite:** com um arquivo real de rota única, RF-09/11/12/15/17/18 funcionam como no multi-rota; o alias é coberto por testes; o caminho multi-rota fica intocado.
 
 ## TASK-RF-005 - Motor de roteamento local (port do protótipo → módulo TS) [XG, dividir]
 
@@ -309,6 +325,30 @@
 
 ---
 
+## TASK-RF-014 - Integração do roteirizador no app legado (Sumário lançador + tela inicial)
+
+- **Status:** Pendente
+- **Modo:** Standard
+- **Valor:** Crítico
+- **Urgência:** IMEDIATA
+- **Esforço-H/IA:** M/M
+- **Data-hora origem:** 22/06/26 23:55
+- **Dependências:** TASK-RF-010, TASK-RF-011
+- **REQ/ADR/DT:** ADR-003; `fluxo-roteirizacao.md` §15
+- **Observações:** Não recomeçar do zero — o roteirizador nasce dentro do fluxo legado (inicial → Sumário → Ver no Mapa). O card de Sumário é reaproveitado e nenhuma info resumida sai.
+
+**Objetivo:** encaixar Roteirizar/Executar no app existente, reaproveitando Sumário e tela inicial.
+
+**Subtarefas:**
+- **Sumário como lançador:** botões adaptativos por modo — multi-rota (Ver no Mapa + Tabelas, como hoje); rota única (+ Roteirizar + Executar se houver roteirização salva). Toggle mínimo Visualizar↔Roteirizar dentro do mapa.
+- **Tela inicial:** instruções viram **spoiler** e são atualizadas (multi-rota + bloco rota única: "exporte no app oficial e importe aqui"); adicionar **romaneios salvos** e **rotas únicas salvas com roteirizações**.
+- **UI mínima no mapa** (overlay enxuto; mapa dominante).
+
+**Critérios de aceite:** multi-rota intocado; rota única abre Roteirizar/Executar pelo Sumário; instruções colapsáveis e atualizadas; nenhuma info do Sumário perdida.
+**Dependências novas:** nenhuma.
+
+---
+
 <!--
 ## TASK-PREFIXO-XXX - Título
 - **Status:** Pendente
@@ -328,9 +368,11 @@
 
 | TASK-ID | Título | Modo | Valor | Urgência | Esforço-H/IA | Dependências | REQ/ADR/DT | Status | Data origem |
 |---|---|:---:|:---:|:---:|:---:|---|---|:---:|---|
-| TASK-RF-003 | Alias de cabeçalhos do arquivo real (Bairro→Neighborhood, Zipcode/Postal code→Zipcode; expor AT ID/SPX TN) para tabela/tooltip da rota única | Standard | Importante | Normal | M/M | - | TASK-RF-002 | [ ] | 22/06/26 22:28 |
+<!-- TASK-RF-003 movida para "Imediatas" (priorizada em 24/06/26, a pedido do humano) -->
+
 | TASK-CHORE-002 | Rodar a suíte completa (`npm run test`) em ambiente estável (Windows/CI) e registrar o verde | Light | Importante | Normal | P/P | - | TASK-RF-002 | [ ] | 22/06/26 22:28 |
 | TASK-DOC-003 | Sincronizar `contexto-projeto-ai.md`: deixa de ser "SPA de página única sem router" (ADR-003) | Standard | Importante | Normal | P/P | TASK-RF-011 | ADR-003 | [ ] | 22/06/26 23:50 |
+| TASK-REF-007 | Remover inferência de área de risco / ESEDC (Correios): código, dados, UI, labels + sync contexto | Standard | Importante | Normal | M/M | - | ADR-005 | [ ] | 22/06/26 23:55 |
 
 
 

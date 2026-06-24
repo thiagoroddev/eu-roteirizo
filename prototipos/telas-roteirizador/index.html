@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Protótipo de telas — Roteirizador a pé</title>
+<style>
+  :root{
+    --bg:#eef0f3; --card:#fff; --ink:#1f2430; --muted:#6b7280; --line:#e4e7ec;
+    --brand:#C0392B; --teal:#0F6E56; --teal-d:#D85A30; --gray:#9aa0aa; --green:#2e9e4f;
+    --yellow:#F5B400; --orange:#D98324; --map:#ECE9E1;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;}
+  header.top{padding:20px 24px;background:#fff;border-bottom:1px solid var(--line)}
+  header.top h1{margin:0 0 4px;font-size:20px}
+  header.top p{margin:0;color:var(--muted);font-size:13px;max-width:780px;line-height:1.5}
+  .gallery{display:flex;flex-wrap:wrap;gap:28px;padding:24px;align-items:flex-start}
+  .screen{width:332px}
+  .screen .cap{font-size:13px;font-weight:600;margin:0 0 2px}
+  .screen .sub{font-size:11.5px;color:var(--muted);margin:0 0 8px;line-height:1.4;min-height:30px}
+  .phone{width:332px;border:1px solid var(--line);border-radius:22px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .hd{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--line);background:#fff}
+  .hd .t{font-size:14px;font-weight:600;color:var(--brand)}
+  .hd .ic{color:var(--muted);font-size:16px}
+  .seg{display:flex;margin:10px 12px 0;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .seg div{flex:1;text-align:center;padding:7px 0;font-size:12.5px;color:var(--muted)}
+  .seg div.on{background:var(--teal);color:#fff}
+  .hud{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 12px}
+  .hud .c{background:#f6f7f9;border-radius:8px;padding:6px 4px;text-align:center}
+  .hud .c b{display:block;font-size:14px}
+  .hud .c span{font-size:9px;color:var(--muted)}
+  .map{position:relative;background:var(--map);height:200px}
+  .map svg{display:block;width:100%;height:100%}
+  .nav{display:flex;border-top:1px solid var(--line);background:#fff}
+  .nav div{flex:1;text-align:center;padding:8px 0;font-size:10px;color:var(--muted)}
+  .nav div.on{color:var(--brand);font-weight:600}
+  .nav .d{font-size:16px;display:block}
+  .sheet{padding:12px 14px;border-top:1px solid var(--line)}
+  .sheet h4{margin:0 0 2px;font-size:14px}
+  .sheet .mut{color:var(--muted);font-size:12px;margin:0 0 8px}
+  .btn{display:block;width:100%;text-align:center;padding:10px;border-radius:9px;border:1px solid var(--line);background:#fff;font-size:13px;color:var(--ink);margin-top:7px}
+  .btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.teal{background:var(--teal);border-color:var(--teal);color:#fff}
+  .btn.ghostred{border-color:#f0b3ac;color:var(--brand)}
+  .row2{display:flex;gap:7px}
+  .row2 .btn{margin-top:7px}
+  .kv{display:flex;gap:8px;align-items:center;background:#f6f7f9;border-radius:8px;padding:7px 9px;font-size:12px;margin-top:7px}
+  .tag{display:flex;flex-direction:column;align-items:center;background:#eceff3;border-radius:7px;padding:3px 9px}
+  .tag small{font-size:9px;color:var(--muted)} .tag b{font-size:15px}
+  .code{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--muted)}
+  .pill{font-size:10px;padding:2px 7px;border-radius:6px;background:#eef;color:#33c}
+  .sel{font-size:12px;border:1px solid var(--line);border-radius:8px;padding:8px;margin-top:7px;color:var(--muted)}
+  .legend{font-size:11px;line-height:1.9}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;margin-right:4px}
+  .sq{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:middle;margin-right:4px}
+  .bar{height:6px;background:#eee;border-radius:3px;margin:7px 0 4px}
+  .bar i{display:block;height:6px;border-radius:3px;background:var(--brand)}
+  .note{font-size:11px;color:var(--muted);padding:0 14px 12px}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Protótipo de telas — Roteirizador a pé (app do entregador)</h1>
+  <p><b>Fonte da verdade = <code>docs/rascunhos/fluxo-roteirizacao.md</code></b> (texto). Este HTML é só ilustração; se divergir, o .md vence. Cobre as telas <b>novas</b> (roteirizar/execução). A <b>tela inicial e o card de Sumário são o app legado reaproveitado</b> (não redesenhados aqui) — ver §15 do spec. Mobile-first (TWA/Android). <b>Descartável</b> — não entra no bundle; aposentar quando houver telas reais em código.</p>
+</header>
+<div class="gallery">
+
+  <!-- 1 -->
+  <div class="screen">
+    <p class="cap">1 · Mapa — Roteirizar (início)</p>
+    <p class="sub">Rota única importada. Pontos cinza (livres), início verde, sugestão tracejada. Toggle Visualizar/Roteirizar.</p>
+    <div class="phone">
+      <div class="hd"><span class="t">Roteirizador a pé</span><span><span class="ic">⚙</span></span></div>
+      <div class="seg"><div>Visualizar</div><div class="on">Roteirizar</div></div>
+      <div class="hud">
+        <div class="c"><b style="color:var(--brand)">40/52</b><span>endereços</span></div>
+        <div class="c"><b>0</b><span>paradas</span></div>
+        <div class="c"><b>0 km</b><span>dist.</span></div>
+        <div class="c"><b>0 min</b><span>tempo</span></div>
+      </div>
+      <div class="map"><svg viewBox="0 0 300 200">
+        <g stroke="#d7d5cd" stroke-width="5"><line x1="0" y1="70" x2="300" y2="70"/><line x1="0" y1="140" x2="300" y2="140"/><line x1="90" y1="0" x2="90" y2="200"/><line x1="200" y1="0" x2="200" y2="200"/></g>
+        <g fill="var(--gray)" opacity=".6"><circle cx="130" cy="50" r="9"/><circle cx="210" cy="60" r="9"/><circle cx="160" cy="120" r="9"/><circle cx="240" cy="130" r="9"/><circle cx="110" cy="150" r="9"/></g>
+        <path d="M70,160 L130,50" stroke="var(--gray)" stroke-width="2" stroke-dasharray="3 4" fill="none"/>
+        <circle cx="70" cy="160" r="10" fill="var(--green)" stroke="#fff" stroke-width="2"/>
+      </svg></div>
+      <div class="sheet">
+        <h4>Montar rota</h4>
+        <p class="mut">Próximo sugerido (mais próximo)<br><b style="color:var(--ink)">Rua Cubatão, 195</b> · a 76 m</p>
+        <button class="btn pri">➤ Selecionar este endereço</button>
+        <button class="btn">✦ Auto-roteirizar (rascunho editável)</button>
+      </div>
+      <div class="nav"><div class="on"><span class="d">🗺</span>Mapa</div><div><span class="d">🚚</span>Rotas</div></div>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="screen">
+    <p class="cap">2 · Mapa — Visualizar (multi-rota legado)</p>
+    <p class="sub">Romaneio com Corridor Cage: só Visualizar (sem toggle de roteirizar). Seletor de rotas + sumário — o app atual, intocado.</p>
+    <div class="phone">
+      <div class="hd"><span class="t">Pré-Rota</span><span class="ic">⚙</span></div>
+      <div class="sheet" style="border-top:0">
+        <div class="sel">▾ L-4 — escolha uma das 12 rotas</div>
+        <div class="kv" style="display:block">
+          <b style="font-size:13px">Sumário da rota: L-4</b><br>
+          <span class="mut" style="font-size:11px">AT202511… · Hub Ilha do Governador · 113 pacotes · 33 paradas · ~4h42 · 47 km</span>
+        </div>
+        <div class="row2"><button class="btn pri">Ver no mapa</button><button class="btn">Tabela</button></div>
+      </div>
+      <div class="map" style="height:120px"><svg viewBox="0 0 300 120"><g stroke="#d7d5cd" stroke-width="5"><line x1="0" y1="60" x2="300" y2="60"/><line x1="150" y1="0" x2="150" y2="120"/></g><g fill="#3a6ea5"><circle cx="120" cy="45" r="8"/><circle cx="180" cy="70" r="8"/><circle cx="90" cy="80" r="8"/></g></svg></div>
+      <div class="note">Aqui os marcadores são os ícones PNG de inferência atuais (casa/comercial).</div>
+      <div class="nav"><div class="on"><span class="d">🗺</span>Mapa</div><div><span class="d">🚚</span>Rotas</div></div>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="screen">
+    <p class="cap">3 · Criar parada (círculo de raio)</p>
+    <p class="sub">Círculo do raio em volta da âncora; candidatos dentro destacados (verde). Sugestão segue a rua. Card "Etiqueta do Pacote".</p>
+    <div class="phone">
+      <div class="hd"><span class="t">Roteirizar · criar parada</span><span class="ic">⚙</span></div>
+      <div class="map" style="height:200px"><svg viewBox="0 0 300 200">
+        <g stroke="#d7d5cd" stroke-width="5"><line x1="0" y1="80" x2="300" y2="80"/><line x1="0" y1="150" x2="300" y2="150"/><line x1="110" y1="0" x2="110" y2="200"/><line x1="200" y1="0" x2="200" y2="200"/></g>
+        <circle cx="140" cy="120" r="55" fill="#1d9e75" fill-opacity=".08" stroke="var(--teal)" stroke-width="1.4" stroke-dasharray="5 4"/>
+        <path d="M140,120 L140,90 L165,88" stroke="var(--teal)" stroke-width="2" stroke-dasharray="5 4" fill="none"/>
+        <g fill="var(--teal)"><circle cx="100" cy="100" r="10"/><circle cx="165" cy="88" r="10"/><circle cx="170" cy="150" r="10"/></g>
+        <g fill="var(--gray)" opacity=".5"><circle cx="250" cy="70" r="9"/><circle cx="60" cy="170" r="9"/></g>
+        <circle cx="140" cy="120" r="12" fill="var(--teal)" stroke="#fff" stroke-width="4"/>
+      </svg>
+      <div style="position:absolute;left:8px;bottom:8px;background:#fffd;border-radius:6px;padding:4px 7px;font-size:9.5px"><span class="dot" style="background:var(--teal)"></span>no raio (3) <span class="dot" style="background:var(--gray)"></span>fora</div>
+      </div>
+      <div class="sheet">
+        <div style="font-size:11px;color:var(--brand);font-weight:600;letter-spacing:.03em">ETIQUETA DO PACOTE</div>
+        <h4 style="margin-top:4px">Rua das Palmeiras, 55</h4>
+        <p class="mut">Botafogo · 22270-070</p>
+        <div class="kv"><div class="tag"><small>parada</small><b>32</b></div><div class="tag"><small>seq</small><b>47</b></div><div style="flex:1;text-align:right"><span class="code">BR2649270672308</span></div></div>
+        <button class="btn teal">＋ Criar parada · inclui 3 no raio (50 m)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="screen">
+    <p class="cap">4 · Endereço livre (órfão) selecionado</p>
+    <p class="sub">Ações: Criar Nova Parada (próxima na ordem) ou Adicionar a uma parada (select da mais próxima). Etiqueta com multi-pacote (Vol 1/2).</p>
+    <div class="phone">
+      <div class="hd"><span class="t">Roteirizar</span><span class="ic">⚙</span></div>
+      <div class="map" style="height:120px"><svg viewBox="0 0 300 120"><g stroke="#d7d5cd" stroke-width="5"><line x1="0" y1="60" x2="300" y2="60"/></g><g fill="var(--gray)" opacity=".55"><circle cx="80" cy="45" r="9"/><circle cx="220" cy="70" r="9"/></g><circle cx="150" cy="75" r="12" fill="var(--gray)" stroke="#3a6ea5" stroke-width="3"/></svg></div>
+      <div class="sheet">
+        <div class="kv" style="display:block;background:#efeefe">
+          <b style="font-size:13px">45 · Endereço livre (órfão)</b>
+          <p class="mut" style="margin:2px 0 0">Não está em nenhuma parada.</p>
+        </div>
+        <button class="btn" style="background:#5b50e6;border-color:#5b50e6;color:#fff">＋ Criar nova parada (será a 1)</button>
+        <div class="row2"><select class="btn" style="appearance:auto"><option>Parada mais próxima…</option></select><button class="btn">Adicionar</button></div>
+        <div style="font-size:11px;color:var(--brand);font-weight:600;margin-top:10px">ETIQUETA DO PACOTE</div>
+        <h4 style="margin-top:3px">Rua Belfort Roxo, 1263</h4>
+        <p class="mut">Copacabana · 220257</p>
+        <div class="kv" style="display:block"><span class="code">SPX-BR-24647467</span> <span class="pill">Vol 1</span> · Parada 9 · Seq 5</div>
+        <div class="kv" style="display:block"><span class="code">SPX-BR-68924177</span> <span class="pill">Vol 2</span> · Parada 9 · Seq 2</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="screen">
+    <p class="cap">5 · Parada selecionada (expandida)</p>
+    <p class="sub">Expandida: endereços = círculos da cor da parada (só número); âncora = círculo de borda grossa (o "1"), sem quadrado. Badge amarelo = pacotes. Sequência a pé editável.</p>
+    <div class="phone">
+      <div class="hd"><span class="t">Roteirizar</span><span class="ic">⚙</span></div>
+      <div class="map" style="height:180px"><svg viewBox="0 0 300 180">
+        <g stroke="#d7d5cd" stroke-width="5"><line x1="0" y1="90" x2="300" y2="90"/><line x1="150" y1="0" x2="150" y2="180"/></g>
+        <path d="M70,140 L150,72" stroke="var(--ink)" stroke-width="3" fill="none"/>
+        <path d="M150,72 L190,60 L185,108 Z" stroke="var(--teal-d)" stroke-width="2" stroke-dasharray="4 4" fill="none"/>
+        <circle cx="70" cy="140" r="10" fill="var(--green)" stroke="#fff" stroke-width="2"/>
+        <circle cx="150" cy="72" r="12" fill="var(--teal-d)" stroke="#1f2430" stroke-width="4"/><text x="150" y="76" font-size="11" fill="#fff" text-anchor="middle">1</text>
+        <circle cx="190" cy="60" r="11" fill="var(--teal-d)"/><text x="190" y="64" font-size="10" fill="#fff" text-anchor="middle">2</text>
+        <circle cx="206" cy="50" r="8" fill="var(--yellow)" stroke="#fff" stroke-width="1.5"/><text x="206" y="53.5" font-size="9" fill="#5a4300" text-anchor="middle">3</text>
+        <circle cx="185" cy="108" r="11" fill="var(--teal-d)"/><text x="185" y="112" font-size="10" fill="#fff" text-anchor="middle">3</text>
+      </svg></div>
+      <div class="sheet">
+        <h4>Parada 1 · <span class="mut" style="font-weight:400">3 endereços · 5 pacotes · ~9 min a pé</span></h4>
+        <div class="kv"><b style="color:var(--teal-d)">1</b><span style="flex:1">Rua das Palmeiras, 55</span><span class="pill" style="background:#fde7df;color:#9a4a1a">âncora</span></div>
+        <div class="kv"><b style="color:var(--teal-d)">2</b><span style="flex:1">Rua das Palmeiras, 61</span><span class="mut">3 pac</span></div>
+        <div class="kv"><b style="color:var(--teal-d)">3</b><span style="flex:1">Rua Conde de Irajá, 12</span></div>
+        <div class="row2"><button class="btn">＋ Endereço</button><button class="btn">⚓ Âncora</button></div>
+        <button class="btn ghostred">🗑 Desfazer parada</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="screen">
+    <p class="cap">6 · Endereço dentro de uma parada</p>
+    <p class="sub">Selecionar um E da parada: Tornar âncora / Remover da parada. Card Etiqueta do Pacote do endereço.</p>
+    <div class="phone">
+      <div class="hd"><span class="t">Roteirizar</span><span class="ic">⚙</span></div>
+      <div class="map" style="height:130px"><svg viewBox="0 0 300 130"><g stroke="#d7d5cd" stroke-width="5"><line x1="0" y1="65" x2="300" y2="65"/></g>
+        <circle cx="110" cy="55" r="12" fill="var(--teal-d)" stroke="#1f2430" stroke-width="4"/><text x="110" y="59" font-size="10" fill="#fff" text-anchor="middle">1</text>
+        <circle cx="160" cy="70" r="13" fill="var(--teal-d)" stroke="#3a6ea5" stroke-width="3"/><text x="160" y="74" font-size="11" fill="#fff" text-anchor="middle">2</text>
+      </svg></div>
+      <div class="sheet">
+        <div style="font-size:11px;color:var(--brand);font-weight:600">ETIQUETA DO PACOTE</div>
+        <h4 style="margin-top:3px">Rua das Palmeiras, 61 <span class="mut" style="font-weight:400">· pertence à Parada 1</span></h4>
+        <div class="kv"><div class="tag"><small>parada</small><b>32</b></div><div class="tag"><small>seq</small><b>48</b></div><div style="flex:1;text-align:right"><span class="code">BR2659069025937</span></div></div>
+        <div class="row2"><button class="btn">⚓ Tornar âncora</button><button class="btn ghostred">↩ Remover da parada</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7 -->
+  <div class="screen">
+    <p class="cap">7 · Completude + Salvar</p>
+    <p class="sub">"Salvar rota" só habilita com 0 faltando. Auto-roteirizar disponível a qualquer momento.</p>
+    <div class="phone">
+      <div class="hd"><span class="t">Roteirizar</span><span style="font-size:12px;color:#fff;background:var(--brand);padding:4px 10px;border-radius:7px">✓ Salvar</span></div>
+      <div class="hud">
+        <div class="c"><b style="color:var(--green)">0/52</b><span>endereços</span></div>
+        <div class="c"><b>8</b><span>paradas</span></div>
+        <div class="c"><b>6,2 km</b><span>dist.</span></div>
+        <div class="c"><b>1h48</b><span>tempo</span></div>
+      </div>
+      <div class="map" style="height:120px"><svg viewBox="0 0 300 120"><g stroke="#d7d5cd" stroke-width="5"><line x1="0" y1="60" x2="300" y2="60"/></g>
+        <path d="M40,90 L90,40 L160,55 L230,40" stroke="var(--ink)" stroke-width="3" fill="none"/>
+        <rect x="80" y="30" width="22" height="22" rx="5" fill="var(--teal)"/><text x="91" y="46" font-size="11" fill="#fff" text-anchor="middle">1</text>
+        <rect x="150" y="45" width="22" height="22" rx="5" fill="var(--teal)"/><text x="161" y="61" font-size="11" fill="#fff" text-anchor="middle">2</text>
+        <circle cx="170" cy="44" r="8" fill="var(--yellow)" stroke="#fff" stroke-width="1.5"/><text x="170" y="47.5" font-size="9" fill="#5a4300" text-anchor="middle">4</text>
+        <rect x="220" y="30" width="22" height="22" rx="5" fill="var(--teal)"/><text x="231" y="46" font-size="11" fill="#fff" text-anchor="middle">3</text>
+        <circle cx="40" cy="90" r="9" fill="var(--green)"/></svg></div>
+      <div class="note" style="padding:6px 14px 0">Paradas fechadas: quadrado + nº; badge amarelo = nº de endereços (sem clicar).</div>
+      <div class="sheet">
+        <button class="btn teal">💾 Salvar rota planejada</button>
+        <p class="mut" style="text-align:center;margin-top:6px">Tudo atribuído — pronto para salvar e executar.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8 -->
+  <div class="screen">
+    <p class="cap">8 · Rotas salvas (aba Rotas)</p>
+    <p class="sub">Lista local (IndexedDB). Executar · importar/exportar JSON (config inclusa → passar pro ajudante). Importar planilha Shopee abre planejamento novo.</p>
+    <div class="phone">
+      <div class="hd"><span class="t">Rotas salvas</span><span class="ic">⤓ ⤒</span></div>
+      <div class="sheet" style="border-top:0">
+        <div class="kv" style="display:block;border-left:3px solid var(--brand)">
+          <b style="font-size:13px">Rota Centro — 22/06</b><br><span class="mut">90 endereços · 42 km · manhã</span>
+          <button class="btn pri" style="margin-top:6px">▶ Executar</button>
+        </div>
+        <div class="kv" style="display:block;border-left:3px solid var(--teal)">
+          <b style="font-size:13px">Zona Sul — 22/06</b><br><span class="mut">45 endereços · 28 km</span>
+          <button class="btn" style="margin-top:6px">▶ Executar</button>
+        </div>
+        <div class="row2"><button class="btn">⤓ Importar JSON</button><button class="btn">＋ Importar planilha</button></div>
+      </div>
+      <div class="nav"><div><span class="d">🗺</span>Mapa</div><div class="on"><span class="d">🚚</span>Rotas</div></div>
+    </div>
+  </div>
+
+  <!-- 9 -->
+  <div class="screen">
+    <p class="cap">9 · Execução</p>
+    <p class="sub">Progresso + previsão de término. Card foca a próxima entrega: endereço + etiqueta (achar) + código (problema). Abrir GPS · Entrega feita (avança). Sem botão de contato — não há contato.</p>
+    <div class="phone">
+      <div class="hd"><span class="t">← Execução</span><span class="ic">⚙</span></div>
+      <div class="sheet" style="border-top:0;padding-bottom:6px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)"><span>progresso</span><span>término ~16:45</span></div>
+        <div style="display:flex;justify-content:space-between"><b style="font-size:15px">31/90 pacotes</b><b style="font-size:15px;color:var(--brand)">34%</b></div>
+        <div class="bar"><i style="width:34%"></i></div>
+        <div class="mut" style="font-size:11px">4,2 km restantes</div>
+      </div>
+      <div class="map" style="height:120px"><svg viewBox="0 0 300 120"><path d="M40,110 L120,60 L260,40" stroke="#3a6ea5" stroke-width="3" fill="none"/><circle cx="120" cy="60" r="11" fill="var(--brand)" stroke="#fff" stroke-width="2"/><text x="120" y="64" font-size="10" fill="#fff" text-anchor="middle">32</text></svg></div>
+      <div class="sheet">
+        <p class="mut" style="margin:0 0 4px">parada 5 de 12 · endereço 2 de 4 · <b style="color:var(--ink)">2,1 km (8 min)</b></p>
+        <h4>Rua das Palmeiras, 61</h4>
+        <p class="mut">Apto 906 · Copacabana</p>
+        <div class="kv"><div class="tag"><small>parada</small><b>32</b></div><div class="tag"><small>seq</small><b>47</b></div><div style="flex:1;text-align:right"><span class="code">BR2649270672308</span></div></div>
+        <button class="btn">📍 Abrir GPS</button>
+        <button class="btn pri">✓ Entrega feita</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10 -->
+  <div class="screen">
+    <p class="cap">10 · Configurações de Rota (engrenagem)</p>
+    <p class="sub">Raio de agrupamento, velocidade a pé, tempo por entrega, velocidade veículo. Base das estimativas e do auto-roteirizar.</p>
+    <div class="phone">
+      <div class="hd"><span class="t">← Configurações de Rota</span></div>
+      <div class="sheet" style="border-top:0">
+        <div class="kv" style="justify-content:space-between">◎ Raio de agrupamento (m)<b>50</b></div>
+        <div class="kv" style="justify-content:space-between">🚶 Velocidade a pé (km/h)<b>4</b></div>
+        <div class="kv" style="justify-content:space-between">⏱ Tempo por entrega (min)<b>2</b></div>
+        <div class="kv" style="justify-content:space-between">🚚 Velocidade veículo (km/h)<b>30</b></div>
+        <button class="btn teal" style="margin-top:12px">💾 Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11 -->
+  <div class="screen">
+    <p class="cap">11 · Sistema de ícones / Legenda do mapa</p>
+    <p class="sub">Geometria = tipo · número = ordem · cor = qual parada · borda grossa = âncora · badge amarelo = contagem. Sem letras (i18n).</p>
+    <div class="phone">
+      <div class="hd"><span class="t">Legenda do mapa</span><span class="ic">?</span></div>
+      <div class="sheet" style="border-top:0">
+        <div class="legend">
+          <div><span class="dot" style="background:var(--green)"></span> Início</div>
+          <div><span class="dot" style="background:var(--gray)"></span> Endereço livre (nº do pacote)</div>
+          <div><span class="sq" style="background:var(--teal)"></span> Parada (quadrado + nº) · badge amarelo = nº de endereços</div>
+          <div><span class="dot" style="background:var(--teal-d)"></span> Endereço da parada (círculo, cor da parada)</div>
+          <div><span class="dot" style="background:var(--teal-d);border:3px solid #1f2430"></span> Âncora (borda grossa)</div>
+          <div><span class="dot" style="background:var(--teal-d);box-shadow:0 0 0 2px var(--yellow)"></span> Multi-pacote (badge amarelo = nº pacotes)</div>
+          <div>━ veículo (âncora→âncora) · ┄ a pé (ida e volta) · ┈ sugestão</div>
+        </div>
+        <p class="note" style="padding:10px 0 0">Legenda colapsável; espelha o §3 do fluxo. Textos via UI_LABELS.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

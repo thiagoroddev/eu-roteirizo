@@ -6,6 +6,10 @@
 
 ---
 
+> 🔄 **Atualização de escopo (22/06/26) — substitui a tese de §7.** Os dois produtos foram **desacoplados em projetos separados**. **Este projeto = somente o app do entregador (Opção B, B2C).** O hub (Opção A) deixa de ser "fase seguinte do mesmo produto" e passa a ser **um projeto futuro à parte**, com escopo **enxuto** quando vier: gerenciador de rotas **sem fila/aderências** (o hub é volátil); o problema real dele é **cadastro + sincronizar com o app oficial da Shopee**, e a entrada de rotas recusadas provavelmente fica **manual** (funcionário sobe planilha). Tudo isso é futuro e fora deste repositório.
+>
+> Consequência prática: para **este** projeto, "sem backend" continua firme (só a costura de billing fica preparada — §10.5). As seções abaixo sobre a Opção A ficam como **referência da análise**, não como roadmap deste app.
+
 ## 1. As duas estratégias na mesa
 
 Existem **dois produtos diferentes** escondidos na mesma dor, com modelos de negócio opostos:
@@ -233,7 +237,8 @@ A Opção B não é o "plano B". É o **caminho de menor risco para o mesmo dest
 **ADRs futuras já mapeadas (não bloqueiam o MVP):**
 
 - **Empacotamento/release TWA** (Bubblewrap ou PWABuilder → AAB/APK): é etapa de *release*, não lib de UI. Exige manifest + ícones + critérios de PWA installable (já somos PWA ✅). Merece ADR própria quando for publicar.
-- **Validação segura de assinatura premium** → provável **backend mínimo** (Play Developer API + RTDN). **Conflita com o "sem backend" inegociável** do `contexto-projeto-ai.md`; quando (e se) a pirataria justificar, abrir ADR que revisa essa regra. Até lá, entitlement client-side (ver §10.4).
+- **Validação segura de assinatura premium** → provável **backend mínimo** (Play Developer API + RTDN, em função serverless — Cloudflare Workers ou Supabase Edge Function; **não Next**, que seria overkill). **Conflita com o "sem backend" inegociável** do `contexto-projeto-ai.md`; quando (e se) a pirataria justificar, abrir ADR que revisa essa regra. Até lá, entitlement client-side (ver §10.4).
+  - **Costura pronta desde já (sem construir o backend):** o entitlement fica atrás de uma **abstração** no cliente (ex.: `isPremium()` / `EntitlementProvider`) com implementação client-side agora. A validação por servidor entra depois como uma **2ª implementação na mesma interface** → o backend vira **drop-in**, não refatoração. (YAGNI: preparar a junção agora, construir a obra só quando houver pagantes + sinal de pirataria.)
 
 ### 10.6 Anúncios (rewarded) como funil para o premium
 

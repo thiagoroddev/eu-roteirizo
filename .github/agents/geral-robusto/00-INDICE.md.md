@@ -1,6 +1,6 @@
 ---
 
-## description: "Catálogo de todos os módulos do pacote .agent/. Mapa de navegação." versao: "3.0"
+## description: "Catálogo de todos os módulos do pacote .agent/. Mapa de navegação." versao: "3.4"
 
 # 📑 Índice do Pacote `.agent/`
 
@@ -39,7 +39,8 @@ agente/
 │   ├── 34-readme-projeto.md
 │   ├── 35-componente-ui.md
 │   ├── 36-hook-feature.md
-│   └── 37-revisao-geral.md
+│   ├── 37-revisao-geral.md
+│   └── 38-requisitos.md            ← NOVO (formato dos requisitos RF/RN/RNF)
 │
 ├── checklists/                     ← Verificações rápidas
 │   ├── 40-revisao-rapida.md
@@ -128,6 +129,7 @@ Consultar quando precisar gerar um artefato com formato padrão.
 |[`35-componente-ui.md`](https://claude.ai/chat/templates/35-componente-ui.md)|Esqueleto de componente UI com forwardRef + variantes|
 |[`36-hook-feature.md`](https://claude.ai/chat/templates/36-hook-feature.md)|Esqueleto de hook de feature (estado + memo + callbacks)|
 |[`37-revisao-geral.md`](https://claude.ai/chat/templates/37-revisao-geral.md)|Template para `docs/arquitetura/revisoes-gerais/REV-NNN.md`|
+|[`38-requisitos.md`](https://claude.ai/chat/templates/38-requisitos.md)|Formato dos 3 arquivos de requisitos (RF/RN/RNF): prioridade, status, rastreabilidade|
 
 ---
 

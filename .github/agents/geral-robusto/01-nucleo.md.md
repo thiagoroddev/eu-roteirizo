@@ -268,6 +268,7 @@ Quando a tarefa envolve isto → carregue aquilo.
 |Tomar decisão arquitetural relevante|[`processos/25-analise-impacto.md`](https://claude.ai/chat/processos/25-analise-impacto.md), [`templates/32-adr.md`](https://claude.ai/chat/templates/32-adr.md)|
 |Entrar em projeto novo ou legado|[`processos/26-inicializacao-projeto.md`](https://claude.ai/chat/processos/26-inicializacao-projeto.md)|
 |Criar `contexto-projeto-ai.md`|[`templates/33-contexto-projeto-ai.md`](https://claude.ai/chat/templates/33-contexto-projeto-ai.md)|
+|Levantar/documentar requisitos (RF/RN/RNF)|[`processos/26-inicializacao-projeto.md`](https://claude.ai/chat/processos/26-inicializacao-projeto.md) (extração do código) + [`templates/38-requisitos.md`](https://claude.ai/chat/templates/38-requisitos.md) (formato)|
 
 ---
 
@@ -289,6 +290,7 @@ npx tsc --noEmit     # checar tipos sem emitir arquivos
 
 |Versão|Data|Mudança|
 |---|---|---|
+|3.4|2026-06-24|Template `38-requisitos.md` (novo): formato único de `docs/requisitos/` (RF/RN/RNF) com prioridade, status e rastreabilidade requisito↔tarefa↔ADR; módulo 26 §6.3 passa a referenciá-lo (antes "ver templates" não tinha alvo).|
 |3.3|2026-06-09|Regra de numeração de IDs de tarefa (§4.4): próximo número após o maior do prefixo no índice de concluídas (`0-indice-concluidas.md`); gaps ignorados, nunca reaproveitados.|
 |3.2|2026-06-06|Anti-padrão de gate não-verificado (typecheck/lint/test/build). Detalhe em `processos/20` (critério de conclusão + regra Strict) e `padroes/10` (narrowing por closure + helper `exigir`).|
 |3.1|2026-06-01|Adicionado comportamento de Revisão Geral completa do projeto sob pedido humano, com registros `REV-NNN.md`.|

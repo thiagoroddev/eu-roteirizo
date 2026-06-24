@@ -354,7 +354,7 @@ Para cada arquivo "Sim" ou "Parcial":
 
 1. **Extraia o que dá para extrair do código** (RFs implícitas em rotas, RNs em validações)
 2. **Marque o restante como "a confirmar"**
-3. **Use formato padrão** (ver templates)
+3. **Use o formato padrão** dos requisitos: [`templates/38-requisitos.md`](../templates/38-requisitos.md.md) (RF/RN/RNF, com prioridade, status e rastreabilidade requisito↔tarefa↔ADR)
 4. **Não invente.** Vazio é melhor que errado.
 
 Exemplo para `requisitos/funcionais.md`:
@@ -374,6 +374,8 @@ Exemplo para `requisitos/funcionais.md`:
 - RF-03: confirmar fluxo de edição
 - Existem requisitos não-implementados? (não dá para saber pelo código)
 ```
+
+> ℹ️ O formato canônico dos requisitos (RF/RN/RNF — com prioridade, status, origem e rastreabilidade) está em [`templates/38-requisitos.md`](../templates/38-requisitos.md.md). O exemplo acima é só ilustrativo.
 
 ### 6.4 ADRs Para Decisões Encontradas
 

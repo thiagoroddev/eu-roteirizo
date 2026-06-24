@@ -23,6 +23,7 @@
 | TASK-RF-002 | Leitura de rota única (Corridor Cage opcional / detecção de modo) | [abrir](./2026-06-22--22h28--TASK-RF-002.md) |
 | TASK-DOC-002 | Atualizar contexto-projeto-ai.md: colunas obrigatórias e modo rota única | [abrir](./2026-06-22--22h40--TASK-DOC-002.md) |
 | TASK-RF-004 | Modelo de dados do roteirizador (Ponto / Parada / Rota planejada) | [abrir](./2026-06-22--23h35--TASK-RF-004.md) |
+| TASK-DOC-004 | Criar docs/requisitos/ (RF/RN/RNF): estado atual + roteirizador planejado + template 38 | [abrir](./2026-06-24--14h33--TASK-DOC-004.md) |
 
 <!-- Exemplo:
 | TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [abrir](./2026-05-16--20h21--TASK-REF-03.md) |

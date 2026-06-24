@@ -1,6 +1,8 @@
 # Fluxo do Roteirizador — Base para o Protótipo
 
 > Passo a passo e estados visuais do modo **Roteirizar** (rota única). Serve de base para o protótipo de tela e para a TASK-RF-006. Documento de trabalho — especulativo e refinável. Complementa `draft-roteirizador-a-pe.md` (visão) e segue a ADR-002 (roteamento local).
+>
+> 🖼️ **Referência visual canônica:** [`prototipos/telas-roteirizador/index.html`](../../prototipos/telas-roteirizador/index.html) — galeria com todas as telas (uma por caso). Este `.md` é a fonte **textual**; o HTML é a fonte **visual**. Manter os dois em sincronia ao decidir mudanças de UI.
 
 ---
 
@@ -239,6 +241,7 @@ Tela focada em **uma entrega por vez** (motorista em movimento; botões grandes)
 
 - **Distância até a próxima entrega** + botão **"Abrir GPS"** (deep link Maps/Waze; a pé dentro da parada, veículo entre paradas).
 - Botão **"Entrega feita"** → confirma e **pula o foco para a próxima** automaticamente.
+- **Sem botão de contato:** o app **não** tem contato/telefone do destinatário — essa ação não existe. (Só "Abrir GPS" + "Entrega feita".)
 - **% concluída** + contagem (ex.: `31/90`).
 - **Previsão de término** (agora + tempo estimado restante).
 - **Âncora ao vivo (GPS):** ao chegar na parada, a posição real reordena os endereços a pé (§6, decisão 4).
@@ -257,6 +260,38 @@ No mesmo card do endereço, aparecem os identificadores do pacote — cada um co
 - Dados vêm do `rawData` de cada `DeliveryPackage` (`Stop`, `Sequence`, `SPX TN`) — **sem mudança no modelo** (RF-004 intacta).
 
 (Refина a TASK-RF-009.)
+
+---
+
+## 15. Integração com o app legado (não recomeçar do zero)
+
+O roteirizador **nasce dentro do app que já existe**, reaproveitando o máximo. Fluxo legado mantido:
+
+**tela inicial → escolher rota → Sumário → "Ver no Mapa" → mapa.** O Roteirizar/Executar partem do Sumário/mapa, não de uma tela nova.
+
+### 15.1 Sumário (card) — reaproveitado, vira "lançador"
+
+- O **card de Sumário permanece** e **nenhuma info resumida do romaneio sai** (AT, Hub, pacotes, paradas, bairros, etc.). Na rota única, campos ausentes na planilha aparecem como "Sem dados"; pacotes/paradas/cidade seguem calculados.
+- Os **botões do Sumário se adaptam ao modo**:
+  - **Multi-rota:** Ver no Mapa · Tabela Simplificada · Tabela Original (como hoje).
+  - **Rota única:** + **Roteirizar** + **Executar** (este só se já houver roteirização salva).
+- Dentro do mapa, **toggle mínimo** Visualizar↔Roteirizar (troca sem voltar ao Sumário). **Executar** é tela cheia (§14), entrada por botão. Decisão registrada.
+
+### 15.2 Tela inicial
+
+- Mantém **"Enviar romaneio"**.
+- **Instruções viram spoiler** (expande no clique) e são **atualizadas**: as atuais valem só para **multi-rota**; adicionar bloco de **rota única** = "**exporte sua rota no app oficial da empresa e importe aqui**".
+- Adicionar áreas de **romaneios salvos** (não reenviar um já enviado) e **rotas únicas salvas com suas roteirizações** (casa com a aba Rotas / persistência RF-008).
+
+### 15.3 Inferências legadas — o que fica e o que sai
+
+- **Comercial (residencial × comercial):** **permanece** (`utils/inferLocationType.ts`, pelo complemento do endereço). Na rota única, **tudo é inferido** (planilha sem a coluna Location Type).
+- **Área de risco / ESEDC (Correios):** **removida do projeto inteiro** — ver **ADR-005** (recurso informal, RJ-only, não escala). Some do Sumário, tabela e ícones.
+- **Bairro:** o app **já usa o CEP quando há** (senão, o nome da planilha, que tem erros de digitação tipo "Copacabana"/"Copacabada"). Cobertura **nacional de CEP→bairro é futuro**; o dataset atual já dá conta do escopo atual.
+
+### 15.4 UI mínima quando o mapa está visível
+
+Princípio: **mapa dominante, overlay enxuto.** Os protótipos anteriores exageraram na UI sobre o mapa — manter contadores/painéis compactos e colapsáveis. Ajuste fino nos **testes práticos**.
 
 ---
 
