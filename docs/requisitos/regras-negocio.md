@@ -14,7 +14,7 @@
 | RN-04 | `Corridor Cage` define o modo de leitura: presente → multi-rota (agrupa); ausente → rota única (rótulo "Minha rota") | `isSingleRoute = !colNames.includes(CORRIDOR_CAGE)` | ✅ | `utils/excelProcessor.ts` | TASK-RF-002 |
 | RN-05 | No multi-rota, o identificador de rota deve casar `^[A-Z]+-\d+(?:NS)?$`; linha com valor inválido/vazio é ignorada (e contada) | `validPattern` no agrupamento | ✅ | `utils/excelProcessor.ts` | - |
 | RN-06 | Linha sem coordenada plotável é descartada (e contada) — nos dois modos | `buildSingleRoute` + reduce do multi-rota | ✅ | `utils/excelProcessor.ts` | - |
-| RN-07 | Tipo de local: `Office` da planilha é confiável (trust); `Home`/vazio aciona inferência pelo complemento do endereço, que pode corrigir | `resolveLocationType` | ✅ | `utils/inferLocationType.ts` | - |
+| RN-07 | Tipo de local: a **inferência pelo complemento do endereço roda para todo romaneio** (decisão 25/06) — **mesmo com** a coluna `Location Type` (fonte Shopee não-confiável). A inferência **manda**; a coluna é só **fallback** quando a inferência fica indefinida | `resolveLocationType` | ✅ | `utils/inferLocationType.ts` | TASK-RF-016 |
 | RN-08 | Status dos Correios por CEP de 8 dígitos (ESEDC) — **descartado** | — | 🚫 | ADR-005 (remove `correiosDelivery.ts`) | TASK-REF-007 |
 | RN-09 | Célula vazia, ausente ou inválida converge para o sentinela único "Sem dados" na apresentação | `presentStatus` + `DATA_STATUS` | ✅ | `constants/index.ts` | - |
 

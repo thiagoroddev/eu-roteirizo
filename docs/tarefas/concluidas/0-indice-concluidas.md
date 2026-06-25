@@ -26,6 +26,8 @@
 | TASK-DOC-004 | Criar docs/requisitos/ (RF/RN/RNF): estado atual + roteirizador planejado + template 38 | [abrir](./2026-06-24--14h33--TASK-DOC-004.md) |
 | TASK-REF-008 | Identidade visual azul (#0D82D6): tokens shadcn + Hanken Grotesk + tema-tailwind.md — ADR-006 | [abrir](./2026-06-24--20h07--TASK-REF-008.md) |
 | TASK-REF-009 | Identidade final "Cyanide" (ciano #0DC2D6 + claro/escuro automático + pill + toggle) — ADR-006 | [abrir](./2026-06-24--20h44--TASK-REF-009.md) |
+| TASK-RF-003 | Alias de cabeçalhos da rota única (Bairro/Zipcode/AT ID → canônicos) — destrava RF-09/12/15/18 | [abrir](./2026-06-25--11h41--TASK-RF-003.md) |
+| TASK-RF-016 | Inferência de tipo de local para todo romaneio (roda sem a coluna e sobrepõe quando há) — RN-07 | [abrir](./2026-06-25--13h08--TASK-RF-016.md) |
 
 <!-- Exemplo:
 | TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [abrir](./2026-05-16--20h21--TASK-REF-03.md) |

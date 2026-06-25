@@ -123,33 +123,24 @@ export function resolveLocationType(row: RowData) {
     .toUpperCase();
   const addr = String(row[COLUMN_NAMES.DESTINATION_ADDRESS] || "").trim();
 
-  /** If no address, return original (could be empty) */
+  /** Sem endereço não há o que inferir — usa a coluna (ou vazio). */
   if (!addr) return originalClassification || EXCEL_EMPTY_VALUE;
 
-  /** 1. Trust rule */
-  if (originalClassification === ICON_KEYS.OFFICE) return ICON_KEYS.OFFICE;
-
-  /** 2. Correction rule
-   * If original is HOME, empty or "-", run inference and apply corrections.
+  /**
+   * DECISÃO (25/06/26 — TASK-RF-016): a inferência roda para **TODO romaneio**, mesmo com a
+   * coluna `Location Type` presente, porque a classificação da fonte (Shopee) é não-confiável.
+   * A inferência pelo complemento do endereço **manda**; a coluna é só **fallback** quando a
+   * inferência fica indefinida. Também conserta a rota única (coluna ausente → `""` → antes a
+   * inferência nem rodava, pois o gate só pegava `"-"`/`"HOME"`).
    */
-  if (originalClassification === EXCEL_EMPTY_VALUE || originalClassification === ICON_KEYS.HOME) {
-    const newClassification = inferLocationType(addr);
+  const inferred = inferLocationType(addr);
+  if (inferred === ICON_KEYS.OFFICE_CORRECTED) return ICON_KEYS.OFFICE_CORRECTED;
+  if (inferred === ICON_KEYS.HOME_CORRECTED) return ICON_KEYS.HOME_CORRECTED;
 
-    /** Apply corrections only if inference is confident */
-    if (newClassification === ICON_KEYS.OFFICE_CORRECTED) return ICON_KEYS.OFFICE_CORRECTED;
-    if (newClassification === ICON_KEYS.HOME_CORRECTED) return ICON_KEYS.HOME_CORRECTED;
-
-    /** Handle INDEFINITE results */
-    if (newClassification === ICON_KEYS.INDEFINITE) {
-      if (originalClassification === ICON_KEYS.HOME) return ICON_KEYS.HOME; // Keep as HOME if that was original
-      return ICON_KEYS.INDEFINITE; // Otherwise, return INDEFINITE
-    }
-
-    /** Fallback logic */
-    return originalClassification === ICON_KEYS.HOME ? ICON_KEYS.HOME : EXCEL_EMPTY_VALUE;
-  }
-
-  return originalClassification;
+  /** Inferência indefinida → cai na coluna, se houver (Office/Home); senão, indefinido. */
+  if (originalClassification === ICON_KEYS.OFFICE) return ICON_KEYS.OFFICE;
+  if (originalClassification === ICON_KEYS.HOME) return ICON_KEYS.HOME;
+  return ICON_KEYS.INDEFINITE;
 }
 
 /* ============================================================================

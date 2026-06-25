@@ -189,6 +189,20 @@ export const OPTIONAL_COLUMNS = [
   COLUMN_NAMES.HUB,
 ] as const;
 
+/**
+ * Aliases de cabeçalho: variantes do arquivo real → nome canônico (COLUMN_NAMES).
+ * A planilha de rota única usa alguns cabeçalhos não-canônicos (TASK-RF-003);
+ * normalizamos logo após o parse para todos os consumidores verem o nome canônico.
+ * Só variantes CONHECIDAS são renomeadas → seguro para o multi-rota (já canônico).
+ * Extensível: novos formatos (lançamento nacional) entram aqui.
+ */
+export const COLUMN_ALIASES: Readonly<Record<string, string>> = {
+  Bairro: COLUMN_NAMES.NEIGHBORHOOD,
+  "Zipcode/Postal code": COLUMN_NAMES.ZIPCODE,
+  "Postal code": COLUMN_NAMES.ZIPCODE,
+  "AT ID": COLUMN_NAMES.PLANNED_AT,
+};
+
 // ========================================
 // ICON KEYS
 // ========================================

@@ -301,4 +301,30 @@ describe("processExcelFile", () => {
     expect(result.routes).toBeNull();
     expect(result.error).toContain("Colunas obrigatórias ausentes");
   });
+
+  it("aliases real single-route headers so consumers see canonical columns (RF-003)", async () => {
+    const realRow = {
+      "AT ID": "AT20260515ABC",
+      [COLUMN_NAMES.SEQUENCE]: 1,
+      [COLUMN_NAMES.STOP]: 1,
+      [COLUMN_NAMES.SPX_TN]: "BR123",
+      [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Sao Clemente, 261",
+      Bairro: "Botafogo",
+      [COLUMN_NAMES.CITY]: "Rio de Janeiro",
+      "Zipcode/Postal code": "22270-070",
+      [COLUMN_NAMES.LATITUDE]: -22.9500637,
+      [COLUMN_NAMES.LONGITUDE]: -43.1908188,
+    };
+    mockRead.mockReturnValue({ SheetNames: ["Sheet1"], Sheets: { Sheet1: {} } });
+    mockSheetToJson.mockReturnValue([realRow]);
+
+    const result = await processExcelFile(createMockFile());
+
+    expect(result.isSingleRoute).toBe(true);
+    expect(result.availableCols).toEqual(expect.arrayContaining([COLUMN_NAMES.NEIGHBORHOOD, COLUMN_NAMES.ZIPCODE, COLUMN_NAMES.PLANNED_AT]));
+    const row = result.routes![SINGLE][0];
+    expect(row[COLUMN_NAMES.NEIGHBORHOOD]).toBe("Botafogo");
+    expect(row[COLUMN_NAMES.ZIPCODE]).toBe("22270-070");
+    expect(row[COLUMN_NAMES.PLANNED_AT]).toBe("AT20260515ABC");
+  });
 });

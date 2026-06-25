@@ -14,6 +14,7 @@ import * as XLSX from "xlsx";
 import type { ProcessedResult, RowData, RoutesMap } from "../types";
 import { COLUMN_NAMES, MANDATORY_COLUMNS, OPTIONAL_COLUMNS, UI_LABELS } from "../constants"; // <--- Importando constantes
 import { parseCoordinate, isWithinRioBounds } from "./coordinates";
+import { normalizeColumnKeys } from "./normalizeColumns";
 
 /**
  * Sorts the rows inside each route by the "Sequence" column, in place.
@@ -88,7 +89,9 @@ export const processExcelFile = async (file: File): Promise<ProcessedResult> => 
     const worksheet = workbook.Sheets[firstSheetName];
 
     /** Convert to JSON - empty cells become "" to prevent column shifting */
-    const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" }) as RowData[];
+    const rawData = XLSX.utils.sheet_to_json(worksheet, { defval: "" }) as RowData[];
+    /** Normaliza cabeçalhos variantes → canônicos (TASK-RF-003), p/ a rota única expor bairro/CEP/AT. */
+    const jsonData = normalizeColumnKeys(rawData);
 
     if (!jsonData || jsonData.length === 0) {
       return {

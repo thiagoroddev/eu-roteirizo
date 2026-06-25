@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { inferLocationType } from "../../utils/inferLocationType";
-import { ICON_KEYS, EXCEL_EMPTY_VALUE } from "../../constants";
+import { inferLocationType, resolveLocationType } from "../../utils/inferLocationType";
+import { ICON_KEYS, EXCEL_EMPTY_VALUE, COLUMN_NAMES } from "../../constants";
+import type { RowData } from "../../types";
 
 describe("inferLocationType", () => {
   // ==========================================================================
@@ -118,5 +119,32 @@ describe("inferLocationType", () => {
         expect(inferLocationType("Rua C, 30, vizinho a oficina")).toBe(ICON_KEYS.HOME_CORRECTED);
       });
     });
+  });
+});
+
+describe("resolveLocationType (inferência manda — TASK-RF-016)", () => {
+  const row = (over: Record<string, unknown>): RowData => ({ ...over });
+
+  it("infere mesmo sem a coluna Location Type (conserta a rota única)", () => {
+    expect(resolveLocationType(row({ [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua A, 10, Apt 101" }))).toBe(ICON_KEYS.HOME_CORRECTED);
+    expect(resolveLocationType(row({ [COLUMN_NAMES.DESTINATION_ADDRESS]: "Av Centro, 500, Sala 305" }))).toBe(ICON_KEYS.OFFICE_CORRECTED);
+  });
+
+  it("a inferência sobrepõe a coluna (fonte Shopee não-confiável)", () => {
+    expect(resolveLocationType(row({ [COLUMN_NAMES.LOCATION_TYPE]: "OFFICE", [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua A, 10, Apt 101" }))).toBe(ICON_KEYS.HOME_CORRECTED);
+  });
+
+  it("cai na coluna quando a inferência é indefinida", () => {
+    expect(resolveLocationType(row({ [COLUMN_NAMES.LOCATION_TYPE]: "OFFICE", [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Sem Complemento, 20" }))).toBe(ICON_KEYS.OFFICE);
+    expect(resolveLocationType(row({ [COLUMN_NAMES.LOCATION_TYPE]: "HOME", [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Sem Complemento, 20" }))).toBe(ICON_KEYS.HOME);
+  });
+
+  it("indefinida e sem coluna → INDEFINITE", () => {
+    expect(resolveLocationType(row({ [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Sem Complemento, 20" }))).toBe(ICON_KEYS.INDEFINITE);
+  });
+
+  it("sem endereço → usa a coluna (ou vazio)", () => {
+    expect(resolveLocationType(row({ [COLUMN_NAMES.LOCATION_TYPE]: "OFFICE" }))).toBe(ICON_KEYS.OFFICE);
+    expect(resolveLocationType(row({}))).toBe(EXCEL_EMPTY_VALUE);
   });
 });

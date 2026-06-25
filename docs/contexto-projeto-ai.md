@@ -78,7 +78,7 @@ Não revisar sem ADR explícita:
 - ❌ **Não usa biblioteca de formulários** (react-hook-form/Zod). A única entrada é upload de arquivo.
 - ❌ **i18n não está ativa** — só português hoje, mas a camada `UI_LABELS` permite adicionar idiomas sem tocar componentes (ADR-001).
 - ❌ **Os experimentos `danfojs`** (`__utilidades-back-office__/DanfoTest*.tsx`) **não estão ligados** ao app.
-- ⚠️ **Modo rota única é parcial:** hoje só o mapa (ícones cinza) e a tabela completa funcionam; resumo, ícones por tipo, tooltip, tabela simplificada, Correios e inferência ficam sem dados (cabeçalhos não-canônicos). Correção priorizada em **TASK-RF-003**. Detalhe em `docs/requisitos/funcionais.md` (RF-09/11/12/15/18 🟡). RF-17/Correios não entra nessa correção — será **removido** (ADR-005, TASK-REF-007).
+- ⚠️ **Modo rota única — quase completo:** a **TASK-RF-003** (alias de cabeçalhos) destravou resumo, tooltip, tabela simplificada e inferência (RF-09/12/15/18 → ✅). Resta parcial só o **RF-11** (ícones por tipo): sem a coluna `Location Type`, a classificação é só por inferência do endereço. RF-17/Correios sai do projeto (ADR-005, TASK-REF-007). Detalhe em `docs/requisitos/funcionais.md`.
 - ✅ **É PWA** (instalável, service worker) — ao contrário de muitos visualizadores simples. Os **tiles do mapa** vêm de um Cloudflare Worker (proxy + cache + bloqueio de zoom < 14), versionado em [`infra/cloudflare-tile-worker/`](../infra/cloudflare-tile-worker/).
 
 ## Documentação de Referência

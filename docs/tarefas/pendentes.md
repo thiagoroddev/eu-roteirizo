@@ -22,21 +22,7 @@
 
 > ✅ **TASK-RF-004 concluída** — ver `concluidas/2026-06-22--23h35--TASK-RF-004.md`.
 
-## TASK-RF-003 - Alias de cabeçalhos da rota única (destrava recursos no modo rota única) [PRIORIZADA]
-
-- **Status:** Pendente
-- **Modo:** Standard
-- **Valor:** Crítico
-- **Urgência:** IMEDIATA
-- **Esforço-H/IA:** M/M
-- **Data-hora origem:** 22/06/26 22:28
-- **Dependências:** TASK-RF-002 (concluída)
-- **REQ/ADR/DT:** RF-09/11/12/15/17/18 (hoje 🟡 por causa disto); `draft-roteirizador-a-pe.md` §3
-- **Observações:** **Prioridade subida em 24/06/26** (pedido do humano). Hoje a rota única só mostra o mapa (ícones cinza) + a tabela completa; resumo, ícones por tipo, tooltip, tabela simplificada, Correios e inferência de local **ficam sem dados** porque o arquivo real de rota única usa cabeçalhos diferentes dos canônicos (`Bairro`, `Zipcode/Postal code`, etc.). Fazer **antes** do roteirizador, para a rota única funcionar **full, igual ao multi-rota** — é a fundação do épico.
-
-**Objetivo:** mapear/aliasar os cabeçalhos do arquivo real de rota única para os canônicos (Bairro→Neighborhood, Zipcode/Postal code→Zipcode; expor AT ID/SPX TN), destravando os recursos dependentes de coluna.
-
-**Critérios de aceite:** com um arquivo real de rota única, RF-09/11/12/15/18 funcionam como no multi-rota; o alias é coberto por testes; o caminho multi-rota fica intocado.
+<!-- TASK-RF-003 movida para em-andamento.md (em execução, 25/06/26) -->
 
 ## TASK-BG-005 - Robustecer `parseCoordinate` (decimal real × inteiro escalado)
 
@@ -53,6 +39,22 @@
 **Objetivo:** distinguir decimal real de inteiro escalado em `parseCoordinate`, sem quebrar o formato atual; teste dedicado cobrindo ambos os casos e o de ≠ 7 casas.
 
 **Critérios de aceite:** decimal real (`-22.95`), inteiro escalado (`-229500637`) e decimais de 5/6/8 casas resolvem para a coordenada correta (ou são rejeitados **explicitamente**, não em silêncio); testes por caso; multi-rota e rota única intocados.
+
+## TASK-RF-015 - Sumário/popup adaptam ao modo: ocultar campos inexistentes na rota única
+
+- **Status:** Pendente
+- **Modo:** Standard
+- **Valor:** Importante
+- **Urgência:** IMEDIATA
+- **Esforço-H/IA:** P/M
+- **Data-hora origem:** 25/06/26 11:55
+- **Dependências:** TASK-RF-002 (rota única)
+- **REQ/ADR/DT:** RF-09, RF-12; relaciona com RF-014 (Sumário); **não** cobre ESEDC (é a TASK-REF-007)
+- **Observações:** Decisão do humano (25/06): na **rota única**, as colunas **Shift Time (Turno), Tempo estimado, Distância estimada, Destination Station (Hub)** **não existem** — hoje o Sumário mostra "Sem dados" pra elas (ruído). Esses campos **não devem aparecer** (nem no Sumário, nem no popup) no modo rota única. **Horário comercial permanece** — será **inferido** (feature futura, fora desta tarefa). **ESEDC** sai por completo via TASK-REF-007 (não é escopo daqui).
+
+**Objetivo:** Sumário e popup **mode-aware** — na rota única, ocultar Turno / Tempo estimado / Distância estimada / Hub (estruturalmente ausentes); manter Horário comercial (placeholder até a inferência). Multi-rota inalterado (lá os campos seguem; "Sem dados" quando faltam).
+
+**Critérios de aceite:** na rota única, Turno/Tempo/Distância/Hub não aparecem em lugar nenhum; Horário comercial permanece; multi-rota mostra tudo como hoje; testes do Sumário cobrindo os dois modos.
 
 ## TASK-RF-005 - Motor de roteamento local (port do protótipo → módulo TS) [XG, dividir]
 

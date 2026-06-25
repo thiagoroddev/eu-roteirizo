@@ -16,16 +16,16 @@
 | RF-06 | O sistema ordena as rotas alfanumericamente e as linhas por `Sequence` | SHOULD | ✅ | `utils/excelProcessor.ts` | - |
 | RF-07 | O usuário pode selecionar qual rota visualizar (multi-rota) | MUST | ✅ | `components/RouteSelector.tsx` | TASK-RF-004 |
 | RF-08 | O usuário pode localizar a rota pelo código AT (`Planned AT`) — **multi-rota apenas** | SHOULD | ✅ | `components/RouteSearchByAT.tsx`, `hooks/useRouteSearch.ts` | - |
-| RF-09 | O usuário vê um resumo estatístico da rota selecionada (sem ESEDC após ADR-005) | SHOULD | 🟡 | `components/RouteSummary.tsx`, `hooks/useRouteSummary.ts` | TASK-RF-003, ADR-005 |
+| RF-09 | O usuário vê um resumo estatístico da rota selecionada (sem ESEDC após ADR-005) | SHOULD | ✅ | `components/RouteSummary.tsx`, `hooks/useRouteSummary.ts` | TASK-RF-003, ADR-005 |
 | RF-10 | O usuário visualiza as entregas como marcadores num mapa (Leaflet) | MUST | ✅ | `components/RouteMap.tsx` | - |
-| RF-11 | Os marcadores diferenciam o **tipo de local** por ícone | SHOULD | 🟡 | `utils/mapIcons.ts`, `utils/iconPicker.ts` | TASK-RF-003, ADR-005 |
-| RF-12 | Ao tocar um marcador, o usuário vê os dados da entrega (HTML escapado) | SHOULD | 🟡 | `components/RouteMap.tsx`, `utils/escapeHtml.ts` | TASK-BG-003, TASK-RF-003 |
+| RF-11 | Os marcadores diferenciam o **tipo de local** por ícone (rota única: só inferência — sem coluna `Location Type`) | SHOULD | 🟡 | `utils/mapIcons.ts`, `utils/iconPicker.ts` | ADR-005 |
+| RF-12 | Ao tocar um marcador, o usuário vê os dados da entrega (HTML escapado) | SHOULD | ✅ | `components/RouteMap.tsx`, `utils/escapeHtml.ts` | TASK-BG-003, TASK-RF-003 |
 | RF-13 | O usuário pode abrir o mapa em tela cheia | COULD | ✅ | `components/RouteMap.tsx` | - |
 | RF-14 | O usuário pode ver a rota como tabela completa (todas as colunas) | SHOULD | ✅ | `components/RouteTable.tsx` | - |
-| RF-15 | O usuário pode ver uma tabela simplificada com o **status comercial** do endereço | SHOULD | 🟡 | `components/RouteSimpleTable.tsx` | TASK-RF-003, ADR-005 |
+| RF-15 | O usuário pode ver uma tabela simplificada com o **status comercial** do endereço | SHOULD | ✅ | `components/RouteSimpleTable.tsx` | TASK-RF-003, ADR-005 |
 | RF-16 | Antes do upload, o usuário vê uma tabela-exemplo da estrutura ideal | COULD | ✅ | `components/ExampleTable.tsx`, `constants/exampleData.ts` | - |
 | RF-17 | Informar se os Correios entregam no CEP (ESEDC) — **descartado** | SHOULD | 🚫 | ADR-005 (remove `correiosDelivery.ts` + JSON) | TASK-REF-007 |
-| RF-18 | O sistema infere o tipo de local (comercial/residencial/indistinto) do endereço | SHOULD | 🟡 | `utils/inferLocationType.ts`, `constants/keywords.ts` | TASK-RF-003 |
+| RF-18 | O sistema infere o tipo de local (comercial/residencial/indistinto) do endereço — **para todo romaneio, mesmo com a coluna** `Location Type` (a inferência manda; coluna = fallback) | SHOULD | ✅ | `utils/inferLocationType.ts`, `constants/keywords.ts` | TASK-RF-003, TASK-RF-016 |
 | RF-19 | O app é instalável (PWA) e o shell funciona offline | SHOULD | ✅ | `vite.config.ts` (vite-plugin-pwa), `public/manifest.json` | - |
 | RF-45 | Resolver o bairro pelo CEP quando houver (fallback: coluna Neighborhood) — cobertura **RJ/Ilha do Governador** | SHOULD | 🟡 | `summarizeNeighborhoods` (`utils/formatters.ts`); `data/CEPs-Hub_RJ_Ilha-do-Governador.json` | DT-003 |
 
@@ -33,11 +33,13 @@
 
 - **RF-04:** arquivo **com** `Corridor Cage` → multi-rota; **sem** a coluna → rota única sob o rótulo `UI_LABELS.ROUTE.SINGLE_ROUTE_NAME` ("Minha rota"); o resultado expõe `ProcessedResult.isSingleRoute`.
 - **RF-12:** nenhum valor de célula é injetado como HTML cru no tooltip — tudo passa por `escapeHtml` (sem XSS via endereço/observação).
-- **RF-18:** `Office` vindo da planilha é respeitado; `Home`/vazio dispara inferência pelo complemento do endereço, que pode corrigir para comercial/residencial; sem evidência → "Indistinto".
+- **RF-18:** a inferência pelo complemento do endereço roda **para todo romaneio** (mesmo com a coluna `Location Type`); inferência confiante (comercial/residencial) **manda**; indefinida → cai na coluna, se houver, senão "Indistinto". (Decisão 25/06 — fonte Shopee não-confiável.)
 
-## Limitação Conhecida: Modo Rota Única (recém-implementado)
+## Modo Rota Única — destravado pela TASK-RF-003 (25/06)
 
-> **Validado com o humano (24/06).** O modo **rota única** hoje funciona só parcialmente. Funcionam: o **mapa** (RF-10, mas com **ícones padrão cinza** — sem diferenciação) e a **tabela completa** (RF-14). **Degradam** — dados aparecem como faltando *mesmo existindo na planilha*: **RF-09, RF-11, RF-12, RF-15, RF-18** (marcados 🟡). (RF-17 saiu desta lista — foi **descartado** por ADR-005.) Causa: a planilha de rota única usa **cabeçalhos com nomes diferentes** dos canônicos (ex.: `Bairro`, `Zipcode/Postal code`) e outros pontos ainda não tratados. Correção planejada: **TASK-RF-003** (alias de cabeçalhos) + fluxo dedicado da **TASK-RF-010**. A busca por AT (RF-08) é **multi-rota apenas** (na rota única há uma só rota — não se aplica).
+> A **TASK-RF-003** (alias de cabeçalhos: `Bairro`→Neighborhood, `Zipcode/Postal code`→Zipcode, `AT ID`→Planned AT) liberou os recursos que dependiam de **nome de coluna**: **RF-09** (resumo: AT/bairros), **RF-12** (tooltip: bairro/CEP) e **RF-15** (tabela simplificada) passaram a **✅**; **RF-18** (inferência) sempre rodou pelo endereço. **Resta parcial só o RF-11** (ícones por tipo): a rota única **não traz a coluna `Location Type`**, então a classificação é **só por inferência** do endereço — ícones "indefinidos/cinza" quando o endereço não tem complemento reconhecível (não é problema de header; ver `iconPicker`/`resolveLocationType`). A busca por AT (RF-08) segue **multi-rota apenas**. Validação visual da rota única recomendada ao humano.
+>
+> **Próximos ajustes da rota única:** campos estruturalmente ausentes (Turno, Tempo/Distância estimados, Hub) serão **ocultados** (não "Sem dados") — **TASK-RF-015**; **Horário comercial** fica e será **inferido** (futuro); **ESEDC/Correios** sai por completo — **TASK-REF-007** (ADR-005). **RF-11** (ícones por tipo) só melhora com mais inferência (sem `Location Type` na rota única).
 
 ## Pendente de Validação
 

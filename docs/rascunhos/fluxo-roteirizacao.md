@@ -291,7 +291,7 @@ O roteirizador **nasce dentro do app que já existe**, reaproveitando o máximo.
 
 ### 15.3 Inferências legadas — o que fica e o que sai
 
-- **Comercial (residencial × comercial):** **permanece** (`utils/inferLocationType.ts`, pelo complemento do endereço). Na rota única, **tudo é inferido** (planilha sem a coluna Location Type).
+- **Comercial (residencial × comercial):** **permanece e roda para TODO romaneio** (decisão 25/06, TASK-RF-016) — **mesmo com** a coluna `Location Type` (classificação da Shopee é não-confiável). A inferência pelo complemento do endereço **manda**; a coluna é só fallback quando indefinido. Conserta também a rota única (sem a coluna, antes nem inferia).
 - **Área de risco / ESEDC (Correios):** **removida do projeto inteiro** — ver **ADR-005** (recurso informal, RJ-only, não escala). Some do Sumário, tabela e ícones.
 - **Bairro:** o app **já usa o CEP quando há** (senão, o nome da planilha, que tem erros de digitação tipo "Copacabana"/"Copacabada"). Cobertura **nacional de CEP→bairro é futuro**; o dataset atual já dá conta do escopo atual.
 
