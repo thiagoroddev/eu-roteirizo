@@ -36,6 +36,7 @@
 | TASK-RF-005.1 | Núcleo do grafo + A* tipado e testado (geo/graph/aStar/streets; mão única = aresta ausente) — ADR-002 | [abrir](./2026-06-25--17h09--TASK-RF-005.1.md) |
 | TASK-RF-005.2 | Camada de dados OSM (Overpass → grafo): osm.ts (fetch/timeout/erro→UI), reusa buildGraph — ADR-002, DT-005 | [abrir](./2026-06-25--17h31--TASK-RF-005.2.md) |
 | TASK-RF-005.3 | Cache do grafo + offline (IndexedDB via idb): graphCache.ts (TTL, loadRoadGraph cache→Overpass) — ADR-002 | [abrir](./2026-06-25--17h44--TASK-RF-005.3.md) |
+| TASK-RF-005.4 | A* com min-heap próprio (minHeap.ts; fronteira O(log n), resultado idêntico, 2.7ms/2500 nós) — ADR-002 | [abrir](./2026-06-25--18h02--TASK-RF-005.4.md) |
 
 <!-- Exemplo:
 | TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [abrir](./2026-05-16--20h21--TASK-REF-03.md) |

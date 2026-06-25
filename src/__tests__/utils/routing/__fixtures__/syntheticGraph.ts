@@ -60,3 +60,22 @@ export const squareGraph: RoadGraph = buildGraph(SQUARE_WAYS);
 export const W_VERTICAL = 111.1949; // A↔B and C↔D (0.001° latitude)
 export const W_HORIZONTAL = 102.3706; // A↔C (0.001° longitude @ -22.98)
 export const DETOUR_B_TO_A = 315.9354; // B→D→C→A (2 horizontal + 1 vertical)
+
+/**
+ * An n×n grid of two-way streets (node id = row*n + col), spaced 0.001°.
+ * Used to exercise A* at neighborhood scale (TASK-RF-005.4). The shortest path
+ * from node 0 (NW corner) to n*n-1 (SE corner) is a monotone staircase of
+ * 2*(n-1) edges → 2*n-1 nodes.
+ */
+export const gridGraph = (n: number): RoadGraph => {
+  const ways: OsmElement[] = [];
+  const pt = (r: number, c: number) => ({ lat: -22.98 - r * 0.001, lon: -43.2 + c * 0.001 });
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      const id = r * n + c;
+      if (c < n - 1) ways.push({ type: "way", nodes: [id, id + 1], geometry: [pt(r, c), pt(r, c + 1)], tags: { name: `H${r}` } });
+      if (r < n - 1) ways.push({ type: "way", nodes: [id, id + n], geometry: [pt(r, c), pt(r + 1, c)], tags: { name: `V${c}` } });
+    }
+  }
+  return buildGraph(ways);
+};

@@ -1,21 +1,31 @@
 /**
  * utils/routing/aStar.ts - Shortest path over the directed road graph.
  *
- * A* guided by straight-line distance to the goal (admissible heuristic ⇒ the
- * returned path is optimal). One-way restrictions need no special handling: a
- * forbidden edge simply isn't in the graph, so it is never traversed.
+ * A* guided by straight-line distance to the goal (admissible AND consistent
+ * heuristic ⇒ the returned path is optimal). One-way restrictions need no
+ * special handling: a forbidden edge isn't in the graph, so it's never used.
  *
- * Ported from the prototype (TASK-RF-001). This is the didactic version with a
- * LINEAR frontier scan; a binary min-heap replaces it in TASK-RF-005.4.
+ * The frontier is a binary min-heap (TASK-RF-005.4) — O(log n) push/pop instead
+ * of the original linear scan (TASK-RF-005.1), with identical results. Stale
+ * heap entries (a node re-pushed at a lower priority) are skipped lazily via the
+ * `settled` set; the consistent heuristic guarantees each node is settled once
+ * at its optimal cost.
  */
 
 import type { NodeId, RoadGraph } from "./graph";
 import { haversine } from "./geo";
+import { MinHeap } from "./minHeap";
 
 /** Result of an A* search: the node path (null if unreachable) and total meters. */
 export interface AStarResult {
   path: NodeId[] | null;
   distance: number;
+}
+
+/** A frontier entry: a node and its f-score (g + heuristic). */
+interface Frontier {
+  node: NodeId;
+  priority: number;
 }
 
 /**
@@ -42,26 +52,21 @@ export const aStar = (graph: RoadGraph, startId: NodeId, goalId: NodeId): AStarR
   };
 
   const gScore = new Map<NodeId, number>([[startId, 0]]);
-  const fScore = new Map<NodeId, number>([[startId, heuristic(startId)]]);
   const cameFrom = new Map<NodeId, NodeId>();
-  const open = new Set<NodeId>([startId]);
+  const settled = new Set<NodeId>();
+  const open = new MinHeap<Frontier>((a, b) => a.priority - b.priority);
+  open.push({ node: startId, priority: heuristic(startId) });
 
   while (open.size > 0) {
-    /** Pick the open node with the lowest f-score (linear scan — heap in 005.4). */
-    let current: NodeId | null = null;
-    let bestF = Infinity;
-    for (const id of open) {
-      const f = fScore.get(id) ?? Infinity;
-      if (f < bestF) {
-        bestF = f;
-        current = id;
-      }
-    }
-    if (current === null) break;
+    const current = open.pop();
+    if (!current) break;
+    const node = current.node;
+    /** Lazy deletion: an outdated duplicate of an already-settled node. */
+    if (settled.has(node)) continue;
 
-    if (current === goalId) {
-      const path: NodeId[] = [current];
-      let step: NodeId = current;
+    if (node === goalId) {
+      const path: NodeId[] = [node];
+      let step: NodeId = node;
       while (cameFrom.has(step)) {
         step = cameFrom.get(step) as NodeId;
         path.unshift(step);
@@ -69,14 +74,14 @@ export const aStar = (graph: RoadGraph, startId: NodeId, goalId: NodeId): AStarR
       return { path, distance: gScore.get(goalId) ?? Infinity };
     }
 
-    open.delete(current);
-    for (const edge of adj.get(current) ?? []) {
-      const tentative = (gScore.get(current) ?? Infinity) + edge.weight;
+    settled.add(node);
+    for (const edge of adj.get(node) ?? []) {
+      if (settled.has(edge.to)) continue;
+      const tentative = (gScore.get(node) ?? Infinity) + edge.weight;
       if (tentative < (gScore.get(edge.to) ?? Infinity)) {
-        cameFrom.set(edge.to, current);
+        cameFrom.set(edge.to, node);
         gScore.set(edge.to, tentative);
-        fScore.set(edge.to, tentative + heuristic(edge.to));
-        open.add(edge.to);
+        open.push({ node: edge.to, priority: tentative + heuristic(edge.to) });
       }
     }
   }

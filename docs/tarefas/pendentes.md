@@ -51,10 +51,8 @@
 ### ✅ TASK-RF-005.3 - Cache do grafo + offline (IndexedDB) — CONCLUÍDA (25/06)
 - `src/services/graphCache.ts` (`getCachedGraph`/`putCachedGraph`/`clearGraphCache`/`loadRoadGraph`); TTL 7d + structured clone dos `Map`; deps **`idb`+`fake-indexeddb`** aprovadas/instaladas; +8 testes (`fake-indexeddb`). Ver `concluidas/2026-06-25--17h44--TASK-RF-005.3.md`. **Próxima: 005.4 (A* com heap — sem dependência).**
 
-### TASK-RF-005.4 - A* com fila de prioridade (heap)
-- **Esforço-H/IA:** M/M · **Dep:** 005.1
-- Trocar a varredura linear da fronteira por min-heap (implementação própria, sem lib). Benchmark simples (tempo médio numa rota de Ipanema).
-- **Aceite:** resultado idêntico ao 005.1; tempo aceitável (<~150ms) em bairro inteiro.
+### ✅ TASK-RF-005.4 - A* com fila de prioridade (heap) — CONCLUÍDA (25/06)
+- `src/utils/routing/minHeap.ts` (`MinHeap<T>`) + `aStar.ts` reescrito (fronteira via heap + lazy deletion; resultado idêntico — 7 testes de regressão verdes). Benchmark: 2.7 ms num grid 50×50 (2500 nós). +8 testes. Ver `concluidas/2026-06-25--18h02--TASK-RF-005.4.md`. **Próxima: 005.5 (map matching em aresta — sem dependência).**
 
 ### TASK-RF-005.5 - Map matching em aresta (projeção no segmento)
 - **Esforço-H/IA:** M/G · **Dep:** 005.1
