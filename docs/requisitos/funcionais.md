@@ -49,7 +49,7 @@
 
 | ID | Requisito | Prioridade | Status | Origem | Tarefas / ADR |
 |---|---|:---:|:---:|---|---|
-| RF-20 | Alternar Visualizar/Roteirizar — na **rota única** e numa **rota selecionada de um Romaneio (Multi)** | MUST | 🔭 | fluxo §11; tela 1 | TASK-RF-010 |
+| RF-20 | Toggle no mapa **`Original \| Meu roteiro`** (PNG read-only × SVG editável; padrão Original) — na rota única e numa rota selecionada de Romaneio (Multi). Em **Roteiro importado avulso**, 'Original' fica desativado | MUST | 🔭 | fluxo §11; tela 1 | TASK-RF-010 |
 | RF-21 | Definir o ponto inicial da rota (GPS, toque no mapa ou endereço da planilha) | MUST | 🔭 | fluxo §4/decisão 5; tela 1 | TASK-RF-006.3 |
 | RF-22 | Sugerir o próximo endereço/parada mais próximo (linha tracejada), re-selecionável ao tocar | MUST | 🔭 | fluxo §6; telas 1/3 | TASK-RF-006.3 |
 | RF-23 | Criar parada a partir de um endereço, incluindo automaticamente os que estão dentro do raio | MUST | 🔭 | fluxo §4/§7; tela 3 | TASK-RF-006.4 |
@@ -62,18 +62,21 @@
 | RF-30 | Mostrar a distância a pé pelas ruas até o alvo selecionado (A* por alvo; reta como fallback) | SHOULD | 🔭 | fluxo §6; ADR-002 | TASK-RF-005 |
 | RF-31 | Estimar tempo (a pé na parada + veículo entre paradas); exibir total e próximo trecho | MUST | 🔭 | fluxo §6; tela 5 | TASK-RF-007 |
 | RF-32 | HUD com contadores sempre visíveis (faltando endereços/pacotes, paradas, distância, tempo) | SHOULD | 🔭 | fluxo §7; telas 1/7 | TASK-RF-006.2 |
-| RF-33 | Habilitar "Salvar rota" só quando 0 endereços/pacotes faltando (completude) | MUST | 🔭 | fluxo §4/§12; tela 7 | TASK-RF-006.7 |
+| RF-33 | Salvar é **livre** (rascunho auto-salvo, mesmo incompleto); o botão **'Iniciar roteiro'** (executar) só aparece com **0 faltando** — completude exigida só para executar | MUST | 🔭 | fluxo §12; tela 7 | TASK-RF-006.7 |
 | RF-34 | Auto-roteirizar: montar um rascunho editável (vizinho-mais-próximo + raio) | SHOULD | 🔭 | fluxo §12; telas 1/7 | TASK-RF-012 |
-| RF-35 | Salvar, listar e reabrir **Roteiros** (rotas planejadas) localmente (IndexedDB) | MUST | 🔭 | fluxo §13; tela 8 | TASK-RF-008 |
-| RF-36 | Exportar/importar uma rota como JSON autocontido (passar p/ ajudante, trocar de aparelho) | MUST | 🔭 | fluxo §13; tela 8 | TASK-RF-013 |
-| RF-37 | Executar a rota (uma entrega por vez): Abrir GPS (deep link), Entrega feita, progresso e previsão | MUST | 🔭 | fluxo §14; tela 9 | TASK-RF-009 |
+| RF-35 | Salvar (auto-save de **rascunho**, mesmo incompleto), listar e reabrir **Roteiros** localmente (IndexedDB) | MUST | 🔭 | fluxo §13 | TASK-RF-008 |
+| RF-36 | Exportar/importar um **Roteiro** como JSON autocontido (ajudante/troca de aparelho); o importado vira um **card avulso** na home (abre direto em 'Meu roteiro', sem 'Original') | MUST | 🔭 | fluxo §13; tela 8 | TASK-RF-013 |
+| RF-37 | Executar o Roteiro (uma entrega por vez): Abrir GPS (deep link), **Concluir entrega**, progresso e previsão; durante a execução o Roteiro **não é editável** | MUST | 🔭 | fluxo §14; tela 9 | TASK-RF-009 |
 | RF-38 | App shell mobile-first: header + bottom tabs (Mapa/Rotas) + acesso a Configurações | MUST | 🔭 | ADR-003; fluxo §11; telas 1/8 | TASK-RF-011 |
 | RF-39 | Configurações de Rota (raio, velocidade a pé, tempo/entrega, velocidade veículo) persistidas | SHOULD | 🔭 | fluxo §8; tela 10 | TASK-RF-007 |
 | RF-40 | Legenda do mapa colapsável, espelhando o sistema de ícones | COULD | 🔭 | fluxo §3; tela 11 | TASK-RF-006 |
 | RF-41 | Freemium: anúncio rewarded opt-in a cada importação; premium remove o anúncio | COULD | 🔭 | analise-comercial §10.6 | DT-002 |
 | RF-42 | Assinatura premium via Play Billing (entitlement client-side no MVP) | COULD | 🔭 | analise-comercial §10.4/10.5 | DT-002 |
-| RF-43 | Sumário reaproveitado como **lançador** com botões adaptativos (multi-rota: Ver no Mapa/Tabelas; rota única: +Roteirizar/+Executar) | MUST | 🔭 | fluxo §15.1; ADR-003 | TASK-RF-014 |
-| RF-44 | Tela inicial: instruções em **spoiler** atualizadas (+ bloco rota única "exporte no app oficial") + áreas de **Romaneios (Único/Multi)** e **Roteiros** salvos | SHOULD | 🔭 | fluxo §15.2 | TASK-RF-014 |
+| RF-43 | Sumário ganha uma **seção de resumo do Roteiro** (paradas; distância veículo/a pé/total; tempo veículo/a pé/total) abaixo dos dados brutos, **quando há** roteiro; os 3 botões (Ver no mapa / Tabelas) **não mudam** | SHOULD | 🔭 | fluxo §15.1 | TASK-RF-014 |
+| RF-44 | Tela inicial: instruções em **spoiler** + **uma lista** de salvos com cards **tipados** (Romaneio Único / Romaneio Multi / Roteiro Exportado, por cor/rótulo), mostrando os Roteiros atrelados + **atalho** que abre o mapa já em 'Meu roteiro' | SHOULD | 🔭 | fluxo §15.2; tela 1 | TASK-RF-014 |
 | RF-46 | Salvar os **Romaneios** importados (Único e Multi) para reabrir sem reenviar | SHOULD | 🔭 | fluxo §13/§15.2; tela 1 | TASK-RF-008, TASK-RF-014 |
+| RF-47 | **Pausar/retomar** a execução — 'Pausar rota' salva onde parou e é resumível | MUST | 🔭 | fluxo §14 | TASK-RF-009 |
+| RF-48 | Na execução: **avançar/retroceder** entre as entregas (muda o foco) e **desfazer** a última | SHOULD | 🔭 | fluxo §14 | TASK-RF-009 |
+| RF-49 | Execução em **modo lista** (sem mapa), alternável com o modo mapa | SHOULD | 🔭 | fluxo §14 | TASK-RF-009 |
 
 > **Não-objetivos (registrados para não reaparecerem):** TSP / otimização automática da ordem inteira (só vizinho-mais-próximo — fluxo §6); GPS em tempo real na execução (decisão consciente — draft §8); **re-ancoragem automática por GPS na execução** (a âncora muda só pelo botão "Trocar âncora", e é sempre o 1º ponto — decisão 24/06); botão de contato/telefone do destinatário (não existe — fluxo §14).

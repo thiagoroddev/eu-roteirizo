@@ -44,6 +44,11 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        /** Acento secundário de marca (ciano) — chips/status, uso parcial (ver tema-tailwind.md §2). */
+        accent2: {
+          DEFAULT: "#0dc2d6",
+          foreground: "#00363d",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -51,7 +56,7 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica", "Arial", "sans-serif"],
+        sans: ['"Hanken Grotesk"', "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica", "Arial", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {

@@ -40,6 +40,7 @@ import { RouteMap } from "../components/RouteMap";
 import { RouteTable } from "../components/RouteTable";
 import { RouteSimpleTable } from "../components/RouteSimpleTable";
 import { RouteSearchByAT } from "../components/RouteSearchByAT";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { UI_LABELS } from "../constants/uiLabels";
 
 /**
@@ -175,6 +176,10 @@ function RouteViewer() {
   ====================================================================== */
   return (
     <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col items-center justify-center">
+      {/* Toggle de tema (provisório — ganha lugar definitivo no app shell, RF-011) */}
+      <div className="fixed right-3 top-3 z-50">
+        <ThemeToggle />
+      </div>
       {/* ===== HEADER ===== */}
       <h1 className="text-3xl font-bold text-center mb-4">{UI_LABELS.ROUTE_VIEWER.TITLE}</h1>
 

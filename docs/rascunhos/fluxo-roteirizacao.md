@@ -211,8 +211,8 @@ O toggle **não é** uma aba do menu inferior — vive **dentro da aba Mapa**, c
 
 | Arquivo carregado | O que a aba Mapa mostra |
 |---|---|
-| **Multi-rota** (tem `Corridor Cage`) | Seletor de rotas; **ao escolher uma rota**, toggle **`[Visualizar \| Roteirizar]`** — pode-se montar um **Roteiro** dessa rota (decisão final 24/06/26; antes era "só visualizar"). |
-| **Rota única** (`isSingleRoute`) | Toggle **`[Visualizar \| Roteirizar]`** no topo. Visualizar = read-only; Roteirizar = montar paradas. Ramo da TASK-RF-010. |
+| **Multi-rota** (tem `Corridor Cage`) | Seletor de rotas; **ao escolher uma rota**, toggle **`[Original \| Meu roteiro]`** — pode-se montar um **Roteiro** dessa rota (decisão final 24/06/26; antes era "só visualizar"). |
+| **Rota única** (`isSingleRoute`) | Toggle **`[Original \| Meu roteiro]`** no topo (padrão Original). Original = PNG read-only; Meu roteiro = SVG editável. Ramo da TASK-RF-010. |
 
 - **Execução** não é um terceiro segmento do toggle: é um **fluxo de tela cheia** (§14) lançado por **ação** ("Executar agora", a partir de uma rota salva ou após salvar) — entra-se de propósito, não por alternância.
 
@@ -220,7 +220,7 @@ O toggle **não é** uma aba do menu inferior — vive **dentro da aba Mapa**, c
 
 ## 12. Ciclo da rota: criar → salvar → executar
 
-- **Salvar rota:** botão no topo/HUD do Mapa, **desabilitado até `0 faltando`** (regra de completude, §4 passo 8). Salvar materializa um `PlannedRoute` (vai para a aba **Rotas**), com opção "Executar agora".
+- **Salvar = rascunho auto-salvo** (sem trava de completude): o Roteiro persiste mesmo **incompleto**, para continuar depois (começar do zero é chato). A **completude (`0 faltando`)** é exigida só para **executar** — o botão **'Iniciar roteiro'** só aparece quando completo.
 - **Auto-roteirizar:** botão que monta tudo sozinho — a partir do início, agrupa o vizinho mais próximo + inclui quem está no **raio configurado**, criando paradas até acabar os endereços. **Reusa as funções do modo manual**; gera um **rascunho editável** (não final). É o "automático + ajuste à mão".
 
 ---
@@ -240,8 +240,11 @@ O toggle **não é** uma aba do menu inferior — vive **dentro da aba Mapa**, c
 Tela focada em **uma entrega por vez** (motorista em movimento; botões grandes):
 
 - **Distância até a próxima entrega** + botão **"Abrir GPS"** (deep link Maps/Waze; a pé dentro da parada, veículo entre paradas).
-- Botão **"Entrega feita"** → confirma e **pula o foco para a próxima** automaticamente.
-- **Sem botão de contato:** o app **não** tem contato/telefone do destinatário — essa ação não existe. (Só "Abrir GPS" + "Entrega feita".)
+- Botão **"Concluir entrega"** → confirma e **pula o foco para a próxima** automaticamente; **"Desfazer"** reverte a última.
+- **Avançar / retroceder** entre as entregas muda o foco manualmente.
+- **"Pausar rota"** sai da execução **salvando onde parou** (resumível). Durante a execução o Roteiro **não é editável** (edita-se só fora dela).
+- **Modo lista** (sem mapa), alternável com o modo mapa.
+- **Sem botão de contato:** o app **não** tem contato/telefone do destinatário — essa ação não existe. (Só "Abrir GPS" + "Concluir entrega".)
 - **% concluída** + contagem (ex.: `31/90`).
 - **Previsão de término** (agora + tempo estimado restante).
 - **Ordem da parada na execução:** segue a ordem definida no planejamento (a partir da âncora). **Sem** reordenação por GPS (decisão final 24/06/26).
@@ -269,19 +272,22 @@ O roteirizador **nasce dentro do app que já existe**, reaproveitando o máximo.
 
 **tela inicial → escolher rota → Sumário → "Ver no Mapa" → mapa.** O Roteirizar/Executar partem do Sumário/mapa, não de uma tela nova.
 
-### 15.1 Sumário (card) — reaproveitado, vira "lançador"
+### 15.1 Sumário (card) — ganha uma seção de Roteiro (não é "lançador")
 
 - O **card de Sumário permanece** e **nenhuma info resumida do romaneio sai** (AT, Hub, pacotes, paradas, bairros, etc.). Na rota única, campos ausentes na planilha aparecem como "Sem dados"; pacotes/paradas/cidade seguem calculados.
-- Os **botões do Sumário se adaptam ao modo**:
-  - **Multi-rota:** Ver no Mapa · Tabela Simplificada · Tabela Original · **Roteirizar** (a rota selecionada) · **Executar** (se houver Roteiro salvo). *(Roteirizar no multi-rota: decisão final 24/06/26.)*
-  - **Rota única:** + **Roteirizar** + **Executar** (se já houver Roteiro salvo).
-- Dentro do mapa, **toggle mínimo** Visualizar↔Roteirizar (troca sem voltar ao Sumário). **Executar** é tela cheia (§14), entrada por botão. Decisão registrada.
+- **Os 3 botões não mudam:** Ver no Mapa · Tabela Simplificada · Tabela Original (multi e único iguais). **Roteirizar/Executar não são botões do Sumário.**
+- **Quando há Roteiro**, o Sumário ganha **uma seção nova de resumo do Roteiro** (paradas; distância veículo/a pé/total; tempo veículo/a pé/total), **abaixo** da seção de dados brutos.
+- Roteirizar/Executar entram **dentro do mapa**: toggle **`Original | Meu roteiro`** (padrão Original) + **botão inferior** — 'Iniciar roteirização' (sem roteiro) / 'Iniciar roteiro' (executar, só se completo). 'Ver no Mapa' abre sempre em **Original**; o atalho da home abre em **Meu roteiro**. (Decisão final 24/06/26.)
 
 ### 15.2 Tela inicial
 
 - Mantém **"Enviar romaneio"**.
 - **Instruções viram spoiler** (expande no clique) e são **atualizadas**: as atuais valem só para **multi-rota**; adicionar bloco de **rota única** = "**exporte sua rota no app oficial da empresa e importe aqui**".
-- Adicionar áreas de **romaneios salvos** (não reenviar um já enviado) e **rotas únicas salvas com suas roteirizações** (casa com a aba Rotas / persistência RF-008).
+- **Uma lista de salvos** (não duas), com cards **tipados** distinguidos por cor/rótulo:
+  - **Romaneio Único** · data · "Sem roteiro" **ou** o Roteiro atrelado (atalho).
+  - **Romaneio Multi** · data · os Roteiros atrelados (**1 por rota**), cada um com atalho.
+  - **Roteiro Exportado** (importado avulso) · data — atalho abre direto em **'Meu roteiro'** (sem 'Original').
+  - O atalho de um Roteiro abre o mapa já em **'Meu roteiro'**.
 
 ### 15.3 Inferências legadas — o que fica e o que sai
 

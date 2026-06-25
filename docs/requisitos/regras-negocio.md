@@ -33,10 +33,12 @@
 | RN-11 | Endereços na mesma coordenada (~1 m) são **um ponto** com vários pacotes (= **uma** atribuição) | `utils/routing/points.ts` | 🟡 | fluxo §2/§3 | TASK-RF-004 (feito) |
 | RN-12 | Toda parada tem uma **âncora** (onde o veículo para); ela é **sempre o 1º ponto** da ordem a pé, e trocá-la recalcula a ordem. Base da ida-e-volta a pé e do salto de veículo | a construir | 🔭 | fluxo §6 | TASK-RF-006 |
 | RN-13 | Endereço **nunca some** (é entrega real): desfazer parada → vira livre; remover a âncora → promove o próximo | a construir | 🔭 | fluxo §9 | TASK-RF-006 |
-| RN-14 | **Não se salva** a rota enquanto houver endereço/pacote não atribuído (completude) | a construir | 🔭 | fluxo §4/§12 | TASK-RF-006.7 |
+| RN-14 | **Salvar é livre** (rascunho auto-salvo, mesmo incompleto); a **completude** (0 faltando) é exigida só para **executar** | a construir | 🔭 | fluxo §12 | TASK-RF-006.7 |
 | RN-15 | `Pn/En` é a ordem **nova** da rota; a numeração Shopee (`Stop`/`Sequence`) é preservada como identidade da **etiqueta** | a construir | 🔭 | fluxo §10.1/§14 | TASK-RF-006, TASK-RF-009 |
 | RN-16 | Marcadores no mapa **nunca** carregam texto traduzível — só número (i18n) | a construir | 🔭 | fluxo §3/decisão 6 | TASK-RF-006 |
 | RN-17 | Inclusão manual de endereço na parada **sem trava de distância** (só aviso suave); o raio só agrupa na criação | a construir | 🔭 | fluxo §9 | TASK-RF-006.4 |
 | RN-18 | A pé **ignora** mão única (circuito da parada); o veículo (entre âncoras) **respeita** | a construir | 🔭 | fluxo §6; ADR-002 | TASK-RF-005, TASK-RF-006 |
 | RN-19 | Rotas salvas são **por dispositivo** (IndexedDB, sem nuvem) — consequência do sem-backend | a construir | 🔭 | fluxo §13 | TASK-RF-008 |
 | RN-20 | O ponto inicial vem de GPS/toque/endereço — **nunca** geocoding pago (digitar endereço) | a construir | 🔭 | fluxo decisão 5 | TASK-RF-006.3 |
+| RN-21 | No máximo **1 Roteiro por rota** (single = 1; multi = até 1 por rota). O Roteiro fica **atrelado** ao seu Romaneio — ou **avulso** quando importado sem o romaneio | a construir | 🔭 | fluxo §15; decisão 24/06 | TASK-RF-008 |
+| RN-22 | Durante a **execução** o Roteiro **não é editável**; 'Pausar rota' salva o progresso e libera a edição | a construir | 🔭 | fluxo §14 | TASK-RF-009 |

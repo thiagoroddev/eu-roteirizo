@@ -216,7 +216,7 @@
 - **Data-hora origem:** 22/06/26 22:45
 - **Dependências:** TASK-RF-004, TASK-RF-006, TASK-RF-008
 - **REQ/ADR/DT:** draft §8
-- **Observações:** Sem GPS em tempo real (decisão consciente do draft). Execução manual e guiada.
+- **Observações:** Sem GPS em tempo real nem âncora ao vivo (decisão final 24/06). Execução manual e guiada. **Escopo ampliado (RF-37/47/48/49, RN-22):** pausar/retomar (resumível), concluir/desfazer entrega, avançar/retroceder (muda o foco), modo lista, e Roteiro **não editável** durante a execução. Refinar as subtarefas ao iniciar.
 
 **Objetivo:** percorrer uma rota salva com avanço manual e navegação delegada a Maps/Waze.
 

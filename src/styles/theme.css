@@ -1,73 +1,75 @@
 /**
- * Design tokens — shadcn/ui convention (ADR-004).
+ * Design tokens — shadcn/ui convention (ADR-004 + ADR-006).
  * HSL triplets consumed via hsl(var(--token)) in tailwind.config.js.
- * Brand: laranja Shopee = --primary. `warning` is a project extension (shadcn has no warning).
+ * Identidade "Cyanide Precision": marca ciano #0DC2D6 = --primary (texto escuro no botão).
+ * Claro (:root) para uso ao sol; Escuro (.dark) "Cyanide" para pouca luz. Troca automática por sistema.
+ * `warning` é extensão do projeto. Identidade completa em docs/arquitetura/tema-tailwind.md.
  */
 :root {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 13%;
+  --background: 210 40% 99%;
+  --foreground: 222 47% 11%;
 
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 13%;
+  --card-foreground: 222 47% 11%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 13%;
+  --popover-foreground: 222 47% 11%;
 
-  --primary: 10 85% 55%; /* Laranja Shopee */
-  --primary-foreground: 0 0% 100%;
+  --primary: 186 88% 44%; /* #0DC2D6 ciano (marca) */
+  --primary-foreground: 187 100% 12%; /* texto escuro sobre o ciano */
 
-  --secondary: 0 0% 96%;
-  --secondary-foreground: 0 0% 13%;
+  --secondary: 210 24% 94%;
+  --secondary-foreground: 222 47% 11%;
 
-  --muted: 0 0% 96%;
-  --muted-foreground: 0 0% 45%;
+  --muted: 210 30% 96%;
+  --muted-foreground: 215 16% 40%;
 
-  --accent: 0 0% 96%;
-  --accent-foreground: 0 0% 13%;
+  --accent: 210 24% 94%;
+  --accent-foreground: 222 47% 11%;
 
-  --destructive: 351 85% 55%; /* Vermelho erro */
+  --destructive: 0 75% 42%; /* Vermelho erro */
   --destructive-foreground: 0 0% 100%;
 
   --warning: 45 100% 50%; /* Amarelo aviso (extensão do projeto) */
   --warning-foreground: 0 0% 13%;
 
-  --border: 0 0% 90%;
-  --input: 0 0% 90%;
-  --ring: 10 85% 55%;
+  --border: 214 25% 88%;
+  --input: 214 25% 88%;
+  --ring: 186 88% 44%;
 
-  --radius: 0.5rem;
+  --radius: 1rem; /* Cyanide: arredondado/pill */
 }
 
 .dark,
 [data-theme="dark"] {
-  --background: 0 0% 7%;
-  --foreground: 0 0% 94%;
+  --background: 222 55% 10%; /* #0b1326 slate/navy */
+  --foreground: 226 90% 92%; /* #dae2fd */
 
-  --card: 0 0% 11%;
-  --card-foreground: 0 0% 94%;
+  --card: 223 38% 15%; /* #171f33 */
+  --card-foreground: 226 90% 92%;
 
-  --popover: 0 0% 11%;
-  --popover-foreground: 0 0% 94%;
+  --popover: 223 38% 15%;
+  --popover-foreground: 226 90% 92%;
 
-  --primary: 10 85% 55%;
-  --primary-foreground: 0 0% 100%;
+  --primary: 186 88% 44%; /* #0DC2D6 ciano */
+  --primary-foreground: 187 100% 12%; /* #00363d texto escuro */
 
-  --secondary: 0 0% 11%;
-  --secondary-foreground: 0 0% 94%;
+  --secondary: 222 28% 19%;
+  --secondary-foreground: 226 90% 92%;
 
-  --muted: 0 0% 11%;
-  --muted-foreground: 0 0% 63%;
+  --muted: 222 41% 13%;
+  --muted-foreground: 200 12% 72%;
 
-  --accent: 0 0% 16%;
-  --accent-foreground: 0 0% 94%;
+  --accent: 224 24% 23%;
+  --accent-foreground: 226 90% 92%;
 
-  --destructive: 351 85% 55%;
+  --destructive: 0 75% 55%;
   --destructive-foreground: 0 0% 100%;
 
-  --warning: 45 100% 50%;
+  --warning: 45 100% 55%;
   --warning-foreground: 0 0% 13%;
 
-  --border: 0 0% 20%;
-  --input: 0 0% 20%;
-  --ring: 10 85% 55%;
+  --border: 222 20% 24%;
+  --input: 222 20% 24%;
+  --ring: 186 88% 44%;
 }
