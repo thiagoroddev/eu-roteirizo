@@ -9,9 +9,7 @@ import { MAP_CONFIG, COLUMN_NAMES, UI_LABELS } from "../constants"; // <--- Impo
 
 // Business logic utils
 import { getCommercialDisplayStatus, resolveLocationType } from "../utils/inferLocationType";
-import { getCorreiosDeliveryStatus } from "../utils/correiosDelivery";
 import { pickIconKey } from "../utils/iconPicker";
-import { formatDeliveryLabel } from "../utils/formatters";
 import { escapeHtml } from "../utils/escapeHtml";
 import { Button } from "./ui/button";
 
@@ -128,14 +126,12 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
           .trim()
           .toUpperCase();
 
-        // 3. Get Correios Status (internal key)
         const zip = row[COLUMN_NAMES.ZIPCODE];
-        const correiosStatus = getCorreiosDeliveryStatus(zip);
 
-        // 4. Pick the correct Icon Key
-        const iconKey = pickIconKey(finalType, originalType, correiosStatus);
+        // 3. Pick the correct Icon Key
+        const iconKey = pickIconKey(finalType, originalType);
 
-        // 5. Select the Icon Asset
+        // 4. Select the Icon Asset
         // Fallback to INDEFINITE if key is missing (safety)
         const iconToUse = ICONS[iconKey] || ICONS.INDEFINITE;
 
@@ -144,8 +140,6 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
         // --- TOOLTIP CONSTRUCTION ---
         // Using UI_LABELS.COMMON.NO_DATA to standardize the empty-value text
         const noData = UI_LABELS.COMMON.NO_DATA;
-        // Map internal Correios key to UI label (Portuguese)
-        const correiosLabel = formatDeliveryLabel(correiosStatus);
 
         // All interpolated values are escaped: spreadsheet cells are untrusted and
         // bindTooltip renders this string as HTML (injection / XSS vector otherwise).
@@ -156,8 +150,7 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
             <strong>${tip.ADDRESS}</strong> ${escapeHtml(row[COLUMN_NAMES.DESTINATION_ADDRESS] || noData)}<br/>
             <strong>${tip.NEIGHBORHOOD}</strong> ${escapeHtml(row[COLUMN_NAMES.NEIGHBORHOOD] || noData)}<br/>
             <strong>${tip.ZIPCODE}</strong> ${escapeHtml(zip || noData)}<br/>
-            <strong>${tip.COMMERCIAL}</strong> ${escapeHtml(getCommercialDisplayStatus(row))}<br/>
-            <strong>${tip.CORREIOS}</strong> ${escapeHtml(correiosLabel)}
+            <strong>${tip.COMMERCIAL}</strong> ${escapeHtml(getCommercialDisplayStatus(finalType))}
           </div>
         `;
 

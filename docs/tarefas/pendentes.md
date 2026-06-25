@@ -40,21 +40,7 @@
 
 **Critérios de aceite:** decimal real (`-22.95`), inteiro escalado (`-229500637`) e decimais de 5/6/8 casas resolvem para a coordenada correta (ou são rejeitados **explicitamente**, não em silêncio); testes por caso; multi-rota e rota única intocados.
 
-## TASK-RF-015 - Sumário/popup adaptam ao modo: ocultar campos inexistentes na rota única
-
-- **Status:** Pendente
-- **Modo:** Standard
-- **Valor:** Importante
-- **Urgência:** IMEDIATA
-- **Esforço-H/IA:** P/M
-- **Data-hora origem:** 25/06/26 11:55
-- **Dependências:** TASK-RF-002 (rota única)
-- **REQ/ADR/DT:** RF-09, RF-12; relaciona com RF-014 (Sumário); **não** cobre ESEDC (é a TASK-REF-007)
-- **Observações:** Decisão do humano (25/06): na **rota única**, as colunas **Shift Time (Turno), Tempo estimado, Distância estimada, Destination Station (Hub)** **não existem** — hoje o Sumário mostra "Sem dados" pra elas (ruído). Esses campos **não devem aparecer** (nem no Sumário, nem no popup) no modo rota única. **Horário comercial permanece** — será **inferido** (feature futura, fora desta tarefa). **ESEDC** sai por completo via TASK-REF-007 (não é escopo daqui).
-
-**Objetivo:** Sumário e popup **mode-aware** — na rota única, ocultar Turno / Tempo estimado / Distância estimada / Hub (estruturalmente ausentes); manter Horário comercial (placeholder até a inferência). Multi-rota inalterado (lá os campos seguem; "Sem dados" quando faltam).
-
-**Critérios de aceite:** na rota única, Turno/Tempo/Distância/Hub não aparecem em lugar nenhum; Horário comercial permanece; multi-rota mostra tudo como hoje; testes do Sumário cobrindo os dois modos.
+> ✅ **TASK-RF-015, TASK-RF-017, TASK-RF-018 e TASK-REF-007 concluídas** (25/06, lote da rota única) — ver `concluidas/2026-06-25--14h09--*`.
 
 ## TASK-RF-005 - Motor de roteamento local (port do protótipo → módulo TS) [XG, dividir]
 
@@ -390,7 +376,6 @@
 
 | TASK-CHORE-002 | Rodar a suíte completa (`npm run test`) em ambiente estável (Windows/CI) e registrar o verde | Light | Importante | Normal | P/P | - | TASK-RF-002 | [ ] | 22/06/26 22:28 |
 | TASK-DOC-003 | Sincronizar `contexto-projeto-ai.md`: deixa de ser "SPA de página única sem router" (ADR-003) | Standard | Importante | Normal | P/P | TASK-RF-011 | ADR-003 | [ ] | 22/06/26 23:50 |
-| TASK-REF-007 | Remover inferência de área de risco / ESEDC (Correios): código, dados, UI, labels + sync contexto | Standard | Importante | Normal | M/M | - | ADR-005 | [ ] | 22/06/26 23:55 |
 | TASK-TEST-002 | Testar o zoom do mapa e definir o limite mínimo ideal (detalhe de rua p/ roteirizar a pé); alinhar `MAP_CONFIG.ZOOM.MIN` com o bloqueio do tile worker (hoje z<14) | Standard | Importante | Normal | P/M | - | RNF-12, RNF-15 | [ ] | 24/06/26 14:50 |
 
 

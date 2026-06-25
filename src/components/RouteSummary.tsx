@@ -14,6 +14,7 @@ interface Props {
   onShowTable: () => void; // Opens original table modal
   onShowSimpleTable: () => void; // Opens simplified table modal
   mapAvailable: boolean; // True if route has lat/lng coordinates
+  isSingleRoute?: boolean; // Single-route mode: hide multi-route-only fields (Shift/ETA/Distance/Hub)
 }
 
 /**=====================================================================================================================
@@ -37,9 +38,9 @@ interface Props {
  */
 
 /** */
-export const RouteSummary: React.FC<Props> = ({ rows, availableCols, selectedRoute, vehicleType, onViewMap, onShowTable, onShowSimpleTable, mapAvailable }) => {
+export const RouteSummary: React.FC<Props> = ({ rows, availableCols, selectedRoute, vehicleType, onViewMap, onShowTable, onShowSimpleTable, mapAvailable, isSingleRoute = false }) => {
   // Obtains all statistics using custom hook
-  const { totalPacks, lastStop, time, distance, city, at, commerceCount, neighborhoods, correiosDeliveryCount, shiftTime, dateRaw, hub } = useRouteSummary(rows, availableCols);
+  const { totalPacks, lastStop, time, distance, city, at, commerceCount, neighborhoods, shiftTime, dateRaw, hub } = useRouteSummary(rows, availableCols);
 
   return (
     <Card className="mb-6 overflow-hidden">
@@ -57,22 +58,25 @@ export const RouteSummary: React.FC<Props> = ({ rows, availableCols, selectedRou
             <li>
               <strong>{UI_LABELS.ROUTE_SUMMARY.AT}</strong> {at}
             </li>
-            <li>
-              <strong>{UI_LABELS.ROUTE_SUMMARY.HUB}</strong> {hub}
-            </li>
+            {/* Hub: coluna inexistente na rota única (RF-015) */}
+            {!isSingleRoute && (
+              <li>
+                <strong>{UI_LABELS.ROUTE_SUMMARY.HUB}</strong> {hub}
+              </li>
+            )}
             <li>
               <strong>{UI_LABELS.ROUTE_SUMMARY.DATE_AT}</strong> {dateRaw}
             </li>
-            <li>
-              <strong>{UI_LABELS.ROUTE_SUMMARY.SHIFT}</strong> {shiftTime}
-            </li>
+            {/* Turno (Shift Time): coluna inexistente na rota única (RF-015) */}
+            {!isSingleRoute && (
+              <li>
+                <strong>{UI_LABELS.ROUTE_SUMMARY.SHIFT}</strong> {shiftTime}
+              </li>
+            )}
 
             <li title={UI_LABELS.ROUTE_SUMMARY.COMMERCIAL_TIME_TOOLTIP} className="flex items-center gap-1">
               <strong className="flex items-center gap-1">{UI_LABELS.ROUTE_SUMMARY.COMMERCIAL_TIME}:</strong>
               {commerceCount}
-            </li>
-            <li title={UI_LABELS.ROUTE_SUMMARY.CORREIOS_NO_ENTRY_TOOLTIP} className="flex items-center gap-1">
-              <strong>{UI_LABELS.ROUTE_SUMMARY.CORREIOS_NO_ENTRY}</strong> {correiosDeliveryCount}
             </li>
           </ul>
         </div>
@@ -87,13 +91,18 @@ export const RouteSummary: React.FC<Props> = ({ rows, availableCols, selectedRou
             <li>
               <strong>{UI_LABELS.ROUTE_SUMMARY.STOPS}</strong> {lastStop}
             </li>
-            <li>
-              <strong>{UI_LABELS.ROUTE_SUMMARY.ESTIMATED_TIME}</strong> {time}
-            </li>
+            {/* Tempo/Distância estimados: colunas inexistentes na rota única (RF-015) */}
+            {!isSingleRoute && (
+              <li>
+                <strong>{UI_LABELS.ROUTE_SUMMARY.ESTIMATED_TIME}</strong> {time}
+              </li>
+            )}
 
-            <li>
-              <strong>{UI_LABELS.ROUTE_SUMMARY.ESTIMATED_DISTANCE}</strong> {distance}
-            </li>
+            {!isSingleRoute && (
+              <li>
+                <strong>{UI_LABELS.ROUTE_SUMMARY.ESTIMATED_DISTANCE}</strong> {distance}
+              </li>
+            )}
 
             <li>
               <strong>{UI_LABELS.ROUTE_SUMMARY.NEIGHBORHOODS}</strong> {neighborhoods}

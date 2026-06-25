@@ -45,7 +45,6 @@ export const UI_LABELS = {
       NEIGHBORHOOD: "Bairro:",
       ZIPCODE: "CEP:",
       COMMERCIAL: "Horário comercial?",
-      CORREIOS: "Correios entrega aqui?",
     },
   },
   ROUTE_TABLE: {
@@ -64,8 +63,6 @@ export const UI_LABELS = {
     SHIFT: "Turno:",
     COMMERCIAL_TIME: "Horário comercial",
     COMMERCIAL_TIME_TOOLTIP: "Definido por dedução (análise do complemento do endereço), pode conter erros.",
-    CORREIOS_NO_ENTRY: "ESEDC:",
-    CORREIOS_NO_ENTRY_TOOLTIP: "Endereços sem entrega domiciliar dos Correios.",
     PACKAGES: "Pacotes:",
     STOPS: "Paradas:",
     ESTIMATED_TIME: "Tempo estimado:",
@@ -87,10 +84,8 @@ export const UI_LABELS = {
     NEIGHBORHOOD: "Bairro",
     ZIPCODE: "CEP",
     LOCATION_TYPE: "Horário Comercial?",
-    CORREIOS_DELIVERY: "Correios Entrega?",
     TITLE: (route: string) => `Romaneio Simplificado: ${route}`,
     LOCATION_TYPE_TOOLTIP: "Detectado automaticamente. Pode conter erros.",
-    CORREIOS_DELIVERY_TOOLTIP: "Possui entrega domiciliar dos Correios?",
   },
   ERRORS: {
     INVALID_FILE: "Arquivo inválido. Use XLSX ou CSV.",

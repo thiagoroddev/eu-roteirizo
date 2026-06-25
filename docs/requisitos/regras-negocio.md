@@ -15,13 +15,13 @@
 | RN-05 | No multi-rota, o identificador de rota deve casar `^[A-Z]+-\d+(?:NS)?$`; linha com valor inválido/vazio é ignorada (e contada) | `validPattern` no agrupamento | ✅ | `utils/excelProcessor.ts` | - |
 | RN-06 | Linha sem coordenada plotável é descartada (e contada) — nos dois modos | `buildSingleRoute` + reduce do multi-rota | ✅ | `utils/excelProcessor.ts` | - |
 | RN-07 | Tipo de local: a **inferência pelo complemento do endereço roda para todo romaneio** (decisão 25/06) — **mesmo com** a coluna `Location Type` (fonte Shopee não-confiável). A inferência **manda**; a coluna é só **fallback** quando a inferência fica indefinida | `resolveLocationType` | ✅ | `utils/inferLocationType.ts` | TASK-RF-016 |
-| RN-08 | Status dos Correios por CEP de 8 dígitos (ESEDC) — **descartado** | — | 🚫 | ADR-005 (remove `correiosDelivery.ts`) | TASK-REF-007 |
+| RN-08 | Status dos Correios por CEP de 8 dígitos (ESEDC) — **removido** | — (código deletado) | 🚫 | ADR-005 (removidos `correiosDelivery.ts`, JSON, ícones, labels) | TASK-REF-007 ✅ |
 | RN-09 | Célula vazia, ausente ou inválida converge para o sentinela único "Sem dados" na apresentação | `presentStatus` + `DATA_STATUS` | ✅ | `constants/index.ts` | - |
 
 ## Pendente de Validação
 
 - **RN-05** (validado em 24/06): `NS` é a única variação; nunca aparece na prática, mas é informal e pode ser inserido manualmente — o código já o aceita.
-- **RN-08** descartado em 24/06/26 (ADR-005): a inferência ESEDC/Correios sai do projeto inteiro (código na TASK-REF-007).
+- **RN-08** removida em 25/06/26 via **TASK-REF-007** (ADR-005): ESEDC/Correios saiu do projeto inteiro — `correiosDelivery.ts`, JSON de CEPs, ícones with-correios, labels e tipos deletados.
 
 ## Planejados (🔭) — Roteirizador a pé
 

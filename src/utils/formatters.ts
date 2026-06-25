@@ -10,8 +10,7 @@ const zipcodeMapNeighborhood = new Map(Object.entries(zipcodeDataNeighborhood));
 
 import type { RowData } from "../types";
 import zipcodeDataNeighborhood from "../data/CEPs-Hub_RJ_Ilha-do-Governador.json";
-import { getCorreiosDeliveryStatus } from "./correiosDelivery"; // .ts extension not needed in import
-import { COLUMN_NAMES, DELIVERY_KEYS, UI_LABELS, DATA_STATUS, presentStatus, type DataStatus } from "../constants";
+import { COLUMN_NAMES, DATA_STATUS, presentStatus, type DataStatus } from "../constants";
 import { safeGetFirst } from "./safeGetData"; // .ts extension not needed
 import { safeGetLast } from "./safeGetData";
 
@@ -327,48 +326,6 @@ export function getVehicleType(rows: RowData[], availableCols: string[] | null |
 
   /** Apply Title Case */
   return toTitleCase(String(rawValue));
-}
-
-/**
- * Counts restricted zipcodes (Correios status "NO")
- *
- * @param {RowData[]} rows - Array of delivery rows
- * @param {string[] | null} availableCols - Available columns in the data
- * @returns {string} Count of restricted zipcodes as string
- */
-export function countRestrictedZipcodes(rows: RowData[], availableCols: string[] | null): string {
-  if (!availableCols?.includes(COLUMN_NAMES.ZIPCODE)) {
-    return presentStatus(DATA_STATUS.MISSING);
-  }
-
-  let restrictedCount = 0;
-
-  for (const row of rows) {
-    const rawStatus = row[COLUMN_NAMES.ZIPCODE];
-    if (!rawStatus) continue;
-
-    const statusStr = String(rawStatus).trim();
-    const normalizedStatus = getCorreiosDeliveryStatus(statusStr);
-
-    if (normalizedStatus === DELIVERY_KEYS.NO) {
-      restrictedCount++;
-    }
-  }
-
-  return String(restrictedCount);
-}
-
-/**
- * Map internal DELIVERY_KEYS status to UI label (Portuguese) or NO_DATA sentinel.
- * Centralizes formatting so components don't duplicate the mapping logic.
- *
- * @param {typeof DELIVERY_KEYS.YES | typeof DELIVERY_KEYS.NO | undefined} status - The delivery status
- * @returns {string} Formatted UI label
- */
-export function formatDeliveryLabel(status: typeof DELIVERY_KEYS.YES | typeof DELIVERY_KEYS.NO | undefined): string {
-  if (status === DELIVERY_KEYS.YES) return UI_LABELS.COMMON.YES;
-  if (status === DELIVERY_KEYS.NO) return UI_LABELS.COMMON.NO;
-  return presentStatus(DATA_STATUS.MISSING);
 }
 
 // ===========================================================================================

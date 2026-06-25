@@ -33,6 +33,7 @@ const uploaderState = {
     COLUMN_NAMES.PLANNED_VEHICLE_TYPE,
   ] as string[],
   missingCols: [] as string[],
+  isSingleRoute: false,
   handleFileUpload: vi.fn(),
 };
 

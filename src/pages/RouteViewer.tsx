@@ -86,7 +86,7 @@ function RouteViewer() {
    * - Route extraction and organization
    * - Error handling
    */
-  const { routes, loading, error, availableCols, missingCols, handleFileUpload } = useRouteUploader();
+  const { routes, loading, error, availableCols, missingCols, isSingleRoute, handleFileUpload } = useRouteUploader();
 
   /**
    * HOOK 2: Route Search by AT Code
@@ -220,6 +220,7 @@ function RouteViewer() {
                 availableCols={availableCols}
                 selectedRoute={selectedRoute}
                 vehicleType={vehicleType}
+                isSingleRoute={isSingleRoute}
                 /** Open map modal */
                 onViewMap={() => setIsMapFullScreen(true)}
                 /** Open detailed table modal */

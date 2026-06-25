@@ -59,6 +59,9 @@ export function useRouteUploader(): RouteUploaderReturn {
   /** Required columns that are missing from the file */
   const [missingCols, setMissingCols] = useState<string[]>([]);
 
+  /** True when the loaded file is a single delivery route (no "Corridor Cage") */
+  const [isSingleRoute, setIsSingleRoute] = useState(false);
+
   /**
    * ============================================================================
    * FILE UPLOAD HANDLER
@@ -117,6 +120,7 @@ export function useRouteUploader(): RouteUploaderReturn {
       setRoutes(result.routes);
       setAvailableCols(result.availableCols);
       setMissingCols(result.missingCols);
+      setIsSingleRoute(!!result.isSingleRoute);
     }
 
     /** Turn off loading spinner */
@@ -136,6 +140,7 @@ export function useRouteUploader(): RouteUploaderReturn {
     error,
     availableCols,
     missingCols,
+    isSingleRoute,
     handleFileUpload,
   };
 }

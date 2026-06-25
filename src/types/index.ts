@@ -53,25 +53,6 @@ export interface IconConfig {
 }
 
 /**
- * Represents a single entry from the 'risco_correios.json' dataset.
- * Defines the structure of the static data used to check home delivery availability.
- * The property names here MUST match exactly the keys in your JSON file.
- */
-export interface CorreiosEntry {
-  /** 8-digit postal code (CEP) */
-  zipcode: string;
-
-  /** Delivery status flag: "S" (Yes) or "N" (No) */
-  homeDelivery: "Yes" | "No";
-
-  /** Descriptive message provided by Correios regarding the restriction */
-  message: string;
-
-  /** Timestamp of when this data was collected/scraped */
-  date: string;
-}
-
-/**
  * Keys used to look up prepared Leaflet icons.
  * Centralizing the IconKey type here makes it available across the app.
  */

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatDeliveryLabel, formatDistance, formatDeliveryTime, normalizeString, toTitleCase, getDate, getTotalPacks, getNumberOfStops } from "../../utils/formatters";
+import { formatDistance, formatDeliveryTime, normalizeString, toTitleCase, getDate, getTotalPacks, getNumberOfStops } from "../../utils/formatters";
 // =============================================================================
 // 7. LAST STOP TESTS (getNumberOfStops)
 // =============================================================================
@@ -73,43 +73,7 @@ describe("getDate", () => {
     expect(getDate(row("", "INVALIDCODE"), availOnlyAT)).toBe("Sem dados");
   });
 });
-import { COLUMN_NAMES, DELIVERY_KEYS, UI_LABELS } from "../../constants";
-
-// =============================================================================
-// 1. DELIVERY STATUS TESTS
-// =============================================================================
-describe("formatDeliveryLabel", () => {
-  describe("Valid Inputs", () => {
-    it("maps YES to UI_LABELS.COMMON.YES ('Sim')", () => {
-      expect(formatDeliveryLabel(DELIVERY_KEYS.YES)).toBe(UI_LABELS.COMMON.YES);
-    });
-
-    it("maps NO to UI_LABELS.COMMON.NO ('Não')", () => {
-      expect(formatDeliveryLabel(DELIVERY_KEYS.NO)).toBe(UI_LABELS.COMMON.NO);
-    });
-  });
-
-  describe("Edge Cases & Invalid Inputs", () => {
-    it("maps undefined to NO_DATA message", () => {
-      expect(formatDeliveryLabel(undefined)).toBe(UI_LABELS.COMMON.NO_DATA);
-    });
-
-    it("maps null to NO_DATA message", () => {
-      // @ts-expect-error: Testing runtime safety for null
-      expect(formatDeliveryLabel(null)).toBe(UI_LABELS.COMMON.NO_DATA);
-    });
-
-    it("maps empty string to NO_DATA message", () => {
-      // @ts-expect-error: Testing runtime safety for empty string
-      expect(formatDeliveryLabel("")).toBe(UI_LABELS.COMMON.NO_DATA);
-    });
-
-    it("maps unknown values to NO_DATA message (fallback)", () => {
-      // @ts-expect-error: Testing runtime safety for invalid enum values
-      expect(formatDeliveryLabel("MAYBE")).toBe(UI_LABELS.COMMON.NO_DATA);
-    });
-  });
-});
+import { COLUMN_NAMES, UI_LABELS } from "../../constants";
 
 // =============================================================================
 // 2. DISTANCE FORMATTING TESTS

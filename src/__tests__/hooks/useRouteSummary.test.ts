@@ -33,16 +33,6 @@ vi.mock("../../data/CEPs-Hub_RJ_Ilha-do-Governador.json", () => ({
   },
 }));
 
-// Mock Correios delivery status logic to avoid external dependencies
-vi.mock("../../utils/correiosDelivery", () => ({
-  getCorreiosDeliveryStatus: vi.fn((zipcode) => {
-    if (zipcode === "22041-001") return "YES";
-    if (zipcode === "22041-002") return "YES";
-    if (zipcode === "22410-001") return "YES";
-    return "NO";
-  }),
-}));
-
 // =============================================================================
 // 2. TEST FIXTURES (Fake Data)
 // =============================================================================
@@ -130,7 +120,6 @@ describe("useRouteSummary Hook", () => {
     // Complex Logic Integration (Inference & Counting)
     expect(result.current.commerceCount).toBe("1"); // 1 address with "Loja"
     expect(result.current.neighborhoods).toBe("Copacabana: 2, Ipanema: 1"); // Via Mocked CEPs
-    expect(result.current.correiosDeliveryCount).toBe("0"); // All "YES" in mock
   });
 
   // ==========================================================================

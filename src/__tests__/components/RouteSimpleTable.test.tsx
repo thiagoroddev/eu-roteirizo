@@ -50,7 +50,6 @@ describe("RouteSimpleTable", () => {
     expect(screen.getByRole("columnheader", { name: UI_LABELS.ROUTE_SIMPLE_TABLE.NEIGHBORHOOD })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: UI_LABELS.ROUTE_SIMPLE_TABLE.ZIPCODE })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: UI_LABELS.ROUTE_SIMPLE_TABLE.LOCATION_TYPE })).toBeInTheDocument();
-    expect(screen.getByRole("columnheader", { name: UI_LABELS.ROUTE_SIMPLE_TABLE.CORREIOS_DELIVERY })).toBeInTheDocument();
   });
 
   it("renders the correct colors for 'Yes' badges (yellow)", () => {

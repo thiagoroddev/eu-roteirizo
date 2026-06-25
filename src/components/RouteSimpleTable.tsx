@@ -3,8 +3,6 @@ import type { RowData } from "../types";
 import { COLUMN_NAMES } from "../constants";
 import { UI_LABELS } from "../constants/uiLabels";
 import { getCommercialDisplayStatus, resolveLocationType } from "../utils/inferLocationType";
-import { getCorreiosDeliveryStatus } from "../utils/correiosDelivery";
-import { formatDeliveryLabel } from "../utils/formatters";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "./ui/dialog";
 
@@ -40,9 +38,6 @@ interface ColumnDef {
   label: string;
 }
 
-// Internal constant for the virtual column key (not present in Excel)
-const VIRTUAL_COLUMN_DELIVERY_CORREIOS = "DeliveryStatusCorreios";
-
 // ========================================
 // HELPER FUNCTIONS (extracted for cleaner component)
 // ========================================
@@ -55,18 +50,6 @@ const getCommercialBadgeClasses = (status: string): string => {
     case UI_LABELS.COMMON.NO:
       return "bg-blue-200 text-blue-900";
     case UI_LABELS.COMMON.INDISTINCT:
-    default:
-      return "bg-slate-200 text-slate-700";
-  }
-};
-
-/** Returns CSS classes for Correios delivery badges */
-const getCorreiosBadgeClasses = (status: string): string => {
-  switch (status) {
-    case UI_LABELS.COMMON.YES:
-      return "bg-green-200 text-green-900";
-    case UI_LABELS.COMMON.NO:
-      return "bg-red-200 text-red-900";
     default:
       return "bg-slate-200 text-slate-700";
   }
@@ -86,20 +69,11 @@ const renderCommercialStatus = (row: RowData): JSX.Element => {
   return <Badge label={displayLabel} colorClasses={getCommercialBadgeClasses(displayLabel)} />;
 };
 
-/** Renders Correios delivery status cell */
-const renderCorreiosStatus = (row: RowData): JSX.Element => {
-  const status = getCorreiosDeliveryStatus(row[COLUMN_NAMES.ZIPCODE]);
-  const displayLabel = formatDeliveryLabel(status);
-  return <Badge label={displayLabel} colorClasses={getCorreiosBadgeClasses(displayLabel)} />;
-};
-
 /** Main cell content renderer - switches based on column type */
 const renderCellContent = (colKey: string, row: RowData): React.ReactNode => {
   switch (colKey) {
     case COLUMN_NAMES.LOCATION_TYPE:
       return renderCommercialStatus(row);
-    case VIRTUAL_COLUMN_DELIVERY_CORREIOS:
-      return renderCorreiosStatus(row);
     default:
       return String(row[colKey] || UI_LABELS.COMMON.NO_DATA);
   }
@@ -116,14 +90,12 @@ const COLUMNS: ColumnDef[] = [
   { key: COLUMN_NAMES.DESTINATION_ADDRESS, label: UI_LABELS.ROUTE_SIMPLE_TABLE.ADDRESS },
   { key: COLUMN_NAMES.NEIGHBORHOOD, label: UI_LABELS.ROUTE_SIMPLE_TABLE.NEIGHBORHOOD },
   { key: COLUMN_NAMES.LOCATION_TYPE, label: UI_LABELS.ROUTE_SIMPLE_TABLE.LOCATION_TYPE },
-  { key: VIRTUAL_COLUMN_DELIVERY_CORREIOS, label: UI_LABELS.ROUTE_SIMPLE_TABLE.CORREIOS_DELIVERY },
   { key: COLUMN_NAMES.ZIPCODE, label: UI_LABELS.ROUTE_SIMPLE_TABLE.ZIPCODE },
 ];
 
 /** Returns tooltip text for a column */
 const getColumnTooltip = (colKey: string): string | undefined => {
   if (colKey === COLUMN_NAMES.LOCATION_TYPE) return UI_LABELS.ROUTE_SIMPLE_TABLE.LOCATION_TYPE_TOOLTIP;
-  if (colKey === VIRTUAL_COLUMN_DELIVERY_CORREIOS) return UI_LABELS.ROUTE_SIMPLE_TABLE.CORREIOS_DELIVERY_TOOLTIP;
   return undefined;
 };
 

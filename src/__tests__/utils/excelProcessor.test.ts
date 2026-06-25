@@ -327,4 +327,28 @@ describe("processExcelFile", () => {
     expect(row[COLUMN_NAMES.ZIPCODE]).toBe("22270-070");
     expect(row[COLUMN_NAMES.PLANNED_AT]).toBe("AT20260515ABC");
   });
+
+  // ==========================================================================
+  // 6. SINGLE-ROUTE: no "missing optional columns" warning (TASK-RF-018)
+  // ==========================================================================
+
+  it("does not report missing optional columns in single-route mode (RF-018)", async () => {
+    // Single-route rows omit the multi-route optional columns; they don't apply here.
+    const mockData = [createSingleRow(), createSingleRow({ [COLUMN_NAMES.SEQUENCE]: 2 })];
+    mockRead.mockReturnValue({ SheetNames: ["Sheet1"], Sheets: { Sheet1: {} } });
+    mockSheetToJson.mockReturnValue(mockData);
+    const result = await processExcelFile(createMockFile());
+    expect(result.isSingleRoute).toBe(true);
+    expect(result.missingCols).toEqual([]);
+  });
+
+  it("still reports missing optional columns in multi-route mode", async () => {
+    // Multi-route row missing many optional columns → warning still computed.
+    const mockData = [createExcelRow({ [COLUMN_NAMES.CORRIDOR_CAGE]: "A-1" })];
+    mockRead.mockReturnValue({ SheetNames: ["Sheet1"], Sheets: { Sheet1: {} } });
+    mockSheetToJson.mockReturnValue(mockData);
+    const result = await processExcelFile(createMockFile());
+    expect(result.isSingleRoute).toBe(false);
+    expect(result.missingCols.length).toBeGreaterThan(0);
+  });
 });

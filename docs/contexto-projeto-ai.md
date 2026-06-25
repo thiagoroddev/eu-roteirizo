@@ -1,6 +1,6 @@
 # Contexto do Projeto: Roteirizador (Pré-Rota)
 
-> PWA que lê um romaneio de entregas (XLSX/CSV) — em modo **multi-rota** (agrupado por `Corridor Cage`) ou **rota única** (planilha sem essa coluna) — e visualiza as rotas num mapa Leaflet + tabelas, com seleção de rota, busca por código AT, resumo estatístico, status de entrega dos Correios e inferência de tipo de local (comercial/residencial).
+> PWA que lê um romaneio de entregas (XLSX/CSV) — em modo **multi-rota** (agrupado por `Corridor Cage`) ou **rota única** (planilha sem essa coluna) — e visualiza as rotas num mapa Leaflet + tabelas, com seleção de rota, busca por código AT, resumo estatístico e inferência de tipo de local (comercial/residencial).
 > Web app (PWA instalável), client-side, foco em desktop com adaptação mobile.
 
 ## ⚙️ Nota de Origem
@@ -35,10 +35,10 @@ src/
 ├── components/   # componentes (sem subpasta ui/ genérica)
 ├── pages/        # RouteViewer (única página, orquestra o fluxo)
 ├── hooks/        # useRouteUploader, useRouteSearch, useRouteSummary
-├── utils/        # ❗ lógica pura/serviços (no lugar de services/): excelProcessor, correiosDelivery, formatters, inferLocationType, coordinates, escapeHtml, validators, map, mapIcons, iconPicker, safeGetData
+├── utils/        # ❗ lógica pura/serviços (no lugar de services/): excelProcessor, formatters, inferLocationType, coordinates, escapeHtml, validators, map, mapIcons, iconPicker, safeGetData
 ├── constants/    # uiLabels (UI_LABELS), index (COLUMN_NAMES, MAP_CONFIG, ...), keywords, exampleData
 ├── types/        # tipos compartilhados (RowData, RoutesMap, ...)
-├── data/         # ❗ JSON estático (CEPs sem entrega domiciliar dos Correios)
+├── data/         # ❗ JSON estático (CEP→bairro, RJ/Ilha do Governador)
 ├── assets/       # ícones de marcador (PNG)
 ├── styles/       # CSS global
 └── __tests__/    # espelha src/ (components, hooks, utils, constants, pages)
@@ -58,7 +58,6 @@ Não revisar sem ADR explícita:
 - **Estado:** `useState` + hooks de feature (`use*`). Sem biblioteca de estado global.
 - **Sem backend / sem banco / sem auth:** app é 100% client-side. Dados vêm do arquivo que o usuário sobe.
 - **Leitura de planilha:** isolada em `utils/excelProcessor.ts` (usa `xlsx` direto). Colunas **obrigatórias**: apenas `Latitude` e `Longitude` (sem coordenada não há o que plotar). A coluna `Corridor Cage` **não é obrigatória**: sua presença agrupa um romaneio em várias rotas (modo multi-rota); sua **ausência** indica uma **rota única** (o entregador envia a própria rota), agrupada sob o rótulo `UI_LABELS.ROUTE.SINGLE_ROUTE_NAME` ("Minha rota"), sinalizada por `ProcessedResult.isSingleRoute`. Ver TASK-RF-002.
-- **Correios:** lookup de JSON estático (`src/data/`) em `utils/correiosDelivery.ts` — não há chamada HTTP em produção.
 - **xlsx fixado na versão da CDN (0.20.3):** segurança (npm só tem a 0.18.5 vulnerável). `overrides` propaga p/ o xlsx interno do danfojs.
 - **Imports por alias:** `@/`, `@assets/`, `@components/`, `@utils/` (em `tsconfig.app.json` + `vite.config.ts`).
 - **UI / Design System (ADR-004):** **shadcn/ui** é a biblioteca padrão. Componentes em `src/components/ui/` (em inglês, ADR-001), texto via `UI_LABELS`. **Componentizar e DRY são lei** (módulo 13 + Regra de Três): nada de classes hardcoded fora dos tokens; criar componente novo em `components/ui/` quando faltar; usar `cn()`/`cva`; primitivos complexos (modal, dropdown, combobox) via Radix — **não reinventar**. Componente de domínio (ex.: marcadores do mapa) fica em `components/[domínio]/`.
@@ -78,7 +77,7 @@ Não revisar sem ADR explícita:
 - ❌ **Não usa biblioteca de formulários** (react-hook-form/Zod). A única entrada é upload de arquivo.
 - ❌ **i18n não está ativa** — só português hoje, mas a camada `UI_LABELS` permite adicionar idiomas sem tocar componentes (ADR-001).
 - ❌ **Os experimentos `danfojs`** (`__utilidades-back-office__/DanfoTest*.tsx`) **não estão ligados** ao app.
-- ⚠️ **Modo rota única — quase completo:** a **TASK-RF-003** (alias de cabeçalhos) destravou resumo, tooltip, tabela simplificada e inferência (RF-09/12/15/18 → ✅). Resta parcial só o **RF-11** (ícones por tipo): sem a coluna `Location Type`, a classificação é só por inferência do endereço. RF-17/Correios sai do projeto (ADR-005, TASK-REF-007). Detalhe em `docs/requisitos/funcionais.md`.
+- ⚠️ **Modo rota única — quase completo:** a **TASK-RF-003** (alias de cabeçalhos) destravou resumo, tooltip, tabela simplificada e inferência (RF-09/12/15/18 → ✅). Resta parcial só o **RF-11** (ícones por tipo): sem a coluna `Location Type`, a classificação é só por inferência do endereço. **Rota única polida (25/06):** campos inexistentes ocultos no Sumário (RF-015), status comercial inferido no Sumário/popup (RF-017), sem aviso de colunas faltando (RF-018). RF-17/Correios **removido** do projeto (ADR-005, TASK-REF-007 ✅). Detalhe em `docs/requisitos/funcionais.md`.
 - ✅ **É PWA** (instalável, service worker) — ao contrário de muitos visualizadores simples. Os **tiles do mapa** vêm de um Cloudflare Worker (proxy + cache + bloqueio de zoom < 14), versionado em [`infra/cloudflare-tile-worker/`](../infra/cloudflare-tile-worker/).
 
 ## Documentação de Referência

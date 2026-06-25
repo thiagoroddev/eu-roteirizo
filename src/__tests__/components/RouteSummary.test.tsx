@@ -17,7 +17,6 @@ vi.mock("../../hooks/useRouteSummary", () => ({
     at: "AT202511158FS0J",
     commerceCount: "5",
     neighborhoods: "Copacabana: 5",
-    correiosDeliveryCount: "2",
     shiftTime: "04:00—09:00",
     dateRaw: "2025-12-12",
     hub: "LM Hub_RJ_Ilha do Governador",
@@ -59,11 +58,10 @@ describe("RouteSummary Component", () => {
     expect(screen.getByText(UI_LABELS.ROUTE_SUMMARY.NEIGHBORHOODS)).toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.ROUTE_SUMMARY.CITY)).toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.ROUTE_SUMMARY.COMMERCIAL_TIME, { exact: false })).toBeInTheDocument();
-    expect(screen.getByText(UI_LABELS.ROUTE_SUMMARY.CORREIOS_NO_ENTRY)).toBeInTheDocument();
 
     // Test that the component renders without crashing and has the expected structure
     const listItems = screen.getAllByRole("listitem");
-    expect(listItems.length).toBeGreaterThan(10); // Should have at least 11 list items
+    expect(listItems.length).toBeGreaterThan(10); // multi-rota: 11 itens (ESEDC removido na REF-007)
 
     // Test that values are present by checking the parent li elements contain text after the strong tags
     const atLi = screen.getByText(UI_LABELS.ROUTE_SUMMARY.AT).closest("li");
@@ -77,7 +75,6 @@ describe("RouteSummary Component", () => {
     const neighborhoodsLi = screen.getByText(UI_LABELS.ROUTE_SUMMARY.NEIGHBORHOODS).closest("li");
     const cityLi = screen.getByText(UI_LABELS.ROUTE_SUMMARY.CITY).closest("li");
     const commerceLi = screen.getByText(UI_LABELS.ROUTE_SUMMARY.COMMERCIAL_TIME, { exact: false }).closest("li");
-    const correiosLi = screen.getByText(UI_LABELS.ROUTE_SUMMARY.CORREIOS_NO_ENTRY).closest("li");
 
     // Ensure list items exist and have content
     expect(atLi).toBeInTheDocument();
@@ -91,7 +88,6 @@ describe("RouteSummary Component", () => {
     expect(neighborhoodsLi).toBeInTheDocument();
     expect(cityLi).toBeInTheDocument();
     expect(commerceLi).toBeInTheDocument();
-    expect(correiosLi).toBeInTheDocument();
 
     // Test that each li renders its actual value (from the mocked useRouteSummary),
     // not just the label. Asserting the real value is robust to label changes.
@@ -106,7 +102,38 @@ describe("RouteSummary Component", () => {
     expect(neighborhoodsLi).toHaveTextContent("Copacabana: 5");
     expect(cityLi).toHaveTextContent("Rio de Janeiro");
     expect(commerceLi).toHaveTextContent("5");
-    expect(correiosLi).toHaveTextContent("2");
+  });
+
+  // ========================================================================================
+  // 1b. MODE-AWARE RENDERING (TASK-RF-015): rota única oculta campos inexistentes
+  // ========================================================================================
+
+  it("hides Shift/ETA/Distance/Hub in single-route mode, keeps the rest", () => {
+    render(<RouteSummary {...defaultProps} isSingleRoute={true} />);
+
+    // Campos estruturalmente ausentes na rota única → NÃO aparecem (nem com "Sem dados")
+    expect(screen.queryByText(UI_LABELS.ROUTE_SUMMARY.HUB)).not.toBeInTheDocument();
+    expect(screen.queryByText(UI_LABELS.ROUTE_SUMMARY.SHIFT)).not.toBeInTheDocument();
+    expect(screen.queryByText(UI_LABELS.ROUTE_SUMMARY.ESTIMATED_TIME)).not.toBeInTheDocument();
+    expect(screen.queryByText(UI_LABELS.ROUTE_SUMMARY.ESTIMATED_DISTANCE)).not.toBeInTheDocument();
+
+    // O que permanece (inclui Horário comercial, inferido)
+    expect(screen.getByText(UI_LABELS.ROUTE_SUMMARY.AT)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.ROUTE_SUMMARY.DATE_AT)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.ROUTE_SUMMARY.PACKAGES)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.ROUTE_SUMMARY.STOPS)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.ROUTE_SUMMARY.NEIGHBORHOODS)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.ROUTE_SUMMARY.CITY)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.ROUTE_SUMMARY.COMMERCIAL_TIME, { exact: false })).toBeInTheDocument();
+  });
+
+  it("shows Shift/ETA/Distance/Hub in multi-route mode (default)", () => {
+    render(<RouteSummary {...defaultProps} />);
+
+    expect(screen.getByText(UI_LABELS.ROUTE_SUMMARY.HUB)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.ROUTE_SUMMARY.SHIFT)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.ROUTE_SUMMARY.ESTIMATED_TIME)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.ROUTE_SUMMARY.ESTIMATED_DISTANCE)).toBeInTheDocument();
   });
 
   // ========================================================================================

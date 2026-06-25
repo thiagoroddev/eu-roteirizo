@@ -194,14 +194,17 @@ export function getCommercialDisplayStatus(arg: RowData | string | undefined): C
 }
 
 /**
- * Helper for counting statistics
+ * Counts how many addresses are commercial (office) by INFERENCE.
+ *
+ * DECISÃO (25/06/26 — TASK-RF-017): não gateia mais na presença da coluna
+ * `Location Type`. A inferência roda para todo romaneio (RN-07/RF-016), então o
+ * dado existe mesmo na rota única (sem a coluna). Antes, a ausência da coluna
+ * fazia o Sumário exibir "Sem dados" — agora conta o que a inferência produz.
+ *
  * @param rows - Array of row data to count from
- * @param availableCols - Available columns in the data
  * @returns The count of commercial addresses as a string
  */
-export const countCommercialAddresses = (rows: RowData[], availableCols: string[] | null): string => {
-  if (!availableCols?.includes(COLUMN_NAMES.LOCATION_TYPE)) return presentStatus(DATA_STATUS.MISSING);
-
+export const countCommercialAddresses = (rows: RowData[]): string => {
   const total = rows.filter((row) => {
     const classification = resolveLocationType(row).toUpperCase();
     return classification === ICON_KEYS.OFFICE || classification === ICON_KEYS.OFFICE_CORRECTED;

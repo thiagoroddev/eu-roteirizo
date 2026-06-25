@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { inferLocationType, resolveLocationType } from "../../utils/inferLocationType";
+import { inferLocationType, resolveLocationType, countCommercialAddresses } from "../../utils/inferLocationType";
 import { ICON_KEYS, EXCEL_EMPTY_VALUE, COLUMN_NAMES } from "../../constants";
 import type { RowData } from "../../types";
 
@@ -146,5 +146,24 @@ describe("resolveLocationType (inferência manda — TASK-RF-016)", () => {
   it("sem endereço → usa a coluna (ou vazio)", () => {
     expect(resolveLocationType(row({ [COLUMN_NAMES.LOCATION_TYPE]: "OFFICE" }))).toBe(ICON_KEYS.OFFICE);
     expect(resolveLocationType(row({}))).toBe(EXCEL_EMPTY_VALUE);
+  });
+});
+
+describe("countCommercialAddresses (inferência sem coluna — TASK-RF-017)", () => {
+  const row = (over: Record<string, unknown>): RowData => ({ ...over });
+
+  it("conta comerciais por inferência mesmo SEM a coluna Location Type (rota única)", () => {
+    const rows: RowData[] = [
+      row({ [COLUMN_NAMES.DESTINATION_ADDRESS]: "Av Centro, 500, Sala 305" }), // comercial
+      row({ [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua A, 10, Apt 101" }), // residencial
+      row({ [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua B, 20, Loja 2" }), // comercial
+    ];
+    // Antes (RF-016/017): retornava "Sem dados" por gatear na coluna ausente.
+    expect(countCommercialAddresses(rows)).toBe("2");
+  });
+
+  it("retorna '0' quando não há endereços comerciais", () => {
+    const rows: RowData[] = [row({ [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua A, 10, Apt 101" })];
+    expect(countCommercialAddresses(rows)).toBe("0");
   });
 });

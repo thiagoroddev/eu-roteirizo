@@ -147,7 +147,15 @@ export const processExcelFile = async (file: File): Promise<ProcessedResult> => 
         console.info(`processExcelFile: modo rota única — pontos válidos=${count}, ignorados (sem coordenada plotável)=${skipped}`);
       }
 
-      return { routes: grouped, availableCols: colNames, missingCols, isSingleRoute: true };
+      /**
+       * TASK-RF-018: a rota única tem schema próprio, menor. As colunas opcionais
+       * do multi-rota (Num of Order, Total Distance, Date, Shift Time, Delivery
+       * Time, Location Type, Planned Vehicle Type, Destination Station) NÃO se
+       * aplicam — avisar que estão "faltando" é ruído. Por isso não reportamos
+       * colunas opcionais faltando neste modo (`missingCols` calculado contra o
+       * conjunto do multi-rota não vale aqui).
+       */
+      return { routes: grouped, availableCols: colNames, missingCols: [], isSingleRoute: true };
     }
 
     /** Column containing route identifier */

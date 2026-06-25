@@ -73,16 +73,8 @@ vi.mock("../../utils/inferLocationType", () => ({
   getCommercialDisplayStatus: vi.fn(() => "Não"),
 }));
 
-vi.mock("../../utils/correiosDelivery", () => ({
-  getCorreiosDeliveryStatus: vi.fn(() => "DELIVERS"),
-}));
-
 vi.mock("../../utils/iconPicker", () => ({
-  pickIconKey: vi.fn(() => "home-correios-delivery"),
-}));
-
-vi.mock("../../utils/formatters", () => ({
-  formatDeliveryLabel: vi.fn(() => "Entrega"),
+  pickIconKey: vi.fn(() => "HOME"),
 }));
 
 vi.mock("../../utils/map", () => ({
@@ -91,7 +83,6 @@ vi.mock("../../utils/map", () => ({
 
 vi.mock("../../utils/mapIcons", () => ({
   getIcons: vi.fn(() => ({
-    "home-correios-delivery": { iconUrl: "icon.png" },
     HOME: { options: { iconUrl: "mock-home.png" } },
     INDEFINITE: { iconUrl: "indefinite.png" },
   })),
@@ -522,21 +513,6 @@ describe("RouteMap Component - Comprehensive Tests", () => {
     renderRouteMap(commercialRow);
 
     // Component should call business logic functions
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
-  });
-
-  it("integrates with Correios delivery status", () => {
-    const deliveryRow: RowData[] = [
-      {
-        [COLUMN_NAMES.LATITUDE]: -22.9,
-        [COLUMN_NAMES.LONGITUDE]: -43.1,
-        [COLUMN_NAMES.ZIPCODE]: "22041-001",
-      },
-    ];
-
-    renderRouteMap(deliveryRow);
-
-    // Component should call Correios status function
     expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
   });
 

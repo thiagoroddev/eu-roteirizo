@@ -60,6 +60,12 @@ export interface RouteUploaderReturn {
   /** Names of required columns that are missing from the file. */
   missingCols: string[];
 
+  /**
+   * True when the loaded file is a single delivery route (no "Corridor Cage").
+   * Lets the UI hide multi-route-only fields (Shift/ETA/Distance/Hub) that don't
+   * exist in this mode. False before any file is processed. */
+  isSingleRoute: boolean;
+
   /** ==================================================================================================================
    *Function to call when user selects a file.
    * Async because file processing takes time.
@@ -153,12 +159,6 @@ export interface RouteSummaryData {
 
   /** List of neighborhoods with counts (e.g., "Copacabana: 5, Ipanema: 3"). */
   neighborhoods: string;
-
-  /**
-   * Count of addresses where Correios does NOT perform home delivery.
-   * Based on the zipcodes found in the route.
-   */
-  correiosDeliveryCount: string;
 
   /** The shift time for the route (e.g., "Morning", "Afternoon"). */
   shiftTime: string;

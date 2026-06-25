@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { RowData } from "../types";
 import type { RouteSummaryData } from "../types/hooks";
 
-import { formatDistance, summarizeNeighborhoods, getUniquePlannedATs, formatDeliveryTime, countRestrictedZipcodes, getShiftTime, getHub, getDate, getCity } from "../utils/formatters";
+import { formatDistance, summarizeNeighborhoods, getUniquePlannedATs, formatDeliveryTime, getShiftTime, getHub, getDate, getCity } from "../utils/formatters";
 import { countCommercialAddresses } from "../utils/inferLocationType";
 import { getTotalPacks } from "../utils/formatters";
 import { getNumberOfStops } from "../utils/formatters";
@@ -62,17 +62,14 @@ export const useRouteSummary = (rows: RowData[], availableCols: string[] | null)
     /** Get all unique AT codes for this route */
     const at = getUniquePlannedATs(rows, availableCols);
 
-    /** Count how many commercial addresses (offices/shops) vs residential */
-    const commerceCount = String(countCommercialAddresses(rows, availableCols));
+    /** Count how many commercial addresses (offices/shops) — inferred for every romaneio (RF-017). */
+    const commerceCount = String(countCommercialAddresses(rows));
 
     /**
      * Get list of neighborhoods with delivery counts
      * Example: "Copacabana: 5, Ipanema: 3"
      */
     const neighborhoods = summarizeNeighborhoods(rows, availableCols);
-
-    /** Count addresses restricted by Correios (Status: "Não") */
-    const correiosDeliveryCount = String(countRestrictedZipcodes(rows, availableCols));
 
     const shiftTime = getShiftTime(rows, availableCols);
 
@@ -90,7 +87,6 @@ export const useRouteSummary = (rows: RowData[], availableCols: string[] | null)
       at,
       commerceCount,
       neighborhoods,
-      correiosDeliveryCount,
       shiftTime,
       dateRaw,
       hub,
