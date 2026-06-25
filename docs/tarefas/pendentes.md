@@ -48,11 +48,8 @@
 ### ✅ TASK-RF-005.2 - Camada de dados OSM (Overpass → grafo) — CONCLUÍDA (25/06)
 - `src/utils/routing/osm.ts` (`buildOverpassQuery`/`bboxFromBounds`/`fetchRoadGraph`), `UI_LABELS.ROUTING`, DT-005, +14 testes (`vi.stubGlobal("fetch")`). Reusa `buildGraph`; erro/timeout via `UI_LABELS`. Ver `concluidas/2026-06-25--17h31--TASK-RF-005.2.md`. **Próxima: 005.3 — ⚠️ pede aprovação de `idb` + `fake-indexeddb`.**
 
-### TASK-RF-005.3 - Cache do grafo + offline (IndexedDB)
-- **Esforço-H/IA:** G/M · **Dep:** 005.2
-- `src/services/graphCache.ts`: persistir grafo por bbox em IndexedDB; carregar do cache antes de bater no Overpass; invalidação simples (TTL/versão). Habilita uso offline do PWA.
-- **Dependência nova a propor:** `idb`.
-- **Aceite:** 2ª abertura da mesma área não rebaixa do Overpass; funciona offline após 1º carregamento.
+### ✅ TASK-RF-005.3 - Cache do grafo + offline (IndexedDB) — CONCLUÍDA (25/06)
+- `src/services/graphCache.ts` (`getCachedGraph`/`putCachedGraph`/`clearGraphCache`/`loadRoadGraph`); TTL 7d + structured clone dos `Map`; deps **`idb`+`fake-indexeddb`** aprovadas/instaladas; +8 testes (`fake-indexeddb`). Ver `concluidas/2026-06-25--17h44--TASK-RF-005.3.md`. **Próxima: 005.4 (A* com heap — sem dependência).**
 
 ### TASK-RF-005.4 - A* com fila de prioridade (heap)
 - **Esforço-H/IA:** M/M · **Dep:** 005.1
