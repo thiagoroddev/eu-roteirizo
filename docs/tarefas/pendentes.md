@@ -24,22 +24,8 @@
 
 <!-- TASK-RF-003 movida para em-andamento.md (em execução, 25/06/26) -->
 
-## TASK-BG-005 - Robustecer `parseCoordinate` (decimal real × inteiro escalado)
-
-- **Status:** Pendente
-- **Modo:** Standard
-- **Valor:** Importante
-- **Urgência:** IMEDIATA
-- **Esforço-H/IA:** P/M
-- **Data-hora origem:** 24/06/26 14:50
-- **Dependências:** -
-- **REQ/ADR/DT:** RN-02
-- **Observações:** **Risco latente.** `parseCoordinate` remove pontos e divide por 1e7; o arquivo real de rota única passa **só por coincidência** (coordenadas com exatamente 7 casas decimais). Uma coordenada com ≠ 7 casas **quebra em silêncio** (vira ponto fora dos limites e some). Crítico para o lançamento nacional (formatos de planilha variados).
-
-**Objetivo:** distinguir decimal real de inteiro escalado em `parseCoordinate`, sem quebrar o formato atual; teste dedicado cobrindo ambos os casos e o de ≠ 7 casas.
-
-**Critérios de aceite:** decimal real (`-22.95`), inteiro escalado (`-229500637`) e decimais de 5/6/8 casas resolvem para a coordenada correta (ou são rejeitados **explicitamente**, não em silêncio); testes por caso; multi-rota e rota única intocados.
-
+> ✅ **TASK-BG-005 concluída** (25/06) — `parseCoordinate` locale-aware (vírgula/ponto/escalado, qualquer precisão) — ver `concluidas/2026-06-25--15h41--TASK-BG-005.md`.
+>
 > ✅ **TASK-RF-015, TASK-RF-017, TASK-RF-018 e TASK-REF-007 concluídas** (25/06, lote da rota única) — ver `concluidas/2026-06-25--14h09--*`.
 
 ## TASK-RF-005 - Motor de roteamento local (port do protótipo → módulo TS) [XG, dividir]

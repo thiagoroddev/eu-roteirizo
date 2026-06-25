@@ -2,7 +2,11 @@ import { describe, it, expect } from "vitest";
 import { parseCoordinate, isWithinRioBounds } from "../../utils/coordinates";
 
 describe("parseCoordinate", () => {
-  it("converts a scaled integer to a decimal coordinate", () => {
+  // ==========================================================================
+  // SCALED INTEGER (multi-route real format) — divide by 1e7
+  // ==========================================================================
+
+  it("converts a scaled integer (number) to a decimal coordinate", () => {
     expect(parseCoordinate(-229000000)).toBeCloseTo(-22.9, 5);
     expect(parseCoordinate(-431000000)).toBeCloseTo(-43.1, 5);
   });
@@ -11,9 +15,44 @@ describe("parseCoordinate", () => {
     expect(parseCoordinate("-229000000")).toBeCloseTo(-22.9, 5);
   });
 
-  it("strips thousand-separator dots before parsing", () => {
-    // "-229.000.000" -> "-229000000" -> -22.9
+  it("strips thousand-separator dots (multi-route real format)", () => {
+    // Valores reais do print multi-rota
+    expect(parseCoordinate("-229.026.394")).toBeCloseTo(-22.9026394, 7);
+    expect(parseCoordinate("-433048401")).toBeCloseTo(-43.3048401, 7);
     expect(parseCoordinate("-229.000.000")).toBeCloseTo(-22.9, 5);
+  });
+
+  // ==========================================================================
+  // REAL DECIMAL — comma (single-route real format) and dot, any precision
+  // ==========================================================================
+
+  it("parses real decimals with a comma separator (single-route real format)", () => {
+    // Valores reais do print rota única (vírgula, casas variáveis)
+    expect(parseCoordinate("-22,952715")).toBeCloseTo(-22.952715, 7);
+    expect(parseCoordinate("-43,1973")).toBeCloseTo(-43.1973, 7);
+    expect(parseCoordinate("-22,9559345")).toBeCloseTo(-22.9559345, 7);
+    expect(parseCoordinate("-43,1974144")).toBeCloseTo(-43.1974144, 7);
+  });
+
+  it("parses real decimals with a dot separator", () => {
+    expect(parseCoordinate("-22.952715")).toBeCloseTo(-22.952715, 7);
+    expect(parseCoordinate("-22.8")).toBeCloseTo(-22.8, 7); // antes virava -0.0000228 (bug)
+  });
+
+  it("parses a real decimal that is already a JS number", () => {
+    expect(parseCoordinate(-22.9500637)).toBeCloseTo(-22.9500637, 7);
+  });
+
+  it("resolves correctly for ANY number of decimal places (not only 7)", () => {
+    // O bug antigo só acertava exatamente 7 casas; aqui 2/5/8 também batem.
+    expect(parseCoordinate("-22,95")).toBeCloseTo(-22.95, 7);
+    expect(parseCoordinate("-22,95006")).toBeCloseTo(-22.95006, 7);
+    expect(parseCoordinate("-22,9500637")).toBeCloseTo(-22.9500637, 7);
+    expect(parseCoordinate("-22,95006370")).toBeCloseTo(-22.9500637, 7);
+  });
+
+  it("a 7-place decimal and its scaled integer resolve to the same coordinate", () => {
+    expect(parseCoordinate("-22,9500637")).toBeCloseTo(parseCoordinate(-229500637)!, 7);
   });
 
   it("returns undefined for non-numeric, null and undefined", () => {
@@ -21,12 +60,6 @@ describe("parseCoordinate", () => {
     expect(parseCoordinate(null)).toBeUndefined();
     expect(parseCoordinate(undefined)).toBeUndefined();
     expect(parseCoordinate("")).toBeUndefined();
-  });
-
-  it("mis-parses a real decimal value (documented limitation)", () => {
-    // "-22.8" has its dot stripped -> "-228" -> -0.0000228 (NOT -22.8).
-    // This is why isWithinRioBounds is needed as a downstream guard.
-    expect(parseCoordinate("-22.8")).toBeCloseTo(-0.0000228, 9);
   });
 });
 
@@ -42,8 +75,8 @@ describe("isWithinRioBounds", () => {
     expect(isWithinRioBounds(-22.9, -43.9)).toBe(false); // too far west
   });
 
-  it("returns false for a mis-parsed decimal coordinate", () => {
-    // The -0.0000228 produced by parseCoordinate("-22.8") must be rejected.
+  it("returns false for a near-zero (out-of-box) coordinate", () => {
+    // Guard de sanidade: valores minúsculos (ex.: 0,0 / origem) caem fora do Rio.
     expect(isWithinRioBounds(-0.0000228, -0.0000431)).toBe(false);
   });
 });

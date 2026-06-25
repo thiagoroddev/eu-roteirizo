@@ -228,6 +228,29 @@ A Opção B não é o "plano B". É o **caminho de menor risco para o mesmo dest
 
 > ⚠️ Não inclui impostos sobre a receita (MEI/empresa — assunto de contador). Taxas de pagamento mudam; confirmar as vigentes. Não é conselho financeiro.
 
+#### 10.4.1 Custo de tiles por escala (a "continha")
+
+A premissa inicial de "R$5 **sem custos**" estava só **levemente** errada: roteamento (ADR-002) e backend continuam **zero**; o **único custo novo são os tiles do mapa**. E, feito do jeito certo (**Protomaps PMTiles em Cloudflare R2 + Worker**, ADR-007), é **centavos por usuário**.
+
+**Premissas:** R2 **sem egress** (saída grátis) — paga-se só leituras (~US$0,36/milhão), requests do Worker (~US$0,30/milhão acima do plano de US$5) e storage (centavos). ~**3.000 requests/ativo/mês** (conservador). 300 ativos ≈ 1 hub/cidade; o custo cresce mais com **nº de áreas** do que com usuários (mais gente na mesma área = mais cache, não mais custo).
+
+| Ativos | ≈ Hubs/cidades | Custo de tiles/mês (PMTiles/R2) | Por ativo |
+|---|---|---|---|
+| 300 | 1 | ~R$ 5–15 | ~R$ 0,03 |
+| 1.000 | ~3 | ~R$ 30 | ~R$ 0,03 |
+| 3.000 | ~10 | ~R$ 60 | ~R$ 0,02 |
+| 5.000 | ~17 | ~R$ 90 | ~R$ 0,02 |
+| 10.000 | ~33 | ~R$ 160 | ~R$ 0,016 |
+| 50.000 | ~167 | ~R$ 600–1.000 | ~R$ 0,015 |
+
+(Início **hospedado** no MapTiler: a 300 ativos cabe no **free tier ~R$0**; em escala, migra-se pro R2 atrás do mesmo Worker.)
+
+**A conta do R$5 por pagante:** `R$5 − R$0,75 (Play 15%) − ~R$0,02 (tiles) ≈ R$4,23 líquido`. A margem por pagante é **quase constante** em qualquer escala — o que pesa é a **fatia da Play**, não os tiles.
+
+**O ponto que fecha:** tile é por **ativo** (todos usam o mapa), mas a cobrança é por **pagante**. A 50.000 ativos (tile ~R$1.000/mês), bastam **~240 pagantes** (0,5% de conversão) para cobrir o tile de **todos** — antes mesmo da receita de anúncio rewarded dos não-pagantes. **Conclusão: o custo novo é minúsculo; R$5 segue cobrindo com enorme folga.**
+
+> Preços de referência (Cloudflare R2/Workers, MapTiler, câmbio) **mudam** — confirmar vigentes. Estimativas de ordem de grandeza, não projeção.
+
 ### 10.5 O que vira ADR depois
 
 - Empacotamento: TWA (Android) como alvo inicial; Capacitor como caminho de iOS.

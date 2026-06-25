@@ -9,7 +9,7 @@
 | ID | Regra (invariante) | Onde é imposta | Status | Origem | Tarefas / ADR |
 |---|---|---|:---:|---|---|
 | RN-01 | Uma coordenada só é válida dentro dos limites do Rio; fora deles é descartada (nunca vira marcador) | `MAP_CONFIG.RIO_BOUNDS` + `isWithinRioBounds` | ✅ | `utils/coordinates.ts`, `constants/index.ts` | TASK-BG-004 |
-| RN-02 | `parseCoordinate` remove pontos e divide por 10.000.000 — resolve inteiro escalado **e** decimal de **exatamente 7 casas** (round-trip por coincidência). Coordenada com ≠ 7 casas **quebra em silêncio** (cai fora dos limites e some) — a robustez é a TASK-BG-005 | `parseCoordinate` | 🟡 | `utils/coordinates.ts` | TASK-BG-005 |
+| RN-02 | `parseCoordinate` é **locale-aware**: resolve decimal real (vírgula **ou** ponto, qualquer precisão — rota única) **e** inteiro escalado (com/sem ponto de milhar — multi-rota), usando a magnitude (`\|x\|>180` ⇒ ÷1e7) como árbitro. ≠7 casas não quebra mais; aceita `number` ou `string` | `parseCoordinate` | ✅ | `utils/coordinates.ts` | TASK-BG-005 |
 | RN-03 | As únicas colunas obrigatórias são `Latitude` e `Longitude`; sem elas o arquivo é rejeitado com erro | `MANDATORY_COLUMNS` + `processExcelFile` | ✅ | `utils/excelProcessor.ts`, `constants/index.ts` | TASK-RF-002 |
 | RN-04 | `Corridor Cage` define o modo de leitura: presente → multi-rota (agrupa); ausente → rota única (rótulo "Minha rota") | `isSingleRoute = !colNames.includes(CORRIDOR_CAGE)` | ✅ | `utils/excelProcessor.ts` | TASK-RF-002 |
 | RN-05 | No multi-rota, o identificador de rota deve casar `^[A-Z]+-\d+(?:NS)?$`; linha com valor inválido/vazio é ignorada (e contada) | `validPattern` no agrupamento | ✅ | `utils/excelProcessor.ts` | - |
