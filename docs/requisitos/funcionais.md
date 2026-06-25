@@ -60,8 +60,8 @@
 | RF-26 | Ordenar os endereços a pé automaticamente (varredura horária) com reordenação manual | SHOULD | 🔭 | fluxo §6; tela 5 | TASK-RF-006 |
 | RF-27 | Expandir/colapsar parada (drill-down parada → endereços → pacotes) | MUST | 🔭 | fluxo §5; tela 5 | TASK-RF-006.5 |
 | RF-28 | Exibir card "Etiqueta do Pacote" (endereço + Parada/Seq + SPX TN); multi-pacote lista cada um | SHOULD | 🔭 | fluxo §9/§14; telas 3/4 | TASK-RF-006 |
-| RF-29 | Traçar o caminho de veículo pela rua real entre âncoras, respeitando mão única, com km | MUST | 🔭 | ADR-002; fluxo §6 | TASK-RF-005, TASK-RF-006.6 |
-| RF-30 | Mostrar a distância a pé pelas ruas até o alvo selecionado (A* por alvo; reta como fallback) | SHOULD | 🔭 | fluxo §6; ADR-002 | TASK-RF-005 |
+| RF-29 | Traçar o caminho de veículo pela rua real entre âncoras, respeitando mão única, com km — **motor pronto (TASK-RF-005); falta UI** | MUST | 🟡 | ADR-002; fluxo §6; `utils/routing/` | TASK-RF-005, TASK-RF-006.6 |
+| RF-30 | Mostrar a distância a pé pelas ruas até o alvo selecionado (A* por alvo; reta como fallback) — **A*/distância/map matching prontos (TASK-RF-005); falta variante a-pé (ignora mão única), fallback reta e UI** | SHOULD | 🟡 | fluxo §6; ADR-002; `utils/routing/` | TASK-RF-005 |
 | RF-31 | Estimar tempo (a pé na parada + veículo entre paradas); exibir total e próximo trecho | MUST | 🔭 | fluxo §6; tela 5 | TASK-RF-007 |
 | RF-32 | HUD com contadores sempre visíveis (faltando endereços/pacotes, paradas, distância, tempo) | SHOULD | 🔭 | fluxo §7; telas 1/7 | TASK-RF-006.2 |
 | RF-33 | Salvar é **livre** (rascunho auto-salvo, mesmo incompleto); o botão **'Iniciar roteiro'** (executar) só aparece com **0 faltando** — completude exigida só para executar | MUST | 🔭 | fluxo §12; tela 7 | TASK-RF-006.7 |

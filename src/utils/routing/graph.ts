@@ -14,8 +14,11 @@
 import type { LatLng } from "../../types/routing";
 import { haversine } from "./geo";
 
-/** A graph node id. OSM node ids are integers well within Number.MAX_SAFE_INTEGER. */
-export type NodeId = number;
+/**
+ * A graph node id: an OSM node id (`number`, well within Number.MAX_SAFE_INTEGER)
+ * or a synthetic id (`string`) inserted by map matching (TASK-RF-005.5).
+ */
+export type NodeId = number | string;
 
 /** Navigable direction of a way, derived from its OSM tags. */
 export type OnewayDir = "forward" | "backward" | "both";

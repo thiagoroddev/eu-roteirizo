@@ -28,40 +28,7 @@
 >
 > ✅ **TASK-RF-015, TASK-RF-017, TASK-RF-018 e TASK-REF-007 concluídas** (25/06, lote da rota única) — ver `concluidas/2026-06-25--14h09--*`.
 
-## TASK-RF-005 - Motor de roteamento local (port do protótipo → módulo TS) [XG, dividir]
-
-- **Status:** Pendente
-- **Modo:** Strict
-- **Valor:** Crítico
-- **Urgência:** IMEDIATA
-- **Esforço-H/IA:** XG/XG
-- **Data-hora origem:** 22/06/26 22:45
-- **Dependências:** ADR-002 (protótipo validado em TASK-RF-001)
-- **REQ/ADR/DT:** ADR-002; `prototipos/roteamento-osm/`
-- **Observações:** XG — **executar pelas subtarefas**, nunca de uma vez. Cada subtarefa fecha com testes verdes.
-
-**Objetivo:** transformar o núcleo validado no protótipo num módulo de produção em `src/utils/routing/`, com tipos, testes e performance/offline.
-
-### ✅ TASK-RF-005.1 - Núcleo do grafo + A* (tipado + testado) — CONCLUÍDA (25/06)
-- Portado para `src/utils/routing/` (`geo.ts`/`graph.ts`/`aStar.ts`/`streets.ts`) + testes Vitest (fixture com grafo sintético de mão única; +34 testes). Guard de start/goal ausente no A*. Ver `concluidas/2026-06-25--17h09--TASK-RF-005.1.md`. **Próxima: 005.2.**
-
-### ✅ TASK-RF-005.2 - Camada de dados OSM (Overpass → grafo) — CONCLUÍDA (25/06)
-- `src/utils/routing/osm.ts` (`buildOverpassQuery`/`bboxFromBounds`/`fetchRoadGraph`), `UI_LABELS.ROUTING`, DT-005, +14 testes (`vi.stubGlobal("fetch")`). Reusa `buildGraph`; erro/timeout via `UI_LABELS`. Ver `concluidas/2026-06-25--17h31--TASK-RF-005.2.md`. **Próxima: 005.3 — ⚠️ pede aprovação de `idb` + `fake-indexeddb`.**
-
-### ✅ TASK-RF-005.3 - Cache do grafo + offline (IndexedDB) — CONCLUÍDA (25/06)
-- `src/services/graphCache.ts` (`getCachedGraph`/`putCachedGraph`/`clearGraphCache`/`loadRoadGraph`); TTL 7d + structured clone dos `Map`; deps **`idb`+`fake-indexeddb`** aprovadas/instaladas; +8 testes (`fake-indexeddb`). Ver `concluidas/2026-06-25--17h44--TASK-RF-005.3.md`. **Próxima: 005.4 (A* com heap — sem dependência).**
-
-### ✅ TASK-RF-005.4 - A* com fila de prioridade (heap) — CONCLUÍDA (25/06)
-- `src/utils/routing/minHeap.ts` (`MinHeap<T>`) + `aStar.ts` reescrito (fronteira via heap + lazy deletion; resultado idêntico — 7 testes de regressão verdes). Benchmark: 2.7 ms num grid 50×50 (2500 nós). +8 testes. Ver `concluidas/2026-06-25--18h02--TASK-RF-005.4.md`. **Próxima: 005.5 (map matching em aresta — sem dependência).**
-
-### TASK-RF-005.5 - Map matching em aresta (projeção no segmento)
-- **Esforço-H/IA:** M/G · **Dep:** 005.1
-- Encaixar o ponto de entrega no **segmento** de rua mais próximo (projeção no segmento), não apenas no nó. Melhora a fidelidade do início/fim do traçado.
-- **Aceite:** ponto no meio do quarteirão gruda na via correta; teste de projeção.
-
-**Critérios de aceite (RF-005):** dado bbox + 2 pontos, retorna polilinha + distância respeitando `oneway`, com cache e performance aceitáveis. Testes por subtarefa.
-**Dependências novas:** `idb` (005.3). Heap próprio, sem lib.
-**Riscos:** tamanho do grafo no navegador (mitigar com recorte/bbox e cache); qualidade da tag `oneway` no OSM.
+> ✅ **TASK-RF-005 (motor de roteamento) CONCLUÍDA** (25/06) — todas as 5 subtarefas. Módulo em `src/utils/routing/` (`geo`/`graph`/`aStar`/`minHeap`/`streets`/`osm`/`match`) + `src/services/graphCache.ts`: grafo direcionado (mão única = aresta ausente), dados OSM/Overpass com cache offline (IndexedDB via `idb`), A* com heap próprio, nomes de rua e **map matching em aresta**. Critério geral atendido (bbox + 2 pontos → polilinha + distância respeitando `oneway`, com cache/perf). Ver `concluidas/2026-06-25--{17h09…18h15}--TASK-RF-005.{1..5}.md`. **Próximo épico: RF-006 (UI de construção), que consome o motor.**
 
 ---
 
