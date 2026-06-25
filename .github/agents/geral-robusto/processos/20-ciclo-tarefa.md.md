@@ -41,26 +41,26 @@ Cada estágio tem **uma localização única**. Tarefa nunca está em dois lugar
 
 Antes de entrar no ciclo, lembre dos modos definidos no [núcleo](https://claude.ai/01-nucleo.md#4-modos-de-cerim%C3%B4nia):
 
-|Modo|Cerimônia|Onde|
-|---|---|---|
-|**Light**|Mensagem curta. Sem mover entre arquivos|Direto no chat ou commit|
-|**Standard**|Ciclo completo: pendentes → em-andamento → concluidas|Este módulo aplica|
-|**Strict**|Standard + ADR + análise de impacto antes|Standard + extras|
+| Modo         | Cerimônia                                             | Onde                     |
+| ------------ | ----------------------------------------------------- | ------------------------ |
+| **Light**    | Mensagem curta. Sem mover entre arquivos              | Direto no chat ou commit |
+| **Standard** | Ciclo completo: pendentes → em-andamento → concluidas | Este módulo aplica       |
+| **Strict**   | Standard + ADR + análise de impacto antes             | Standard + extras        |
 
 **Este módulo descreve o ciclo Standard.** Para Light, não há ciclo - apenas o registro mínimo no commit. Para Strict, este ciclo se aplica com adições documentadas em [`25-analise-impacto.md`](https://claude.ai/chat/25-analise-impacto.md) e [`../templates/32-adr.md`](https://claude.ai/templates/32-adr.md).
 
 ### 2.1 Exemplos Concretos
 
-|Tarefa|Modo|Por quê|
-|---|---|---|
-|Corrigir typo no README|Light|Trivial, sem impacto|
-|Adicionar `border-radius` num botão|Light|Cosmético, isolado|
-|Renomear pasta de `utils/` para `helpers/`|Standard|Afeta imports em todo projeto|
-|Adicionar campo `cpf` ao perfil|Standard|Nova feature, isolada|
-|Refatorar 5 componentes para usar novo padrão|Standard|Refatoração com escopo claro|
-|Trocar Vite por Next.js|Strict|Decisão arquitetural enorme|
-|Adicionar autenticação por OAuth|Strict|Múltiplos sistemas, segurança|
-|Mudar idioma do projeto de PT para EN|Strict|Atravessa todo o código|
+| Tarefa                                        | Modo     | Por quê                       |
+| --------------------------------------------- | -------- | ----------------------------- |
+| Corrigir typo no README                       | Light    | Trivial, sem impacto          |
+| Adicionar `border-radius` num botão           | Light    | Cosmético, isolado            |
+| Renomear pasta de `utils/` para `helpers/`    | Standard | Afeta imports em todo projeto |
+| Adicionar campo `cpf` ao perfil               | Standard | Nova feature, isolada         |
+| Refatorar 5 componentes para usar novo padrão | Standard | Refatoração com escopo claro  |
+| Trocar Vite por Next.js                       | Strict   | Decisão arquitetural enorme   |
+| Adicionar autenticação por OAuth              | Strict   | Múltiplos sistemas, segurança |
+| Mudar idioma do projeto de PT para EN         | Strict   | Atravessa todo o código       |
 
 ---
 
@@ -75,11 +75,10 @@ A tarefa entra como **uma única linha** no backlog priorizado. Sem detalhes, se
 Tarefas com urgência **Normal** entram como linha em tabela no backlog priorizado:
 
 ```markdown
-| TASK-ID | Título | Modo | Valor | Urgência | Esforço-H/IA | Dependências | REQ/ADR | Status | Data origem - hora |
-|---|---|:---:|:---:|:---:|:---:|---|---|:---:|---|
-| TASK-RF-5.1 | Registros - lista e sub-abas | Standard | Importante | Normal | G/G | TASK-RF-1 | RF-2, ADR-3, DT-14 | `[ ]` | 10/05/26 - 09:39 |
+| TASK-ID     | Título                       |   Modo   |   Valor    | Urgência | Esforço-H/IA | Dependências | REQ/ADR            | Status | Data origem - hora |
+| ----------- | ---------------------------- | :------: | :--------: | :------: | :----------: | ------------ | ------------------ | :----: | ------------------ |
+| TASK-RF-5.1 | Registros - lista e sub-abas | Standard | Importante |  Normal  |     G/G      | TASK-RF-1    | RF-2, ADR-3, DT-14 | `[ ]`  | 10/05/26 - 09:39   |
 ```
-
 
 ## Legenda de Prefixos para tarefas
 
@@ -94,6 +93,7 @@ Tarefas com urgência **Normal** entram como linha em tabela no backlog prioriza
 | TASK-CHORE | Manutenção              |
 | TASK-TEST  | Testes                  |
 |            |                         |
+
 Exemplos de nomes para IDs:
 
 Independentes:  TASK-RF-005
@@ -105,6 +105,7 @@ Tarefas com urgência **Imediata** não cabem em uma linha de tabela porque carr
 
 ```markdown
 ## TASK-PREFIXO-XXX - Título
+
 - **Status:** Pendente
 - **Modo:** Standard
 - **Valor:** Crítico
@@ -120,19 +121,19 @@ Tarefas com urgência **Imediata** não cabem em uma linha de tabela porque carr
 
 ### 3.3 Campos
 
-| Campo                         | Valores aceitos                                                                                                                                                                                                                            |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **TASK-PREFIXO-XXX**          | `TASK-` + prefixo + número. Prefixos: `RF` (req funcional), `RN` (regra negócio), `RNF` (req não-funcional), `BG` (bug), `REF` (refactor), `DOC` (documentação), `CHORE` (manutenção), `TEST` (testes). Exemplo: `TASK-RF-5.1`             |
-| **Título**                    | Frase curta descritiva. Sem ponto final                                                                                                                                                                                                    |
-| **Modo**                      | Light / Standard / Strict (ver [seção 2](https://claude.ai/chat/7ad9cd8a-fc76-4046-a5d6-651d4752358b#2-modos-de-cerim%C3%B4nia-revisitados))                                                                                               |
-| **Valor**                     | Crítico / Importante / Desejável                                                                                                                                                                                                           |
-| **Urgência**                  | Imediata / Normal                                                                                                                                                                                                                          |
-| **Esforço-H/IA**              | Duas medidas separadas por `/`. Humano (H) e IA. Exemplo: `M/G` = médio para humano, grande para IA. Valores: P / M / G / XG. Detalhes na [seção 3.4](https://claude.ai/chat/7ad9cd8a-fc76-4046-a5d6-651d4752358b#34-esfor%C3%A7o-para-ia) |
-| **Dependências**              | IDs de outras tarefas que precisam ser concluídas antes. `-` se nenhuma                                                                                                                                                                    |
-| **REQ/ADR/DT**                | Referências a requisitos (RF/RN/RNF), ADRs, revisões gerais (`REV-NNN-Axx`) e dívidas técnicas (DT) relacionadas. Exemplo: `RF-2, ADR-3, REV-001-A02, DT-14`. `-` se nenhuma                                                                |
-| **Status**                    | `[ ]` pendente / `[x]` concluída (raramente aparece aqui - tarefa concluída sai do arquivo)                                                                                                                                                |
-| **Data origem**               | `DD/MM/AA HH:MM` quando a tarefa foi criada                                                                                                                                                                                                |
-| **Observações** (só Imediata) | Texto livre explicando contexto/motivo da urgência                                                                                                                                                                                         |
+| Campo                                  | Valores aceitos                                                                                                                                                                                                                            |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **TASK-PREFIXO-XXX**                   | `TASK-` + prefixo + número. Prefixos: `RF` (req funcional), `RN` (regra negócio), `RNF` (req não-funcional), `BG` (bug), `REF` (refactor), `DOC` (documentação), `CHORE` (manutenção), `TEST` (testes). Exemplo: `TASK-RF-5.1`             |
+| **Título**                             | Frase curta descritiva. Sem ponto final                                                                                                                                                                                                    |
+| **Modo**                               | Light / Standard / Strict (ver [seção 2](https://claude.ai/chat/7ad9cd8a-fc76-4046-a5d6-651d4752358b#2-modos-de-cerim%C3%B4nia-revisitados))                                                                                               |
+| **Valor**                              | Crítico / Importante / Desejável                                                                                                                                                                                                           |
+| **Urgência**                           | Imediata / Normal                                                                                                                                                                                                                          |
+| **Esforço-H/IA**                       | Duas medidas separadas por `/`. Humano (H) e IA. Exemplo: `M/G` = médio para humano, grande para IA. Valores: P / M / G / XG. Detalhes na [seção 3.4](https://claude.ai/chat/7ad9cd8a-fc76-4046-a5d6-651d4752358b#34-esfor%C3%A7o-para-ia) |
+| **Dependências**                       | IDs de outras tarefas que precisam ser concluídas antes. `-` se nenhuma                                                                                                                                                                    |
+| **REQ/ADR/DT**                         | Referências a requisitos (RF/RN/RNF), ADRs, revisões gerais (`REV-NNN-Axx`) e dívidas técnicas (DT) relacionadas. Exemplo: `RF-2, ADR-3, REV-001-A02, DT-14`. `-` se nenhuma                                                               |
+| **Status**                             | `[ ]` pendente / `[x]` concluída (raramente aparece aqui - tarefa concluída sai do arquivo)                                                                                                                                                |
+| **Data origem**                        | `DD/MM/AA HH:MM` quando a tarefa foi criada                                                                                                                                                                                                |
+| **Observações/Problema** (só Imediata) | Texto livre explicando contexto/motivo da urgência                                                                                                                                                                                         |
 
 ### 3.4 Esforço para IA
 
@@ -161,21 +162,20 @@ O **plano** vem depois, no estágio "Em Andamento", quando alguém vai executar.
 
 ### 3.6 Quem Adiciona
 
-|Origem|Quem adiciona|
-|---|---|
-|Requisito documentado|IA, ao processar `docs/requisitos/`|
-|Bug descoberto em revisão|IA, registrando em "Tarefas Geradas pela Revisão"|
-|Achado de revisão geral completa|IA, se o humano pediu a REV e aprovou/criou a tarefa; registrar `REV-NNN-Axx` na tarefa e na REV|
-|Dívida técnica que disparou gatilho|IA, ao detectar o gatilho|
-|Solicitação do humano|Humano ou IA registrando em nome do humano|
-|Refatoração identificada|IA ou humano|
+| Origem                              | Quem adiciona                                                                                    |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Requisito documentado               | IA, ao processar `docs/requisitos/`                                                              |
+| Bug descoberto em revisão           | IA, registrando em "Tarefas Geradas pela Revisão"                                                |
+| Achado de revisão geral completa    | IA, se o humano pediu a REV e aprovou/criou a tarefa; registrar `REV-NNN-Axx` na tarefa e na REV |
+| Dívida técnica que disparou gatilho | IA, ao detectar o gatilho                                                                        |
+| Solicitação do humano               | Humano ou IA registrando em nome do humano                                                       |
+| Refatoração identificada            | IA ou humano                                                                                     |
 
 A IA **nunca** adiciona tarefa sem confirmação se ela tem origem em requisito novo (que não existia). Para requisitos novos, ver fluxo em [`21-revisao-codigo.md`](https://claude.ai/chat/21-revisao-codigo.md#3-tarefas-geradas-por-revis%C3%A3o).
 
 ### 3.7 Ordenação no Arquivo
 
 Tarefas são listadas por **prioridade combinada** (Valor + Urgência), não por data. Maior prioridade no topo. Quando empate, a com menor esforço vem antes (libera capacidade).
-
 
 ---
 
@@ -203,35 +203,38 @@ Estrutura mínima:
 - **Data-hora início:** 10/05/26 12:39
 - **Dependências:** TASK-RF-21
 - **REQ/ADR/DT:** RNF-04, RNF-11, ADR-2, DT-14
-- **Observações:** Deu problema nisso e naquilo, agora precisa disso primeiro
+- **Observações/Problema:** "Deu problema nisso e naquilo, agora precisa disso primeiro"
 
 ## Planejamento Aprovado
+
 [O MESMO plano apresentado ao humano no chat e por ele aprovado — texto integral, não um resumo]
 
 ## Execução
+
 - 14:15: Plano aprovado
 - 14:30: Iniciada implementação do componente CardRegistro
 - 15:45: CardRegistro pronto. Iniciando lista paginada
 - 16:00: Bloqueio - paginação API retorna formato inesperado
-  
+
 ## Testes
-- `1º npm run test`: 82 verdes 
+
+- `1º npm run test`: 82 verdes
 ```
 
 **Observação sobre datas:** todas as datas usam formato `DD/MM/AA HH:MM`. Inclua hora desde o início - facilita reconstruir a sequência depois.
 
 ### 4.2 Regras
 
-| Regra                                     | Detalhe                                                                                          |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Regra                                         | Detalhe                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`Planejamento Aprovado` = o plano do chat** | A seção `## Planejamento Aprovado` reproduz **o mesmo plano que foi apresentado ao humano no chat e por ele aprovado** — texto integral (O que muda / Critérios de aceite / Impacto / Riscos / Dependências novas), **nunca um resumo**. É o contrato do que foi combinado; reproduzi-lo no registro garante rastreabilidade entre o que foi aprovado e o que foi feito. Vale tanto em `em-andamento.md` quanto no arquivo de `concluidas/` (copiado sem alteração). |
-| **Máximo 3 em andamento ao mesmo tempo**  | Mais que isso, foco é diluído. Termine uma antes de iniciar outra                                |
-| **Log com timestamp**                     | Cada entrada anota a hora. Permite reconstruir a sequência                                       |
-| **Bloqueios documentados**                | Quando empaca, anota o que tentou e o que faltou                                                 |
-| **Decisões anotadas**                     | Escolha não óbvia gera nota explicando o porquê                                                  |
-| **Pode haver várias tarefas no arquivo**  | Cada uma é um bloco com seu próprio cabeçalho. Adicione no final                                 |
-| **Rodar testes antes e depois da tarefa** | Para saber se já tinha teste falhando antes da tarefa e garantir que não quebre nada depois dela |
-|                                           |                                                                                                  |
+| **Máximo 3 em andamento ao mesmo tempo**      | Mais que isso, foco é diluído. Termine uma antes de iniciar outra                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Log com timestamp**                         | Cada entrada anota a hora. Permite reconstruir a sequência                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **Bloqueios documentados**                    | Quando empaca, anota o que tentou e o que faltou                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Decisões anotadas**                         | Escolha não óbvia gera nota explicando o porquê                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **Pode haver várias tarefas no arquivo**      | Cada uma é um bloco com seu próprio cabeçalho. Adicione no final                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Rodar testes antes e depois da tarefa**     | Para saber se já tinha teste falhando antes da tarefa e garantir que não quebre nada depois dela                                                                                                                                                                                                                                                                                                                                                                     |
+|                                               |                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
 ### 4.3 Quando Registrar no Log
 
@@ -250,6 +253,7 @@ Bloqueio é situação onde a tarefa **não pode prosseguir** sem informação o
 
 ```markdown
 ## Bloqueio em 2026-05-13 16:00
+
 **O que tentei:** Implementar paginação assumindo formato `{ data, total }`.
 **Por que não funcionou:** API retorna `{ items, count, nextCursor }`. Cursor-based, não offset.
 **O que preciso:** Decidir se reimplementamos para cursor ou se backend muda para offset.
@@ -261,6 +265,7 @@ Conforme o núcleo: **após 2 tentativas sem sucesso no mesmo problema, pare e p
 
 ```markdown
 ## Bloqueio em 2026-05-13 16:30 (após 2 tentativas)
+
 **Tentativa 1 (16:00):** [...]
 **Tentativa 2 (16:20):** [...]
 **Conclusão:** Não consigo resolver sozinho. Pedi orientação ao humano.
@@ -289,9 +294,10 @@ TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [[](./2026-
 Para garantir ordem cronológica dos arquivos na pasta, coloque a data no começo do nome do arquivo.
 
 Exemplo:
-````
+
+```
 docs/tarefas/concluidas/2026-05-13-17h30--TASK-RF-001--Criar-tela-login.md
-````
+```
 
 Formato: `[YYYY-MM-DD]--[HHhMM]--[TASK-PREFIXO]-[NUMERO].md`
 
@@ -339,35 +345,46 @@ Estrutura essencial:
 - **Observações:** Deu problema nisso e naquilo, agora precisa disso primeiro
 
 ## Planejamento Aprovado
+
 [Mesmo que estava em em-andamento.md]
 
 ## Execução
+
 [Log completo, transferido de em-andamento.md]
 
 ## Decisões Tomadas
+
 - [decisão]: [motivo]
 
 ## O Que NÃO Foi Feito (e Por Quê)
+
 - [item]: [motivo]
 
 ## Testes
-- `1º npm run test`: 82 verdes 
+
+- `1º npm run test`: 82 verdes
 - Novos testes: `useRegistros.test.ts` (5 testes)
-- Modificados: `cardRegistro.test.ts` (1 teste atualizado por nova lógica)  
-- último npm run test`: 88 verdes 
+- Modificados: `cardRegistro.test.ts` (1 teste atualizado por nova lógica)
+- último npm run test`: 88 verdes
 
 ## Revisão
+
 [Conforme módulo 21. Pode ser N/A com justificativa para Light]
 
 ## Tarefas Geradas pela Revisão
+
 - TASK-BG-12: [descrição]
 
 ## Requisitos Gerados pela Revisão
+
 - RNF-13: [descrição] (adicionado em docs/requisitos/nao-funcionais.md)
 
 ## ADRs Geradas pela Revisão
+
 - -
+
 ## Aprendizados Para o Projeto
+
 - [algo que vale a equipe saber]
 ```
 
@@ -401,16 +418,16 @@ Alternativa seria um único `concluidas.md` enorme. Por que separar?
 
 ## 6. Quem Faz o Quê
 
-|Ação|IA|Humano|
-|---|---|---|
-|Criar entrada em pendentes (origem em requisito)|Sim|Aprova|
-|Criar entrada em pendentes (origem em solicitação)|Sim, em nome do humano|Solicita|
-|Mover de pendentes para em-andamento|Sim, ao iniciar|Confirma com "pode iniciar"|
-|Atualizar log em em-andamento|Sim, em tempo real|Lê quando quiser|
-|Aprovar plano detalhado|-|Sim, obrigatório|
-|Tomar decisões durante execução|Sim para óbvias|Sim para não-óbvias|
-|Mover para concluida|Sim, após critérios atendidos|Valida transição|
-|Atualizar requisitos|Sim|Aprova mudanças significativas|
+| Ação                                               | IA                            | Humano                         |
+| -------------------------------------------------- | ----------------------------- | ------------------------------ |
+| Criar entrada em pendentes (origem em requisito)   | Sim                           | Aprova                         |
+| Criar entrada em pendentes (origem em solicitação) | Sim, em nome do humano        | Solicita                       |
+| Mover de pendentes para em-andamento               | Sim, ao iniciar               | Confirma com "pode iniciar"    |
+| Atualizar log em em-andamento                      | Sim, em tempo real            | Lê quando quiser               |
+| Aprovar plano detalhado                            | -                             | Sim, obrigatório               |
+| Tomar decisões durante execução                    | Sim para óbvias               | Sim para não-óbvias            |
+| Mover para concluida                               | Sim, após critérios atendidos | Valida transição               |
+| Atualizar requisitos                               | Sim                           | Aprova mudanças significativas |
 
 **Regra de ouro:** humano aprova mudanças de **estágio** (especialmente para concluída). IA conduz a execução dentro de cada estágio.
 
@@ -420,12 +437,12 @@ Alternativa seria um único `concluidas.md` enorme. Por que separar?
 
 Tarefas raramente terminam isoladas. Frequentemente geram:
 
-|Geram|O que fazer|
-|---|---|
-|Outras tarefas (BG, REF)|Adicionar em `pendentes.md` E listar na concluída|
-|Dívida técnica (decidiu adiar algo)|Registrar em `docs/dominios/divida-tecnica.md` com gatilho|
-|Novo requisito (descobriu necessidade)|Adicionar em `docs/requisitos/` + tarefa que implementa|
-|ADR (decisão arquitetural)|Criar em `docs/arquitetura/ADR/` + listar na concluída|
+| Geram                                  | O que fazer                                                |
+| -------------------------------------- | ---------------------------------------------------------- |
+| Outras tarefas (BG, REF)               | Adicionar em `pendentes.md` E listar na concluída          |
+| Dívida técnica (decidiu adiar algo)    | Registrar em `docs/dominios/divida-tecnica.md` com gatilho |
+| Novo requisito (descobriu necessidade) | Adicionar em `docs/requisitos/` + tarefa que implementa    |
+| ADR (decisão arquitetural)             | Criar em `docs/arquitetura/ADR/` + listar na concluída     |
 
 Se a origem for uma revisão geral, a tarefa deve citar `REV-NNN-Axx` no campo `REQ/ADR/DT` ou nas observações, e a REV deve listar a tarefa no achado correspondente. Revisão geral só existe quando o humano pediu revisão completa do projeto; para detalhes, ver [`27-revisao-geral.md`](https://claude.ai/chat/27-revisao-geral.md).
 
@@ -433,6 +450,7 @@ Se a origem for uma revisão geral, a tarefa deve citar `REV-NNN-Axx` no campo `
 
 ```markdown
 ## Tarefas Geradas pela Revisão
+
 - TASK-BG-12: Corrigir cálculo de total quando há desconto cumulativo (encontrado durante implementação de TASK-RF-5.1)
 - TASK-REF-03: Extrair lógica de paginação para hook reutilizável (após 3ª ocorrência - Regra de Três)
 ```
@@ -456,6 +474,7 @@ Mantém em em-andamento, com registro:
 
 ```markdown
 ## Bloqueio em 2026-05-13 16:00
+
 **O que tentei:** [...]
 **O que preciso:** Resposta do humano sobre formato da API.
 **Pausa até:** resposta do humano.
@@ -480,9 +499,9 @@ Se o bloqueio depende de algo que não vai resolver (decisão pendente do stakeh
 ```markdown
 # Em docs/dominios/divida-tecnica.md
 
-| ID | Descrição | Impacto | Gatilho | ADR |
-|---|---|---|---|---|
-| DT-04 | TASK-RF-5.1 não implementada porque API não suporta paginação cursor | Médio | Quando API for atualizada para v3 | - |
+| ID    | Descrição                                                            | Impacto | Gatilho                           | ADR |
+| ----- | -------------------------------------------------------------------- | ------- | --------------------------------- | --- |
+| DT-04 | TASK-RF-5.1 não implementada porque API não suporta paginação cursor | Médio   | Quando API for atualizada para v3 | -   |
 ```
 
 Tarefa sai de pendentes. Volta quando o gatilho disparar.
@@ -493,28 +512,28 @@ Tarefa sai de pendentes. Volta quando o gatilho disparar.
 
 ### 9.1 Tamanho de Tarefa
 
-|Esforço estimado|Recomendação|
-|---|---|
-|≤ 2h (P)|OK, executar|
-|2-8h (M)|OK|
-|1-3d (G)|OK, considere dividir se possível|
-|> 3d (XG)|**Divida.** XG quase sempre esconde múltiplas tarefas misturadas|
+| Esforço estimado | Recomendação                                                     |
+| ---------------- | ---------------------------------------------------------------- |
+| ≤ 2h (P)         | OK, executar                                                     |
+| 2-8h (M)         | OK                                                               |
+| 1-3d (G)         | OK, considere dividir se possível                                |
+| > 3d (XG)        | **Divida.** XG quase sempre esconde múltiplas tarefas misturadas |
 
 ### 9.2 Tarefas Simultâneas
 
-|Em andamento|Status|
-|---|---|
-|0-1|Ideal|
-|2-3|Aceitável (ex: aguardando feedback em uma)|
-|4+|Foco diluído. Termine antes de iniciar nova|
+| Em andamento | Status                                      |
+| ------------ | ------------------------------------------- |
+| 0-1          | Ideal                                       |
+| 2-3          | Aceitável (ex: aguardando feedback em uma)  |
+| 4+           | Foco diluído. Termine antes de iniciar nova |
 
 ### 9.3 Tempo Em Andamento Sem Progresso
 
-|Duração|Ação|
-|---|---|
-|< 1 dia|Normal|
-|1-3 dias|Verificar se está bloqueada|
-|> 3 dias sem log|Voltar para pendentes ou marcar como bloqueada|
+| Duração          | Ação                                           |
+| ---------------- | ---------------------------------------------- |
+| < 1 dia          | Normal                                         |
+| 1-3 dias         | Verificar se está bloqueada                    |
+| > 3 dias sem log | Voltar para pendentes ou marcar como bloqueada |
 
 ---
 
@@ -533,11 +552,11 @@ Bug crítico em produção. Não passa pelo fluxo normal:
 
 Você está executando TASK-RF-5.1 e descobre que precisa também tocar em TASK-RF-5.2.
 
-|Situação|Ação|
-|---|---|
-|Escopo cresceu, mas é coeso (mesmo módulo)|OK, atualizar plano e seguir|
-|Escopo cresceu, e o adicional é tarefa separada|Anotar, terminar TASK-RF-5.1, criar TASK-RF-5.2 em pendentes|
-|Descobriu bug não relacionado|**Não corrija.** Anote em "Tarefas Geradas" e criar TASK-BG em pendentes|
+| Situação                                        | Ação                                                                     |
+| ----------------------------------------------- | ------------------------------------------------------------------------ |
+| Escopo cresceu, mas é coeso (mesmo módulo)      | OK, atualizar plano e seguir                                             |
+| Escopo cresceu, e o adicional é tarefa separada | Anotar, terminar TASK-RF-5.1, criar TASK-RF-5.2 em pendentes             |
+| Descobriu bug não relacionado                   | **Não corrija.** Anote em "Tarefas Geradas" e criar TASK-BG em pendentes |
 
 ### 10.3 Tarefa Que Vira Outra
 
@@ -567,19 +586,19 @@ Se o arquivo não existe ou está incompleto, é um sinal de que o ciclo foi que
 
 ## 11. Resumo Rápido
 
-|Pergunta|Resposta|
-|---|---|
-|Onde mora tarefa nova?|`docs/tarefas/pendentes.md` (1 linha)|
-|Como inicia?|Move para `em-andamento.md`, plano detalhado, aprovação|
-|Como termina?|Cria arquivo em `concluidas/`, copia tudo, atualiza requisitos|
-|Cerimônia para typo?|Light. Sem ciclo|
-|Cerimônia para feature?|Standard. Ciclo completo|
-|Cerimônia para decisão arquitetural?|Strict. Standard + ADR|
-|Quem aprova mudanças de estágio?|Humano (especialmente entrada em concluída)|
-|Máximo em andamento?|3|
-|Bloqueio longo?|Volta para pendentes com `[!]`|
-|Bug não relacionado durante execução?|Não corrija. Anote e crie tarefa|
-|Tarefa cancelada?|Documenta motivo, vai para concluidas com Status: CANCELADA|
+| Pergunta                              | Resposta                                                       |
+| ------------------------------------- | -------------------------------------------------------------- |
+| Onde mora tarefa nova?                | `docs/tarefas/pendentes.md` (1 linha)                          |
+| Como inicia?                          | Move para `em-andamento.md`, plano detalhado, aprovação        |
+| Como termina?                         | Cria arquivo em `concluidas/`, copia tudo, atualiza requisitos |
+| Cerimônia para typo?                  | Light. Sem ciclo                                               |
+| Cerimônia para feature?               | Standard. Ciclo completo                                       |
+| Cerimônia para decisão arquitetural?  | Strict. Standard + ADR                                         |
+| Quem aprova mudanças de estágio?      | Humano (especialmente entrada em concluída)                    |
+| Máximo em andamento?                  | 3                                                              |
+| Bloqueio longo?                       | Volta para pendentes com `[!]`                                 |
+| Bug não relacionado durante execução? | Não corrija. Anote e crie tarefa                               |
+| Tarefa cancelada?                     | Documenta motivo, vai para concluidas com Status: CANCELADA    |
 
 ---
 

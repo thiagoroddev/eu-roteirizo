@@ -42,11 +42,8 @@
 
 **Objetivo:** transformar o núcleo validado no protótipo num módulo de produção em `src/utils/routing/`, com tipos, testes e performance/offline.
 
-### TASK-RF-005.1 - Núcleo do grafo + A* (tipado + testado)
-- **Esforço-H/IA:** G/M · **Dep:** -
-- Portar `core.mjs` do protótipo para: `src/utils/routing/geo.ts` (`haversine`), `graph.ts` (`buildGraph`, tipos `RoadGraph`/`GraphNode`/`Edge`, `onewayDirection`, `nearestNode`), `aStar.ts` (`aStar`), `streets.ts` (`streetsAlong`).
-- Migrar os testes do protótipo (grid sintético com mão única) para Vitest.
-- **Aceite:** sentido permitido vai direto; contramão desvia; sem fetch/Leaflet acoplado; testes verdes.
+### ✅ TASK-RF-005.1 - Núcleo do grafo + A* (tipado + testado) — CONCLUÍDA (25/06)
+- Portado para `src/utils/routing/` (`geo.ts`/`graph.ts`/`aStar.ts`/`streets.ts`) + testes Vitest (fixture com grafo sintético de mão única; +34 testes). Guard de start/goal ausente no A*. Ver `concluidas/2026-06-25--17h09--TASK-RF-005.1.md`. **Próxima: 005.2.**
 
 ### TASK-RF-005.2 - Camada de dados OSM (Overpass → grafo)
 - **Esforço-H/IA:** M/M · **Dep:** 005.1
