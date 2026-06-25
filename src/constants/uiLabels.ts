@@ -47,6 +47,12 @@ export const UI_LABELS = {
       COMMERCIAL: "Horário comercial?",
     },
   },
+  // Mensagens da camada de roteamento local (OSM → grafo). TASK-RF-005.2.
+  ROUTING: {
+    OVERPASS_HTTP_ERROR: (status: number) => `O servidor de mapas respondeu com erro (${status}). Tente novamente em instantes.`,
+    NETWORK_ERROR: "Não foi possível baixar as ruas do mapa. Verifique sua conexão e tente novamente.",
+    TIMEOUT: "O download das ruas demorou demais e foi cancelado. Tente novamente.",
+  },
   ROUTE_TABLE: {
     TITLE: (route: string) => `Tabela Original : ${route}`,
   },

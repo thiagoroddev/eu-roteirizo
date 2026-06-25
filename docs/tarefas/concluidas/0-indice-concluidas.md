@@ -34,6 +34,7 @@
 | TASK-RF-018 | Rota única: não avisar "colunas opcionais faltando" (missingCols vazio no modo) | [abrir](./2026-06-25--14h09--TASK-RF-018.md) |
 | TASK-BG-005 | Robustecer `parseCoordinate` (decimal real vírgula/ponto × inteiro escalado, locale-aware) — RN-02 | [abrir](./2026-06-25--15h41--TASK-BG-005.md) |
 | TASK-RF-005.1 | Núcleo do grafo + A* tipado e testado (geo/graph/aStar/streets; mão única = aresta ausente) — ADR-002 | [abrir](./2026-06-25--17h09--TASK-RF-005.1.md) |
+| TASK-RF-005.2 | Camada de dados OSM (Overpass → grafo): osm.ts (fetch/timeout/erro→UI), reusa buildGraph — ADR-002, DT-005 | [abrir](./2026-06-25--17h31--TASK-RF-005.2.md) |
 
 <!-- Exemplo:
 | TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [abrir](./2026-05-16--20h21--TASK-REF-03.md) |

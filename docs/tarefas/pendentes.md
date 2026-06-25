@@ -45,10 +45,8 @@
 ### ✅ TASK-RF-005.1 - Núcleo do grafo + A* (tipado + testado) — CONCLUÍDA (25/06)
 - Portado para `src/utils/routing/` (`geo.ts`/`graph.ts`/`aStar.ts`/`streets.ts`) + testes Vitest (fixture com grafo sintético de mão única; +34 testes). Guard de start/goal ausente no A*. Ver `concluidas/2026-06-25--17h09--TASK-RF-005.1.md`. **Próxima: 005.2.**
 
-### TASK-RF-005.2 - Camada de dados OSM (Overpass → grafo)
-- **Esforço-H/IA:** M/M · **Dep:** 005.1
-- `src/utils/routing/osm.ts`: montar query Overpass por bbox (filtrando vias navegáveis), `fetch`, parsear `elements` → `RoadGraph` (reusa `buildGraph`). Tipar a resposta do Overpass. Tratar erro/timeout com mensagem de UI (`UI_LABELS`).
-- **Aceite:** dado um bbox, retorna um `RoadGraph` válido; erro de rede tratado sem quebrar a UI.
+### ✅ TASK-RF-005.2 - Camada de dados OSM (Overpass → grafo) — CONCLUÍDA (25/06)
+- `src/utils/routing/osm.ts` (`buildOverpassQuery`/`bboxFromBounds`/`fetchRoadGraph`), `UI_LABELS.ROUTING`, DT-005, +14 testes (`vi.stubGlobal("fetch")`). Reusa `buildGraph`; erro/timeout via `UI_LABELS`. Ver `concluidas/2026-06-25--17h31--TASK-RF-005.2.md`. **Próxima: 005.3 — ⚠️ pede aprovação de `idb` + `fake-indexeddb`.**
 
 ### TASK-RF-005.3 - Cache do grafo + offline (IndexedDB)
 - **Esforço-H/IA:** G/M · **Dep:** 005.2
