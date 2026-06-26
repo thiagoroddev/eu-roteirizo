@@ -39,6 +39,10 @@
 | TASK-RF-005.4 | A* com min-heap próprio (minHeap.ts; fronteira O(log n), resultado idêntico, 2.7ms/2500 nós) — ADR-002 | [abrir](./2026-06-25--18h02--TASK-RF-005.4.md) |
 | TASK-RF-005.5 | Map matching em aresta (match.ts: projeção/nearestEdge/matchToGraph; nó sintético) — **fecha o motor RF-005** | [abrir](./2026-06-25--18h15--TASK-RF-005.5.md) |
 | TASK-RF-019 | Protótipo dos marcadores SVG do modo Original (forma=Stop, número=parada, cor=tipo, badge caixa/pino, ponta fina, neon) — ADR-008 | [abrir](./2026-06-25--22h55--TASK-RF-019.md) |
+| TASK-RF-020.1 | Componente de marcador SVG parametrizável (markerSvg builder puro + markerIcon divIcon + reset CSS) — ADR-008 | [abrir](./2026-06-26--12h09--TASK-RF-020.1.md) |
+| TASK-RF-020.2 | Integrar no RouteMap (agrupar por Stop, 1 marcador/parada; stopGrouping + markerColors; aposenta PNGs) — ADR-008 | [abrir](./2026-06-26--12h46--TASK-RF-020.2.md) |
+| TASK-RF-020.4 | Ajuste visual dos marcadores: escala por zoom (markerScale) + badge reposicionado na base da cabeça — ADR-008 | [abrir](./2026-06-26--14h40--TASK-RF-020.4.md) |
+| TASK-RF-020.5 | Redesenho do marcador: sempre quadrado colapsado + badge dentro + rótulo `parada-sequência` (ADR-008 refinada) | [abrir](./2026-06-26--15h43--TASK-RF-020.5.md) |
 | TASK-REF-010 | Profissionalizar o pacote de agente e torná-lo auto-carregável (Claude/Codex/Copilot): entry points, 9 Skills, 7 instructions, renome .md.md→.md, 489 links corrigidos, geral-leve arquivado — pacote v4.0 | [abrir](./2026-06-26--10h19--TASK-REF-010.md) |
 
 <!-- Exemplo:

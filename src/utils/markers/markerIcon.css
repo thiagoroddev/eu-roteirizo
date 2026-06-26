@@ -1,0 +1,19 @@
+/*
+ * Neutralizes Leaflet's default divIcon appearance (`.leaflet-div-icon` draws a
+ * white square with a gray border). Our marker is a self-contained SVG with its
+ * own neon glow, so the wrapper must be transparent and borderless. The SVG body
+ * already carries the glow filter; the wrapper itself takes no background.
+ */
+.leaflet-div-icon.route-marker-icon {
+  background: transparent;
+  border: 0;
+  /* The wrapper is a rectangle; its transparent area must not steal clicks from
+     a marker underneath. Disable hits on the wrapper and re-enable only on the
+     painted shapes below — events there still bubble to Leaflet's wrapper listener. */
+  pointer-events: none;
+}
+
+.route-marker-icon .mk-body,
+.route-marker-icon .mk-badge {
+  pointer-events: auto;
+}

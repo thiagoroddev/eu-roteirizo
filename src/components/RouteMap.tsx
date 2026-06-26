@@ -8,26 +8,28 @@ import type { RowData } from "../types";
 import { MAP_CONFIG, COLUMN_NAMES, UI_LABELS } from "../constants"; // <--- Importante: Constantes
 
 // Business logic utils
-import { getCommercialDisplayStatus, resolveLocationType } from "../utils/inferLocationType";
-import { pickIconKey } from "../utils/iconPicker";
+import { getCommercialDisplayStatus } from "../utils/inferLocationType";
 import { escapeHtml } from "../utils/escapeHtml";
 import { Button } from "./ui/button";
 
-// Map and icon utils
-import { getScaleFactorFromWidth } from "../utils/map";
-import { getIcons } from "../utils/mapIcons";
-import { parseCoordinate, isWithinRioBounds } from "../utils/coordinates";
+// SVG markers (ADR-008): one divIcon per stop, grouped by Stop, colored by type.
+import { createMarkerDivIcon } from "../utils/markers/markerIcon";
+import { MARKER_GEOMETRY, type MarkerSvgProps } from "../utils/markers/markerSvg";
+import { groupRowsByStop } from "../utils/markers/stopGrouping";
+import { colorForLocationType } from "../utils/markers/markerColors";
+import { scaleForZoom, MARKER_MAX_SCALE } from "../utils/markers/markerScale";
 
 /* ============================================================================
    GLOBAL CONFIGURATION (OUTSIDE COMPONENT)
-   Creates icons only once to improve performance.
 ============================================================================ */
 
-// 1. Calculate Scale Factor based on config
-const ICON_SCALE_FACTOR = getScaleFactorFromWidth(MAP_CONFIG.MARKER.TARGET_WIDTH_PX);
+// Tooltip sits above the body. Computed at full size (the closest-zoom scale); at
+// far zoom the marker is smaller, so the tooltip just floats slightly higher.
+const TOOLTIP_OFFSET_Y = -(MARKER_GEOMETRY.TIP_Y - MARKER_GEOMETRY.BODY_TOP) * MARKER_MAX_SCALE;
 
-// 2. Generate Icon Registry (memoized by scale)
-const ICONS = getIcons(ICON_SCALE_FACTOR);
+// A stop whose addresses spread beyond this (meters) from the representative gets a
+// DEV-only warning — to learn in the field whether a "spread Stop" is rare or bad data.
+const STOP_DISPERSION_WARN_M = 100;
 
 /* ============================================================================
    ROUTEMAP COMPONENT
@@ -99,94 +101,107 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
 
     markersLayer.clearLayers();
 
+    // One marker per Stop (ADR-008): group rows, then draw the representative.
+    const stops = groupRowsByStop(rows);
     const latlngs: L.LatLng[] = [];
+    const noData = UI_LABELS.COMMON.NO_DATA;
+    const tip = UI_LABELS.ROUTE_MAP.TOOLTIP;
 
-    rows.forEach((row) => {
-      // Using COLUMN_NAMES to guard against typos
-      const latVal = row[COLUMN_NAMES.LATITUDE];
-      const lngVal = row[COLUMN_NAMES.LONGITUDE];
+    // The map has no view until fitBounds runs below; guard getZoom for that window.
+    const safeZoom = (): number => {
+      try {
+        return map.getZoom();
+      } catch {
+        return MAP_CONFIG.ZOOM.DEFAULT;
+      }
+    };
 
-      const lat = parseCoordinate(latVal);
-      const lng = parseCoordinate(lngVal);
+    // Markers keep their base props so the icon can be rebuilt at a new scale on zoom.
+    const entries: { marker: L.Marker; iconProps: Omit<MarkerSvgProps, "scale"> }[] = [];
 
-      // A point is only plotted if both coordinates parsed AND fall inside the
-      // map's Rio bounds. Out-of-range values (e.g. mis-parsed coordinates) are
-      // discarded instead of producing a misplaced marker.
-      if (lat !== undefined && lng !== undefined && isWithinRioBounds(lat, lng)) {
-        const position = L.latLng(lat, lng);
-        latlngs.push(position);
+    stops.forEach((stop) => {
+      const rep = stop.representative;
+      const position = L.latLng(rep.lat, rep.lng);
+      latlngs.push(position);
 
-        // --- BUSINESS LOGIC ---
+      // Collapsed stop = always a SQUARE (ADR-008, RF-020.5): the circle is reserved
+      // for the expanded/selected address state (.3). Color = stop type (commercial
+      // wins), number = Stop, badge = addresses (multi) or packages (single address >1).
+      const multi = stop.addresses.length > 1;
+      const iconProps: Omit<MarkerSvgProps, "scale"> = {
+        shape: "square",
+        color: colorForLocationType(stop.type),
+        number: stop.hasStop ? stop.stop : null,
+        badge: multi ? { kind: "addresses", count: stop.addresses.length } : { kind: "packages", count: rep.rows.length },
+      };
+      const icon = createMarkerDivIcon({ ...iconProps, scale: scaleForZoom(safeZoom()) });
 
-        // 1. Resolve Location Type (Residencial/Comercial)
-        const finalType = resolveLocationType(row);
+      // Tooltip describes the representative row (the addresses hidden from the map
+      // stay in the side list/table). Spreadsheet cells are untrusted → escape all.
+      const row = rep.rows[0];
+      const zip = row[COLUMN_NAMES.ZIPCODE];
+      const googleMapsUrl = `https://www.google.com/maps?q=${rep.lat},${rep.lng}`;
+      const tooltipContent = `
+        <div style="font-family: sans-serif; font-size: 13px;">
+          <strong>${tip.SEQUENCE}</strong> ${escapeHtml(row[COLUMN_NAMES.SEQUENCE] || noData)} | <strong>${tip.STOP}</strong> ${escapeHtml(row[COLUMN_NAMES.STOP] || noData)}<br/>
+          <strong>${tip.ADDRESS}</strong> ${escapeHtml(row[COLUMN_NAMES.DESTINATION_ADDRESS] || noData)}<br/>
+          <strong>${tip.NEIGHBORHOOD}</strong> ${escapeHtml(row[COLUMN_NAMES.NEIGHBORHOOD] || noData)}<br/>
+          <strong>${tip.ZIPCODE}</strong> ${escapeHtml(zip || noData)}<br/>
+          <strong>${tip.COMMERCIAL}</strong> ${escapeHtml(getCommercialDisplayStatus(row))}
+        </div>
+      `;
 
-        // 2. Get Original Type (for correction detection)
-        const originalType = String(row[COLUMN_NAMES.LOCATION_TYPE] || "")
-          .trim()
-          .toUpperCase();
+      const marker = L.marker(position, { icon }).bindTooltip(tooltipContent, {
+        direction: "top",
+        offset: [0, TOOLTIP_OFFSET_Y],
+      });
 
-        const zip = row[COLUMN_NAMES.ZIPCODE];
+      marker.on("click", () => {
+        window.open(googleMapsUrl, "_blank");
+      });
 
-        // 3. Pick the correct Icon Key
-        const iconKey = pickIconKey(finalType, originalType);
+      marker.addTo(markersLayer);
+      entries.push({ marker, iconProps });
 
-        // 4. Select the Icon Asset
-        // Fallback to INDEFINITE if key is missing (safety)
-        const iconToUse = ICONS[iconKey] || ICONS.INDEFINITE;
-
-        const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-
-        // --- TOOLTIP CONSTRUCTION ---
-        // Using UI_LABELS.COMMON.NO_DATA to standardize the empty-value text
-        const noData = UI_LABELS.COMMON.NO_DATA;
-
-        // All interpolated values are escaped: spreadsheet cells are untrusted and
-        // bindTooltip renders this string as HTML (injection / XSS vector otherwise).
-        const tip = UI_LABELS.ROUTE_MAP.TOOLTIP;
-        const tooltipContent = `
-          <div style="font-family: sans-serif; font-size: 13px;">
-            <strong>${tip.SEQUENCE}</strong> ${escapeHtml(row[COLUMN_NAMES.SEQUENCE] || noData)} | <strong>${tip.STOP}</strong> ${escapeHtml(row[COLUMN_NAMES.STOP] || noData)}<br/>
-            <strong>${tip.ADDRESS}</strong> ${escapeHtml(row[COLUMN_NAMES.DESTINATION_ADDRESS] || noData)}<br/>
-            <strong>${tip.NEIGHBORHOOD}</strong> ${escapeHtml(row[COLUMN_NAMES.NEIGHBORHOOD] || noData)}<br/>
-            <strong>${tip.ZIPCODE}</strong> ${escapeHtml(zip || noData)}<br/>
-            <strong>${tip.COMMERCIAL}</strong> ${escapeHtml(getCommercialDisplayStatus(finalType))}
-          </div>
-        `;
-
-        const marker = L.marker(position, { icon: iconToUse }).bindTooltip(tooltipContent, {
-          direction: "top",
-          offset: [0, -40 * ICON_SCALE_FACTOR], // Dynamic offset based on scale
-        });
-
-        marker.on("click", () => {
-          window.open(googleMapsUrl, "_blank");
-        });
-
-        marker.addTo(markersLayer);
+      // DEV-only, no PII: flag stops whose addresses are dispersed from the representative.
+      if (import.meta.env.DEV && stop.maxDispersionMeters > STOP_DISPERSION_WARN_M) {
+        console.info(`RouteMap: Stop disperso (${stop.addresses.length} endereços, máx ${Math.round(stop.maxDispersionMeters)}m do representante).`);
       }
     });
 
-    // Warn (DEV only, no PII) when points were dropped for lacking a valid
-    // in-range coordinate, so a silent omission from the map is noticeable.
-    const discarded = rows.length - latlngs.length;
+    // Rebuild every marker icon at the current zoom's scale (markers grow with zoom,
+    // full size only when closest). Anchor re-derives, so the tip stays on the point.
+    const applyScaleForZoom = () => {
+      const scale = scaleForZoom(safeZoom());
+      entries.forEach(({ marker, iconProps }) => marker.setIcon(createMarkerDivIcon({ ...iconProps, scale })));
+    };
+    map.on("zoomend", applyScaleForZoom);
+
+    // Warn (DEV only, no PII) when rows were dropped for lacking a valid in-range
+    // coordinate, so a silent omission from the map is noticeable.
+    const plottedRows = stops.reduce((sum, stop) => sum + stop.addresses.reduce((acc, addr) => acc + addr.rows.length, 0), 0);
+    const discarded = rows.length - plottedRows;
     if (import.meta.env.DEV && discarded > 0) {
       console.warn(`RouteMap: ${discarded} de ${rows.length} pontos sem coordenada válida (omitidos do mapa).`);
     }
 
-    // Auto-zoom logic
+    // Auto-zoom logic, then size markers to the fitted zoom.
     if (latlngs.length > 0) {
       map.fitBounds(L.latLngBounds(latlngs), {
         padding: [50, 50],
         maxZoom: MAP_CONFIG.ZOOM.DEFAULT,
       });
+      applyScaleForZoom();
     }
 
     const resizeTimeout = setTimeout(() => {
       map.invalidateSize();
     }, 100);
 
-    return () => clearTimeout(resizeTimeout);
+    return () => {
+      map.off("zoomend", applyScaleForZoom);
+      clearTimeout(resizeTimeout);
+    };
   }, [rows]);
 
   // 3) KEYBOARD HANDLER

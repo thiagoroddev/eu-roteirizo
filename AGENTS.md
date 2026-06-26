@@ -11,6 +11,7 @@
 
 <!-- BEGIN:nucleo-sync (fonte: .github/agents/geral-robusto/01-nucleo.md §1.3, §2, §3, §4, §5) -->
 
+
 ## Hierarquia de regras (resolução de conflito)
 
 1. `docs/contexto-projeto-ai.md` (vence quase sempre)

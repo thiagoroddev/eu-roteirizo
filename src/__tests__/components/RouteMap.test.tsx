@@ -31,6 +31,9 @@ const mapMethods = {
   fitBounds: vi.fn(),
   invalidateSize: vi.fn(),
   addLayer: vi.fn(),
+  getZoom: vi.fn(() => 16),
+  on: vi.fn(),
+  off: vi.fn(),
 };
 
 const layerGroupMethods = {
@@ -42,6 +45,7 @@ const markerMethods = {
   addTo: vi.fn().mockReturnThis(),
   bindTooltip: vi.fn().mockReturnThis(),
   on: vi.fn(), // Intercept click events
+  setIcon: vi.fn().mockReturnThis(), // Re-scaled on zoomend (RF-020.4)
 };
 
 vi.mock("leaflet", () => {
@@ -57,6 +61,9 @@ vi.mock("leaflet", () => {
       })),
       marker: vi.fn(() => markerMethods),
       Icon: vi.fn(),
+      // SVG markers (ADR-008) wrap their html in L.divIcon.
+      divIcon: vi.fn(() => ({})),
+      DivIcon: vi.fn(),
     },
   };
 });
@@ -68,28 +75,16 @@ import L from "leaflet";
 // 2. MOCK UTILITIES & DEPENDENCIES
 // =============================================================================
 
+// resolveLocationType is used by the stop-grouping logic (RF-020.2); the marker
+// color/type follows from it. getCommercialDisplayStatus feeds the tooltip.
 vi.mock("../../utils/inferLocationType", () => ({
   resolveLocationType: vi.fn(() => "RESIDENTIAL"),
   getCommercialDisplayStatus: vi.fn(() => "Não"),
 }));
 
-vi.mock("../../utils/iconPicker", () => ({
-  pickIconKey: vi.fn(() => "HOME"),
-}));
-
-vi.mock("../../utils/map", () => ({
-  getScaleFactorFromWidth: vi.fn(() => 1),
-}));
-
-vi.mock("../../utils/mapIcons", () => ({
-  getIcons: vi.fn(() => ({
-    HOME: { options: { iconUrl: "mock-home.png" } },
-    INDEFINITE: { iconUrl: "indefinite.png" },
-  })),
-}));
-
-// Mock CSS import to prevent parse errors
+// Mock CSS imports to prevent parse errors
 vi.mock("leaflet/dist/leaflet.css", () => ({}));
+vi.mock("../../utils/markers/markerIcon.css", () => ({}));
 
 // =============================================================================
 // 3. TEST DATA FIXTURES

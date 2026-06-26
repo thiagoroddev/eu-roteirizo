@@ -32,7 +32,17 @@
 
 ---
 
-## TASK-RF-020 - Marcadores SVG no visualizador Original (divIcon + agrupar por Stop) [G, dividir]
+## 🔄 TASK-RF-020 - Marcadores SVG no visualizador Original — EM ANDAMENTO
+
+> Bloco completo (header + plano da subtarefa atual) vive agora em [`em-andamento.md`](./em-andamento.md). Cadência **uma subtarefa por vez**.
+>
+> - **.1** Componente de marcador SVG parametrizável — ✅ concluída (26/06, `concluidas/2026-06-26--12h09--TASK-RF-020.1.md`)
+> - **.2** Integrar no `RouteMap` (agrupar por Stop) — ✅ concluída (26/06, `concluidas/2026-06-26--12h46--TASK-RF-020.2.md`)
+> - **.4** Ajuste visual (escala por zoom + badge reposicionado) — ✅ concluída (26/06, `concluidas/2026-06-26--14h40--TASK-RF-020.4.md`)
+> - **.5** Redesenho (sempre quadrado colapsado + badge dentro + rótulo `parada-seq`) + docs — ✅ concluída (26/06, `concluidas/2026-06-26--15h43--TASK-RF-020.5.md`)
+> - **.3** Interações: expandir/colapsar, seleção, popup — ⏳ **próxima** (Dep .2/.5 ✅) — ver abaixo (spec atualizada)
+
+<!-- Header original preservado abaixo para histórico; subtarefas .2/.3 seguem detalhadas.
 
 - **Status:** Pendente
 - **Modo:** Strict
@@ -51,15 +61,19 @@
 - Função pura que gera o SVG do marcador a partir de `{ shape: "square"|"circle", color, number, badge: { kind: "pacotes"|"enderecos", count }, anchor }`; embrulhar em `L.divIcon`. Texto/cores via tokens; número escuro no cinza (contraste AA). Ponta fina; badge com ícone **caixa** (pacotes) ou **pino** (endereços), só se `count > 1`; estética neon (gradiente + glow CSS).
 - **Aceite:** componente isolado e testável (snapshot/estrutura); sem dependência de Leaflet na geração do SVG (só o wrapper `divIcon` conhece o Leaflet).
 
+-->
+
 ### TASK-RF-020.2 - Integrar no RouteMap (agrupar por Stop, 1 marcador por parada)
 - **Esforço-H/IA:** M/G · **Dep:** 020.1
 - Em `RouteMap.tsx`: agrupar `rows` por `COLUMN_NAMES.STOP`; **quadrado** se a parada tem >1 endereço, **círculo** se único; **cor por tipo** (`resolveLocationType`, comercial vence); **número = Stop**; **posição** = representante da parada (por ora menor sequência); badge = nº de endereços (parada) ou nº de pacotes (endereço). Remover/aposentar `getIcons` PNG. Tooltip/lista mantêm os endereços ocultos do mapa.
 - **Aceite:** multi-rota mostra 1 marcador por parada com o número da parada; cores/formas/badges corretos; testes de `RouteMap` adaptados verdes.
 
 ### TASK-RF-020.3 - Interações: expandir/colapsar parada, seleção e popup do endereço
-- **Esforço-H/IA:** M/M · **Dep:** 020.2 · **REQ:** `fluxo-modo-original.md` §5–§6
-- Clicar numa **parada** (quadrado) **expande** seus endereços como **círculos coloridos por tipo** (representante vira círculo); clicar em **outra parada** troca o foco; clicar **fora** **colapsa** (volta ao quadrado do representante) e limpa a seleção. **Só uma expandida por vez.** Marcador clicado fica **selecionado** (borda grossa branca + sombra na cor do tipo) — **seleção, não âncora**. Clicar num **endereço** abre **popup**: lista de pacotes (`SPX TN` + sequência), endereço completo, complemento e tipo (comercial/residencial/indefinido) **em texto** (reusar `escapeHtml`).
-- **Aceite:** expandir/colapsar conforme §5; popup com os campos do §6; seleção visível; nenhum endereço some da lista/tabela.
+- **Esforço-H/IA:** M/M · **Dep:** 020.2 / 020.5 · **REQ:** `fluxo-modo-original.md` §5–§6 · **ADR-008** (refinada RF-020.5)
+- **Spec atualizada (RF-020.5):** parada colapsada é **sempre quadrado** com o **nº da parada**. Clicar nela **expande**: **todos** os endereços viram **círculos** (cone sempre), coloridos por tipo, rotulados **`parada-sequência`** (ex.: `18-49`) — **incl. o representante**; a sequência é a **da planilha** (modo Original). Parada de **1 endereço** também vira **círculo** `parada-seq` ao ser selecionada.
+- Clicar em **outra parada** troca o foco; clicar **fora** **colapsa** (volta ao quadrado) e limpa a seleção. **Só uma expandida por vez.** Marcador clicado fica **selecionado** (borda grossa branca + sombra na cor do tipo) — **seleção, não âncora**. Cada círculo pode ter badge de **nº de pacotes** (se > 1). Clicar num **endereço** abre **popup**: lista de pacotes (`SPX TN` + sequência), endereço completo, complemento e tipo (comercial/residencial/indefinido) **em texto** (reusar `escapeHtml`).
+- **Nota técnica:** o componente já suporta `number` composto (`"18-49"`) e `shape:"circle"`/`selected` (RF-020.1/.5). A .3 é a orquestração de estado no `RouteMap` (parada expandida / endereço selecionado) + popup + `UI_LABELS` novos.
+- **Aceite:** expandir/colapsar conforme §5; círculos rotulados `parada-seq`; popup com os campos do §6; seleção visível; nenhum endereço some da lista/tabela.
 
 **Critérios de aceite (RF-020):** visualizador Original com marcadores SVG conforme ADR-008; nenhum endereço "perdido" (os ocultos do mapa seguem na lista/tabela); gate `tsc`/`vitest`/`lint` verde.
 **Dependências novas:** nenhuma.

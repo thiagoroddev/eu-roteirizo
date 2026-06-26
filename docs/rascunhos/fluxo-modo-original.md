@@ -33,10 +33,10 @@ Detalhe completo na **ADR-008**. Resumo das variáveis (cada uma com **um** sign
 
 | Variável | Significado |
 |---|---|
-| **Geometria** | **quadrado** = parada com **mais de um** endereço · **círculo** = endereço único (ou endereço dentro de uma parada expandida) |
-| **Número** (dentro) | **número da parada (Stop)** — espelha o oficial. **Nunca** a sequência. Ao expandir, **só o representante** (menor sequência) mantém o número; os demais endereços ficam **sem número** (só cor + posição + popup). |
+| **Geometria** *(RF-020.5)* | **quadrado** = **parada colapsada** (sempre, mesmo com 1 endereço) · **círculo** = **endereço** (parada expandida/selecionada; a parada de 1 endereço também vira círculo ao ser selecionada) |
+| **Número** (dentro) *(RF-020.5)* | **quadrado colapsado** = **número da parada (Stop)**. **Círculos expandidos** = **`parada-sequência`** (ex.: `18-49`; sequência **da planilha** no Original) — **todos** os círculos, **incl. o representante**. |
 | **Cor** | **tipo**: **verde** = residencial · **azul** = comercial · **cinza** = indefinido. **Comercial vence:** parada com ≥1 comercial fica **azul**. |
-| **Badge amarelo** (canto) | contagem, só se > 1 — ícone **caixa** = nº de pacotes (num endereço) · ícone **pino** = nº de endereços (numa parada) |
+| **Badge amarelo** (dentro da cabeça) *(RF-020.5)* | contagem, só se > 1 — ícone **caixa** = nº de pacotes (num endereço) · ícone **pino** = nº de endereços (numa parada). Fica **dentro** do ícone; o número sobe quando há badge, centraliza quando não há. |
 | **Ponta fina** | aponta o **ponto exato** no mapa, mesmo com marcadores amontoados |
 | **Borda grossa branca + sombra colorida** | **selecionado** (§5) — **não** é âncora |
 
@@ -48,10 +48,10 @@ Detalhe completo na **ADR-008**. Resumo das variáveis (cada uma com **um** sign
 
 | Estado | Como aparece |
 |---|---|
-| **Colapsada** (padrão) | **Um** marcador **quadrado** no representante da parada (menor sequência), com número da parada, cor por tipo e badge de **nº de endereços** (se > 1). Os demais endereços **não** aparecem no mapa. |
-| **Expandida** (após clique) | O quadrado **vira círculo**; aparecem os **endereços** da parada como **círculos** coloridos por tipo (cada um residencial/comercial/indefinido). **Só o representante** (menor sequência) mostra o número da parada; os outros endereços ficam **sem número** — evita confundir com sequência e mantém "ícone só mostra número de parada". |
+| **Colapsada** (padrão) | **Um** marcador **quadrado** (sempre, mesmo com 1 endereço) no representante da parada (menor sequência), com **número da parada**, cor por tipo e badge de **nº de endereços** (se > 1; ou **nº de pacotes** se a parada tem 1 só endereço com > 1 pacote). Os demais endereços **não** aparecem no mapa. |
+| **Expandida** (após clique) | O quadrado **vira círculo**; aparecem os **endereços** da parada como **círculos** coloridos por tipo. **Todos** mostram **`parada-sequência`** (ex.: `18-49`, `18-50`), **inclusive o representante** — assim dá pra saber quais endereços são daquela parada. Cada círculo pode ter badge de **nº de pacotes** (se > 1 naquele endereço). |
 
-> **Só uma parada fica expandida por vez** (assumido — evita poluição; alinhado ao roteirizar). Parada de **um único endereço** já é um **círculo** colapsado: não expande, vai direto ao popup (§6).
+> **Só uma parada fica expandida por vez** (assumido — evita poluição; alinhado ao roteirizar). Parada de **um único endereço** é um **quadrado** colapsado (nº da parada); ao ser **selecionada** vira um **círculo** `parada-sequência` e abre o popup (§6).
 
 ---
 
@@ -60,6 +60,7 @@ Detalhe completo na **ADR-008**. Resumo das variáveis (cada uma com **um** sign
 **Clique numa parada colapsada (quadrado) → expandir:**
 - Os **endereços** da parada aparecem no mapa como **círculos**, cada um na cor do seu **tipo** (residencial/comercial/indefinido).
 - O quadrado representante **vira círculo** também.
+- **Todos** os círculos mostram **`parada-sequência`** (ex.: `18-49`) — é assim que se sabe quais endereços são daquela parada *(RF-020.5; antes os demais ficavam sem número)*.
 - A expansão **permanece** até o usuário expandir **outra parada** (troca o foco) ou **clicar fora** (colapsa).
 
 **Clique numa outra parada:**
@@ -121,9 +122,10 @@ Pontos que decidi por padrão razoável e que valem confirmação:
 
 ## 9. Pendências / a confirmar
 
-- [ ] Posição do representante na parada (menor sequência por ora — verificar entregando).
-- [ ] Comportamento quando um mesmo **Stop** tem **coordenadas divergentes** entre endereços (escolher representante / dispersão).
-- [x] **Número nos endereços expandidos:** RESOLVIDO (25/06) — só o **representante** (menor sequência) mantém o número da parada; os demais ficam **sem número**. Mantém "ícone só mostra número de parada".
+- [ ] **Posição do representante na parada — confirmar em campo (primeiro/centro/último).** Implementado (TASK-RF-020.2) como **menor sequência entre os endereços com coordenada válida**. Só dá pra saber qual o app oficial usa entregando.
+- [x] **Coordenadas divergentes no mesmo Stop:** RESOLVIDO (26/06, TASK-RF-020.2) — endereço é identificado **por coordenada**; representante = menor sequência válida; **aviso só em DEV** (`import.meta.env.DEV`, sem PII) quando a parada está **dispersa** (endereço mais distante **> 100 m** do representante, via `haversine`). Serve para descobrir em campo se "Stop disperso" é raro ou indica dado estranho — **não muda comportamento**.
+- [x] **Número nos endereços expandidos:** RESOLVIDO (26/06, RF-020.5 — **revisa** a decisão de 25/06) — **todos** os círculos expandidos mostram **`parada-sequência`** (ex.: `18-49`), **inclusive o representante**. A sequência é a **da planilha** no modo Original (no roteirização reinicia `1..N` por parada). Antes: "só o representante mantém número, demais sem número".
+- [x] **Forma colapsada:** RESOLVIDO (26/06, RF-020.5) — parada colapsada é **sempre quadrado** (mesmo com 1 endereço); círculo passou a ser o estado **expandido/selecionado**.
 - [ ] Os 5 pontos do §8.
 
 ---
