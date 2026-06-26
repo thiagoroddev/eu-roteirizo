@@ -32,6 +32,41 @@
 
 ---
 
+## TASK-RF-020 - Marcadores SVG no visualizador Original (divIcon + agrupar por Stop) [G, dividir]
+
+- **Status:** Pendente
+- **Modo:** Strict
+- **Valor:** Crítico
+- **Urgência:** IMEDIATA
+- **Esforço-H/IA:** G/M
+- **Data-hora origem:** 25/06/26 22:55
+- **Dependências:** -
+- **REQ/ADR/DT:** ADR-008; `fluxo-modo-original.md`
+- **Observações:** **Isolado do roteirizar** (não toca `fluxo-roteirizacao.md`). Fazer **antes** de retomar a RF-006. Mantém Leaflet (troca `L.Icon`→`L.divIcon`, sem migrar lib). Protótipo aprovado: `prototipos/marcadores-svg/index.html`. Interações em `fluxo-modo-original.md`. Componente pequeno e reutilizável (a cor é prop → reusável depois no Meu roteiro).
+
+**Objetivo:** substituir os PNGs (`mapIcons.ts`) por marcadores **SVG** no modo Original, espelhando o app oficial (um marcador por **parada/Stop**, número da parada, resto na lista).
+
+### TASK-RF-020.1 - Componente de marcador SVG parametrizável
+- **Esforço-H/IA:** M/M · **Dep:** -
+- Função pura que gera o SVG do marcador a partir de `{ shape: "square"|"circle", color, number, badge: { kind: "pacotes"|"enderecos", count }, anchor }`; embrulhar em `L.divIcon`. Texto/cores via tokens; número escuro no cinza (contraste AA). Ponta fina; badge com ícone **caixa** (pacotes) ou **pino** (endereços), só se `count > 1`; estética neon (gradiente + glow CSS).
+- **Aceite:** componente isolado e testável (snapshot/estrutura); sem dependência de Leaflet na geração do SVG (só o wrapper `divIcon` conhece o Leaflet).
+
+### TASK-RF-020.2 - Integrar no RouteMap (agrupar por Stop, 1 marcador por parada)
+- **Esforço-H/IA:** M/G · **Dep:** 020.1
+- Em `RouteMap.tsx`: agrupar `rows` por `COLUMN_NAMES.STOP`; **quadrado** se a parada tem >1 endereço, **círculo** se único; **cor por tipo** (`resolveLocationType`, comercial vence); **número = Stop**; **posição** = representante da parada (por ora menor sequência); badge = nº de endereços (parada) ou nº de pacotes (endereço). Remover/aposentar `getIcons` PNG. Tooltip/lista mantêm os endereços ocultos do mapa.
+- **Aceite:** multi-rota mostra 1 marcador por parada com o número da parada; cores/formas/badges corretos; testes de `RouteMap` adaptados verdes.
+
+### TASK-RF-020.3 - Interações: expandir/colapsar parada, seleção e popup do endereço
+- **Esforço-H/IA:** M/M · **Dep:** 020.2 · **REQ:** `fluxo-modo-original.md` §5–§6
+- Clicar numa **parada** (quadrado) **expande** seus endereços como **círculos coloridos por tipo** (representante vira círculo); clicar em **outra parada** troca o foco; clicar **fora** **colapsa** (volta ao quadrado do representante) e limpa a seleção. **Só uma expandida por vez.** Marcador clicado fica **selecionado** (borda grossa branca + sombra na cor do tipo) — **seleção, não âncora**. Clicar num **endereço** abre **popup**: lista de pacotes (`SPX TN` + sequência), endereço completo, complemento e tipo (comercial/residencial/indefinido) **em texto** (reusar `escapeHtml`).
+- **Aceite:** expandir/colapsar conforme §5; popup com os campos do §6; seleção visível; nenhum endereço some da lista/tabela.
+
+**Critérios de aceite (RF-020):** visualizador Original com marcadores SVG conforme ADR-008; nenhum endereço "perdido" (os ocultos do mapa seguem na lista/tabela); gate `tsc`/`vitest`/`lint` verde.
+**Dependências novas:** nenhuma.
+**Riscos:** agrupamento por Stop quando o mesmo Stop tem coordenadas divergentes (escolher representante); re-render com muitas paradas (memoizar).
+
+---
+
 ## TASK-RF-006 - UI de construção da rota (planejamento) [XG, dividir]
 
 - **Status:** Pendente
