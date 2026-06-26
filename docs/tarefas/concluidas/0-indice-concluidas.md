@@ -39,6 +39,7 @@
 | TASK-RF-005.4 | A* com min-heap próprio (minHeap.ts; fronteira O(log n), resultado idêntico, 2.7ms/2500 nós) — ADR-002 | [abrir](./2026-06-25--18h02--TASK-RF-005.4.md) |
 | TASK-RF-005.5 | Map matching em aresta (match.ts: projeção/nearestEdge/matchToGraph; nó sintético) — **fecha o motor RF-005** | [abrir](./2026-06-25--18h15--TASK-RF-005.5.md) |
 | TASK-RF-019 | Protótipo dos marcadores SVG do modo Original (forma=Stop, número=parada, cor=tipo, badge caixa/pino, ponta fina, neon) — ADR-008 | [abrir](./2026-06-25--22h55--TASK-RF-019.md) |
+| TASK-REF-010 | Profissionalizar o pacote de agente e torná-lo auto-carregável (Claude/Codex/Copilot): entry points, 9 Skills, 7 instructions, renome .md.md→.md, 489 links corrigidos, geral-leve arquivado — pacote v4.0 | [abrir](./2026-06-26--10h19--TASK-REF-010.md) |
 
 <!-- Exemplo:
 | TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [abrir](./2026-05-16--20h21--TASK-REF-03.md) |
