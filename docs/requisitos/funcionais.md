@@ -56,11 +56,11 @@
 | RF-22 | Sugerir o próximo endereço/parada mais próximo (linha tracejada), re-selecionável ao tocar | MUST | 🔭 | fluxo §6; telas 1/3 | TASK-RF-006.3 |
 | RF-23 | Criar parada a partir de um endereço, incluindo automaticamente os que estão dentro do raio | MUST | 🔭 | fluxo §4/§7; tela 3 | TASK-RF-006.4 |
 | RF-24 | Ajustar a parada manualmente (adicionar/remover endereços) | MUST | 🔭 | fluxo §5/§9; telas 5/6 | TASK-RF-006.4 |
-| RF-25 | Trocar a âncora da parada (botão "Trocar âncora") — a âncora é **sempre o 1º ponto** e a troca recalcula a ordem a pé | SHOULD | 🔭 | fluxo §6; tela 6 | TASK-RF-006 |
+| RF-25 | **Mover a parada do veículo** (arrastar na rua) — ponto **livre**, não um endereço; sugerida em frente ao endereço selecionado; mover recalcula a ordem a pé | SHOULD | 🔭 | fluxo §6 (changelog 26/06); tela 6 | TASK-RF-006, TASK-RF-021 |
 | RF-26 | Ordenar os endereços a pé automaticamente (varredura horária) com reordenação manual | SHOULD | 🔭 | fluxo §6; tela 5 | TASK-RF-006 |
 | RF-27 | Expandir/colapsar parada (drill-down parada → endereços → pacotes) | MUST | 🔭 | fluxo §5; tela 5 | TASK-RF-006.5 |
 | RF-28 | Exibir card "Etiqueta do Pacote" (endereço + Parada/Seq + SPX TN); multi-pacote lista cada um | SHOULD | 🔭 | fluxo §9/§14; telas 3/4 | TASK-RF-006 |
-| RF-29 | Traçar o caminho de veículo pela rua real entre âncoras, respeitando mão única, com km — **motor pronto (TASK-RF-005); falta UI** | MUST | 🟡 | ADR-002; fluxo §6; `utils/routing/` | TASK-RF-005, TASK-RF-006.6 |
+| RF-29 | Traçar o caminho de veículo pela rua real **entre paradas do veículo**, respeitando mão única, com km — **motor pronto (TASK-RF-005); falta UI** | MUST | 🟡 | ADR-002; fluxo §6; `utils/routing/` | TASK-RF-005, TASK-RF-006.6 |
 | RF-30 | Mostrar a distância a pé pelas ruas até o alvo selecionado (A* por alvo; reta como fallback) — **A*/distância/map matching prontos (TASK-RF-005); falta variante a-pé (ignora mão única), fallback reta e UI** | SHOULD | 🟡 | fluxo §6; ADR-002; `utils/routing/` | TASK-RF-005 |
 | RF-31 | Estimar tempo (a pé na parada + veículo entre paradas); exibir total e próximo trecho | MUST | 🔭 | fluxo §6; tela 5 | TASK-RF-007 |
 | RF-32 | HUD com contadores sempre visíveis (faltando endereços/pacotes, paradas, distância, tempo) | SHOULD | 🔭 | fluxo §7; telas 1/7 | TASK-RF-006.2 |
@@ -81,4 +81,4 @@
 | RF-48 | Na execução: **avançar/retroceder** entre as entregas (muda o foco) e **desfazer** a última | SHOULD | 🔭 | fluxo §14 | TASK-RF-009 |
 | RF-49 | Execução em **modo lista** (sem mapa), alternável com o modo mapa | SHOULD | 🔭 | fluxo §14 | TASK-RF-009 |
 
-> **Não-objetivos (registrados para não reaparecerem):** TSP / otimização automática da ordem inteira (só vizinho-mais-próximo — fluxo §6); GPS em tempo real na execução (decisão consciente — draft §8); **re-ancoragem automática por GPS na execução** (a âncora muda só pelo botão "Trocar âncora", e é sempre o 1º ponto — decisão 24/06); botão de contato/telefone do destinatário (não existe — fluxo §14).
+> **Não-objetivos (registrados para não reaparecerem):** TSP / otimização automática da ordem inteira (só vizinho-mais-próximo — fluxo §6); GPS em tempo real na execução (decisão consciente — draft §8); **posição de veículo automática por GPS na execução** (a parada do veículo é sugerida/movida só pelo usuário — decisões 24/06 e 26/06); botão de contato/telefone do destinatário (não existe — fluxo §14).

@@ -23,7 +23,7 @@ Visualizador **read-only** que mostra, no mapa, **uma parada por marcador** (esp
 
 > **Hierarquia (3 níveis):** **Parada (Stop)** → **Endereços** → **Pacotes**. O drill-down da UI segue essa espinha: o mapa mostra **paradas** → clicar numa parada revela seus **endereços** → clicar num endereço revela seus **pacotes** (popup, §6).
 >
-> **Não existe "Âncora" aqui.** Âncora é conceito **exclusivo do roteirizar** (onde o veículo para). No Original não há rota nem âncora — a borda grossa significa outra coisa (§5).
+> **Não existe "Âncora" aqui.** O conceito de **onde o veículo para** é **exclusivo do roteirizar** (lá é a *parada do veículo*, um ponto na rua). No Original não há rota nem veículo — a borda grossa significa **seleção** (§5).
 
 ---
 
@@ -101,8 +101,8 @@ Ao clicar num endereço (círculo), abre um popup com:
 | Marcador por | **Parada (Stop)** | Parada (agrupada pelo usuário) |
 | **Número** | número da **parada (Stop)** | **ordem** (ordinal) da rota |
 | **Cor** | **tipo** (res/com/indef) | **de qual parada** (paleta categórica) |
-| **Âncora** | **não existe** | existe (borda grossa = âncora) |
-| **Borda grossa** | **selecionado** | **âncora** |
+| **Veículo / âncora** | **não existe** | é a **parada do veículo** (marcador próprio na rua, não um endereço) |
+| **Borda grossa** | **selecionado** | **selecionado** (a parada do veículo é marcador próprio, não borda) |
 | Origem dos dados | espelha o app oficial | montado pelo usuário |
 
 > O **componente de marcador é o mesmo** (parametrizável); só mudam os **valores** das props (cor, número, significado da borda). Sem duplicação.

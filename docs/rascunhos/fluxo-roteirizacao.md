@@ -20,13 +20,13 @@ Roteirizador **manual** para entregador Shopee: importa a planilha (70 a 150 end
 | **Endereço multi-pacote** | Mesmo endereço/número com mais de um pacote. Conta como **um ponto** no mapa, com vários pacotes. |
 | **Pacote** | Uma encomenda individual (uma linha/etiqueta da planilha, com `SPX TN`). Vários pacotes podem estar no mesmo endereço (Vol 1, Vol 2…). |
 | **Parada** | Agrupamento de endereços próximos, atendidos **a pé** a partir de onde o veículo para. Rotulada `P1`, `P2`… |
-| **Âncora (da parada)** | O **endereço** da parada **onde o veículo fica parado** (o mais próximo de onde se para; assume-se mesma rua) — partida e retorno da caminhada (ida e volta) e o ponto que o veículo visita ao saltar de parada a parada. É **sempre o 1º** da ordem a pé. **Trocável** a qualquer momento para outro endereço da parada; trocar **recalcula automaticamente** a ordem a pé a partir dela. |
+| **Parada do veículo** | O **ponto na rua** onde o veículo para para atender a parada. **Não é um endereço** — é um ponto livre **grudado na malha viária** (pode ficar numa rua principal, sem entrar na rua do endereço, pra dar menos volta). De onde a caminhada **sai e volta** (circuito) e o ponto que o veículo visita ao saltar de parada a parada. **Posição sugerida (por ora): em frente ao endereço selecionado** ao criar a parada (simples; um otimizador de "menor volta" fica para o futuro). **Movível** pelo usuário; mover **recalcula** a ordem a pé. |
 | **Ponto inicial** | De onde a rota começa (referência da primeira sugestão). |
-| **a pé × veículo** | Deslocamento **dentro** de uma parada = a pé (ida e volta a partir da âncora); deslocamento **entre** paradas = veículo (âncora → âncora). |
+| **a pé × veículo** | Deslocamento **dentro** de uma parada = a pé (**circuito**: sai e volta à **parada do veículo**); deslocamento **entre** paradas = veículo (**parada do veículo → parada do veículo**). |
 
 > **Hierarquia (3 níveis) — espinha dorsal do app:** uma **Parada** contém **Endereços**; um **Endereço** contém **Pacotes**. Reflete o modelo (`RouteStop` → `DeliveryPoint` → `DeliveryPackage`) e o **drill-down da UI**: o mapa mostra **paradas** → expandir uma parada mostra seus **endereços** → selecionar um endereço mostra seus **pacotes** (card "Etiqueta do Pacote", §9/§14).
 >
-> **Vocabulário único (i18n):** usar sempre **Parada · Endereço · Pacote · Âncora** (não "agrupamento", "circuit" etc.), centralizado em `UI_LABELS`.
+> **Vocabulário único (i18n):** usar sempre **Parada · Endereço · Pacote · Parada do veículo** (não "âncora", "agrupamento", "circuit" etc.), centralizado em `UI_LABELS`.
 
 ---
 
@@ -39,24 +39,26 @@ Quatro variáveis visuais, cada uma com **um** significado (sem sobreposição):
 | **Geometria** | tipo: **quadrado = parada**, **círculo = endereço** |
 | **Número** (dentro) | ordem: parada `1, 2, 3…`; endereço dentro da parada `1, 2, 3…` (**só número, sem letra**) |
 | **Cor** | uma parada e **todos os seus endereços compartilham a mesma cor**; cinza desbotado = livre (órfão); início = verde |
-| **Borda grossa** | **âncora** (o endereço onde o veículo para; o `1` da parada) |
+| **Parada do veículo** | marcador **próprio** (ícone de veículo), separado dos endereços — **só aparece com a parada selecionada** (oculto na visão geral, pra não poluir). *(A "borda grossa" deixou de significar âncora — não há mais âncora-endereço.)* |
 | **Badge amarelo** (atrás) | **contagem**: numa parada fechada = nº de endereços; num endereço = nº de pacotes (só se > 1) |
 
 | Elemento | Como aparece |
 |---|---|
 | Endereço livre (órfão) | círculo cinza desbotado, nº do pacote da planilha |
 | Parada fechada | quadrado colorido, nº de ordem, **badge amarelo com nº de endereços** |
-| Parada selecionada | quadrado **realçado** (anel/brilho — mesma cor, não outra) → **expande** os endereços |
+| Parada selecionada | quadrado **realçado** (anel/brilho — mesma cor, não outra) → **expande** os endereços **e** mostra a parada do veículo |
 | Endereço dentro da parada | círculo da **cor da parada**, nº de ordem; **só aparece com a parada selecionada** |
-| Âncora (parada expandida) | o `1` da parada vira **círculo com borda grossa** (deixa de ser quadrado) |
+| Parada do veículo (parada expandida) | marcador **próprio** (ícone de veículo) na rua; **arrastável**; some ao colapsar a parada |
 | Endereço multi-pacote | círculo + **badge amarelo** com o nº de pacotes |
 | Início | marcador verde próprio |
-| Sugestão do próximo | **linha tracejada** até o mais próximo (some ao escolher) |
-| Trecho configurado | **linha contínua** veículo (âncora→âncora) + **laço tracejado** a pé dentro da parada |
-| Círculo de raio (ao criar parada) | **círculo tracejado** do raio configurado, centrado na semente/âncora — mostra quem está no alcance |
+| Sugestão da próxima parada | **linha tracejada** até o endereço mais próximo fora do raio. **Desbotada no rascunho**; ao **concluir** a parada fica **mais forte** (mas ainda trocável tocando em outro). |
+| Trecho configurado | **linha contínua** de veículo (**parada do veículo → parada do veículo**) + **laço tracejado** a pé (circuito que **sai e volta** à parada do veículo). |
+| Círculo de raio (ao criar parada) | **círculo tracejado** do raio configurado, centrado no **endereço selecionado** — mostra quem entra na parada. |
 | Candidato no raio | endereço **dentro** do círculo, destacado (entra na parada ao criar) |
 
-> Regra de leitura: **geometria = o quê (parada/endereço); número = ordem; cor = a que parada pertence; borda grossa = âncora; badge amarelo = quantos.** Na visão geral (nada selecionado) eu já vejo as paradas numeradas e, pelo badge amarelo, quantos endereços cada uma tem — sem clicar.
+> Regra de leitura: **geometria = o quê (parada/endereço); número = ordem; cor = a que parada pertence; badge amarelo = quantos.** A **parada do veículo** é um marcador próprio que **só aparece ao selecionar a parada**. Na visão geral (nada selecionado) eu já vejo as paradas numeradas e, pelo badge amarelo, quantos endereços cada uma tem — sem clicar, e sem o veículo poluindo.
+
+> **Marcador da parada do veículo:** corpo **escuro** (slate/navy) com **anel ciano** (cor da marca) — **fora** da paleta funcional verde/azul/cinza das entregas, pra nunca se confundir com um endereço. Dentro, o **ícone do veículo** conforme o **Modo de Transporte** (moto · carro · van · caminhão · bici · a pé). Mantém a **ponta fina**; é **arrastável** na rua e **oculto na visão geral** (aparece só com a parada selecionada). Os glyphs devem vir de um **set SVG aberto** — **Tabler Icons** (MIT, tem `motorbike`) é a fonte recomendada (evitar desenhar à mão). Referência visual: [`prototipos/marcadores-svg/index.html`](../../prototipos/marcadores-svg/index.html) (`createVehicleMarker`).
 
 > **i18n:** os marcadores no mapa **nunca** carregam letra/texto traduzível — só número. A palavra "Parada"/"Stop"/etc. vive apenas em `UI_LABELS` (legenda, painel, botões). Assim o mapa serve qualquer idioma sem mudança (Shopee em outros países). Decisão alinhada à ADR-001.
 
@@ -76,12 +78,11 @@ Com o sistema de ícones denso, o mapa traz uma **legenda colapsável** (um "?" 
 
 **3. Ver informações do endereço.** Ao tocar num endereço, abre um card com os dados da planilha: **rua + número, complemento, bairro, CEP**. Se for multi-pacote, mostra **quantos pacotes**.
 
-**4. Criar a parada.** O usuário escolhe um endereço para **criar uma parada**. O ícone ganha **cor viva** e vira `P1`.
-- Se houver um **raio** configurado (ver §7), todos os endereços **dentro do raio** entram automaticamente na parada.
+**4. Criar a parada (rascunho desbotado).** O usuário toca num endereço para **criar uma parada**. Surge um **rascunho esmaecido** com três coisas: os endereços **dentro do raio** (§8) já agrupados, a **parada do veículo** sugerida **em frente ao endereço selecionado**, e a **linha tracejada da próxima parada** (até o endereço mais próximo fora do raio). Tudo **desbotado** sinaliza "isto é rascunho editável".
 
-**5. Ajustar a parada.** A qualquer momento o usuário pode **adicionar** ou **remover** endereços da parada, arbitrariamente.
+**5. Ajustar a parada (modo edição).** O usuário **adiciona/remove** endereços e **arrasta a parada do veículo** pela rua. Mover o veículo **recalcula** a ordem a pé e muda **qual é a próxima parada sugerida** (a sugestão parte de onde o veículo ficou).
 
-**6. Concluir a parada.** Fechada a `P1`, o app **aguarda o próximo endereço** (que será a `P2`) e sugere, em linha tracejada, o **mais próximo**.
+**6. Concluir a parada.** Ao fechar a `P1`, o rascunho **firma** (cores vivas) e a **linha tracejada da próxima parada fica mais forte** — mas **continua sendo sugestão**: tocar em outro endereço re-aponta a próxima.
 
 **7. Repetir.** Passos 3 a 6 para `P2`, `P3`… até **todos os endereços** estarem em alguma parada.
 
@@ -92,42 +93,43 @@ Com o sistema de ícones denso, o mapa traz uma **legenda colapsável** (um "?" 
 ## 5. Expandir e colapsar uma parada
 
 - **Não selecionada:** aparece **apenas o ícone da parada** (`Pn`) — os endereços ficam escondidos.
-- **Ao tocar na parada:** ela **expande** e mostra os endereços (`E1`, `E2`…) na **mesma cor da parada**, junto das infos da parada (qtd de endereços, pacotes, tempo a pé estimado).
+- **Ao tocar na parada:** ela **expande** e mostra os endereços (`E1`, `E2`…) na **mesma cor da parada** **e a parada do veículo** (marcador próprio, oculto na visão geral), junto das infos da parada (qtd de endereços, pacotes, tempo a pé estimado).
 
 ---
 
 ## 6. Modelo de cálculo e estimativas (tempo e distância)
 
-A **âncora** organiza o cálculo em duas camadas:
+A **parada do veículo** organiza o cálculo em duas camadas:
 
 | Deslocamento | De → até | Como estima |
 |---|---|---|
-| **Veículo** (entre paradas) | âncora(Pn) → âncora(Pn+1) | velocidade km/h (configurável), pela rua, respeitando mão única (ADR-002) |
-| **A pé** (dentro da parada) | âncora → endereços → âncora (**ida e volta**) | velocidade a pé + tempo por entrega (configuráveis); pedestre **não** tem mão única |
+| **Veículo** (entre paradas) | parada do veículo(Pn) → parada do veículo(Pn+1) | velocidade km/h (configurável), pela rua, respeitando mão única (ADR-002) |
+| **A pé** (dentro da parada) | parada do veículo → endereços → parada do veículo (**circuito**) | velocidade a pé + tempo por entrega (configuráveis); pedestre **não** tem mão única |
 
-> O veículo só "para" nas âncoras; a caminhada de cada parada é um **circuito fechado** que sai e volta à âncora. Por isso a âncora é necessária — sem ela não dá pra estimar a ida e volta a pé.
+> O veículo só "para" nas paradas do veículo; a caminhada de cada parada é um **circuito fechado** que sai e volta ao ponto do veículo. Por isso a parada do veículo é necessária — sem ela não dá pra estimar a ida e volta a pé.
 
 ### Ordem dos endereços a pé dentro da parada
 
-- **Padrão:** **varredura horária** a partir da âncora — ordena os endereços pelo **ângulo (bearing)** em torno da âncora (`atan2`, custo zero). Faz um **laço** que volta perto de onde começou — ideal para ida e volta. (Melhor que "vizinho mais próximo", que pode terminar longe da âncora e encarecer o retorno.)
+- **Padrão:** **varredura horária** a partir da **parada do veículo** — ordena os endereços pelo **ângulo (bearing)** em torno dela (`atan2`, custo zero). Faz um **laço** que volta perto de onde começou — ideal para o circuito. (Melhor que "vizinho mais próximo", que pode terminar longe do veículo e encarecer o retorno.)
 - **Override manual (essencial):** a ordem automática é só sugestão. O usuário **reordena à mão** sempre que quiser — nenhum algoritmo sabe que "a entrada do prédio é pelos fundos". O controle manual é o diferencial; o auto-ordenamento só precisa ser "bom o bastante".
-- **Trocar a âncora recalcula a ordem:** mudou a âncora (outro endereço, GPS ou toque no mapa), a varredura horária é refeita a partir dela. Custo zero.
+- **Mover a parada do veículo recalcula a ordem:** arrastou o veículo para outro ponto da rua, a varredura horária é refeita a partir dele. Custo zero.
 
-### Sugestão do próximo (linha tracejada)
+### Sugestão da próxima parada (linha tracejada)
 
-- **Referência = último configurado:** a sugestão parte do último elemento configurado (endereço/parada).
-- **Auto-seleciona o mais próximo:** a linha tracejada já aponta o mais próximo (desempate pela varredura horária; ao montar parada, prioriza quem está dentro do raio).
-- **Clicar em outro re-direciona:** tocar em qualquer endereço move a linha tracejada para ele e mostra a distância até ele — comparar destinos é só tocar.
+- **Referência = parada do veículo da última parada:** a sugestão da próxima parte de **onde o veículo ficou** — por isso muda muito conforme a posição do veículo.
+- **Auto-seleciona o mais próximo:** a linha tracejada já aponta o endereço mais próximo **fora do raio** (desempate pela varredura horária). **Desbotada** no rascunho; **mais forte** ao concluir.
+- **Clicar em outro re-direciona:** tocar em qualquer endereço move a linha tracejada para ele e mostra a distância — comparar destinos é só tocar; a próxima continua **trocável**.
 
 ### Distância a pé pelas ruas (não em linha reta)
 
 - A distância a pé exibida é a de **caminhada pelas ruas** (grafo, pedestre — ignora mão única), **não linha reta**.
 - **Performance:** rankeia o "mais próximo" por linha reta (barato) e calcula o **caminho de rua + distância real só para o alvo selecionado** (um A* por alvo). Linha reta só como **fallback** enquanto o grafo não carregou.
 
-### Âncora — sempre um endereço da parada
+### Parada do veículo — um ponto livre na rua (não um endereço)
 
-- A âncora é **um endereço da parada** (o 1º; onde o veículo para, assumido na mesma rua). **Não há** âncora "ao vivo" por GPS (decisão final 24/06/26).
-- O usuário **troca a âncora** para outro endereço da parada quando quiser; a ordem a pé é **reordenada automaticamente a partir dela**.
+- A parada do veículo é um **ponto na malha viária**, **separado dos endereços** — pode ficar numa rua principal sem entrar na rua do endereço, pra dar menos volta. Tecnicamente, é um ponto **projetado na aresta de rua mais próxima** (map matching, `match.ts`/RF-005.5).
+- **Posição sugerida (por ora): em frente ao endereço selecionado** ao criar a parada. É o **simples**; um otimizador que ache o ponto de **menor volta** fica para o futuro.
+- O usuário **arrasta** o veículo para outro ponto da rua quando quiser; a ordem a pé é **reordenada automaticamente a partir dele**. **Não há** veículo "ao vivo" por GPS — é sempre o ponto sugerido/movido pelo usuário.
 
 ### Exibição — sempre em dois níveis
 
@@ -160,35 +162,35 @@ Os botões dependem do que está selecionado:
 | Selecionado | Botões |
 |---|---|
 | Endereço livre (órfão) | **Criar parada** (vira a próxima na ordem) · **Adicionar a uma parada** (select pré-selecionando a mais próxima) |
-| Parada (fechada / selecionada) | **Adicionar endereço** · **Desfazer parada** · trocar âncora (no painel) |
-| Endereço dentro de uma parada | **Remover da parada** · **Tornar âncora** |
+| Parada (fechada / selecionada) | **Adicionar endereço** · **Desfazer parada** · **mover a parada do veículo** (arrastar na rua) |
+| Endereço dentro de uma parada | **Remover da parada** |
 
 **Card "Etiqueta do Pacote":** ao selecionar um endereço no Roteirizar, suas infos aparecem num card titulado **"Etiqueta do Pacote"** — endereço + `Parada {Stop} · Seq {Sequence}` + código (`SPX TN`) — **separado** dos botões de ação. Mesmos dados da execução (§14), mas sem misturar com as ações de montar parada.
 
 **Remoção — regra de ouro: endereço nunca some (é entrega real).**
 
 - **Desfazer parada:** desagrupa; os endereços voltam a **livres**. Avisa que a parada será desfeita — mas as entregas permanecem.
-- **Remover endereço da parada:** vira livre. Se era a **âncora**, o próximo da ordem **vira âncora** automaticamente e a ordem a pé é recalculada.
+- **Remover endereço da parada:** vira livre. A **parada do veículo não muda** (é independente dos endereços); a ordem a pé é recalculada sem ele.
 
 **Adicionar órfão a parada existente:** select com a parada **mais próxima pré-selecionada** (liberdade de trocar) — não "sempre a última".
 
-**Limite de distância:** **sem trava.** O raio só serve ao **agrupamento automático** na criação da parada. A inclusão manual é livre; se o endereço estiver muito longe da âncora, mostra **aviso suave** (orienta, não bloqueia).
+**Limite de distância:** **sem trava.** O raio só serve ao **agrupamento automático** na criação da parada. A inclusão manual é livre; se o endereço estiver muito longe da **parada do veículo**, mostra **aviso suave** (orienta, não bloqueia).
 
 ---
 
 ## 10. Decisões fechadas
 
 1. **Numeração — Shopee × nossa:** ✅ no mapa, `Pn`/`En` (com cor) são a **numeração nova da rota manual**. A numeração da Shopee (`Stop` + `Sequence`) é ignorada **apenas para a ordem da rota** — mas é **preservada como identidade da etiqueta** do pacote e **exibida na execução** (ver §14): é por ela que o entregador acha o pacote na sacola. O **código** (`SPX TN`) também é preservado para chamados/problemas.
-2. **Ordem dos endereços a pé na parada:** ✅ o app **ordena automaticamente** (varredura horária a partir da âncora) **e** o usuário pode **reordenar à mão** a qualquer momento (ver §6).
-3. **Âncora:** ✅ cada parada tem uma âncora = **um endereço da parada** (o 1º; onde o veículo para). Base da ida e volta a pé e do salto de veículo entre paradas. **Trocável** para outro endereço da parada; ao trocar, **recalcula a ordem a pé a partir dela**. (Sem GPS/toque — decisão final 24/06/26.)
-4. **Âncora ao vivo na execução:** ❌ **Revertido (decisão final 24/06/26):** não há âncora por GPS. A âncora é sempre um endereço da parada, alterada apenas pelo usuário (que reordena a parada a partir dela).
+2. **Ordem dos endereços a pé na parada:** ✅ o app **ordena automaticamente** (varredura horária a partir da **parada do veículo**) **e** o usuário pode **reordenar à mão** a qualquer momento (ver §6).
+3. **Parada do veículo:** ✅ **(decisão 26/06/26 — supersede a âncora-endereço)** cada parada tem uma **parada do veículo** = **um ponto livre na rua**, **separado** dos endereços (pode parar numa rua principal sem entrar na do endereço, pra dar menos volta). Base do **circuito** a pé e do salto de veículo entre paradas. **Posição sugerida: em frente ao endereço selecionado** (otimizador de "menor volta" = futuro); **movível** pelo usuário; mover **recalcula a ordem a pé**. Projetada na rua via map matching (`match.ts`/RF-005.5). Sem GPS ao vivo.
+4. **Veículo ao vivo por GPS:** ❌ não há posição de veículo por GPS ao vivo. A parada do veículo é sempre o ponto **sugerido/movido pelo usuário**. (Mantém a decisão de 24/06/26, agora sobre o ponto do veículo em vez do endereço-âncora.)
 5. **Ponto inicial:** ✅ **GPS** (`navigator.geolocation`, grátis) como principal; **toque no mapa** como alternativa; opcional **partir de um endereço da planilha**. **Não** usar "digitar endereço" (exigiria geocoding pago/limitado).
 6. **Rótulo dos marcadores:** ✅ **só número, sem letra**; geometria distingue parada (quadrado) de endereço (círculo). Palavra "Parada/Stop" só em `UI_LABELS` (i18n — Shopee em outros países).
 7. **Cor:** ✅ parada e seus endereços = **mesma cor**; seleção = **realce** (não outra cor); só a parada selecionada expande.
-8. **Contagem e âncora:** ✅ **badge amarelo** atrás do marcador mostra nº de endereços (parada fechada) ou nº de pacotes (endereço > 1), visível **sem clicar**; **borda grossa = âncora**.
-9. **Remoção e inclusão:** ✅ desfazer parada (endereços viram livres) · remover endereço (promove a próxima âncora) · incluir órfão via **select da parada mais próxima** · **sem trava de distância** (só aviso suave). Detalhe em §9.
+8. **Contagem e parada do veículo:** ✅ **badge amarelo** atrás do marcador mostra nº de endereços (parada fechada) ou nº de pacotes (endereço > 1), visível **sem clicar**. A **parada do veículo** é um **marcador próprio**, **oculto na visão geral** e visível só com a parada selecionada. *(A "borda grossa" deixou de significar âncora.)*
+9. **Remoção e inclusão:** ✅ desfazer parada (endereços viram livres) · remover endereço (vira livre; a **parada do veículo não muda**) · incluir órfão via **select da parada mais próxima** · **sem trava de distância** (só aviso suave). Detalhe em §9.
 10. **Painéis de ação por contexto:** ✅ aprovados em protótipo (nada selecionado · órfão · parada · endereço na parada) — contrato de UI da TASK-RF-006.
-11. **Sugestão e raio:** ✅ ao criar parada, **círculo do raio** mostra os candidatos; **referência = último configurado**; a sugestão **auto-seleciona o mais próximo** (desempate horário) e **re-direciona ao clicar** em outro endereço; **distância a pé pelas ruas** (rank por linha reta, caminho/distância real só do alvo via A*; linha reta só como fallback enquanto o grafo carrega).
+11. **Sugestão e raio:** ✅ ao criar parada, **círculo do raio** (centrado no **endereço selecionado**) mostra os candidatos; a sugestão da **próxima parada** parte da **parada do veículo da última parada** e **auto-seleciona o mais próximo fora do raio** (desempate horário), **desbotada no rascunho → mais forte ao concluir**, e **re-direciona ao clicar** em outro endereço; **distância a pé pelas ruas** (rank por linha reta, caminho/distância real só do alvo via A*; linha reta só como fallback enquanto o grafo carrega).
 12. **Etiqueta no Roteirizar:** ✅ card **"Etiqueta do Pacote"** (endereço + `Parada/Seq` + código), separado dos botões de ação.
 
 ### Ainda a confirmar
@@ -231,7 +233,7 @@ O toggle **não é** uma aba do menu inferior — vive **dentro da aba Mapa**, c
 - **Importar planilha nova não apaga rotas salvas:** começa um novo planejamento; salvar cria uma nova rota. Nada é sobrescrito sem apagar.
 - **Onde encontrar:** aba **Rotas**.
 - **Dois imports distintos:** (a) **planilha Shopee** → planejamento do zero; (b) **JSON nosso** → rota já configurada, pronta para executar.
-- **Export/import = JSON autocontido** (pontos + paradas + âncoras + config). É como passar a rota pronta para um **ajudante** ou trocar de aparelho.
+- **Export/import = JSON autocontido** (pontos + paradas + **parada do veículo** + config). É como passar a rota pronta para um **ajudante** ou trocar de aparelho.
 
 ---
 
@@ -239,7 +241,7 @@ O toggle **não é** uma aba do menu inferior — vive **dentro da aba Mapa**, c
 
 Tela focada em **uma entrega por vez** (motorista em movimento; botões grandes):
 
-- **Distância até a próxima entrega** + botão **"Abrir GPS"** (deep link Maps/Waze; a pé dentro da parada, veículo entre paradas).
+- **Distância até a próxima entrega** + botão **"Abrir GPS"** (deep link Maps/Waze; a pé dentro da parada; entre paradas, leva até a **parada do veículo**).
 - Botão **"Concluir entrega"** → confirma e **pula o foco para a próxima** automaticamente; **"Desfazer"** reverte a última.
 - **Avançar / retroceder** entre as entregas muda o foco manualmente.
 - **"Pausar rota"** sai da execução **salvando onde parou** (resumível). Durante a execução o Roteiro **não é editável** (edita-se só fora dela).
@@ -247,7 +249,7 @@ Tela focada em **uma entrega por vez** (motorista em movimento; botões grandes)
 - **Sem botão de contato:** o app **não** tem contato/telefone do destinatário — essa ação não existe. (Só "Abrir GPS" + "Concluir entrega".)
 - **% concluída** + contagem (ex.: `31/90`).
 - **Previsão de término** (agora + tempo estimado restante).
-- **Ordem da parada na execução:** segue a ordem definida no planejamento (a partir da âncora). **Sem** reordenação por GPS (decisão final 24/06/26).
+- **Ordem da parada na execução:** segue a ordem definida no planejamento (circuito a partir da **parada do veículo**). **Sem** reordenação por GPS (decisão final 24/06/26).
 
 ### Identificação do pacote no card (vem da planilha)
 
@@ -306,4 +308,6 @@ Princípio: **mapa dominante, overlay enxuto.** Os protótipos anteriores exager
 - **Data:** 24/06/26
 - **Por:** spec do modo Roteirizar + app shell/navegação (ADR-003), ciclo da rota, persistência/export, execução e integração com legado (§15). Base para TASK-RF-006/008/009/011/012/013/014.
 - **Atualização 24/06/26 (decisões finais):** §11 — **multi-rota também roteirizável** (reverte "só visualizar"); §2/§6/§10/§14 — âncora é **um endereço da parada**, trocável pelo usuário, sem GPS ao vivo.
+- **Atualização 26/06/26 — "Parada do veículo" (supersede a âncora-endereço):** a âncora deixa de ser o 1º endereço e vira a **parada do veículo** = um **ponto livre na rua** (projetado via map matching), separado dos endereços, pra poder parar numa rua principal sem entrar na do endereço. Caminhada = **circuito** (sai e volta ao veículo). Veículo **sugerido em frente ao endereço selecionado** (otimizador de menor volta = futuro), **arrastável**, **oculto na visão geral** (aparece só com a parada selecionada). Sugestão da próxima parte de **onde o veículo ficou** (tracejado desbotado → forte, trocável). Afeta §2/§3/§4/§5/§6/§9/§10/§13/§14.
+  - **Implicações a executar (não feitas aqui):** (1) **modelo** — `RouteStop.anchorPointId` (id de endereço) → algo como **`vehicleStop: LatLng`** (ponto na rua) em `src/types/routing.ts`, na fase da RF-006; (2) **ADR-008 §11** — a nota "borda grossa = âncora no roteirizar" foi ajustada (não há mais âncora-endereço).
 - **Status:** rascunho de trabalho; §9 (decisões) fechado.

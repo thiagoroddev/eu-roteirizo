@@ -46,6 +46,31 @@
 
 ---
 
+## TASK-RF-021 - Migrar modelo para a "parada do veículo" (anchorPointId → vehicleStop)
+
+- **Status:** Pendente
+- **Modo:** Standard
+- **Valor:** Crítico
+- **Urgência:** IMEDIATA
+- **Esforço-H/IA:** P/M
+- **Data-hora origem:** 26/06/26 23:30
+- **Dependências:** -
+- **REQ/ADR/DT:** `fluxo-roteirizacao.md` §2/§6 (changelog 26/06 — "parada do veículo"); supersede parcial do modelo da RF-004
+- **Observações:** **Pré-requisito do RF-006.** Decisão 26/06: a âncora deixa de ser o 1º endereço e vira a **parada do veículo** — um **ponto livre na rua** (não um endereço). Aqui é só o **modelo**; a lógica de sugestão (em frente ao endereço selecionado) e o arrastar ficam no RF-006.
+
+**Objetivo:** ajustar o modelo de domínio para refletir a parada do veículo.
+
+**Subtarefas:**
+- `src/types/routing.ts`: trocar `RouteStop.anchorPointId: string` por **`vehicleStop: LatLng`** (ponto na rua, projetado via map matching). Reavaliar campos derivados/órfãos.
+- Atualizar seletores/funções que referenciam `anchorPointId` (`utils/routing/selectors.ts` e onde mais houver).
+- Sem GPS ao vivo. Posição default (em frente ao endereço) é responsabilidade do RF-006, não do modelo.
+- Ajustar testes do modelo afetados.
+
+**Critérios de aceite:** compila com `vehicleStop`; sem referência órfã a `anchorPointId`; gates `tsc`/`vitest`/`lint` verdes.
+**Dependências novas:** nenhuma.
+
+---
+
 ## TASK-RF-006 - UI de construção da rota (planejamento) [XG, dividir]
 
 - **Status:** Pendente
@@ -54,7 +79,7 @@
 - **Urgência:** IMEDIATA
 - **Esforço-H/IA:** XG/XG
 - **Data-hora origem:** 22/06/26 22:45
-- **Dependências:** TASK-RF-004, TASK-RF-005, TASK-RF-002 (isSingleRoute)
+- **Dependências:** TASK-RF-004, TASK-RF-005, TASK-RF-002 (isSingleRoute), TASK-RF-021 (modelo da parada do veículo)
 - **REQ/ADR/DT:** draft §6
 - **Observações:** XG — executar pelas subtarefas. Coração da experiência. Reaproveitar `RouteMap` (Leaflet) onde possível, sem inflar componente (preferir componentes pequenos e reutilizáveis).
 

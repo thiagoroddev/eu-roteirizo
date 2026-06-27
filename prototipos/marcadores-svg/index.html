@@ -19,6 +19,8 @@
     --res-top: #34D27A;  --res-bot: #0E8C49;  --res-glow: rgba(34,184,102,.50);
     --ind-top: #B6BCC6;  --ind-bot: #8A909C;
     --badge: #F5B400;    --badge-ink: #5A4300;
+    /* Parada do veículo (cor da marca — distinta das entregas) */
+    --veh-top: #334155;  --veh-bot: #0B1326;  --veh-ring: #0DC2D6;
   }
   * { box-sizing: border-box; }
   body {
@@ -97,6 +99,11 @@
   .marker.s-com .body { filter: drop-shadow(0 0 7px var(--com-glow)) drop-shadow(0 1px 1px rgba(0,0,0,.18)); }
   .marker.s-res .body { filter: drop-shadow(0 0 7px var(--res-glow)) drop-shadow(0 1px 1px rgba(0,0,0,.18)); }
   .marker.s-ind .body { filter: drop-shadow(0 1px 2px rgba(0,0,0,.18)); }
+  .marker.s-veh .body { filter: drop-shadow(0 0 7px rgba(13,194,214,.5)) drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
+
+  /* Linha de tipos de veículo */
+  .vehRow { display: flex; flex-wrap: wrap; gap: 16px 22px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 18px; }
+  .vehRow .v { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -126,6 +133,16 @@
     <h2>Ponta fina em aglomeração</h2>
     <div class="clusterCard" id="cluster"></div>
     <div class="caption">Mesmo amontoados, cada marcador aponta com a ponta fina para o ponto exato (•) no mapa — o corpo pode sobrepor, a ponta não engana.</div>
+  </section>
+
+  <section>
+    <h2>Parada do veículo (modo Meu roteiro)</h2>
+    <div class="vehRow" id="vehRow"></div>
+    <div class="caption">Marcador <b>próprio</b> — escuro com anel <b>ciano (a marca)</b>, distinto das entregas (verde/azul/cinza). O ícone reflete o <b>Modo de Transporte</b>. Mesma ponta fina; só aparece com a parada selecionada.</div>
+
+    <h2 style="margin-top:30px">Contraste no mapa (parada expandida)</h2>
+    <div class="clusterCard" id="vehScene" style="height:240px"></div>
+    <div class="caption">A moto (escura/ciano) não se confunde com os endereços da parada (círculos coloridos por tipo).</div>
   </section>
 </div>
 
@@ -203,7 +220,7 @@
     { mk: createMarker({ shape: "circle", type: "res", number: 8, packages: 1, scale: .72 }), b: "Círculo = endereço único", s: "Um único endereço naquele ponto." },
     { mk: createMarker({ shape: "circle", type: "com", number: 3, packages: 5, scale: .72 }), b: "Badge caixa = nº de pacotes", s: "No endereço: quantos pacotes ali (só se > 1)." },
     { mk: createMarker({ shape: "square", type: "res", number: 6, packages: 3, scale: .72 }), b: "Badge pino = nº de endereços", s: "Na parada: quantos endereços ela agrupa." },
-    { mk: createMarker({ shape: "circle", type: "res", number: 1, packages: 1, selected: true, scale: .72 }), b: "Borda grossa = selecionado", s: "O marcador clicado (foco). No Meu roteiro a mesma borda = âncora." },
+    { mk: createMarker({ shape: "circle", type: "res", number: 1, packages: 1, selected: true, scale: .72 }), b: "Borda grossa = selecionado", s: "O marcador clicado (foco). No Meu roteiro também marca seleção — não há mais âncora-endereço." },
   ];
   const lg = document.getElementById("legend");
   legend.forEach(it => lg.insertAdjacentHTML("beforeend", `<div class="item"><div class="swatch">${it.mk}</div><div class="txt"><b>${it.b}</b><span>${it.s}</span></div></div>`));
@@ -221,6 +238,53 @@
   pts.forEach(p => {
     cluster.insertAdjacentHTML("beforeend", `<div class="pt" style="left:${p.x}px;top:${p.y}px"></div>`);
     cluster.insertAdjacentHTML("beforeend", `<div class="mk" style="left:${p.x}px;top:${p.y}px">${createMarker({ shape: p.shape, type: p.type, number: p.number, packages: p.packages, scale: .8 })}</div>`);
+  });
+
+  /* createVehicleMarker — irmão do createMarker, parametrizado pelo Modo de Transporte.
+     Corpo escuro + anel ciano (marca) + glyph do veículo (paths simplificados; em produção, vir do Tabler/Lucide). */
+  function createVehicleMarker({ type = "moto", scale = 1 }) {
+    const W = 92, H = 122, cx = 46, cyTop = 12, bodyH = 56, cyMid = cyTop + bodyH / 2, bodyBottom = cyTop + bodyH;
+    const tip = `M${cx - 7},${bodyBottom - 6} L${cx},${bodyBottom + 30} L${cx + 7},${bodyBottom - 6} Z`;
+    const glyphs = {
+      moto: `<circle cx="6" cy="14" r="4"/><circle cx="22" cy="14" r="4"/><path d="M6,14 L12,9 L17,9 M22,14 L18,9 M17,9 L21,6"/>`,
+      carro: `<path d="M3,13 L3,11 C3,10 4,9.5 5,9.5 L10,9.5 L13,6.5 L19,6.5 L21,9.5 L24,9.5 C25,9.5 26,10 26,11 L26,13"/><circle cx="9" cy="14" r="2.4"/><circle cx="20" cy="14" r="2.4"/>`,
+      van: `<path d="M3,6 L17,6 L17,13 M3,13 L3,6 M17,7.5 L22,7.5 L25,11 L25,13 M3,13 L25,13"/><circle cx="8" cy="14.5" r="2.4"/><circle cx="21" cy="14.5" r="2.4"/>`,
+      caminhao: `<path d="M2,5 L15,5 L15,13 L2,13 Z M15,8 L20,8 L23,11 L23,13 L15,13"/><circle cx="7" cy="14.5" r="2.4"/><circle cx="20" cy="14.5" r="2.4"/>`,
+      bici: `<circle cx="6" cy="13" r="4"/><circle cx="22" cy="13" r="4"/><path d="M6,13 L12,7 L18,13 M11,7 L15,7 M9,13 L14,13"/>`,
+      pe: `<circle cx="14" cy="3" r="2"/><path d="M14,6 L12.5,11 L10,15 M12.5,11 L16,13 L16.5,16 M11,8 L17,8"/>`,
+    };
+    const g = glyphs[type] || glyphs.moto;
+    return `
+    <svg class="marker s-veh" width="${W * scale}" height="${H * scale}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="g-veh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--veh-top)"/><stop offset="1" stop-color="var(--veh-bot)"/></linearGradient></defs>
+      <g class="body">
+        <path d="${tip}" fill="var(--veh-bot)"/>
+        <circle cx="${cx}" cy="${cyMid}" r="28" fill="url(#g-veh)" stroke="var(--veh-ring)" stroke-width="3.5"/>
+        <g transform="translate(${cx - 14}, ${cyMid - 9})" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${g}</g>
+      </g>
+    </svg>`;
+  }
+
+  /* Linha de tipos de veículo */
+  const vehTypes = [["moto", "Moto"], ["carro", "Carro"], ["van", "Van"], ["caminhao", "Caminhão"], ["bici", "Bici"], ["pe", "A pé"]];
+  const vr = document.getElementById("vehRow");
+  vehTypes.forEach(([k, label]) => vr.insertAdjacentHTML("beforeend", `<div class="v">${createVehicleMarker({ type: k, scale: .7 })}<span>${label}</span></div>`));
+
+  /* Cena de contraste: parada expandida (endereços) + a moto */
+  const vs = document.getElementById("vehScene");
+  const scene = [
+    { x: 150, y: 150, kind: "addr", type: "res", number: 1 },
+    { x: 208, y: 132, kind: "addr", type: "res", number: "" },
+    { x: 120, y: 178, kind: "addr", type: "com", number: "" },
+    { x: 255, y: 168, kind: "addr", type: "res", number: "" },
+    { x: 186, y: 198, kind: "veh", type: "moto" },
+  ];
+  scene.forEach(p => {
+    vs.insertAdjacentHTML("beforeend", `<div class="pt" style="left:${p.x}px;top:${p.y}px"></div>`);
+    const mk = p.kind === "veh"
+      ? createVehicleMarker({ type: p.type, scale: .78 })
+      : createMarker({ shape: "circle", type: p.type, number: p.number, packages: 1, scale: .78 });
+    vs.insertAdjacentHTML("beforeend", `<div class="mk" style="left:${p.x}px;top:${p.y}px">${mk}</div>`);
   });
 </script>
 </body>
