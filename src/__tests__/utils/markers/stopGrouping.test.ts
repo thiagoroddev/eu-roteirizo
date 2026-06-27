@@ -19,18 +19,42 @@ const row = (over: Partial<Record<string, unknown>>): RowData => ({
 });
 
 describe("groupRowsByStop", () => {
-  it("groups packages at the same coordinate into one address (circle, packages badge)", () => {
+  it("groups packages at the same building into one address (circle, packages badge)", () => {
     const rows = [row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 7, [COLUMN_NAMES.SPX_TN]: "BR1" }), row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 9, [COLUMN_NAMES.SPX_TN]: "BR2" })];
     const stops = groupRowsByStop(rows);
     expect(stops).toHaveLength(1);
     expect(stops[0].addresses).toHaveLength(1);
-    expect(stops[0].addresses[0].rows).toHaveLength(2); // two packages, one point
+    expect(stops[0].addresses[0].rows).toHaveLength(2); // two packages, one building
   });
 
-  it("treats distinct coordinates in a stop as distinct addresses (square, addresses badge)", () => {
+  it("merges same-building packages (different complement / slightly different coords) into one address", () => {
     const rows = [
-      row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 7, [COLUMN_NAMES.LATITUDE]: -22.9, [COLUMN_NAMES.LONGITUDE]: -43.2 }),
-      row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 9, [COLUMN_NAMES.LATITUDE]: -22.91, [COLUMN_NAMES.LONGITUDE]: -43.21 }),
+      row({
+        [COLUMN_NAMES.STOP]: 7,
+        [COLUMN_NAMES.SEQUENCE]: 1,
+        [COLUMN_NAMES.LATITUDE]: -22.9,
+        [COLUMN_NAMES.LONGITUDE]: -43.2,
+        [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua X, 47, Apt 202",
+        [COLUMN_NAMES.SPX_TN]: "P1",
+      }),
+      row({
+        [COLUMN_NAMES.STOP]: 7,
+        [COLUMN_NAMES.SEQUENCE]: 2,
+        [COLUMN_NAMES.LATITUDE]: -22.90001,
+        [COLUMN_NAMES.LONGITUDE]: -43.20001,
+        [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua X, 47, Loja 1",
+        [COLUMN_NAMES.SPX_TN]: "P2",
+      }),
+    ];
+    const stops = groupRowsByStop(rows);
+    expect(stops[0].addresses).toHaveLength(1); // one building → one icon
+    expect(stops[0].addresses[0].rows).toHaveLength(2); // both packages on it (popup lists each)
+  });
+
+  it("treats distinct buildings (street + number) as distinct addresses", () => {
+    const rows = [
+      row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 7, [COLUMN_NAMES.LATITUDE]: -22.9, [COLUMN_NAMES.LONGITUDE]: -43.2, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Um, 10" }),
+      row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 9, [COLUMN_NAMES.LATITUDE]: -22.91, [COLUMN_NAMES.LONGITUDE]: -43.21, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Dois, 20" }),
     ];
     const stops = groupRowsByStop(rows);
     expect(stops).toHaveLength(1);
@@ -40,9 +64,9 @@ describe("groupRowsByStop", () => {
   it("picks the representative as the lowest sequence among VALID-coordinate addresses", () => {
     const rows = [
       // Lowest sequence (1) but invalid coordinate → dropped, must NOT be the representative.
-      row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 1, [COLUMN_NAMES.LATITUDE]: "invalid", [COLUMN_NAMES.LONGITUDE]: null }),
-      row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 5, [COLUMN_NAMES.LATITUDE]: -22.9, [COLUMN_NAMES.LONGITUDE]: -43.2 }),
-      row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 2, [COLUMN_NAMES.LATITUDE]: -22.91, [COLUMN_NAMES.LONGITUDE]: -43.21 }),
+      row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 1, [COLUMN_NAMES.LATITUDE]: "invalid", [COLUMN_NAMES.LONGITUDE]: null, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Inval, 1" }),
+      row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 5, [COLUMN_NAMES.LATITUDE]: -22.9, [COLUMN_NAMES.LONGITUDE]: -43.2, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Cinco, 5" }),
+      row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 2, [COLUMN_NAMES.LATITUDE]: -22.91, [COLUMN_NAMES.LONGITUDE]: -43.21, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Dois, 2" }),
     ];
     const stops = groupRowsByStop(rows);
     expect(stops).toHaveLength(1);
@@ -72,8 +96,8 @@ describe("groupRowsByStop", () => {
 
   it("flags a dispersed stop (representative > 100 m from a far address)", () => {
     const rows = [
-      row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 1, [COLUMN_NAMES.LATITUDE]: -22.9, [COLUMN_NAMES.LONGITUDE]: -43.2 }),
-      row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 2, [COLUMN_NAMES.LATITUDE]: -22.92, [COLUMN_NAMES.LONGITUDE]: -43.2 }), // ~2.2 km away
+      row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 1, [COLUMN_NAMES.LATITUDE]: -22.9, [COLUMN_NAMES.LONGITUDE]: -43.2, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Perto, 1" }),
+      row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.SEQUENCE]: 2, [COLUMN_NAMES.LATITUDE]: -22.92, [COLUMN_NAMES.LONGITUDE]: -43.2, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Longe, 2" }), // ~2.2 km away, distinct building
     ];
     const stops = groupRowsByStop(rows);
     expect(stops[0].maxDispersionMeters).toBeGreaterThan(100);

@@ -46,6 +46,23 @@ export const UI_LABELS = {
       ZIPCODE: "CEP:",
       COMMERCIAL: "Horário comercial?",
     },
+    // Popup do endereço (modo Original, ADR-008 §10 / fluxo §6 — TASK-RF-020.3).
+    POPUP: {
+      PACKAGES_HEADER: (count: number) => `Pacotes (${count})`,
+      SEQUENCE: "seq",
+      ADDRESS: "Endereço:",
+      NEIGHBORHOOD: "Bairro:",
+      ZIPCODE: "CEP:",
+      COMPLEMENT: "Complemento:",
+      NO_COMPLEMENT: "—",
+      TYPE: "Tipo:",
+      GOOGLE_MAPS: "Abrir no Google Maps",
+      TYPE_LABELS: {
+        COMMERCIAL: "Comercial",
+        RESIDENTIAL: "Residencial",
+        INDEFINITE: "Indefinido",
+      },
+    },
   },
   // Mensagens da camada de roteamento local (OSM → grafo). TASK-RF-005.2.
   ROUTING: {

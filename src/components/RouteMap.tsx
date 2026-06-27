@@ -1,23 +1,21 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 // Tipos e Constantes
 import type { RowData } from "../types";
-import { MAP_CONFIG, COLUMN_NAMES, UI_LABELS } from "../constants"; // <--- Importante: Constantes
-
-// Business logic utils
-import { getCommercialDisplayStatus } from "../utils/inferLocationType";
-import { escapeHtml } from "../utils/escapeHtml";
+import { MAP_CONFIG, UI_LABELS } from "../constants";
 import { Button } from "./ui/button";
 
-// SVG markers (ADR-008): one divIcon per stop, grouped by Stop, colored by type.
+// SVG markers (ADR-008): one marker per stop; click expands a stop into its address
+// circles, click an address opens a popup. The view-model logic is pure (markerModels).
 import { createMarkerDivIcon } from "../utils/markers/markerIcon";
-import { MARKER_GEOMETRY, type MarkerSvgProps } from "../utils/markers/markerSvg";
+import { MARKER_GEOMETRY } from "../utils/markers/markerSvg";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
 import { colorForLocationType } from "../utils/markers/markerColors";
 import { scaleForZoom, MARKER_MAX_SCALE } from "../utils/markers/markerScale";
+import { computeMarkerModels, nextInteraction, collapseInteraction, type MarkerModel } from "../utils/markers/markerModels";
 
 /* ============================================================================
    GLOBAL CONFIGURATION (OUTSIDE COMPONENT)
@@ -31,15 +29,26 @@ const TOOLTIP_OFFSET_Y = -(MARKER_GEOMETRY.TIP_Y - MARKER_GEOMETRY.BODY_TOP) * M
 // DEV-only warning — to learn in the field whether a "spread Stop" is rare or bad data.
 const STOP_DISPERSION_WARN_M = 100;
 
+// Expanded address circles scale with zoom like the stop squares (same proportion);
+// the selected one (inside a multi-address stop) is enlarged by this factor.
+const SELECTED_SCALE_FACTOR = 1.4;
+
+// Stacking priority (zIndexOffset): the expanded stop's addresses rise above the other
+// stops' squares; the selected address rises above its neighbors — so nothing covers it.
+// Gaps are large enough to dominate Leaflet's latitude-based ordering.
+const Z_GROUP = 100000;
+const Z_SELECTED = 200000;
+
 /* ============================================================================
    ROUTEMAP COMPONENT
 ============================================================================ */
 
 /**
- * RouteMap - Fullscreen map component displaying route deliveries
+ * RouteMap - Fullscreen map component displaying route deliveries (Original mode).
  *
- * Renders a Leaflet map with markers for each delivery point, colored by location type
- * (home, office, commercial). Includes popup with delivery details and close button.
+ * Draws one SVG marker per stop (square). Clicking a stop expands its addresses as
+ * circles labeled `stop-sequence`; clicking an address opens a popup with its packages
+ * and details. Clicking the empty map collapses and clears the selection.
  *
  * @param {RowData[]} rows - All deliveries for the selected route
  * @param {() => void} onClose - Callback to close the fullscreen map modal
@@ -56,6 +65,13 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
+
+  // Interaction state (ADR-008 §10): which stop is expanded, which address is selected.
+  const [expandedStopKey, setExpandedStopKey] = useState<string | null>(null);
+  const [selectedAddressKey, setSelectedAddressKey] = useState<string | null>(null);
+
+  const stops = useMemo(() => groupRowsByStop(rows), [rows]);
+  const models = useMemo(() => computeMarkerModels(stops, expandedStopKey, selectedAddressKey), [stops, expandedStopKey, selectedAddressKey]);
 
   // 1) MAP INITIALIZATION (Leaflet Setup)
   useEffect(() => {
@@ -92,22 +108,67 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
     };
   }, []);
 
-  // 2) MARKERS RENDERING (Data Binding)
+  // 2) DEV WARNINGS + initial sizing — on data change only.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (import.meta.env.DEV) {
+      // No PII: counts and distances only.
+      stops.forEach((stop) => {
+        if (stop.maxDispersionMeters > STOP_DISPERSION_WARN_M) {
+          console.info(`RouteMap: Stop disperso (${stop.addresses.length} endereços, máx ${Math.round(stop.maxDispersionMeters)}m do representante).`);
+        }
+      });
+      const plottedRows = stops.reduce((sum, stop) => sum + stop.addresses.reduce((acc, addr) => acc + addr.rows.length, 0), 0);
+      const discarded = rows.length - plottedRows;
+      if (discarded > 0) {
+        console.warn(`RouteMap: ${discarded} de ${rows.length} pontos sem coordenada válida (omitidos do mapa).`);
+      }
+    }
+
+    const resizeTimeout = setTimeout(() => map.invalidateSize(), 100);
+    return () => clearTimeout(resizeTimeout);
+  }, [stops, rows]);
+
+  // 2b) FOCUS — fit the expanded stop's addresses at MAX zoom (closest focus);
+  //     otherwise frame the whole route. Re-runs only on data/expansion change.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || stops.length === 0) return;
+
+    const expanded = expandedStopKey !== null ? stops[Number(expandedStopKey)] : undefined;
+    if (expanded) {
+      const bounds = L.latLngBounds(expanded.addresses.map((addr) => L.latLng(addr.lat, addr.lng)));
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: MAP_CONFIG.ZOOM.MAX });
+    } else {
+      const bounds = L.latLngBounds(stops.map((stop) => L.latLng(stop.representative.lat, stop.representative.lng)));
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: MAP_CONFIG.ZOOM.DEFAULT });
+    }
+  }, [stops, expandedStopKey]);
+
+  // 3) MARKERS RENDERING — redraws when the data OR the interaction state changes.
   useEffect(() => {
     const map = mapInstanceRef.current;
     const markersLayer = markersLayerRef.current;
-
     if (!map || !markersLayer) return;
 
     markersLayer.clearLayers();
 
-    // One marker per Stop (ADR-008): group rows, then draw the representative.
-    const stops = groupRowsByStop(rows);
-    const latlngs: L.LatLng[] = [];
-    const noData = UI_LABELS.COMMON.NO_DATA;
-    const tip = UI_LABELS.ROUTE_MAP.TOOLTIP;
+    // Grouping cue (RF-020.3 iteration): small dots exactly where each address's cone
+    // tip touches the map. Drawn first so they sit under the markers.
+    if (expandedStopKey !== null) {
+      const expanded = stops[Number(expandedStopKey)];
+      if (expanded && expanded.addresses.length > 1) {
+        const dotColor = colorForLocationType(expanded.type).bottom;
+        expanded.addresses.forEach((addr) => {
+          L.circleMarker([addr.lat, addr.lng], { radius: 3, color: "#ffffff", weight: 1, fillColor: dotColor, fillOpacity: 1 }).addTo(markersLayer);
+        });
+      }
+    }
 
-    // The map has no view until fitBounds runs below; guard getZoom for that window.
+    // The map already has a view here (fit in the effect above, which runs first), but
+    // guard getZoom anyway for the no-data case.
     const safeZoom = (): number => {
       try {
         return map.getZoom();
@@ -116,95 +177,76 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
       }
     };
 
-    // Markers keep their base props so the icon can be rebuilt at a new scale on zoom.
-    const entries: { marker: L.Marker; iconProps: Omit<MarkerSvgProps, "scale"> }[] = [];
+    const entries: { marker: L.Marker; model: MarkerModel }[] = [];
+    let selectedMarker: L.Marker | null = null;
 
-    stops.forEach((stop) => {
-      const rep = stop.representative;
-      const position = L.latLng(rep.lat, rep.lng);
-      latlngs.push(position);
+    // Squares and address circles share the zoom-based scale (same proportion); the
+    // selected address is always enlarged for emphasis (alone or within a group).
+    const scaleFor = (model: MarkerModel): number => {
+      const base = scaleForZoom(safeZoom());
+      if (model.kind !== "address") return base;
+      return model.addressKey === selectedAddressKey ? base * SELECTED_SCALE_FACTOR : base;
+    };
 
-      // Collapsed stop = always a SQUARE (ADR-008, RF-020.5): the circle is reserved
-      // for the expanded/selected address state (.3). Color = stop type (commercial
-      // wins), number = Stop, badge = addresses (multi) or packages (single address >1).
-      const multi = stop.addresses.length > 1;
-      const iconProps: Omit<MarkerSvgProps, "scale"> = {
-        shape: "square",
-        color: colorForLocationType(stop.type),
-        number: stop.hasStop ? stop.stop : null,
-        badge: multi ? { kind: "addresses", count: stop.addresses.length } : { kind: "packages", count: rep.rows.length },
-      };
-      const icon = createMarkerDivIcon({ ...iconProps, scale: scaleForZoom(safeZoom()) });
+    // Stacking: addresses of the focused stop rise above other stops; the selected
+    // address rises above its neighbors.
+    const zIndexFor = (model: MarkerModel): number => {
+      if (model.kind !== "address") return 0;
+      return model.addressKey === selectedAddressKey ? Z_SELECTED : Z_GROUP;
+    };
 
-      // Tooltip describes the representative row (the addresses hidden from the map
-      // stay in the side list/table). Spreadsheet cells are untrusted → escape all.
-      const row = rep.rows[0];
-      const zip = row[COLUMN_NAMES.ZIPCODE];
-      const googleMapsUrl = `https://www.google.com/maps?q=${rep.lat},${rep.lng}`;
-      const tooltipContent = `
-        <div style="font-family: sans-serif; font-size: 13px;">
-          <strong>${tip.SEQUENCE}</strong> ${escapeHtml(row[COLUMN_NAMES.SEQUENCE] || noData)} | <strong>${tip.STOP}</strong> ${escapeHtml(row[COLUMN_NAMES.STOP] || noData)}<br/>
-          <strong>${tip.ADDRESS}</strong> ${escapeHtml(row[COLUMN_NAMES.DESTINATION_ADDRESS] || noData)}<br/>
-          <strong>${tip.NEIGHBORHOOD}</strong> ${escapeHtml(row[COLUMN_NAMES.NEIGHBORHOOD] || noData)}<br/>
-          <strong>${tip.ZIPCODE}</strong> ${escapeHtml(zip || noData)}<br/>
-          <strong>${tip.COMMERCIAL}</strong> ${escapeHtml(getCommercialDisplayStatus(row))}
-        </div>
-      `;
-
-      const marker = L.marker(position, { icon }).bindTooltip(tooltipContent, {
-        direction: "top",
-        offset: [0, TOOLTIP_OFFSET_Y],
+    models.forEach((model) => {
+      const marker = L.marker([model.lat, model.lng], {
+        icon: createMarkerDivIcon({ ...model.iconProps, scale: scaleFor(model) }),
+        zIndexOffset: zIndexFor(model),
       });
 
+      if (model.tooltipHtml) marker.bindTooltip(model.tooltipHtml, { direction: "top", offset: [0, TOOLTIP_OFFSET_Y] });
+      if (model.popupHtml) marker.bindPopup(model.popupHtml);
+
       marker.on("click", () => {
-        window.open(googleMapsUrl, "_blank");
+        const next = nextInteraction({ expandedStopKey, selectedAddressKey }, model, stops);
+        setExpandedStopKey(next.expandedStopKey);
+        setSelectedAddressKey(next.selectedAddressKey);
       });
 
       marker.addTo(markersLayer);
-      entries.push({ marker, iconProps });
+      entries.push({ marker, model });
 
-      // DEV-only, no PII: flag stops whose addresses are dispersed from the representative.
-      if (import.meta.env.DEV && stop.maxDispersionMeters > STOP_DISPERSION_WARN_M) {
-        console.info(`RouteMap: Stop disperso (${stop.addresses.length} endereços, máx ${Math.round(stop.maxDispersionMeters)}m do representante).`);
-      }
+      if (model.kind === "address" && model.addressKey === selectedAddressKey) selectedMarker = marker;
     });
 
-    // Rebuild every marker icon at the current zoom's scale (markers grow with zoom,
-    // full size only when closest). Anchor re-derives, so the tip stays on the point.
+    // Open the popup of the selected address (selection survives the redraw).
+    if (selectedMarker) (selectedMarker as L.Marker).openPopup();
+
+    // Squares grow with zoom; address circles keep their fixed scale. Rebuilding the
+    // icon re-derives the anchor so the tip stays on the point.
     const applyScaleForZoom = () => {
-      const scale = scaleForZoom(safeZoom());
-      entries.forEach(({ marker, iconProps }) => marker.setIcon(createMarkerDivIcon({ ...iconProps, scale })));
+      entries.forEach(({ marker, model }) => marker.setIcon(createMarkerDivIcon({ ...model.iconProps, scale: scaleFor(model) })));
     };
     map.on("zoomend", applyScaleForZoom);
 
-    // Warn (DEV only, no PII) when rows were dropped for lacking a valid in-range
-    // coordinate, so a silent omission from the map is noticeable.
-    const plottedRows = stops.reduce((sum, stop) => sum + stop.addresses.reduce((acc, addr) => acc + addr.rows.length, 0), 0);
-    const discarded = rows.length - plottedRows;
-    if (import.meta.env.DEV && discarded > 0) {
-      console.warn(`RouteMap: ${discarded} de ${rows.length} pontos sem coordenada válida (omitidos do mapa).`);
-    }
-
-    // Auto-zoom logic, then size markers to the fitted zoom.
-    if (latlngs.length > 0) {
-      map.fitBounds(L.latLngBounds(latlngs), {
-        padding: [50, 50],
-        maxZoom: MAP_CONFIG.ZOOM.DEFAULT,
-      });
-      applyScaleForZoom();
-    }
-
-    const resizeTimeout = setTimeout(() => {
-      map.invalidateSize();
-    }, 100);
-
     return () => {
       map.off("zoomend", applyScaleForZoom);
-      clearTimeout(resizeTimeout);
     };
-  }, [rows]);
+  }, [models, stops, expandedStopKey, selectedAddressKey]);
 
-  // 3) KEYBOARD HANDLER
+  // 4) CLICK OUTSIDE (empty map) → collapse and clear selection.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    const onMapClick = () => {
+      const collapsed = collapseInteraction();
+      setExpandedStopKey(collapsed.expandedStopKey);
+      setSelectedAddressKey(collapsed.selectedAddressKey);
+    };
+    map.on("click", onMapClick);
+    return () => {
+      map.off("click", onMapClick);
+    };
+  }, []);
+
+  // 5) KEYBOARD HANDLER
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();

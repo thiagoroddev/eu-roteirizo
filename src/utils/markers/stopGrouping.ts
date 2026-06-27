@@ -5,8 +5,11 @@
  * pure helper turns the flat rows into that hierarchy: Stop → Address → packages.
  *
  * Decisions (locked with the human):
- * - **Address identity = coordinate** (lat/lng rounded): one map point = one address;
- *   packages at the same point count as packages, not as separate addresses.
+ * - **Address identity = the BUILDING (street + number)**, so packages at the same
+ *   building but different complements/floors — and slightly different geocoded
+ *   coordinates — collapse into ONE address (avoids two near-coincident markers that
+ *   would overlap). Falls back to the rounded coordinate when there is no street+number.
+ *   The differing per-package info (complement, sequence) lives in the popup.
  * - **Representative = lowest sequence among addresses WITH a valid coordinate** —
  *   so a stop is never lost just because its first address has a bad coordinate.
  * - **Empty/absent Stop → its own marker** (one StopGroup per such row, no number).
@@ -54,6 +57,32 @@ export interface StopGroup {
 }
 
 const COORD_PRECISION = 6;
+
+/** Leading comma-parts ("street, number") that identify a building. */
+const BUILDING_PARTS = 2;
+
+/** Normalizes address text for keying (strip accents, lowercase, collapse spaces). */
+const normalizeAddress = (value: string): string =>
+  value
+    .normalize("NFD")
+    .replace(/\p{Mn}/gu, "") // drop combining marks (accents) after NFD
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+
+/**
+ * Address key within a stop = the BUILDING (street + number) so packages at the same
+ * building (different complement/floor, possibly slightly different coordinates) merge
+ * into one address. Falls back to the rounded coordinate when there is no street+number.
+ */
+const addressKeyFor = (row: RowData, lat: number, lng: number): string => {
+  const parts = String(row[COLUMN_NAMES.DESTINATION_ADDRESS] ?? "")
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length >= BUILDING_PARTS) return `addr:${normalizeAddress(parts.slice(0, BUILDING_PARTS).join(", "))}`;
+  return `geo:${lat.toFixed(COORD_PRECISION)},${lng.toFixed(COORD_PRECISION)}`;
+};
 
 /** Canonical ICON_KEYS per bucket, so the result feeds `colorForLocationType` directly. */
 const CANONICAL = {
@@ -126,26 +155,27 @@ export function groupRowsByStop(rows: RowData[]): StopGroup[] {
     // Not plottable → dropped (caller warns on the count).
     if (lat === undefined || lng === undefined || !isWithinRioBounds(lat, lng)) continue;
 
-    const coordKey = `${lat.toFixed(COORD_PRECISION)},${lng.toFixed(COORD_PRECISION)}`;
     const stop = String(row[COLUMN_NAMES.STOP] ?? "").trim();
 
     if (!stop) {
       // Empty Stop → its own marker (do not merge with anything).
-      noStop.push({ key: coordKey, lat, lng, rows: [row] });
+      noStop.push({ key: `geo:${lat.toFixed(COORD_PRECISION)},${lng.toFixed(COORD_PRECISION)}`, lat, lng, rows: [row] });
       continue;
     }
 
+    // Same building (street + number) → one address, even with slightly different coords.
+    const addrKey = addressKeyFor(row, lat, lng);
     let addresses = byStop.get(stop);
     if (!addresses) {
       addresses = new Map();
       byStop.set(stop, addresses);
       stopOrder.push(stop);
     }
-    const existing = addresses.get(coordKey);
+    const existing = addresses.get(addrKey);
     if (existing) {
       existing.rows.push(row);
     } else {
-      addresses.set(coordKey, { key: coordKey, lat, lng, rows: [row] });
+      addresses.set(addrKey, { key: addrKey, lat, lng, rows: [row] });
     }
   }
 

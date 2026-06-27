@@ -43,6 +43,7 @@
 | TASK-RF-020.2 | Integrar no RouteMap (agrupar por Stop, 1 marcador/parada; stopGrouping + markerColors; aposenta PNGs) — ADR-008 | [abrir](./2026-06-26--12h46--TASK-RF-020.2.md) |
 | TASK-RF-020.4 | Ajuste visual dos marcadores: escala por zoom (markerScale) + badge reposicionado na base da cabeça — ADR-008 | [abrir](./2026-06-26--14h40--TASK-RF-020.4.md) |
 | TASK-RF-020.5 | Redesenho do marcador: sempre quadrado colapsado + badge dentro + rótulo `parada-sequência` (ADR-008 refinada) | [abrir](./2026-06-26--15h43--TASK-RF-020.5.md) |
+| TASK-RF-020.3 | Interações: expandir/colapsar parada, seleção e popup do endereço (markerModels puro) — **fecha o épico RF-020** | [abrir](./2026-06-26--16h12--TASK-RF-020.3.md) |
 | TASK-REF-010 | Profissionalizar o pacote de agente e torná-lo auto-carregável (Claude/Codex/Copilot): entry points, 9 Skills, 7 instructions, renome .md.md→.md, 489 links corrigidos, geral-leve arquivado — pacote v4.0 | [abrir](./2026-06-26--10h19--TASK-REF-010.md) |
 
 <!-- Exemplo:

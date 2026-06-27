@@ -9,10 +9,10 @@
 import { MAP_CONFIG } from "../../constants";
 
 /** Marker scale at the minimum (farthest) zoom — kept small to reduce crowding. */
-export const MARKER_MIN_SCALE = 0.45;
+export const MARKER_MIN_SCALE = 0.4;
 
-/** Marker scale at the maximum (closest) zoom — full size. */
-export const MARKER_MAX_SCALE = 0.9;
+/** Marker scale at the maximum (closest) zoom — markers stay compact (like the official app). */
+export const MARKER_MAX_SCALE = 0.6;
 
 const clamp01 = (value: number): number => (value < 0 ? 0 : value > 1 ? 1 : value);
 

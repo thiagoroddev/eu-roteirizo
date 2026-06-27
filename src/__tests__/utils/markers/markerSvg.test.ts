@@ -82,16 +82,23 @@ describe("buildMarkerSvg", () => {
     expect(addresses).toContain("translate(9,4)");
   });
 
-  it("applies a thick white stroke when selected", () => {
+  it("applies a thick white stroke when selected (border is the group cue)", () => {
     const sel = buildMarkerSvg({ shape: "circle", color: COM, number: 1, selected: true });
     expect(sel).toContain('stroke="#ffffff" stroke-width="4"');
-    expect(sel).toContain("0 0 11px"); // stronger glow
   });
 
   it("applies a thin stroke when not selected", () => {
     const base = buildMarkerSvg({ shape: "circle", color: COM, number: 1 });
     expect(base).toContain('stroke-width="1.5"');
     expect(base).toContain("0 0 7px"); // base glow
+  });
+
+  it("uses a bright type-colored neon glow when emphasized, keeping the white border — RF-020.3", () => {
+    const com = buildMarkerSvg({ shape: "circle", color: COM, number: 18, selected: true, emphasis: true });
+    expect(com).toContain('stroke="#ffffff" stroke-width="4"'); // border stays white
+    expect(com).toContain("drop-shadow(0 0 12px #3DA0FF)"); // light-blue neon (commercial top)
+    const res = buildMarkerSvg({ shape: "circle", color: { top: "#34D27A", bottom: "#0E8C49", glow: "rgba(34,184,102,.50)" }, number: 18, selected: true, emphasis: true });
+    expect(res).toContain("drop-shadow(0 0 12px #34D27A)"); // light-green neon (residential top)
   });
 
   it("applies numberInk to the number fill (dark ink for the gray indefinite)", () => {

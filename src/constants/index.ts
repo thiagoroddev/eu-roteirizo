@@ -83,7 +83,7 @@ export const NOTIFICATION_DURATION = 3000; // 3 seconds
  *  Configuration for the Leaflet map component.
  * Defines bounds, zoom levels, and rendering options.
  *
- * @type {{ readonly RIO_BOUNDS: { readonly SOUTH_WEST: { readonly lat: -23.02; readonly lng: -43.42; }; readonly NORTH_EAST: { readonly lat: -22.74; readonly lng: -43.08; }; }; readonly ZOOM: { readonly MIN: 14; readonly MAX: 17; readonly DEFAULT: 16; }; readonly TILE_SIZE: 256; readonly KEEP_BUFFER: 2; }}
+ * @type {{ readonly RIO_BOUNDS: { readonly SOUTH_WEST: { readonly lat: -23.02; readonly lng: -43.42; }; readonly NORTH_EAST: { readonly lat: -22.74; readonly lng: -43.08; }; }; readonly ZOOM: { readonly MIN: 14; readonly MAX: 19; readonly DEFAULT: 16; }; readonly TILE_SIZE: 256; readonly KEEP_BUFFER: 2; }}
  */
 export const MAP_CONFIG = {
   /** Default Leaflet Icon Settings (Base to Scale) */
@@ -111,7 +111,7 @@ export const MAP_CONFIG = {
   /** Zoom level constraints */
   ZOOM: {
     MIN: 14, // The lower it is, the wider the view of the area.
-    MAX: 17, // The higher it is, the closer it gets
+    MAX: 19, // The higher it is, the closer it gets (street level, like the official app)
     DEFAULT: 16,
   },
 

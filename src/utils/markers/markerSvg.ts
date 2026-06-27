@@ -48,8 +48,10 @@ export interface MarkerSvgProps {
   number?: number | string | null;
   /** Count badge; ignored when count <= 1. */
   badge?: MarkerBadge | null;
-  /** Thick white border + stronger glow. In the Original mode this means "selected" (not anchor). */
+  /** Thick white border. In the Original mode this marks a focused stop's address. */
   selected?: boolean;
+  /** Bright type-colored neon glow — the clicked address within a multi-address stop. */
+  emphasis?: boolean;
   /** Render scale applied to the intrinsic viewBox size. Defaults to 0.8. */
   scale?: number;
 }
@@ -106,21 +108,26 @@ const NUMBER_Y_WITH_BADGE = 34;
  * @returns SVG markup ready to inject as HTML (number is HTML-escaped).
  */
 export function buildMarkerSvg(props: MarkerSvgProps): string {
-  const { shape, color, number, badge, selected = false, scale = G.DEFAULT_SCALE } = props;
+  const { shape, color, number, badge, selected = false, emphasis = false, scale = G.DEFAULT_SCALE } = props;
 
   const id = gradientId(color);
   const numberInk = color.numberInk ?? "#ffffff";
+  // Selected = thick white border (a focused stop's address). Unselected = a hairline border.
   const stroke = selected ? `stroke="#ffffff" stroke-width="4"` : `stroke="rgba(255,255,255,.4)" stroke-width="1.5"`;
 
-  // Neon glow is inline (driven by the color prop) so the builder stays self-contained.
-  const glowFilter = selected ? `drop-shadow(0 0 11px ${color.glow}) drop-shadow(0 0 4px ${color.glow})` : `drop-shadow(0 0 7px ${color.glow}) drop-shadow(0 1px 1px rgba(0,0,0,.18))`;
+  // Glow (inline, self-contained): the emphasized address gets a bright type-colored neon
+  // around the white border (light blue for commercial, light green for residential —
+  // color.top); everything else keeps the subtle base glow.
+  const glowFilter = emphasis ? `drop-shadow(0 0 12px ${color.top}) drop-shadow(0 0 6px ${color.top})` : `drop-shadow(0 0 7px ${color.glow}) drop-shadow(0 1px 1px rgba(0,0,0,.18))`;
 
   const tipPath = `M${G.CX - 7},${BODY_BOTTOM - 6} L${G.CX},${BODY_BOTTOM + 30} L${G.CX + 7},${BODY_BOTTOM - 6} Z`;
 
   const body =
     shape === "square"
       ? `<rect x="${G.CX - 28}" y="${G.BODY_TOP}" width="56" height="${G.BODY_HEIGHT}" rx="15" fill="url(#${id})" ${stroke}/>`
-      : `<circle cx="${G.CX}" cy="${G.CY_MID}" r="28" fill="url(#${id})" ${stroke}/>`;
+      : // Circle radius is a touch larger than the square's half-width so the number/badge
+        // get padding from the curved edge (a circle narrows at top/bottom). RF-020.3.
+        `<circle cx="${G.CX}" cy="${G.CY_MID}" r="30" fill="url(#${id})" ${stroke}/>`;
 
   // The label may be the stop number ("18") or a composite "stop-sequence" ("18-49");
   // the font shrinks for longer labels so it fits the head.

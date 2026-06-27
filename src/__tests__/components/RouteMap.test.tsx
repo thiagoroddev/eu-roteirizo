@@ -44,6 +44,9 @@ const layerGroupMethods = {
 const markerMethods = {
   addTo: vi.fn().mockReturnThis(),
   bindTooltip: vi.fn().mockReturnThis(),
+  bindPopup: vi.fn().mockReturnThis(), // Address popup (RF-020.3)
+  openPopup: vi.fn().mockReturnThis(),
+  closePopup: vi.fn().mockReturnThis(),
   on: vi.fn(), // Intercept click events
   setIcon: vi.fn().mockReturnThis(), // Re-scaled on zoomend (RF-020.4)
 };
@@ -64,6 +67,9 @@ vi.mock("leaflet", () => {
       // SVG markers (ADR-008) wrap their html in L.divIcon.
       divIcon: vi.fn(() => ({})),
       DivIcon: vi.fn(),
+      // Grouping leader line + dots for the expanded stop (RF-020.3).
+      polyline: vi.fn(() => ({ addTo: vi.fn() })),
+      circleMarker: vi.fn(() => ({ addTo: vi.fn() })),
     },
   };
 });
@@ -363,6 +369,12 @@ describe("RouteMap Component - Comprehensive Tests", () => {
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
+  it("registers a map click handler to collapse the expanded stop (RF-020.3)", () => {
+    render(<RouteMap {...defaultProps} />);
+    // The empty-map click collapses/clears the selection.
+    expect(mapMethods.on).toHaveBeenCalledWith("click", expect.any(Function));
+  });
+
   it("calls onClose when Escape key is pressed", () => {
     const mockClose = vi.fn();
     renderRouteMap(mockRowsWithCoordinates, mockClose);
@@ -448,7 +460,7 @@ describe("RouteMap Component - Comprehensive Tests", () => {
       expect.objectContaining({
         maxBounds: expect.any(Object), // Rio bounds object
         maxBoundsViscosity: 1.0,
-        maxZoom: 17,
+        maxZoom: 19,
         minZoom: 14,
         bounceAtZoomLimits: false,
       })
@@ -461,7 +473,7 @@ describe("RouteMap Component - Comprehensive Tests", () => {
     expect(L.tileLayer).toHaveBeenCalledWith(
       "https://tile-proxy.thiagorod-dev.workers.dev/tiles/{z}/{x}/{y}.png",
       expect.objectContaining({
-        maxZoom: 17,
+        maxZoom: 19,
         minZoom: 14,
         tileSize: 256,
         updateWhenIdle: true,
