@@ -47,6 +47,7 @@ export const UI_LABELS = {
     NAV_HOME: "Início",
     NAV_ROUTES: "Rotas",
     SETTINGS_ARIA: "Configurações de rota (em breve)",
+    BACK_ARIA: "Voltar",
   },
   // Aba Rotas (TASK-RF-022.3): lista de romaneios salvos
   ROUTES_PAGE: {
@@ -101,6 +102,19 @@ export const UI_LABELS = {
     },
   },
   // Mensagens da camada de roteamento local (OSM → grafo). TASK-RF-005.2.
+  // Seção "Info Meu Roteiro" do Sumário (RF-43, fluxo §15.1) — totais do Roteiro,
+  // separados de propósito dos números do romaneio; preenchida pela RF-007/008.
+  ROTEIRO_INFO: {
+    TITLE: "Info Meu Roteiro",
+    VEHICLE_STOPS: "Paradas de veículo:",
+    WALK_POINTS: "Pontos a pé:",
+    DISTANCE_VEHICLE: "Distância (veículo):",
+    DISTANCE_WALK: "Distância (a pé):",
+    DISTANCE_TOTAL: "Distância total:",
+    TIME_VEHICLE: "Tempo (veículo):",
+    TIME_WALK: "Tempo (a pé):",
+    TIME_TOTAL: "Tempo total:",
+  },
   ROUTING: {
     OVERPASS_HTTP_ERROR: (status: number) => `O servidor de mapas respondeu com erro (${status}). Tente novamente em instantes.`,
     NETWORK_ERROR: "Não foi possível baixar as ruas do mapa. Verifique sua conexão e tente novamente.",
@@ -128,8 +142,12 @@ export const UI_LABELS = {
     ESTIMATED_DISTANCE: "Distância estimada:",
     NEIGHBORHOODS: "Bairros:",
     CITY: "Cidade:",
-    VIEW_MAP: "Ver no Mapa",
+    // "Ver Original" abre o mapa no modo Original (RF-43, rev. 26/06 — antes "Ver no Mapa")
+    VIEW_MAP: "Ver Original",
     NO_COORDINATES: "Sem Coordenadas",
+    // Botão adaptativo (RF-43): "Criar Roteiro" quando não há; vira "Ver Meu Roteiro" com a RF-006/008
+    CREATE_ROTEIRO: "Criar Roteiro",
+    CREATE_ROTEIRO_SOON: "Em breve — montar o roteiro manual (Meu roteiro)",
     SIMPLE_TABLE: "Tabela Simplificada",
     ORIGINAL_TABLE: "Tabela Original",
   },

@@ -6,8 +6,8 @@
 
 *(Nenhuma tarefa em andamento.)*
 
-<!-- Concluídas em 05/07/26 (ver concluidas/): TASK-RF-021 (03h47) · TASK-RF-011 (04h47) · TASK-CHORE-003 (04h57) · TASK-RF-022.1 (18h08) · TASK-RF-022.2 (19h20) · TASK-RF-022.3 (19h42). -->
-<!-- Próxima da fase 1: TASK-RF-022.4 (Sumário como tela de foco). -->
+<!-- Concluídas em 05/07/26 (ver concluidas/): TASK-RF-021 (03h47) · TASK-RF-011 (04h47) · TASK-CHORE-003 (04h57) · TASK-RF-022.1 (18h08) · TASK-RF-022.2 (19h20) · TASK-RF-022.3 (19h42) · TASK-RF-022.4 (19h58). -->
+<!-- Restam da fase 1: TASK-RF-022.5 (mapa de foco + toggle Original|Meu roteiro) e TASK-RF-022.6 (painel inferior compartilhado). -->
 
 ---
 

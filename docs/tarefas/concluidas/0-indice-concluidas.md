@@ -51,6 +51,7 @@
 | TASK-RF-022.1 | Serviço de romaneios salvos: `manifestStorage` (IndexedDB, bytes brutos + meta) + `sha256Hex` + dedup RN-23 — suíte completa 384/384 (fecha também a CHORE-002) | [abrir](./2026-07-05--18h08--TASK-RF-022.1.md) |
 | TASK-RF-022.2 | HOME: spoiler de instruções (multi + rota única, `<details>` nativo), botão Importar JSON stub, salvar romaneio no upload + avisos RN-23 | [abrir](./2026-07-05--19h20--TASK-RF-022.2.md) |
 | TASK-RF-022.3 | Aba Rotas: cards tipados + chips por rota/AT, reabrir via deep link `/?romaneio&rota`, apagar c/ confirmação, busca por AT, RN-23 completa — RF-46 ✅ | [abrir](./2026-07-05--19h42--TASK-RF-022.3.md) |
+| TASK-RF-022.4 | Sumário como tela de foco (`/sumario` no FocusShell + voltar no header): botões RF-43 ("Ver Original", Criar Roteiro stub, extraActions), PlannedRouteInfo pronta, pós-upload navega (single→Sumário, multi→Rotas) | [abrir](./2026-07-05--19h58--TASK-RF-022.4.md) |
 
 <!-- Exemplo:
 | TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [abrir](./2026-05-16--20h21--TASK-REF-03.md) |

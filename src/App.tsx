@@ -11,9 +11,10 @@
  */
 
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AppShell } from "./components/shell/AppShell";
+import { AppShell, FocusShell } from "./components/shell/AppShell";
 import RouteViewer from "./pages/RouteViewer";
 import RoutesPage from "./pages/RoutesPage";
+import SummaryPage from "./pages/SummaryPage";
 
 function App() {
   return (
@@ -22,7 +23,10 @@ function App() {
         <Route path="/" element={<RouteViewer />} />
         <Route path="/rotas" element={<RoutesPage />} />
       </Route>
-      {/* Focus screens (FocusShell, no bottom nav) are added here by TASK-RF-022. */}
+      {/* Focus screens (no bottom nav — fluxo §11): Sumário; the map screen joins with TASK-RF-022.5. */}
+      <Route element={<FocusShell />}>
+        <Route path="/sumario" element={<SummaryPage />} />
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

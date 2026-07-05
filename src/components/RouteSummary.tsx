@@ -15,6 +15,7 @@ interface Props {
   onShowSimpleTable: () => void; // Opens simplified table modal
   mapAvailable: boolean; // True if route has lat/lng coordinates
   isSingleRoute?: boolean; // Single-route mode: hide multi-route-only fields (Shift/ETA/Distance/Hub)
+  extraActions?: React.ReactNode; // Extra buttons rendered with the actions (e.g. "Criar Roteiro" on the Sumário screen — RF-43)
 }
 
 /**=====================================================================================================================
@@ -38,7 +39,18 @@ interface Props {
  */
 
 /** */
-export const RouteSummary: React.FC<Props> = ({ rows, availableCols, selectedRoute, vehicleType, onViewMap, onShowTable, onShowSimpleTable, mapAvailable, isSingleRoute = false }) => {
+export const RouteSummary: React.FC<Props> = ({
+  rows,
+  availableCols,
+  selectedRoute,
+  vehicleType,
+  onViewMap,
+  onShowTable,
+  onShowSimpleTable,
+  mapAvailable,
+  isSingleRoute = false,
+  extraActions = null,
+}) => {
   // Obtains all statistics using custom hook
   const { totalPacks, lastStop, time, distance, city, at, commerceCount, neighborhoods, shiftTime, dateRaw, hub } = useRouteSummary(rows, availableCols);
 
@@ -122,6 +134,8 @@ export const RouteSummary: React.FC<Props> = ({ rows, availableCols, selectedRou
             {UI_LABELS.ROUTE_SUMMARY.NO_COORDINATES}
           </Button>
         )}
+
+        {extraActions}
 
         <Button variant="outline" onClick={onShowSimpleTable}>
           {UI_LABELS.ROUTE_SUMMARY.SIMPLE_TABLE}

@@ -75,6 +75,7 @@ const renderViewer = (initialPath = "/") =>
       <Routes>
         <Route path="/" element={<RouteViewer />} />
         <Route path="/rotas" element={<div data-testid="rotas-page-stub" />} />
+        <Route path="/sumario" element={<div data-testid="sumario-page-stub" />} />
       </Routes>
     </MemoryRouter>
   );
@@ -132,21 +133,35 @@ describe("RouteViewer (integration)", () => {
   });
 
   // ==========================================================================
-  // Navigation effects (TASK-RF-022.3)
+  // Navigation effects (TASK-RF-022.3/.4)
   // ==========================================================================
-
-  it("deep link '/?romaneio=&rota=' reopens the manifest and pre-selects the route (RF-46)", async () => {
-    renderViewer("/?romaneio=hash-abc&rota=A-1");
-
-    expect(uploaderState.loadManifest).toHaveBeenCalledWith("hash-abc");
-    // After loadManifest resolves true, the requested route is selected → summary appears
-    expect(await screen.findByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.ORIGINAL_TABLE })).toBeInTheDocument();
-  });
 
   it("redirects to /rotas?sel= when the upload duplicates a saved manifest (RN-23)", async () => {
     uploaderState.manifestSave = {
       status: "duplicate",
       meta: { id: "hash-dup", fileName: "original.xlsx", fileType: "", fileSize: 1, kind: "multi", routes: [], importedAt: "2026-07-05T10:00:00.000Z" },
+    };
+
+    renderViewer();
+
+    await waitFor(() => expect(screen.getByTestId("rotas-page-stub")).toBeInTheDocument());
+  });
+
+  it("after saving a single-route upload, goes straight to its Sumário (HOME is upload-only)", async () => {
+    uploaderState.manifestSave = {
+      status: "saved",
+      meta: { id: "hash-single", fileName: "rota.xlsx", fileType: "", fileSize: 1, kind: "single", routes: [{ name: "Minha rota", rowCount: 3 }], importedAt: "2026-07-05T10:00:00.000Z" },
+    };
+
+    renderViewer();
+
+    await waitFor(() => expect(screen.getByTestId("sumario-page-stub")).toBeInTheDocument());
+  });
+
+  it("after saving a multi-route upload, goes to the Rotas tab to pick a route", async () => {
+    uploaderState.manifestSave = {
+      status: "saved",
+      meta: { id: "hash-multi", fileName: "romaneio.xlsx", fileType: "", fileSize: 1, kind: "multi", routes: [{ name: "A-1", rowCount: 2 }], importedAt: "2026-07-05T10:00:00.000Z" },
     };
 
     renderViewer();

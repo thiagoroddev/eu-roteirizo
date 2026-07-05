@@ -23,7 +23,7 @@ export const AppShell = () => (
  */
 export const FocusShell = () => (
   <div className="min-h-screen">
-    <AppHeader />
+    <AppHeader showBack />
     <main>
       <Outlet />
     </main>

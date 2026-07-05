@@ -9,10 +9,9 @@ import type { ManifestMeta, ManifestRouteMeta } from "../types/manifest";
 /**
  * RoutesPage - the "Rotas" tab (TASK-RF-022.3, fluxo §15.2, `2-ROTAS.png`):
  * saved manifests as typed cards with one chip per route. Tapping a chip
- * reopens that route in the viewer via a deep-linkable URL
- * (`/?romaneio={id}&rota={name}` — the Sumário focus screen of TASK-RF-022.4
- * will become the destination later). `?sel={id}` highlights the card the
- * duplicate-import redirect points at (RN-23).
+ * opens that route's Sumário focus screen via a deep-linkable URL
+ * (`/sumario?romaneio={id}&rota={name}` — TASK-RF-022.4). `?sel={id}`
+ * highlights the card the duplicate-import redirect points at (RN-23).
  */
 function RoutesPage() {
   const navigate = useNavigate();
@@ -41,7 +40,7 @@ function RoutesPage() {
   }, [manifests, filter]);
 
   const openRoute = (manifest: ManifestMeta, route: ManifestRouteMeta) => {
-    navigate(`/?romaneio=${encodeURIComponent(manifest.id)}&rota=${encodeURIComponent(route.name)}`);
+    navigate(`/sumario?romaneio=${encodeURIComponent(manifest.id)}&rota=${encodeURIComponent(route.name)}`);
   };
 
   const removeManifest = async (manifest: ManifestMeta) => {

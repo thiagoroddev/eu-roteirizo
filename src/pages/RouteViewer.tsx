@@ -24,8 +24,8 @@
  * - Conditional Rendering → {condition && <Component />}
  */
 
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 /**
  * ============================================================================
@@ -85,7 +85,7 @@ function RouteViewer() {
    * - Route extraction and organization
    * - Error handling
    */
-  const { routes, loading, error, availableCols, missingCols, isSingleRoute, manifestSave, handleFileUpload, loadManifest } = useRouteUploader();
+  const { routes, loading, error, availableCols, missingCols, isSingleRoute, manifestSave, handleFileUpload } = useRouteUploader();
 
   /**
    * HOOK 2: Route Search by AT Code
@@ -124,35 +124,29 @@ function RouteViewer() {
   const [showSimpleTable, setShowSimpleTable] = useState(false);
 
   /* ======================================================================
-      🔗 SECTION 2.5: NAVIGATION EFFECTS (TASK-RF-022.3)
+      🔗 SECTION 2.5: NAVIGATION EFFECTS (TASK-RF-022.3/.4)
       ====================================================================== */
 
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const requestedManifestId = searchParams.get("romaneio");
-  const requestedRoute = searchParams.get("rota");
-  /** Guards the deep-link load against re-runs (same id → load once). */
-  const loadedManifestRef = useRef<string | null>(null);
 
   /**
-   * Deep link from the Rotas tab (`/?romaneio={id}&rota={name}`): reopen the
-   * saved manifest and pre-select the requested route (RF-46). The Sumário
-   * focus screen (TASK-RF-022.4) will take over as the destination later.
+   * HOME is "upload only" (fluxo §15.2): once the manifest is persisted the
+   * app moves on — a duplicate goes to the Rotas tab with the existing card
+   * selected (RN-23); a fresh save goes straight to the Sumário for a single
+   * route, or to the Rotas tab to pick one of the routes (multi).
    */
   useEffect(() => {
-    if (!requestedManifestId || loadedManifestRef.current === requestedManifestId) return;
-    loadedManifestRef.current = requestedManifestId;
-    void loadManifest(requestedManifestId).then((ok) => {
-      if (ok && requestedRoute) setSelectedRoute(requestedRoute);
-    });
-  }, [requestedManifestId, requestedRoute, loadManifest]);
-
-  /**
-   * RN-23 (complete): uploading a file identical to a saved manifest does not
-   * duplicate it — the app goes to the Rotas tab with the existing card selected.
-   */
-  useEffect(() => {
-    if (manifestSave?.status === "duplicate") navigate(`/rotas?sel=${encodeURIComponent(manifestSave.meta.id)}`, { replace: true });
+    if (!manifestSave) return;
+    if (manifestSave.status === "duplicate") {
+      navigate(`/rotas?sel=${encodeURIComponent(manifestSave.meta.id)}`, { replace: true });
+      return;
+    }
+    if (manifestSave.status === "saved") {
+      const { meta } = manifestSave;
+      const onlyRoute = meta.kind === "single" ? meta.routes[0] : undefined;
+      if (onlyRoute) navigate(`/sumario?romaneio=${encodeURIComponent(meta.id)}&rota=${encodeURIComponent(onlyRoute.name)}`);
+      else navigate(`/rotas?sel=${encodeURIComponent(meta.id)}`);
+    }
   }, [manifestSave, navigate]);
 
   /* ======================================================================

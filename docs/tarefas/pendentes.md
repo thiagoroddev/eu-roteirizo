@@ -77,10 +77,8 @@
 ### ✅ TASK-RF-022.3 - Aba Rotas: lista de salvos (cards tipados + chips por rota/AT) — CONCLUÍDA (05/07)
 > Cards tipados (`ManifestCard` + `RouteChip` com contrato `hasRoteiro?` p/ RN-21), reabrir via deep link **`/?romaneio={id}&rota={nome}`** (`loadManifest` no hook — a .4 troca o destino p/ o Sumário de foco), apagar com confirmação (Dialog), busca por rota/AT sobre as metas, **RN-23 completa** (duplicado → `/rotas?sel=` com card destacado). **RF-46 ✅**. Ver `concluidas/2026-07-05--19h42--TASK-RF-022.3.md`.
 
-### TASK-RF-022.4 - Sumário como tela de foco (botão adaptativo + seção Info Meu Roteiro)
-- **Esforço-H/IA:** M/M · **Dep:** 022.3, RF-011
-- `RouteSummary` reaproveitado numa **tela de foco** (sem bottom-nav; voltar → Rotas). **Nenhuma info resumida sai.** Botões (RF-43, rev. 26/06): **Ver Original** (abre o mapa, 022.5) · **Criar Roteiro** (adaptativo: fase 1 = desabilitado "em breve"; vira "Ver Meu Roteiro" quando houver roteiro — liga na RF-006) · **Tabela Simplificada** · **Tabela Original**. Seção **"Info Meu Roteiro"** condicional, **separada** dos dados do romaneio (fase 1: oculta; componente e props prontos para a RF-007/008 preencherem). Ref: `4-detalhes-sumario.png`; fluxo §15.1.
-- **Aceite:** rota única e multi abrem o Sumário pela aba Rotas; Ver Original abre o mapa certo; tabelas acessíveis; nenhuma métrica atual perdida.
+### ✅ TASK-RF-022.4 - Sumário como tela de foco — CONCLUÍDA (05/07)
+> `/sumario?romaneio&rota` sob `FocusShell` (+ **voltar no header** — RF-38 completa); botões RF-43 ("Ver Original", "Criar Roteiro" stub via `extraActions`, tabelas); `PlannedRouteInfo` tipada pronta p/ RF-007/008; **pós-upload navega** (single → Sumário; multi → `/rotas?sel=`) — "HOME é só enviar" completo. Mapa segue modal (vira tela na .5). Ver `concluidas/2026-07-05--19h58--TASK-RF-022.4.md`.
 
 ### TASK-RF-022.5 - Tela do mapa (foco) + toggle `Original | Meu roteiro` (stub)
 - **Esforço-H/IA:** M/M · **Dep:** 022.4, RF-011

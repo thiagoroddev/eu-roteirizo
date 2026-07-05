@@ -62,6 +62,8 @@ describe("AppShell (integration)", () => {
     expect(screen.getByText("conteúdo de foco")).toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.SHELL.APP_TITLE)).toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: UI_LABELS.SHELL.NAV_ARIA })).not.toBeInTheDocument();
+    // Focus screens carry the header back arrow (RF-38 — TASK-RF-022.4)
+    expect(screen.getByRole("button", { name: UI_LABELS.SHELL.BACK_ARIA })).toBeInTheDocument();
   });
 
   it("keeps the settings gear disabled until TASK-RF-007", () => {

@@ -49,7 +49,7 @@ const renderPage = (initialPath = "/rotas") =>
     <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
         <Route path="/rotas" element={<RoutesPage />} />
-        <Route path="/" element={<LocationProbe />} />
+        <Route path="/sumario" element={<LocationProbe />} />
       </Routes>
     </MemoryRouter>
   );
@@ -92,13 +92,13 @@ describe("RoutesPage", () => {
     expect(screen.getByText(UI_LABELS.ROUTES_PAGE.NO_SEARCH_RESULTS)).toBeInTheDocument();
   });
 
-  it("navigates to the viewer deep link when a chip is tapped", async () => {
+  it("navigates to the Sumário deep link when a chip is tapped (TASK-RF-022.4)", async () => {
     renderPage();
     await screen.findByText("romaneio-completo.xlsx");
 
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("B-2") }));
 
-    expect(screen.getByTestId("location-probe")).toHaveTextContent("/?romaneio=id-multi&rota=B-2");
+    expect(screen.getByTestId("location-probe")).toHaveTextContent("/sumario?romaneio=id-multi&rota=B-2");
   });
 
   it("highlights the card pointed at by ?sel= (RN-23 redirect target)", async () => {
