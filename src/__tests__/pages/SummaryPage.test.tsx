@@ -32,17 +32,6 @@ vi.mock("../../hooks/useRouteUploader", () => ({
   useRouteUploader: () => uploaderState,
 }));
 
-// Stub RouteMap to avoid loading Leaflet in jsdom.
-vi.mock("../../components/RouteMap", () => ({
-  RouteMap: ({ onClose }: { onClose: () => void }) => (
-    <div data-testid="route-map-stub">
-      <button type="button" onClick={onClose}>
-        close-map-stub
-      </button>
-    </div>
-  ),
-}));
-
 import SummaryPage from "../../pages/SummaryPage";
 
 const renderPage = (initialPath = "/sumario?romaneio=hash-1&rota=A-1") =>
@@ -51,6 +40,7 @@ const renderPage = (initialPath = "/sumario?romaneio=hash-1&rota=A-1") =>
       <Routes>
         <Route path="/sumario" element={<SummaryPage />} />
         <Route path="/rotas" element={<div data-testid="rotas-page-stub" />} />
+        <Route path="/mapa" element={<div data-testid="map-page-stub" />} />
       </Routes>
     </MemoryRouter>
   );
@@ -70,14 +60,11 @@ describe("SummaryPage (focus screen)", () => {
     expect(screen.getByText(new RegExp(UI_LABELS.ROUTE_SUMMARY.TITLE("A-1")))).toBeInTheDocument();
   });
 
-  it("'Ver Original' opens the map (modal until TASK-RF-022.5)", () => {
+  it("'Ver Original' navigates to the map focus screen (TASK-RF-022.5)", () => {
     renderPage();
 
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.VIEW_MAP }));
-    expect(screen.getByTestId("route-map-stub")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "close-map-stub" }));
-    expect(screen.queryByTestId("route-map-stub")).not.toBeInTheDocument();
+    expect(screen.getByTestId("map-page-stub")).toBeInTheDocument();
   });
 
   it("opens the original table modal", () => {

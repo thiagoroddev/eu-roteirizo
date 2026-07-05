@@ -15,6 +15,7 @@ import { AppShell, FocusShell } from "./components/shell/AppShell";
 import RouteViewer from "./pages/RouteViewer";
 import RoutesPage from "./pages/RoutesPage";
 import SummaryPage from "./pages/SummaryPage";
+import MapPage from "./pages/MapPage";
 
 function App() {
   return (
@@ -23,9 +24,10 @@ function App() {
         <Route path="/" element={<RouteViewer />} />
         <Route path="/rotas" element={<RoutesPage />} />
       </Route>
-      {/* Focus screens (no bottom nav — fluxo §11): Sumário; the map screen joins with TASK-RF-022.5. */}
+      {/* Focus screens (no bottom nav — fluxo §11): Sumário and the map. */}
       <Route element={<FocusShell />}>
         <Route path="/sumario" element={<SummaryPage />} />
+        <Route path="/mapa" element={<MapPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

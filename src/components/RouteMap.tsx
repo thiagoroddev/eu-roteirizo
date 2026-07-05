@@ -59,9 +59,16 @@ interface Props {
   rows: RowData[];
   onClose: () => void;
   availableCols?: string[] | null;
+  /**
+   * Embedded mode (TASK-RF-022.5): fills the parent layout instead of a fixed
+   * fullscreen overlay, and hides the internal close button — the shell's
+   * header back arrow is the way out. Default false keeps the legacy modal
+   * behavior (its own close button, since no header back exists there).
+   */
+  embedded?: boolean;
 }
 
-export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
+export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
@@ -255,15 +262,21 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose }) => {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  return createPortal(
-    <div className="fixed inset-0 bg-white z-[2000]" aria-label={UI_LABELS.ROUTE_MAP.FULLSCREEN_ARIA} role="dialog">
+  // Embedded: fill the parent (focus screen, header back = way out). Legacy
+  // modal: portal to body as a fixed overlay with its own close button.
+  const containerProps = embedded ? ({ className: "relative h-full w-full bg-white", role: "region" } as const) : ({ className: "fixed inset-0 bg-white z-[2000]", role: "dialog" } as const);
+  const content = (
+    <div {...containerProps} aria-label={UI_LABELS.ROUTE_MAP.FULLSCREEN_ARIA}>
       <div ref={mapContainerRef} data-testid="map-container" className="absolute inset-0 w-full h-full" />
 
-      <Button onClick={onClose} type="button" className="fixed right-4 top-4 z-[3000] shadow-lg">
-        <span aria-hidden>×</span>
-        {UI_LABELS.ROUTE_MAP.CLOSE}
-      </Button>
-    </div>,
-    document.body
+      {!embedded && (
+        <Button onClick={onClose} type="button" className="fixed right-4 top-4 z-[3000] shadow-lg">
+          <span aria-hidden>×</span>
+          {UI_LABELS.ROUTE_MAP.CLOSE}
+        </Button>
+      )}
+    </div>
   );
+
+  return embedded ? content : createPortal(content, document.body);
 };

@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 
 import { RouteSummary } from "../components/RouteSummary";
-import { RouteMap } from "../components/RouteMap";
 import { RouteTable } from "../components/RouteTable";
 import { RouteSimpleTable } from "../components/RouteSimpleTable";
 import { PlannedRouteInfo } from "../components/summary/PlannedRouteInfo";
@@ -19,13 +18,13 @@ import { UI_LABELS } from "../constants/uiLabels";
  * and the header back arrow returns to Rotas.
  *
  * Reuses the same RouteSummary card as the legacy inline flow — no summary
- * info is lost — plus the RF-43 buttons: "Ver Original" opens the map (still
- * a modal; TASK-RF-022.5 turns it into the map focus screen with the
- * Original|Meu roteiro toggle) and the adaptive "Criar Roteiro" ships
- * disabled until TASK-RF-006/008 wire the Roteiro flow. The "Info Meu
+ * info is lost — plus the RF-43 buttons: "Ver Original" navigates to the map
+ * focus screen (`/mapa`, TASK-RF-022.5) and the adaptive "Criar Roteiro"
+ * ships disabled until TASK-RF-006/008 wire the Roteiro flow. The "Info Meu
  * Roteiro" section renders only when a Roteiro exists (phase 1: never).
  */
 function SummaryPage() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const manifestId = searchParams.get("romaneio");
   const routeName = searchParams.get("rota");
@@ -34,7 +33,6 @@ function SummaryPage() {
   /** Guards the load against re-runs (same id → load once). */
   const loadedRef = useRef<string | null>(null);
 
-  const [isMapOpen, setIsMapOpen] = useState(false);
   const [showTable, setShowTable] = useState(false);
   const [showSimpleTable, setShowSimpleTable] = useState(false);
 
@@ -70,7 +68,7 @@ function SummaryPage() {
             selectedRoute={routeName}
             vehicleType={vehicleType}
             isSingleRoute={isSingleRoute}
-            onViewMap={() => setIsMapOpen(true)}
+            onViewMap={() => navigate(`/mapa?romaneio=${encodeURIComponent(manifestId)}&rota=${encodeURIComponent(routeName)}`)}
             onShowTable={() => setShowTable(true)}
             onShowSimpleTable={() => setShowSimpleTable(true)}
             mapAvailable={mapAvailable}
@@ -86,7 +84,6 @@ function SummaryPage() {
 
           {showTable && <RouteTable selectedRoute={routeName} rows={currentRows} onClose={() => setShowTable(false)} />}
           {showSimpleTable && <RouteSimpleTable rows={currentRows} selectedRoute={routeName} onClose={() => setShowSimpleTable(false)} />}
-          {isMapOpen && <RouteMap rows={currentRows} availableCols={availableCols} onClose={() => setIsMapOpen(false)} />}
         </>
       )}
     </div>

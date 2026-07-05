@@ -80,10 +80,8 @@
 ### ✅ TASK-RF-022.4 - Sumário como tela de foco — CONCLUÍDA (05/07)
 > `/sumario?romaneio&rota` sob `FocusShell` (+ **voltar no header** — RF-38 completa); botões RF-43 ("Ver Original", "Criar Roteiro" stub via `extraActions`, tabelas); `PlannedRouteInfo` tipada pronta p/ RF-007/008; **pós-upload navega** (single → Sumário; multi → `/rotas?sel=`) — "HOME é só enviar" completo. Mapa segue modal (vira tela na .5). Ver `concluidas/2026-07-05--19h58--TASK-RF-022.4.md`.
 
-### TASK-RF-022.5 - Tela do mapa (foco) + toggle `Original | Meu roteiro` (stub)
-- **Esforço-H/IA:** M/M · **Dep:** 022.4, RF-011
-- Mapa como **tela de foco** (fechar → Sumário). **Toggle segmentado no topo** (abaixo do header), padrão **Original**; lado **"Meu roteiro" desabilitado** ("em breve") — a RF-010 liga esse lado ao fluxo da RF-006. Reaproveita `RouteMap` + marcadores SVG (RF-020) **intactos**. **UI mínima**: mapa dominante, overlays compactos/colapsáveis (fluxo §15.4). Ref: `5-Visualizacao-de-Parada.png`; RF-20 (parte Original); fluxo §11 ("Modos do mapa").
-- **Aceite:** "Ver Original" abre este mapa com a rota certa (única e multi); toggle visível com lado direito desabilitado; interações da RF-020 (expandir/colapsar/selecionar) preservadas.
+### ✅ TASK-RF-022.5 - Tela do mapa (foco) + toggle `Original | Meu roteiro` — CONCLUÍDA (05/07)
+> `/mapa?romaneio&rota` no `FocusShell`; `MapModeToggle` segmentado (contrato `roteiroEnabled?` p/ RF-010; "Meu roteiro" desabilitado); `RouteMap.embedded` (sem portal e **sem botão de fechar** — o voltar do header cumpre; regra: fechar só quando não há voltar); "Ver Original" do Sumário navega. RF-20 → 🟡. Ver `concluidas/2026-07-05--20h18--TASK-RF-022.5.md`.
 
 ### TASK-RF-022.6 - Painel inferior do endereço compartilhado (read-only no Original)
 - **Esforço-H/IA:** M/G · **Dep:** 022.5 (integração; o componente pode nascer antes, sobre o `RouteMap` atual)

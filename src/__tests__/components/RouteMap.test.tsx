@@ -618,3 +618,24 @@ describe("RouteMap Component - Comprehensive Tests", () => {
     expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
   });
 });
+
+// =============================================================================
+// EMBEDDED MODE (TASK-RF-022.5) — map focus screen
+// =============================================================================
+
+describe("RouteMap embedded mode (TASK-RF-022.5)", () => {
+  it("fills the parent as a region WITHOUT the internal close button (header back is the way out)", () => {
+    render(<RouteMap rows={mockRowsWithCoordinates} onClose={mockOnClose} embedded />);
+
+    expect(screen.getByRole("region")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /fechar mapa/i })).not.toBeInTheDocument();
+  });
+
+  it("keeps the legacy modal (dialog + own close button) by default", () => {
+    renderRouteMap();
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
+  });
+});

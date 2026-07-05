@@ -72,6 +72,13 @@ export const UI_LABELS = {
     // (modo rota única: o próprio entregador envia uma rota só).
     SINGLE_ROUTE_NAME: "Minha rota",
   },
+  // Toggle de modos do mapa (fluxo §11 "Modos do mapa" — TASK-RF-022.5)
+  MAP_MODE: {
+    ARIA: "Modo do mapa",
+    ORIGINAL: "Original",
+    MY_ROTEIRO: "Meu roteiro",
+    MY_ROTEIRO_SOON: "Em breve — montar e ver o seu roteiro",
+  },
   ROUTE_MAP: {
     CLOSE: "Fechar Mapa",
     FULLSCREEN_ARIA: "Mapa em tela cheia",

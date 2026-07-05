@@ -51,7 +51,7 @@
 
 | ID | Requisito | Prioridade | Status | Origem | Tarefas / ADR |
 |---|---|:---:|:---:|---|---|
-| RF-20 | Toggle no mapa **`Original \| Meu roteiro`** (PNG read-only × SVG editável; padrão Original) — na rota única e numa rota selecionada de Romaneio (Multi). Em **Roteiro importado avulso**, 'Original' fica desativado | MUST | 🔭 | fluxo §11; tela 1 | TASK-RF-022.5 (toggle + lado Original), TASK-RF-010 (liga o lado Meu roteiro) |
+| RF-20 | Toggle no mapa **`Original \| Meu roteiro`** (PNG read-only × SVG editável; padrão Original) — na rota única e numa rota selecionada de Romaneio (Multi). Em **Roteiro importado avulso**, 'Original' fica desativado | MUST | 🟡 | Tela `/mapa` + `MapModeToggle` (TASK-RF-022.5 ✅ — toggle e lado Original); lado Meu roteiro = TASK-RF-010; avulso = TASK-RF-013 | TASK-RF-022.5 ✅, TASK-RF-010, TASK-RF-013 |
 | RF-21 | Definir o ponto inicial da rota (GPS, toque no mapa ou endereço da planilha) | MUST | 🔭 | fluxo §4/decisão 5; tela 1 | TASK-RF-006.3 |
 | RF-22 | Sugerir o próximo endereço/parada mais próximo (linha tracejada), re-selecionável ao tocar | MUST | 🔭 | fluxo §6; telas 1/3 | TASK-RF-006.3 |
 | RF-23 | Criar parada a partir de um endereço, **sugerindo** os que estão dentro do raio (o usuário escolhe quais entram) | MUST | 🔭 | fluxo §4/§8; tela 3 | TASK-RF-006.4 |
