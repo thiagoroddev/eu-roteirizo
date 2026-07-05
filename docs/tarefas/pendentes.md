@@ -10,7 +10,7 @@
 
 > Tarefas urgentes que carregam contexto extra. Bloco em lista, no topo.
 >
-> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). Ordem sugerida no VS Code: **RF-004 → RF-003 (destrava a rota única) → RF-005 (.1→.5) → RF-006 (.1→.7) → RF-007 → RF-008 → RF-009 (.1→.4) → RF-010**. Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
+> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). **Ordem sugerida (rev. 05/07/26):** **fase 1 de UI — RF-011 (shell) → RF-022 (.1→.6, telas de média fidelidade com modo Original/visualização)** → depois **RF-006 (.1→.7, Meu roteiro/edição) → RF-007 → RF-008 → RF-010 → RF-009 (.1→.4, execução) → RF-012 → RF-013**. (RF-003/004/005/020/021 ✅; RF-014 absorvida pela RF-022.) Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
 >
 > ⚠️ **Decisões transversais (valem para o épico todo):**
 > - **Estado:** `useReducer` por feature (conforme draft §6). Zustand só se a complexidade exigir — e **não instalar sem aprovação** (anti-padrão do núcleo §5).
@@ -46,28 +46,84 @@
 
 ---
 
-## TASK-RF-021 - Migrar modelo para a "parada do veículo" (anchorPointId → vehicleStop)
+> ✅ **TASK-RF-021 concluída** (05/07) — modelo migrado para a parada do veículo (`anchorPointId` → `vehicleStop: LatLng`) — ver `concluidas/2026-07-05--03h47--TASK-RF-021.md`. **RF-006 destravado.**
+
+---
+
+## TASK-RF-011 - App shell mobile-first (header + bottom nav + React Router) — abre a fase 1
 
 - **Status:** Pendente
-- **Modo:** Standard
+- **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
-- **Esforço-H/IA:** P/M
-- **Data-hora origem:** 26/06/26 23:30
-- **Dependências:** -
-- **REQ/ADR/DT:** `fluxo-roteirizacao.md` §2/§6 (changelog 26/06 — "parada do veículo"); supersede parcial do modelo da RF-004
-- **Observações:** **Pré-requisito do RF-006.** Decisão 26/06: a âncora deixa de ser o 1º endereço e vira a **parada do veículo** — um **ponto livre na rua** (não um endereço). Aqui é só o **modelo**; a lógica de sugestão (em frente ao endereço selecionado) e o arrastar ficam no RF-006.
+- **Esforço-H/IA:** G/M
+- **Data-hora origem:** 22/06/26 23:50
+- **Dependências:** ADR-003
+- **REQ/ADR/DT:** ADR-003; RF-38; `fluxo-roteirizacao.md` §11 (rev. 26/06); `analise-comercial-2.0.md` §10
+- **Observações:** Reescreve o shell do `App.tsx`. Dependência nova `react-router-dom` (**já aprovada** na ADR-003). **Pré-requisito da TASK-RF-022** (telas da fase 1). **Atualizada 05/07/26** para as decisões de navegação de 26/06 — antes falava em abas "Mapa/Rotas"; o correto é **HOME (enviar) + Rotas (salvos)** com telas de foco sem abas.
 
-**Objetivo:** ajustar o modelo de domínio para refletir a parada do veículo.
+**Objetivo:** dar ao app um shell mobile-first com navegação por abas e telas de foco.
 
 **Subtarefas:**
-- `src/types/routing.ts`: trocar `RouteStop.anchorPointId: string` por **`vehicleStop: LatLng`** (ponto na rua, projetado via map matching). Reavaliar campos derivados/órfãos.
-- Atualizar seletores/funções que referenciam `anchorPointId` (`utils/routing/selectors.ts` e onde mais houver).
-- Sem GPS ao vivo. Posição default (em frente ao endereço) é responsabilidade do RF-006, não do modelo.
-- Ajustar testes do modelo afetados.
+- Instalar e configurar `react-router-dom`.
+- `AppShell`: header (título + engrenagem → Configurações de Rota + voltar quando aplicável) e **bottom tab bar** com **2 abas**: **HOME** (`/` — enviar/importar) e **Rotas** (`/rotas` — salvos). (3ª aba "Configurações" é opcional, a decidir; **não** criar aba "Roteiro".)
+- **Bottom-nav some nas telas de foco** (Sumário e mapa abertos). Navegação do "voltar": fechar mapa → Sumário; voltar do Sumário → Rotas (nav reaparece) — RF-38.
+- Esqueleto navegável apenas: o conteúdo real das telas vem da TASK-RF-022; nesta tarefa o `RouteViewer` atual precisa continuar acessível **sem regressão**.
+- Garantir botão **voltar do Android** previsível.
 
-**Critérios de aceite:** compila com `vehicleStop`; sem referência órfã a `anchorPointId`; gates `tsc`/`vitest`/`lint` verdes.
-**Dependências novas:** nenhuma.
+**Critérios de aceite:** navega HOME↔Rotas; nav some nas telas de foco; voltar do Android funciona; fluxo atual (upload → visualizador) intocado.
+**Dependências novas:** `react-router-dom` (aprovada na ADR-003; instalar com aprovação no plano fino).
+**Riscos:** mexer no `App.tsx` sem quebrar o fluxo atual (cobrir com os testes de integração do `RouteViewer`).
+
+---
+
+## TASK-RF-022 - Telas de média fidelidade — fase 1: navegação + modo Original (visualização) [XG, dividir]
+
+- **Status:** Pendente
+- **Modo:** Strict
+- **Valor:** Crítico
+- **Urgência:** IMEDIATA
+- **Esforço-H/IA:** XG/XG
+- **Data-hora origem:** 05/07/26 04:06
+- **Dependências:** TASK-RF-011 (shell), TASK-RF-002 (isSingleRoute); RF-020 ✅ (marcadores SVG do Original)
+- **REQ/ADR/DT:** RF-20 (parte Original), RF-43, RF-44, RF-46, RN-21, RN-23; ADR-003, ADR-008; `fluxo-modo-original.md` §5/§6; `fluxo-roteirizacao.md` §11/§13/§15; `prototipos/telas-media-fidelidade/` (telas 1–5 + README)
+- **Observações:** XG — executar pelas subtarefas, uma por vez. Implementa as telas dos protótipos de média fidelidade **apenas com o modo Original (visualização)**; o lado "Meu roteiro" (edição/rascunho — RF-006), a execução (RF-009) e a persistência de Roteiros (RF-008) vêm depois **reaproveitando a estrutura criada aqui**. **Contrato de reuso (lei do épico):** painel inferior **único** para os dois modos (prop `readOnly` + slots de ação); toggle com lado desabilitável; Sumário com seção "Info Meu Roteiro" condicional; cards de Rotas com estado sem/com roteiro. ⚠️ **Fontes:** os `.md` decidem, as imagens ilustram (README dos protótipos). **`docs/prompt-prototipacao-ui.md` está DESATUALIZADO** (24/06 — âncora-endereço, paleta por parada, "3 botões fixos" no Sumário): **não usar como spec**; valem `fluxo-modo-original.md` + `fluxo-roteirizacao.md` (decisões 26/06). Absorve a antiga TASK-RF-014.
+
+**Objetivo:** o usuário navega **HOME → Rotas → Sumário → mapa Original** ponta a ponta, com romaneios salvos no aparelho — sem regressão do visualizador atual — e cada componente pronto (por contrato de props) para ganhar o modo editável depois.
+
+### TASK-RF-022.1 - Serviço de romaneios salvos (IndexedDB) + detecção de duplicado
+- **Esforço-H/IA:** M/M · **Dep:** nenhuma (`idb` e `fake-indexeddb` já instalados desde a RF-005.3)
+- `src/services/manifestStorage.ts`: salvar/listar/reabrir/apagar **romaneios importados** (Único e Multi) com metadados (tipo, data de import, ATs/rotas contidas) + **hash do conteúdo do arquivo** para dedup (RN-23: arquivo idêntico → não duplica, avisa "já importado" e seleciona o existente). Decidir no plano fino se persiste o `ProcessedResult` ou o binário bruto (reprocessável). Versionamento do schema (`version` + `upgrade`), distinto do store do `graphCache`.
+- **Aceite:** reabrir romaneio sem reenviar (RF-46); duplicado detectado; testes com `fake-indexeddb`.
+
+### TASK-RF-022.2 - Tela HOME (enviar) com instruções em spoiler
+- **Esforço-H/IA:** M/M · **Dep:** 022.1, RF-011
+- HOME é **só enviar** (decisão 26/06): upload `.xlsx/.csv` (fluxo atual preservado) + botão "Importar roteiro (.json)" **presente porém desabilitado** ("em breve" — liga na RF-013). Instruções atuais viram **spoiler** com dois blocos: multi-rota (texto atual) + rota única ("exporte sua rota no app oficial da empresa e importe aqui"). Ao processar com sucesso, salva o romaneio via 022.1 (com o fluxo de dedup). Ref: `1-HOME.png`; fluxo §15.2; RF-44 (parte HOME).
+- **Aceite:** upload funciona como hoje; instruções colapsáveis e atualizadas; romaneio salvo ao importar; **sem** lista de salvos na HOME (mora na aba Rotas).
+
+### TASK-RF-022.3 - Aba Rotas: lista de salvos (cards tipados + chips por rota/AT)
+- **Esforço-H/IA:** M/G · **Dep:** 022.1, RF-011
+- Cards **tipados** por cor/rótulo — **Romaneio Único** (data + chips por AT) e **Romaneio Multi** (data + chips por rota); tipo **Roteiro Exportado** fica previsto no modelo do card mas só aparece após a RF-013. Ícone do chip indica estado **sem/com roteiro** (fase 1: sempre "sem"; estrutura pronta — RN-21: máx. 1 roteiro por rota). Tocar num chip → **Sumário** daquela rota (**sem** botão "Criar Roteiro" aqui — decisão 26/06). Busca por AT (reusa `useRouteSearch`) para multi-rota grande. Redirect do dedup (022.1) cai aqui com o item selecionado. Estado vazio amigável. Ref: `2-ROTAS.png`, `3-SELECIONAR-rotas-apos-envio.png`; fluxo §15.2; RF-44 (parte lista).
+- **Aceite:** listar/reabrir/apagar romaneios salvos; chip abre o Sumário da rota certa; multi-rota mostra todas as rotas; dedup seleciona o existente.
+
+### TASK-RF-022.4 - Sumário como tela de foco (botão adaptativo + seção Info Meu Roteiro)
+- **Esforço-H/IA:** M/M · **Dep:** 022.3, RF-011
+- `RouteSummary` reaproveitado numa **tela de foco** (sem bottom-nav; voltar → Rotas). **Nenhuma info resumida sai.** Botões (RF-43, rev. 26/06): **Ver Original** (abre o mapa, 022.5) · **Criar Roteiro** (adaptativo: fase 1 = desabilitado "em breve"; vira "Ver Meu Roteiro" quando houver roteiro — liga na RF-006) · **Tabela Simplificada** · **Tabela Original**. Seção **"Info Meu Roteiro"** condicional, **separada** dos dados do romaneio (fase 1: oculta; componente e props prontos para a RF-007/008 preencherem). Ref: `4-detalhes-sumario.png`; fluxo §15.1.
+- **Aceite:** rota única e multi abrem o Sumário pela aba Rotas; Ver Original abre o mapa certo; tabelas acessíveis; nenhuma métrica atual perdida.
+
+### TASK-RF-022.5 - Tela do mapa (foco) + toggle `Original | Meu roteiro` (stub)
+- **Esforço-H/IA:** M/M · **Dep:** 022.4, RF-011
+- Mapa como **tela de foco** (fechar → Sumário). **Toggle segmentado no topo** (abaixo do header), padrão **Original**; lado **"Meu roteiro" desabilitado** ("em breve") — a RF-010 liga esse lado ao fluxo da RF-006. Reaproveita `RouteMap` + marcadores SVG (RF-020) **intactos**. **UI mínima**: mapa dominante, overlays compactos/colapsáveis (fluxo §15.4). Ref: `5-Visualizacao-de-Parada.png`; RF-20 (parte Original); fluxo §11 ("Modos do mapa").
+- **Aceite:** "Ver Original" abre este mapa com a rota certa (única e multi); toggle visível com lado direito desabilitado; interações da RF-020 (expandir/colapsar/selecionar) preservadas.
+
+### TASK-RF-022.6 - Painel inferior do endereço compartilhado (read-only no Original)
+- **Esforço-H/IA:** M/G · **Dep:** 022.5 (integração; o componente pode nascer antes, sobre o `RouteMap` atual)
+- Substituir o **popup** do endereço (RF-020.3) pelo **painel inferior (bottom sheet) único dos dois modos** — `fluxo-modo-original.md` §6: **lista de pacotes** (código `SPX TN` + sequência), **endereço completo**, **complemento** e **tipo em texto** (Comercial/Residencial/Indefinido). **Contrato de reuso:** prop de modo (`readOnly`) + slots tipados para as ações do Meu roteiro (âncora/edição — RF-006) e dados de execução (RF-009); no Original **nada de botão de edição**. Trocar de endereço na mesma parada troca o conteúdo **sem colapsar** a expansão. Texto via `UI_LABELS` (ADR-001).
+- **Aceite:** clicar num endereço expandido abre o painel (não mais popup); multi-pacote lista todos os pacotes com Stop/Seq/código; alternância entre endereços sem fechar; componente aceita o modo editável futuro sem refactor (props/slots tipados).
+
+**Critérios de aceite (RF-022):** fluxo HOME → Rotas → Sumário → mapa Original ponta a ponta com romaneios persistidos; visualizador atual (multi e rota única) **sem regressão** (testes de integração verdes); contrato de reuso documentado nas props dos componentes compartilhados.
+**Dependências novas:** nenhuma (`idb`/`fake-indexeddb` já instalados; `react-router-dom` entra pela RF-011).
+**Riscos:** regressão do fluxo atual do `RouteViewer` (mitigar com os testes de integração existentes); escopo de UI crescer para edição — **segurar no read-only** (edição é RF-006); decisão de persistência (bruto × processado) na 022.1 — registrar no plano fino, ADR só se virar decisão estrutural.
 
 ---
 
@@ -223,9 +279,9 @@
 - **Urgência:** IMEDIATA
 - **Esforço-H/IA:** M/M
 - **Data-hora origem:** 22/06/26 22:45
-- **Dependências:** TASK-RF-002, TASK-RF-006
-- **REQ/ADR/DT:** draft §3
-- **Observações:** Liga o sinal já existente (`isSingleRoute`) ao novo fluxo, sem quebrar o multi-rota.
+- **Dependências:** TASK-RF-002, TASK-RF-006, TASK-RF-022.5 (toggle)
+- **REQ/ADR/DT:** draft §3; RF-20
+- **Observações:** Liga o sinal já existente (`isSingleRoute`) ao novo fluxo, sem quebrar o multi-rota. **Nota 05/07/26:** o **toggle** `Original | Meu roteiro` nasce na **TASK-RF-022.5** (com o lado direito desabilitado); esta tarefa passa a ser **ligar o lado "Meu roteiro"** ao fluxo de construção (RF-006), na rota única e na rota selecionada do multi.
 
 **Objetivo:** quando `isSingleRoute`, oferecer "Planejar rota" (fluxo de construção) em vez do seletor multi-rota.
 
@@ -239,31 +295,7 @@
 
 ---
 
-## TASK-RF-011 - App shell mobile-first (header + bottom nav + React Router)
-
-- **Status:** Pendente
-- **Modo:** Strict
-- **Valor:** Crítico
-- **Urgência:** IMEDIATA
-- **Esforço-H/IA:** G/M
-- **Data-hora origem:** 22/06/26 23:50
-- **Dependências:** ADR-003
-- **REQ/ADR/DT:** ADR-003; `analise-comercial-2.0.md` §10; `fluxo-roteirizacao.md` §11
-- **Observações:** Reescreve o shell do `App.tsx`; o `RouteViewer` atual vira a tela do Mapa. Dependência nova `react-router-dom` (aprovada). Base das demais telas — priorizar cedo (antes/junto da RF-006).
-
-**Objetivo:** dar ao app um shell mobile-first com navegação por abas.
-
-**Subtarefas:**
-- Instalar e configurar `react-router-dom`.
-- `AppShell`: header (título + engrenagem → Configurações de Rota + voltar) e **bottom tab bar** (Mapa `/`, Rotas `/rotas`); Relatórios/Perfil como stubs.
-- `RouteViewer` vira a rota `/` (Mapa); dentro dela, o toggle **Visualizar | Roteirizar** só em rota única (liga com RF-010).
-- Garantir botão **voltar do Android** previsível.
-
-**Critérios de aceite:** navega entre Mapa/Rotas; voltar do Android funciona; multi-rota (visualizador) intocado.
-**Dependências novas:** `react-router-dom` (propor/instalar com aprovação — já aprovada na ADR-003).
-**Riscos:** mexer no `App.tsx` sem quebrar o fluxo atual (cobrir com os testes de `RouteViewer`).
-
----
+<!-- TASK-RF-011 movida para o topo das Imediatas em 05/07/26 (abre a fase 1 de UI; texto atualizado para as decisões de navegação de 26/06). -->
 
 ## TASK-RF-012 - Auto-roteirizar (agrupamento por raio)
 
@@ -311,27 +343,7 @@
 
 ---
 
-## TASK-RF-014 - Integração do roteirizador no app legado (Sumário lançador + tela inicial)
-
-- **Status:** Pendente
-- **Modo:** Standard
-- **Valor:** Crítico
-- **Urgência:** IMEDIATA
-- **Esforço-H/IA:** M/M
-- **Data-hora origem:** 22/06/26 23:55
-- **Dependências:** TASK-RF-010, TASK-RF-011
-- **REQ/ADR/DT:** ADR-003; `fluxo-roteirizacao.md` §15
-- **Observações:** Não recomeçar do zero — o roteirizador nasce dentro do fluxo legado (inicial → Sumário → Ver no Mapa). O card de Sumário é reaproveitado e nenhuma info resumida sai.
-
-**Objetivo:** encaixar Roteirizar/Executar no app existente, reaproveitando Sumário e tela inicial.
-
-**Subtarefas:**
-- **Sumário como lançador:** botões adaptativos por modo — multi-rota (Ver no Mapa + Tabelas, como hoje); rota única (+ Roteirizar + Executar se houver roteirização salva). Toggle mínimo Visualizar↔Roteirizar dentro do mapa.
-- **Tela inicial:** instruções viram **spoiler** e são atualizadas (multi-rota + bloco rota única: "exporte no app oficial e importe aqui"); adicionar **romaneios salvos** e **rotas únicas salvas com roteirizações**.
-- **UI mínima no mapa** (overlay enxuto; mapa dominante).
-
-**Critérios de aceite:** multi-rota intocado; rota única abre Roteirizar/Executar pelo Sumário; instruções colapsáveis e atualizadas; nenhuma info do Sumário perdida.
-**Dependências novas:** nenhuma.
+> 🔀 **TASK-RF-014 absorvida pela TASK-RF-022** (05/07/26): o escopo estava desatualizado (rev. 26/06 dos fluxos) e duplicava a fase 1 — Sumário lançador/adaptativo → **RF-022.4**; tela inicial/instruções em spoiler → **RF-022.2**; lista de salvos → **RF-022.3**; UI mínima no mapa → **RF-022.5**. O número **014 não será reaproveitado** (regra de numeração do núcleo §4.4).
 
 ---
 

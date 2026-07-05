@@ -2,7 +2,7 @@
 
 > Passo a passo, estados visuais e **interações de clique** do modo **Original** (visualizar). É o visualizador legado evoluído: **espelha o app oficial da Shopee**. Documento de trabalho — refinável. **Isolado do roteirizar:** não se confunde com `fluxo-roteirizacao.md` (modo Meu roteiro). Segue a **[ADR-008](../arquitetura/ADR/ADR-008.md)** (marcadores SVG do Original).
 >
-> 🖼️ **Referência visual:** [`prototipos/marcadores-svg/index.html`](../../prototipos/marcadores-svg/index.html) — vocabulário dos marcadores. Este `.md` é a fonte **textual**; o HTML é a fonte **visual**. Manter os dois em sincronia.
+> 🖼️ **Referência visual:** vocabulário dos marcadores em [`prototipos/marcadores-svg/index.html`](../../prototipos/marcadores-svg/index.html) · **telas de média fidelidade** em [`prototipos/telas-media-fidelidade/`](../../prototipos/telas-media-fidelidade/) (ver o `README` do índice). Este `.md` é a fonte **textual** e **decide** em caso de conflito; as imagens **ilustram**. Manter em sincronia.
 
 ---
 
@@ -51,7 +51,7 @@ Detalhe completo na **ADR-008**. Resumo das variáveis (cada uma com **um** sign
 | **Colapsada** (padrão) | **Um** marcador **quadrado** (sempre, mesmo com 1 endereço) no representante da parada (menor sequência), com **número da parada**, cor por tipo e badge de **nº de endereços** (se > 1; ou **nº de pacotes** se a parada tem 1 só endereço com > 1 pacote). Os demais endereços **não** aparecem no mapa. |
 | **Expandida** (após clique) | O quadrado **vira círculo**; aparecem os **endereços** da parada como **círculos** coloridos por tipo, **todos com o nº da parada** + **borda branca**. O mapa **dá foco** (zoom máximo) na parada. Cada círculo pode ter badge de **nº de pacotes** (se > 1). O **selecionado** fica **maior** + **glow neon** na cor clara do tipo, e por cima dos vizinhos. |
 
-> **Só uma parada fica expandida por vez** (assumido — evita poluição; alinhado ao roteirizar). Parada de **um único endereço** é um **quadrado** colapsado (nº da parada); ao ser **selecionada** vira um **círculo** `parada-sequência` e abre o popup (§6).
+> **Só uma parada fica expandida por vez** (assumido — evita poluição; alinhado ao roteirizar). Parada de **um único endereço** é um **quadrado** colapsado (nº da parada); ao ser **selecionada** vira um **círculo** `parada-sequência` e abre o **painel inferior** (§6).
 
 ---
 
@@ -71,25 +71,27 @@ Detalhe completo na **ADR-008**. Resumo das variáveis (cada uma com **um** sign
 - Os endereços da parada expandida **somem**; sobra **só o representante** (menor sequência), que **volta a ser quadrado**.
 - A seleção é **limpa** (some a borda grossa). *(Assumido.)*
 
-**Clique num endereço (círculo) → popup (§6):**
-- Abre o popup do endereço.
+**Clique num endereço (círculo) → painel inferior (§6):**
+- Abre o **painel inferior** do endereço — **o mesmo componente do Meu roteiro**, em modo **read-only**.
 - O endereço clicado fica **selecionado**: ganha **borda grossa branca + sombra na cor do seu tipo**.
-- Clicar em **outro endereço da mesma parada** move a seleção e troca o popup, **sem colapsar**. *(Assumido.)*
+- Clicar em **outro endereço da mesma parada** troca o conteúdo do painel/seleção, **sem colapsar**. *(Assumido.)*
 
 > **Seleção (§5):** a borda grossa branca + sombra colorida marca **o último marcador clicado** (parada ou endereço). É um realce de **seleção/foco**, não de âncora (que não existe no Original).
 
 ---
 
-## 6. Popup do endereço
+## 6. Painel inferior do endereço (read-only)
 
-Ao clicar num endereço (círculo), abre um popup com:
+Ao clicar num endereço (círculo), o **painel inferior** — **o mesmo componente do Meu roteiro**, em modo **read-only** (sem âncora, sem botões de edição) — mostra:
 
 - **Lista de pacotes** daquele endereço — cada item com **código** (`SPX TN`) e **sequência**.
 - **Endereço completo** (rua + número, bairro, CEP).
 - **Complemento** (o texto que alimenta a inferência de tipo).
 - **Tipo** — **"Comercial"**, **"Residencial"** ou **"Indefinido"**, escrito **em texto**.
 
-> Um endereço pode ter **vários pacotes** (multi-pacote): o popup os lista todos, cada um com seu código e sequência. É aqui que os pacotes "escondidos do mapa" ficam acessíveis.
+> Um endereço pode ter **vários pacotes** (multi-pacote): o painel os lista todos, cada um com seu código e sequência. É aqui que os pacotes "escondidos do mapa" ficam acessíveis.
+>
+> **Painel compartilhado:** este painel inferior é o **mesmo dos dois modos**. No Original é **read-only** (sem âncora, sem edição) e mostra os **números da planilha** (Stop/Sequence); no Meu roteiro é **editável** e mostra os números da rota (Pn/En) + âncora + ações. **Alternar Original ↔ Meu roteiro só troca os dados mostrados — a estrutura da UI é a mesma.**
 
 ---
 
@@ -100,12 +102,12 @@ Ao clicar num endereço (círculo), abre um popup com:
 | Papel | Visualizar (read-only) | Construir a rota (editável) |
 | Marcador por | **Parada (Stop)** | Parada (agrupada pelo usuário) |
 | **Número** | número da **parada (Stop)** | **ordem** (ordinal) da rota |
-| **Cor** | **tipo** (res/com/indef) | **de qual parada** (paleta categórica) |
+| **Cor** | **tipo** (res/com/indef) | **tipo** (res/com/indef) — **igual** (decisão 26/06) |
 | **Veículo / âncora** | **não existe** | é a **parada do veículo** (marcador próprio na rua, não um endereço) |
 | **Borda grossa** | **selecionado** | **selecionado** (a parada do veículo é marcador próprio, não borda) |
 | Origem dos dados | espelha o app oficial | montado pelo usuário |
 
-> O **componente de marcador é o mesmo** (parametrizável); só mudam os **valores** das props (cor, número, significado da borda). Sem duplicação.
+> O **componente de marcador é o mesmo** (parametrizável); só mudam os **valores** das props (número, significado da borda). **E o painel inferior também é o mesmo** — Original **read-only** (sem âncora/edição), Meu roteiro **editável**. **Alternar Original ↔ Meu roteiro só troca os dados mostrados.** Sem duplicação.
 
 ---
 
@@ -115,7 +117,7 @@ Pontos que decidi por padrão razoável e que valem confirmação:
 
 1. **Foco único:** só uma parada expandida por vez; expandir outra colapsa a anterior.
 2. **Limpar seleção ao clicar fora:** clicar no mapa vazio colapsa a parada **e** remove a borda de seleção.
-3. **Popup não colapsa:** clicar de endereço para endereço (mesma parada) troca popup/seleção sem fechar a expansão.
+3. **Painel não colapsa:** clicar de endereço para endereço (mesma parada) troca o conteúdo do painel/seleção sem fechar a expansão.
 4. **Sombra da seleção = cor do tipo** do marcador selecionado (coerente com o neon).
 5. **Representante = menor sequência** (a confirmar em campo: primeiro/centro/último).
 
@@ -134,4 +136,5 @@ Pontos que decidi por padrão razoável e que valem confirmação:
 ## Última Atualização
 
 - **Data:** 25/06/26
-- **Por:** criação do fluxo do modo Original (interações de clique: expandir/colapsar parada, seleção por borda grossa, popup do endereço com pacotes). Esclarecido que **não há âncora** no Original. Acompanha ADR-008.
+- **Por:** criação do fluxo do modo Original (interações de clique: expandir/colapsar parada, seleção por borda grossa, detalhe do endereço com pacotes). Esclarecido que **não há âncora** no Original. Acompanha ADR-008.
+- **Atualização 26/06/26:** o **popup** do endereço vira **painel inferior** — **o mesmo componente do Meu roteiro**, em **read-only** (sem âncora, sem edição), mostrando os **números da planilha** (Stop/Sequence). **Painel único nos dois modos:** alternar Original ↔ Meu roteiro **só troca os dados**, não a estrutura. Cor = **tipo** nos dois modos (a "paleta por parada" foi aposentada). Afeta §5/§6/§7/§8.

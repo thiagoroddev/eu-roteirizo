@@ -41,8 +41,8 @@ export const addressCountInStop = (stop: RouteStop): number => stop.pointIds.len
 export const packagesInStop = (stop: RouteStop, pointsById: Map<string, DeliveryPoint>): number => stop.pointIds.reduce((sum, id) => sum + (pointsById.get(id)?.packageCount ?? 0), 0);
 
 /**
- * Geographic centroid (mean) of a stop's points. Useful as a fallback marker
- * position; the primary marker sits at the anchor.
+ * Geographic centroid (mean) of a stop's points. Useful as a fallback position
+ * for the stop marker (the vehicle stop is a separate, own marker).
  */
 export const stopCentroid = (stop: RouteStop, pointsById: Map<string, DeliveryPoint>): LatLng | null => {
   const pts = stop.pointIds.map((id) => pointsById.get(id)).filter((p): p is DeliveryPoint => p !== undefined);

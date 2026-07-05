@@ -7,7 +7,8 @@
  *
  * Core idea: a DeliveryPoint is a unique LOCATION on the map (one marker), which
  * may carry several packages (multi-package address). Points are grouped into
- * Stops; each Stop has an anchor (where the vehicle parks).
+ * Stops; each Stop has a vehicle stop ("parada do veículo" / anchor): a free
+ * point on the street — NOT an address — where the vehicle parks.
  */
 
 import type { RowData } from "./index";
@@ -49,7 +50,7 @@ export interface DeliveryPoint {
 }
 
 /**
- * A Stop: a group of nearby DeliveryPoints delivered on foot from an anchor.
+ * A Stop: a group of nearby DeliveryPoints delivered on foot from the vehicle stop.
  * Rendered as a square marker numbered by `order` (1, 2, 3…).
  */
 export interface RouteStop {
@@ -57,14 +58,21 @@ export interface RouteStop {
   id: string;
   /** 1-based display order along the route (P1, P2…). */
   order: number;
-  /** Id of the DeliveryPoint that is the anchor (where the vehicle parks). */
-  anchorPointId: string;
   /**
-   * Ids of the points in this stop, in walking-visit order (anchor first).
-   * The anchor is also the first element. See fluxo §6 (clockwise sweep + manual override).
+   * Where the vehicle parks ("parada do veículo" / anchor): a free point on the
+   * street, NOT one of the stop's points — projected onto the nearest road edge
+   * via map matching by whoever creates/moves the stop (RF-006). The walking
+   * circuit leaves from and returns to it, and vehicle legs run between the
+   * vehicle stops of consecutive stops. See fluxo §2/§6.
+   */
+  vehicleStop: LatLng;
+  /**
+   * Ids of the points in this stop, in walking-visit order: a circuit that
+   * leaves from and returns to `vehicleStop`. See fluxo §6 (clockwise sweep
+   * from the vehicle stop + manual override).
    */
   pointIds: string[];
-  /** Radius (meters) used when this stop auto-grouped nearby points on creation. */
+  /** Radius (meters) used to suggest candidate points when creating this stop. */
   radiusMeters: number;
 }
 
@@ -74,7 +82,7 @@ export interface RoutingConfig {
   walkingSpeedKmh: number;
   /** Fixed time spent per delivery (handover), in minutes. */
   walkingMinutesPerDelivery: number;
-  /** Vehicle speed between stop anchors. */
+  /** Vehicle speed between the vehicle stops of consecutive stops. */
   vehicleSpeedKmh: number;
   /** Default radius (meters) for auto-grouping when creating a stop. */
   autoRadiusMeters: number;

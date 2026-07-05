@@ -13,7 +13,7 @@ const pt = (id: string, lat: number, lng: number, packageCount: number): Deliver
 
 const points: DeliveryPoint[] = [pt("a", -22.95, -43.19, 2), pt("b", -22.96, -43.2, 1), pt("c", -22.97, -43.21, 3)];
 
-const stop: RouteStop = { id: "s1", order: 1, anchorPointId: "a", pointIds: ["a", "b"], radiusMeters: 30 };
+const stop: RouteStop = { id: "s1", order: 1, vehicleStop: { lat: -22.9501, lng: -43.1901 }, pointIds: ["a", "b"], radiusMeters: 30 };
 
 describe("routing selectors", () => {
   it("counts points and packages", () => {

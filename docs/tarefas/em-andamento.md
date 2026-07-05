@@ -6,6 +6,8 @@
 
 *(Nenhuma tarefa em andamento.)*
 
+<!-- TASK-RF-021 concluída em 05/07/26 03:47 — registro em concluidas/2026-07-05--03h47--TASK-RF-021.md. -->
+
 <!-- TASK-RF-020 (épico marcadores SVG do modo Original) ENCERRADO em 26/06/26.
      Subtarefas concluídas: .1 (12h09) · .2 (12h46) · .4 (14h40) · .5 (15h43) · .3 (16h12).
      Registros em docs/tarefas/concluidas/2026-06-26--*--TASK-RF-020.*.md. -->

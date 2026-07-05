@@ -45,6 +45,7 @@
 | TASK-RF-020.5 | Redesenho do marcador: sempre quadrado colapsado + badge dentro + rótulo `parada-sequência` (ADR-008 refinada) | [abrir](./2026-06-26--15h43--TASK-RF-020.5.md) |
 | TASK-RF-020.3 | Interações: expandir/colapsar parada, seleção e popup do endereço (markerModels puro) — **fecha o épico RF-020** | [abrir](./2026-06-26--16h12--TASK-RF-020.3.md) |
 | TASK-REF-010 | Profissionalizar o pacote de agente e torná-lo auto-carregável (Claude/Codex/Copilot): entry points, 9 Skills, 7 instructions, renome .md.md→.md, 489 links corrigidos, geral-leve arquivado — pacote v4.0 | [abrir](./2026-06-26--10h19--TASK-REF-010.md) |
+| TASK-RF-021 | Migrar modelo para a "parada do veículo" (`anchorPointId` → `vehicleStop: LatLng`) — destrava RF-006 | [abrir](./2026-07-05--03h47--TASK-RF-021.md) |
 
 <!-- Exemplo:
 | TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [abrir](./2026-05-16--20h21--TASK-REF-03.md) |
