@@ -49,6 +49,10 @@ const config = {
   test: {
     globals: true,
     environment: "jsdom", // Simulates browser environment for React testing
+    // Shield the runner from a shell that leaks NODE_ENV=production — that
+    // makes Vitest load the production React build and every render fails
+    // with "act(...) is not supported" (TASK-CHORE-003).
+    env: { NODE_ENV: "test" },
     setupFiles: "./src/setupTests.ts", // Setup file for tests
     css: {
       modules: {

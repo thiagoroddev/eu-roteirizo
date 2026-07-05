@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { processExcelFile } from "../utils/excelProcessor";
 import { hasValidFileExtension } from "../utils/validators";
+import { saveManifest, getManifest, type SaveManifestResult } from "../services/manifestStorage";
 import type { RoutesMap } from "../types";
 import type { RouteUploaderReturn } from "../types/hooks";
 import { FILE_CONFIG, UI_LABELS } from "../constants";
@@ -62,6 +63,9 @@ export function useRouteUploader(): RouteUploaderReturn {
   /** True when the loaded file is a single delivery route (no "Corridor Cage") */
   const [isSingleRoute, setIsSingleRoute] = useState(false);
 
+  /** Result of persisting the manifest locally (RF-46/RN-23); null before any upload */
+  const [manifestSave, setManifestSave] = useState<SaveManifestResult | null>(null);
+
   /**
    * ============================================================================
    * FILE UPLOAD HANDLER
@@ -103,6 +107,7 @@ export function useRouteUploader(): RouteUploaderReturn {
     setLoading(true);
     setError(null);
     setRoutes(null);
+    setManifestSave(null);
 
     /**
      * ===== PROCESS THE FILE =====
@@ -121,11 +126,57 @@ export function useRouteUploader(): RouteUploaderReturn {
       setAvailableCols(result.availableCols);
       setMissingCols(result.missingCols);
       setIsSingleRoute(!!result.isSingleRoute);
+
+      /**
+       * Persist the manifest locally (RF-46) so it can be reopened without
+       * re-uploading. Never blocks viewing: a duplicate (RN-23) or a storage
+       * failure is only surfaced as a notice via `manifestSave`.
+       */
+      setManifestSave(await saveManifest(file, result));
     }
 
     /** Turn off loading spinner */
     setLoading(false);
     /** Empty dependency array = function never changes */
+  }, []);
+
+  /**
+   * ============================================================================
+   * REOPEN A SAVED MANIFEST (TASK-RF-022.3 / RF-46)
+   * ============================================================================
+   * Loads the raw bytes persisted by saveManifest, rebuilds the original File
+   * and runs it through the SAME processing pipeline as a fresh upload — so
+   * reopened manifests automatically pick up parser improvements. Does NOT
+   * re-save (the record already exists); manifestSave stays null.
+   */
+  const loadManifest = useCallback(async (id: string): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    setRoutes(null);
+    setManifestSave(null);
+
+    const record = await getManifest(id);
+    if (!record) {
+      setError(UI_LABELS.FILE_UPLOADER.MANIFEST_NOT_FOUND);
+      setLoading(false);
+      return false;
+    }
+
+    const file = new File([record.bytes], record.fileName, { type: record.fileType });
+    const result = await processExcelFile(file);
+
+    if (result.error) {
+      setError(result.error);
+      setLoading(false);
+      return false;
+    }
+
+    setRoutes(result.routes);
+    setAvailableCols(result.availableCols);
+    setMissingCols(result.missingCols);
+    setIsSingleRoute(!!result.isSingleRoute);
+    setLoading(false);
+    return true;
   }, []);
 
   /**
@@ -141,6 +192,8 @@ export function useRouteUploader(): RouteUploaderReturn {
     availableCols,
     missingCols,
     isSingleRoute,
+    manifestSave,
     handleFileUpload,
+    loadManifest,
   };
 }

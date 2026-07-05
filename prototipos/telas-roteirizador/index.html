@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Protótipo de telas — Roteirizador a pé</title>
+<title>Protótipo de telas - Roteirizador a pé</title>
 <style>
   :root{
     --bg:#eef0f3; --card:#fff; --ink:#1f2430; --muted:#6b7280; --line:#e4e7ec;
@@ -61,14 +61,14 @@
 </head>
 <body>
 <header class="top">
-  <h1>Protótipo de telas — Roteirizador a pé (app do entregador)</h1>
-  <p><b>Fonte da verdade = <code>docs/rascunhos/fluxo-roteirizacao.md</code></b> (texto). Este HTML é só ilustração; se divergir, o .md vence. Cobre as telas <b>novas</b> (roteirizar/execução). A <b>tela inicial e o card de Sumário são o app legado reaproveitado</b> (não redesenhados aqui) — ver §15 do spec. Mobile-first (TWA/Android). <b>Descartável</b> — não entra no bundle; aposentar quando houver telas reais em código.</p>
+  <h1>Protótipo de telas - Roteirizador a pé (app do entregador)</h1>
+  <p><b>Fonte da verdade = <code>docs/rascunhos/fluxo-roteirizacao.md</code></b> (texto). Este HTML é só ilustração; se divergir, o .md vence. Cobre as telas <b>novas</b> (roteirizar/execução). A <b>tela inicial e o card de Sumário são o app legado reaproveitado</b> (não redesenhados aqui) - ver §15 do spec. Mobile-first (TWA/Android). <b>Descartável</b> - não entra no bundle; aposentar quando houver telas reais em código.</p>
 </header>
 <div class="gallery">
 
   <!-- 1 -->
   <div class="screen">
-    <p class="cap">1 · Mapa — Roteirizar (início)</p>
+    <p class="cap">1 · Mapa - Roteirizar (início)</p>
     <p class="sub">Rota única importada. Pontos cinza (livres), início verde, sugestão tracejada. Toggle Visualizar/Roteirizar.</p>
     <div class="phone">
       <div class="hd"><span class="t">Roteirizador a pé</span><span><span class="ic">⚙</span></span></div>
@@ -97,12 +97,12 @@
 
   <!-- 2 -->
   <div class="screen">
-    <p class="cap">2 · Mapa — Visualizar (multi-rota legado)</p>
-    <p class="sub">Romaneio com Corridor Cage: só Visualizar (sem toggle de roteirizar). Seletor de rotas + sumário — o app atual, intocado.</p>
+    <p class="cap">2 · Mapa - Visualizar (multi-rota legado)</p>
+    <p class="sub">Romaneio com Corridor Cage: só Visualizar (sem toggle de roteirizar). Seletor de rotas + sumário - o app atual, intocado.</p>
     <div class="phone">
       <div class="hd"><span class="t">Pré-Rota</span><span class="ic">⚙</span></div>
       <div class="sheet" style="border-top:0">
-        <div class="sel">▾ L-4 — escolha uma das 12 rotas</div>
+        <div class="sel">▾ L-4 - escolha uma das 12 rotas</div>
         <div class="kv" style="display:block">
           <b style="font-size:13px">Sumário da rota: L-4</b><br>
           <span class="mut" style="font-size:11px">AT202511… · Hub Ilha do Governador · 113 pacotes · 33 paradas · ~4h42 · 47 km</span>
@@ -232,7 +232,7 @@
       <div class="note" style="padding:6px 14px 0">Paradas fechadas: quadrado + nº; badge amarelo = nº de endereços (sem clicar).</div>
       <div class="sheet">
         <button class="btn teal">💾 Salvar rota planejada</button>
-        <p class="mut" style="text-align:center;margin-top:6px">Tudo atribuído — pronto para salvar e executar.</p>
+        <p class="mut" style="text-align:center;margin-top:6px">Tudo atribuído - pronto para salvar e executar.</p>
       </div>
     </div>
   </div>
@@ -245,11 +245,11 @@
       <div class="hd"><span class="t">Rotas salvas</span><span class="ic">⤓ ⤒</span></div>
       <div class="sheet" style="border-top:0">
         <div class="kv" style="display:block;border-left:3px solid var(--brand)">
-          <b style="font-size:13px">Rota Centro — 22/06</b><br><span class="mut">90 endereços · 42 km · manhã</span>
+          <b style="font-size:13px">Rota Centro - 22/06</b><br><span class="mut">90 endereços · 42 km · manhã</span>
           <button class="btn pri" style="margin-top:6px">▶ Executar</button>
         </div>
         <div class="kv" style="display:block;border-left:3px solid var(--teal)">
-          <b style="font-size:13px">Zona Sul — 22/06</b><br><span class="mut">45 endereços · 28 km</span>
+          <b style="font-size:13px">Zona Sul - 22/06</b><br><span class="mut">45 endereços · 28 km</span>
           <button class="btn" style="margin-top:6px">▶ Executar</button>
         </div>
         <div class="row2"><button class="btn">⤓ Importar JSON</button><button class="btn">＋ Importar planilha</button></div>
@@ -261,7 +261,7 @@
   <!-- 9 -->
   <div class="screen">
     <p class="cap">9 · Execução</p>
-    <p class="sub">Progresso + previsão de término. Card foca a próxima entrega: endereço + etiqueta (achar) + código (problema). Abrir GPS · Entrega feita (avança). Sem botão de contato — não há contato.</p>
+    <p class="sub">Progresso + previsão de término. Card foca a próxima entrega: endereço + etiqueta (achar) + código (problema). Abrir GPS · Entrega feita (avança). Sem botão de contato - não há contato.</p>
     <div class="phone">
       <div class="hd"><span class="t">← Execução</span><span class="ic">⚙</span></div>
       <div class="sheet" style="border-top:0;padding-bottom:6px">

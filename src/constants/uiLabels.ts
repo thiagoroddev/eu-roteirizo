@@ -22,6 +22,16 @@ export const UI_LABELS = {
     INCOMPLETE_SHEET: "Planilha incompleta! Faltando as seguintes colunas opcionais:",
     INSTRUCTIONS: "Instruções:",
     LOADING: "Carregando...",
+    // HOME (TASK-RF-022.2): spoiler de instruções + import de roteiro + avisos de persistência
+    INSTRUCTIONS_SUMMARY: "Instruções e exemplo de planilha",
+    INSTRUCTIONS_MULTI_TITLE: "Romaneio completo (multi-rota)",
+    INSTRUCTIONS_SINGLE_TITLE: "Rota única (exportada do app oficial)",
+    IMPORT_JSON: "Importar roteiro (.json)",
+    IMPORT_JSON_SOON: "Em breve — importar um roteiro pronto (JSON)",
+    MANIFEST_SAVED: "Romaneio salvo neste aparelho.",
+    MANIFEST_DUPLICATE: (fileName: string) => `Este arquivo já foi importado como "${fileName}".`,
+    MANIFEST_SAVE_ERROR: "Não foi possível salvar o romaneio neste aparelho — será preciso reenviar na próxima vez.",
+    MANIFEST_NOT_FOUND: "Romaneio salvo não encontrado neste aparelho — envie o arquivo de novo.",
   },
   ROUTE_SEARCH: {
     PLACEHOLDER: "🔍 Busca por código AT (ex: AT2025...)",
@@ -29,6 +39,32 @@ export const UI_LABELS = {
   },
   ROUTE_VIEWER: {
     TITLE: "Pré-Rota",
+  },
+  // App shell (header + bottom nav) — ADR-003 / fluxo §11 (rev. 26/06)
+  SHELL: {
+    APP_TITLE: "Pré-Rota",
+    NAV_ARIA: "Navegação principal",
+    NAV_HOME: "Início",
+    NAV_ROUTES: "Rotas",
+    SETTINGS_ARIA: "Configurações de rota (em breve)",
+  },
+  // Aba Rotas (TASK-RF-022.3): lista de romaneios salvos
+  ROUTES_PAGE: {
+    TITLE: "Romaneios salvos",
+    SEARCH_PLACEHOLDER: "🔍 Filtrar por rota ou código AT",
+    EMPTY: "Nenhum romaneio salvo ainda. Envie um na aba Início — ele fica guardado aqui para reabrir sem reenviar.",
+    NO_SEARCH_RESULTS: "Nenhum romaneio corresponde ao filtro.",
+    KIND_SINGLE: "Romaneio Único",
+    KIND_MULTI: "Romaneio Multi",
+    IMPORTED_AT: (date: string) => `Importado em ${date}`,
+    ROUTE_COUNT: (count: number) => (count === 1 ? "1 rota" : `${count} rotas`),
+    CHIP_ARIA: (routeName: string) => `Abrir a rota ${routeName}`,
+    CHIP_NO_ROTEIRO_ARIA: "Sem roteiro",
+    DELETE_ARIA: (fileName: string) => `Apagar o romaneio ${fileName}`,
+    DELETE_TITLE: "Apagar romaneio?",
+    DELETE_DESCRIPTION: (fileName: string) => `"${fileName}" será removido deste aparelho. Você pode importá-lo de novo quando quiser.`,
+    DELETE_CONFIRM: "Apagar",
+    DELETE_CANCEL: "Cancelar",
   },
   ROUTE: {
     // Nome dado à rota quando a planilha não tem a coluna "Corridor Cage"

@@ -21,6 +21,7 @@
  */
 
 import type { RoutesMap } from "./index";
+import type { SaveManifestResult } from "../services/manifestStorage";
 
 /** ================================================================================================================
  * This hook manages file upload and processing.
@@ -66,6 +67,13 @@ export interface RouteUploaderReturn {
    * exist in this mode. False before any file is processed. */
   isSingleRoute: boolean;
 
+  /**
+   * Outcome of persisting the manifest locally (TASK-RF-022.1/.2): saved,
+   * duplicate (RN-23 — meta of the EXISTING record) or a storage error the UI
+   * should surface. Null before any upload; reset on each new upload. A save
+   * failure never blocks viewing the routes. */
+  manifestSave: SaveManifestResult | null;
+
   /** ==================================================================================================================
    *Function to call when user selects a file.
    * Async because file processing takes time.
@@ -77,6 +85,13 @@ export interface RouteUploaderReturn {
    * ==================================================================================================================
    */
   handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+
+  /**
+   * Reopens a SAVED manifest (TASK-RF-022.3/RF-46): loads its bytes from
+   * manifestStorage, rebuilds the File and processes it through the same
+   * pipeline as an upload (without re-saving). Resolves `true` on success,
+   * `false` when the id is unknown or processing fails (error state is set). */
+  loadManifest: (id: string) => Promise<boolean>;
 }
 
 /** ===================================================================================================================

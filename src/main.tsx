@@ -18,13 +18,18 @@
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import App from "./App.tsx";
 import "./styles/global.css";
 
 // Find the HTML element with id="root" in public/index.html
-// and render our React app inside it
+// and render our React app inside it.
+// BrowserRouter (clean URLs) requires the host to rewrite every path to
+// index.html — Cloudflare Pages via public/_redirects (ADR-003).
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </StrictMode>
 );

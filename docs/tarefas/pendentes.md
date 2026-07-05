@@ -50,30 +50,7 @@
 
 ---
 
-## TASK-RF-011 - App shell mobile-first (header + bottom nav + React Router) — abre a fase 1
-
-- **Status:** Pendente
-- **Modo:** Strict
-- **Valor:** Crítico
-- **Urgência:** IMEDIATA
-- **Esforço-H/IA:** G/M
-- **Data-hora origem:** 22/06/26 23:50
-- **Dependências:** ADR-003
-- **REQ/ADR/DT:** ADR-003; RF-38; `fluxo-roteirizacao.md` §11 (rev. 26/06); `analise-comercial-2.0.md` §10
-- **Observações:** Reescreve o shell do `App.tsx`. Dependência nova `react-router-dom` (**já aprovada** na ADR-003). **Pré-requisito da TASK-RF-022** (telas da fase 1). **Atualizada 05/07/26** para as decisões de navegação de 26/06 — antes falava em abas "Mapa/Rotas"; o correto é **HOME (enviar) + Rotas (salvos)** com telas de foco sem abas.
-
-**Objetivo:** dar ao app um shell mobile-first com navegação por abas e telas de foco.
-
-**Subtarefas:**
-- Instalar e configurar `react-router-dom`.
-- `AppShell`: header (título + engrenagem → Configurações de Rota + voltar quando aplicável) e **bottom tab bar** com **2 abas**: **HOME** (`/` — enviar/importar) e **Rotas** (`/rotas` — salvos). (3ª aba "Configurações" é opcional, a decidir; **não** criar aba "Roteiro".)
-- **Bottom-nav some nas telas de foco** (Sumário e mapa abertos). Navegação do "voltar": fechar mapa → Sumário; voltar do Sumário → Rotas (nav reaparece) — RF-38.
-- Esqueleto navegável apenas: o conteúdo real das telas vem da TASK-RF-022; nesta tarefa o `RouteViewer` atual precisa continuar acessível **sem regressão**.
-- Garantir botão **voltar do Android** previsível.
-
-**Critérios de aceite:** navega HOME↔Rotas; nav some nas telas de foco; voltar do Android funciona; fluxo atual (upload → visualizador) intocado.
-**Dependências novas:** `react-router-dom` (aprovada na ADR-003; instalar com aprovação no plano fino).
-**Riscos:** mexer no `App.tsx` sem quebrar o fluxo atual (cobrir com os testes de integração do `RouteViewer`).
+> ✅ **TASK-RF-011 concluída** (05/07) — app shell com BrowserRouter (HOME/Rotas, `FocusShell` sem nav, `_redirects` p/ Cloudflare Pages; ADR-003 atualizada) — ver `concluidas/2026-07-05--04h47--TASK-RF-011.md`. **RF-022 destravada.**
 
 ---
 
@@ -91,20 +68,14 @@
 
 **Objetivo:** o usuário navega **HOME → Rotas → Sumário → mapa Original** ponta a ponta, com romaneios salvos no aparelho — sem regressão do visualizador atual — e cada componente pronto (por contrato de props) para ganhar o modo editável depois.
 
-### TASK-RF-022.1 - Serviço de romaneios salvos (IndexedDB) + detecção de duplicado
-- **Esforço-H/IA:** M/M · **Dep:** nenhuma (`idb` e `fake-indexeddb` já instalados desde a RF-005.3)
-- `src/services/manifestStorage.ts`: salvar/listar/reabrir/apagar **romaneios importados** (Único e Multi) com metadados (tipo, data de import, ATs/rotas contidas) + **hash do conteúdo do arquivo** para dedup (RN-23: arquivo idêntico → não duplica, avisa "já importado" e seleciona o existente). Decidir no plano fino se persiste o `ProcessedResult` ou o binário bruto (reprocessável). Versionamento do schema (`version` + `upgrade`), distinto do store do `graphCache`.
-- **Aceite:** reabrir romaneio sem reenviar (RF-46); duplicado detectado; testes com `fake-indexeddb`.
+### ✅ TASK-RF-022.1 - Serviço de romaneios salvos (IndexedDB) + detecção de duplicado — CONCLUÍDA (05/07)
+> `src/services/manifestStorage.ts` (DB `danfo-manifests`, bytes brutos + meta, dedup por SHA-256/RN-23) + `src/utils/hash.ts` + `src/types/manifest.ts`. Decisão do plano fino: **bytes brutos reprocessáveis** (não `ProcessedResult`). API p/ as próximas: `saveManifest(file, processed) → saved|duplicate|invalid|error` · `listManifests()` · `getManifest(id)` (bytes → `new File` → `processExcelFile`) · `deleteManifest(id)`. Ver `concluidas/2026-07-05--18h08--TASK-RF-022.1.md`.
 
-### TASK-RF-022.2 - Tela HOME (enviar) com instruções em spoiler
-- **Esforço-H/IA:** M/M · **Dep:** 022.1, RF-011
-- HOME é **só enviar** (decisão 26/06): upload `.xlsx/.csv` (fluxo atual preservado) + botão "Importar roteiro (.json)" **presente porém desabilitado** ("em breve" — liga na RF-013). Instruções atuais viram **spoiler** com dois blocos: multi-rota (texto atual) + rota única ("exporte sua rota no app oficial da empresa e importe aqui"). Ao processar com sucesso, salva o romaneio via 022.1 (com o fluxo de dedup). Ref: `1-HOME.png`; fluxo §15.2; RF-44 (parte HOME).
-- **Aceite:** upload funciona como hoje; instruções colapsáveis e atualizadas; romaneio salvo ao importar; **sem** lista de salvos na HOME (mora na aba Rotas).
+### ✅ TASK-RF-022.2 - Tela HOME (enviar) com instruções em spoiler — CONCLUÍDA (05/07)
+> Spoiler `<details>` nativo com blocos multi-rota + rota única (ExampleTable dentro); botão "Importar roteiro (.json)" stub desabilitado (liga na RF-013); upload salva via `saveManifest` e o hook expõe `manifestSave` (avisos salvo/duplicado/falha — o **redirect** do duplicado p/ aba Rotas fica na **.3**). Ver `concluidas/2026-07-05--19h20--TASK-RF-022.2.md`.
 
-### TASK-RF-022.3 - Aba Rotas: lista de salvos (cards tipados + chips por rota/AT)
-- **Esforço-H/IA:** M/G · **Dep:** 022.1, RF-011
-- Cards **tipados** por cor/rótulo — **Romaneio Único** (data + chips por AT) e **Romaneio Multi** (data + chips por rota); tipo **Roteiro Exportado** fica previsto no modelo do card mas só aparece após a RF-013. Ícone do chip indica estado **sem/com roteiro** (fase 1: sempre "sem"; estrutura pronta — RN-21: máx. 1 roteiro por rota). Tocar num chip → **Sumário** daquela rota (**sem** botão "Criar Roteiro" aqui — decisão 26/06). Busca por AT (reusa `useRouteSearch`) para multi-rota grande. Redirect do dedup (022.1) cai aqui com o item selecionado. Estado vazio amigável. Ref: `2-ROTAS.png`, `3-SELECIONAR-rotas-apos-envio.png`; fluxo §15.2; RF-44 (parte lista).
-- **Aceite:** listar/reabrir/apagar romaneios salvos; chip abre o Sumário da rota certa; multi-rota mostra todas as rotas; dedup seleciona o existente.
+### ✅ TASK-RF-022.3 - Aba Rotas: lista de salvos (cards tipados + chips por rota/AT) — CONCLUÍDA (05/07)
+> Cards tipados (`ManifestCard` + `RouteChip` com contrato `hasRoteiro?` p/ RN-21), reabrir via deep link **`/?romaneio={id}&rota={nome}`** (`loadManifest` no hook — a .4 troca o destino p/ o Sumário de foco), apagar com confirmação (Dialog), busca por rota/AT sobre as metas, **RN-23 completa** (duplicado → `/rotas?sel=` com card destacado). **RF-46 ✅**. Ver `concluidas/2026-07-05--19h42--TASK-RF-022.3.md`.
 
 ### TASK-RF-022.4 - Sumário como tela de foco (botão adaptativo + seção Info Meu Roteiro)
 - **Esforço-H/IA:** M/M · **Dep:** 022.3, RF-011
@@ -368,7 +339,8 @@
 |---|---|:---:|:---:|:---:|:---:|---|---|:---:|---|
 <!-- TASK-RF-003 movida para "Imediatas" (priorizada em 24/06/26, a pedido do humano) -->
 
-| TASK-CHORE-002 | Rodar a suíte completa (`npm run test`) em ambiente estável (Windows/CI) e registrar o verde | Light | Importante | Normal | P/P | - | TASK-RF-002 | [ ] | 22/06/26 22:28 |
+<!-- ✅ TASK-CHORE-002 encerrada (05/07/26): suíte completa rodou verde em Windows nativo — 384/384 em 40 arquivos, ~13s (registrado em concluidas/2026-07-05--18h08--TASK-RF-022.1.md). O travamento era do sandbox antigo. -->
+<!-- ✅ TASK-CHORE-003 concluída (05/07) — ambiente blindado (.npmrc include=dev, test.env no Vitest, env do Claude Code, TLS reativado) — ver concluidas/2026-07-05--04h57--TASK-CHORE-003.md -->
 | TASK-DOC-003 | Sincronizar `contexto-projeto-ai.md`: deixa de ser "SPA de página única sem router" (ADR-003) | Standard | Importante | Normal | P/P | TASK-RF-011 | ADR-003 | [ ] | 22/06/26 23:50 |
 | TASK-TEST-002 | Testar o zoom do mapa e definir o limite mínimo ideal (detalhe de rua p/ roteirizar a pé); alinhar `MAP_CONFIG.ZOOM.MIN` com o bloqueio do tile worker (hoje z<14) | Standard | Importante | Normal | P/M | - | RNF-12, RNF-15 | [ ] | 24/06/26 14:50 |
 

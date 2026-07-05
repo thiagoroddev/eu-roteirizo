@@ -17,8 +17,10 @@ import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useRouteUploader } from "../../hooks/useRouteUploader";
 import { processExcelFile } from "../../utils/excelProcessor";
+import { saveManifest, getManifest } from "../../services/manifestStorage";
 import { FILE_CONFIG, UI_LABELS } from "../../constants";
 import type { RoutesMap } from "../../types";
+import type { ManifestMeta } from "../../types/manifest";
 
 // =============================================================================
 // 1. MOCKS
@@ -29,7 +31,15 @@ vi.mock("../../utils/excelProcessor", () => ({
   processExcelFile: vi.fn(),
 }));
 
+// Mock the local persistence (RF-022.2/.3) — the hook only forwards its results
+vi.mock("../../services/manifestStorage", () => ({
+  saveManifest: vi.fn(),
+  getManifest: vi.fn(),
+}));
+
 const mockProcessExcel = processExcelFile as Mock;
+const mockSaveManifest = saveManifest as Mock;
+const mockGetManifest = getManifest as Mock;
 
 // =============================================================================
 // 2. TEST FIXTURES (Helpers & Data)
@@ -72,9 +82,21 @@ const createMockEvent = (file: File | null) => {
   } as unknown as React.ChangeEvent<HTMLInputElement>;
 };
 
+const mockMeta: ManifestMeta = {
+  id: "hash-abc",
+  fileName: "romaneio.xlsx",
+  fileType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  fileSize: 1024,
+  kind: "multi",
+  routes: [{ name: "A-1", rowCount: 1 }],
+  importedAt: "2026-07-05T10:00:00.000Z",
+};
+
 describe("useRouteUploader Hook", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: persistence succeeds quietly (individual tests override)
+    mockSaveManifest.mockResolvedValue({ status: "saved", meta: mockMeta });
   });
 
   // ==========================================================================
@@ -251,6 +273,145 @@ describe("useRouteUploader Hook", () => {
     // Ensure processor was called exactly once
     expect(mockProcessExcel).toHaveBeenCalledTimes(1);
     expect(result.current.error).toBeNull();
+  });
+
+  // ==========================================================================
+  // 7. LOCAL PERSISTENCE (RF-46 / RN-23 — TASK-RF-022.2)
+  // ==========================================================================
+
+  it("persists the manifest after a successful upload and exposes the result", async () => {
+    const { result } = renderHook(() => useRouteUploader());
+    const validFile = createMockFile("test.xlsx");
+
+    mockProcessExcel.mockResolvedValue(mockSuccessResult);
+
+    await act(async () => {
+      await result.current.handleFileUpload(createMockEvent(validFile));
+    });
+
+    expect(mockSaveManifest).toHaveBeenCalledWith(validFile, mockSuccessResult);
+    expect(result.current.manifestSave).toEqual({ status: "saved", meta: mockMeta });
+  });
+
+  it("does NOT persist when processing fails, and manifestSave stays null", async () => {
+    const { result } = renderHook(() => useRouteUploader());
+
+    mockProcessExcel.mockResolvedValue(mockErrorResult);
+
+    await act(async () => {
+      await result.current.handleFileUpload(createMockEvent(createMockFile("corrupt.xlsx")));
+    });
+
+    expect(mockSaveManifest).not.toHaveBeenCalled();
+    expect(result.current.manifestSave).toBeNull();
+  });
+
+  it("exposes a duplicate result (RN-23) without blocking the routes", async () => {
+    const { result } = renderHook(() => useRouteUploader());
+
+    mockProcessExcel.mockResolvedValue(mockSuccessResult);
+    mockSaveManifest.mockResolvedValue({ status: "duplicate", meta: mockMeta });
+
+    await act(async () => {
+      await result.current.handleFileUpload(createMockEvent(createMockFile("de-novo.xlsx")));
+    });
+
+    expect(result.current.manifestSave).toEqual({ status: "duplicate", meta: mockMeta });
+    expect(result.current.routes).toEqual(mockSuccessResult.routes); // viewing is not blocked
+  });
+
+  it("exposes a storage error without blocking the routes", async () => {
+    const { result } = renderHook(() => useRouteUploader());
+
+    mockProcessExcel.mockResolvedValue(mockSuccessResult);
+    mockSaveManifest.mockResolvedValue({ status: "error", reason: "quota" });
+
+    await act(async () => {
+      await result.current.handleFileUpload(createMockEvent(createMockFile("sem-espaco.xlsx")));
+    });
+
+    expect(result.current.manifestSave).toEqual({ status: "error", reason: "quota" });
+    expect(result.current.routes).toEqual(mockSuccessResult.routes);
+  });
+
+  it("resets manifestSave when a new upload starts", async () => {
+    const { result } = renderHook(() => useRouteUploader());
+
+    mockProcessExcel.mockResolvedValue(mockSuccessResult);
+    await act(async () => {
+      await result.current.handleFileUpload(createMockEvent(createMockFile("primeiro.xlsx")));
+    });
+    expect(result.current.manifestSave).not.toBeNull();
+
+    // Second upload fails processing → manifestSave must be back to null (not stale)
+    mockProcessExcel.mockResolvedValue(mockErrorResult);
+    await act(async () => {
+      await result.current.handleFileUpload(createMockEvent(createMockFile("segundo.xlsx")));
+    });
+    expect(result.current.manifestSave).toBeNull();
+  });
+
+  // ==========================================================================
+  // 8. REOPEN SAVED MANIFEST (RF-46 — TASK-RF-022.3)
+  // ==========================================================================
+
+  const mockRecord = {
+    ...mockMeta,
+    bytes: new TextEncoder().encode("planilha-salva").buffer as ArrayBuffer,
+  };
+
+  it("loadManifest reopens a saved manifest through the same pipeline without re-saving", async () => {
+    const { result } = renderHook(() => useRouteUploader());
+
+    mockGetManifest.mockResolvedValue(mockRecord);
+    mockProcessExcel.mockResolvedValue(mockSuccessResult);
+
+    let ok = false;
+    await act(async () => {
+      ok = await result.current.loadManifest("hash-abc");
+    });
+
+    expect(ok).toBe(true);
+    expect(mockGetManifest).toHaveBeenCalledWith("hash-abc");
+    // The rebuilt File carries the persisted name/type
+    const fileArg = mockProcessExcel.mock.calls[0][0] as File;
+    expect(fileArg.name).toBe(mockMeta.fileName);
+    expect(fileArg.type).toBe(mockMeta.fileType);
+    expect(result.current.routes).toEqual(mockSuccessResult.routes);
+    expect(mockSaveManifest).not.toHaveBeenCalled(); // reopening never re-saves
+    expect(result.current.manifestSave).toBeNull();
+  });
+
+  it("loadManifest fails gracefully for an unknown id", async () => {
+    const { result } = renderHook(() => useRouteUploader());
+
+    mockGetManifest.mockResolvedValue(null);
+
+    let ok = true;
+    await act(async () => {
+      ok = await result.current.loadManifest("nao-existe");
+    });
+
+    expect(ok).toBe(false);
+    expect(result.current.error).toBe(UI_LABELS.FILE_UPLOADER.MANIFEST_NOT_FOUND);
+    expect(result.current.routes).toBeNull();
+    expect(result.current.loading).toBe(false);
+  });
+
+  it("loadManifest surfaces a processing error from the stored bytes", async () => {
+    const { result } = renderHook(() => useRouteUploader());
+
+    mockGetManifest.mockResolvedValue(mockRecord);
+    mockProcessExcel.mockResolvedValue(mockErrorResult);
+
+    let ok = true;
+    await act(async () => {
+      ok = await result.current.loadManifest("hash-abc");
+    });
+
+    expect(ok).toBe(false);
+    expect(result.current.error).toBe(mockErrorResult.error);
+    expect(result.current.loading).toBe(false);
   });
 
   it("memoizes handleFileUpload function (Performance)", () => {

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ExampleTable } from "./ExampleTable";
+import type { SaveManifestResult } from "../services/manifestStorage";
 
 interface Props {
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void; // Handler from useRouteUploader hook
@@ -7,8 +8,9 @@ interface Props {
   hasRoutes: boolean; // Hides instructions after successful upload
   error: string | null; // Error message to display
   missingCols?: string[]; // Columns missing from the uploaded file
+  manifestSave?: SaveManifestResult | null; // Outcome of persisting the manifest (RF-46/RN-23 notices)
 }
-import { UPLOAD_INSTRUCTIONS } from "../constants";
+import { UPLOAD_INSTRUCTIONS, UPLOAD_INSTRUCTIONS_SINGLE_ROUTE } from "../constants";
 import { UI_LABELS } from "../constants/uiLabels";
 import { Button } from "./ui/button";
 
@@ -27,7 +29,7 @@ import { Button } from "./ui/button";
  * @param {string | null} error - Error message to display, null if no error
  * @returns {JSX.Element} The rendered FileUploader component
  */
-export const FileUploader: React.FC<Props> = ({ onFileUpload, loading, hasRoutes, error, missingCols = [] }) => {
+export const FileUploader: React.FC<Props> = ({ onFileUpload, loading, hasRoutes, error, missingCols = [], manifestSave = null }) => {
   // State to track selected file name
   const [fileName, setFileName] = useState<string | null>(null);
 
@@ -60,7 +62,19 @@ export const FileUploader: React.FC<Props> = ({ onFileUpload, loading, hasRoutes
       </Button>
 
       {/* Show selected file name or format instructions */}
-      <div className="text-sm text-muted-foreground pt-1 pb-4">{fileName ? UI_LABELS.FILE_UPLOADER.FILE_SELECTED(fileName) : UI_LABELS.FILE_UPLOADER.SELECT_FILE}</div>
+      <div className="text-sm text-muted-foreground pt-1 pb-2">{fileName ? UI_LABELS.FILE_UPLOADER.FILE_SELECTED(fileName) : UI_LABELS.FILE_UPLOADER.SELECT_FILE}</div>
+
+      {/* Import a ready-made roteiro (JSON) — disabled stub until TASK-RF-013 wires it */}
+      <Button variant="outline" size="sm" disabled title={UI_LABELS.FILE_UPLOADER.IMPORT_JSON_SOON} aria-label={UI_LABELS.FILE_UPLOADER.IMPORT_JSON_SOON} className="mb-4">
+        {UI_LABELS.FILE_UPLOADER.IMPORT_JSON}
+      </Button>
+
+      {/* Persistence notices (RF-46/RN-23): saved locally, duplicate of an existing import, or storage failure */}
+      {manifestSave?.status === "saved" && <div className="text-xs text-muted-foreground pb-2">{UI_LABELS.FILE_UPLOADER.MANIFEST_SAVED}</div>}
+      {manifestSave?.status === "duplicate" && (
+        <div className="m-2 p-2 rounded-md border border-warning/80 bg-warning/10 text-warning-foreground text-sm">{UI_LABELS.FILE_UPLOADER.MANIFEST_DUPLICATE(manifestSave.meta.fileName)}</div>
+      )}
+      {manifestSave?.status === "error" && <div className="m-2 p-2 rounded-md border border-destructive bg-destructive/10 text-destructive text-sm">{UI_LABELS.FILE_UPLOADER.MANIFEST_SAVE_ERROR}</div>}
 
       {/* Error alert if upload fails - always show if error exists (Arquivo inválido. Use XLSX ou CSV.)(src/utils/excelProcessor.ts) */}
       {error && (
@@ -76,20 +90,38 @@ export const FileUploader: React.FC<Props> = ({ onFileUpload, loading, hasRoutes
         </div>
       )}
 
-      {/* Show instructions only before file is uploaded */}
+      {/* Instructions spoiler (closed by default) — only before a file is uploaded.
+          Native <details>/<summary>: the exact primitive for a spoiler, accessible,
+          zero new dependency (fluxo §15.2, TASK-RF-022.2). */}
       {!loading && !hasRoutes && (
         <div className="items-center w-screen max-w-6xl">
-          <div className="mt-5 p-4 border rounded-lg bg-muted text-left m-4">
-            <h5 className="mb-3 font-semibold text-lg text-primary">{UI_LABELS.FILE_UPLOADER.INSTRUCTIONS}</h5>
-            <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
-              {/* Render instruction list from constants */}
-              {UPLOAD_INSTRUCTIONS.map((text, index) => (
-                <li key={index}>{text}</li>
-              ))}
-            </ul>
-          </div>
+          <details className="mt-3 m-4 border rounded-lg bg-muted text-left">
+            <summary className="cursor-pointer select-none p-4 font-semibold text-lg text-primary">{UI_LABELS.FILE_UPLOADER.INSTRUCTIONS_SUMMARY}</summary>
 
-          <ExampleTable />
+            <div className="px-4 pb-4 space-y-5">
+              {/* Block 1: full multi-route manifest (legacy flow) */}
+              <section>
+                <h5 className="mb-2 font-semibold text-primary">{UI_LABELS.FILE_UPLOADER.INSTRUCTIONS_MULTI_TITLE}</h5>
+                <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
+                  {UPLOAD_INSTRUCTIONS.map((text, index) => (
+                    <li key={index}>{text}</li>
+                  ))}
+                </ul>
+              </section>
+
+              {/* Block 2: single route exported from the official app (fluxo §15.2) */}
+              <section>
+                <h5 className="mb-2 font-semibold text-primary">{UI_LABELS.FILE_UPLOADER.INSTRUCTIONS_SINGLE_TITLE}</h5>
+                <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
+                  {UPLOAD_INSTRUCTIONS_SINGLE_ROUTE.map((text, index) => (
+                    <li key={index}>{text}</li>
+                  ))}
+                </ul>
+              </section>
+
+              <ExampleTable />
+            </div>
+          </details>
         </div>
       )}
 

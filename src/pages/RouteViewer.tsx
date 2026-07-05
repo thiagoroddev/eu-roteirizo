@@ -24,7 +24,8 @@
  * - Conditional Rendering → {condition && <Component />}
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 /**
  * ============================================================================
@@ -40,8 +41,6 @@ import { RouteMap } from "../components/RouteMap";
 import { RouteTable } from "../components/RouteTable";
 import { RouteSimpleTable } from "../components/RouteSimpleTable";
 import { RouteSearchByAT } from "../components/RouteSearchByAT";
-import { ThemeToggle } from "../components/ThemeToggle";
-import { UI_LABELS } from "../constants/uiLabels";
 
 /**
  * ============================================================================
@@ -86,7 +85,7 @@ function RouteViewer() {
    * - Route extraction and organization
    * - Error handling
    */
-  const { routes, loading, error, availableCols, missingCols, isSingleRoute, handleFileUpload } = useRouteUploader();
+  const { routes, loading, error, availableCols, missingCols, isSingleRoute, manifestSave, handleFileUpload, loadManifest } = useRouteUploader();
 
   /**
    * HOOK 2: Route Search by AT Code
@@ -125,6 +124,38 @@ function RouteViewer() {
   const [showSimpleTable, setShowSimpleTable] = useState(false);
 
   /* ======================================================================
+      🔗 SECTION 2.5: NAVIGATION EFFECTS (TASK-RF-022.3)
+      ====================================================================== */
+
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedManifestId = searchParams.get("romaneio");
+  const requestedRoute = searchParams.get("rota");
+  /** Guards the deep-link load against re-runs (same id → load once). */
+  const loadedManifestRef = useRef<string | null>(null);
+
+  /**
+   * Deep link from the Rotas tab (`/?romaneio={id}&rota={name}`): reopen the
+   * saved manifest and pre-select the requested route (RF-46). The Sumário
+   * focus screen (TASK-RF-022.4) will take over as the destination later.
+   */
+  useEffect(() => {
+    if (!requestedManifestId || loadedManifestRef.current === requestedManifestId) return;
+    loadedManifestRef.current = requestedManifestId;
+    void loadManifest(requestedManifestId).then((ok) => {
+      if (ok && requestedRoute) setSelectedRoute(requestedRoute);
+    });
+  }, [requestedManifestId, requestedRoute, loadManifest]);
+
+  /**
+   * RN-23 (complete): uploading a file identical to a saved manifest does not
+   * duplicate it — the app goes to the Rotas tab with the existing card selected.
+   */
+  useEffect(() => {
+    if (manifestSave?.status === "duplicate") navigate(`/rotas?sel=${encodeURIComponent(manifestSave.meta.id)}`, { replace: true });
+  }, [manifestSave, navigate]);
+
+  /* ======================================================================
       🔄 SECTION 3: DERIVED VALUES (Computed from state)
       ======================================================================
 
@@ -139,7 +170,8 @@ function RouteViewer() {
    * Get all rows (deliveries) for the currently selected route
    * If no route selected or no routes loaded → empty array
    */
-  const currentRows = selectedRoute && routes ? routes[selectedRoute] : [];
+  // `?? []` also covers a deep link pointing at a route name that no longer exists.
+  const currentRows = (selectedRoute && routes ? routes[selectedRoute] : undefined) ?? [];
 
   /**
    * Check if we have the necessary columns to show a map
@@ -176,17 +208,12 @@ function RouteViewer() {
   ====================================================================== */
   return (
     <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col items-center justify-center">
-      {/* Toggle de tema (provisório — ganha lugar definitivo no app shell, RF-011) */}
-      <div className="fixed right-3 top-3 z-50">
-        <ThemeToggle />
-      </div>
-      {/* ===== HEADER ===== */}
-      <h1 className="text-3xl font-bold text-center mb-4">{UI_LABELS.ROUTE_VIEWER.TITLE}</h1>
+      {/* Title and theme toggle live in the app shell header (AppHeader, RF-011). */}
 
       {/* ===== STEP 1: FILE UPLOAD =====
           Always visible. Receives functions and state from useRouteUploader hook.
       */}
-      <FileUploader onFileUpload={handleFileUpload} loading={loading} hasRoutes={!!routes} error={error} missingCols={missingCols} />
+      <FileUploader onFileUpload={handleFileUpload} loading={loading} hasRoutes={!!routes} error={error} missingCols={missingCols} manifestSave={manifestSave} />
 
       {/* ===== STEP 2: SHOW ROUTES (if file was uploaded successfully) =====
           This entire section only renders if 'routes' is not null/undefined.

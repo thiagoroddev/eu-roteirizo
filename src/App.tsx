@@ -1,36 +1,31 @@
 /**
- * ============================================================================
- * APP.TSX - Root Component
- * ============================================================================
+ * App - route table of the app shell (ADR-003).
  *
- * This is the main component of the application.
- * Right now it's very simple - it just renders the RouteViewer page.
+ * Two layouts (fluxo §11, rev. 26/06):
+ * - AppShell: top-level tabs — HOME (`/`, upload) and Rotas (`/rotas`, saved).
+ * - FocusShell: focus screens WITHOUT the bottom nav — the Sumário and map
+ *   screens plug their routes under it with TASK-RF-022.
  *
- * 📚 FUTURE EXPANSION:
- * If you want to add:
- * - Multiple pages → Use React Router here
- * - Global state → Wrap with Context Providers here
- * - Authentication → Add auth checks here
- * - Navigation → Add a navbar component here
- *
- * 💡 WHY IT'S SEPARATE FROM MAIN.TSX:
- * - main.tsx handles the React→HTML connection
- * - App.tsx handles the application structure
- * - This separation keeps concerns organized
+ * The router itself (BrowserRouter) is provided by main.tsx; hosting is
+ * Cloudflare Pages with an SPA fallback (public/_redirects) — see ADR-003.
  */
 
+import { Navigate, Route, Routes } from "react-router-dom";
+import { AppShell } from "./components/shell/AppShell";
 import RouteViewer from "./pages/RouteViewer";
+import RoutesPage from "./pages/RoutesPage";
 
 function App() {
-  // For now, we just render the main page
-  // In the future, you could add routing like:
-  // <BrowserRouter>
-  //   <Routes>
-  //     <Route path="/" element={<RouteViewer />} />
-  //     <Route path="/settings" element={<Settings />} />
-  //   </Routes>
-  // </BrowserRouter>
-  return <RouteViewer />;
+  return (
+    <Routes>
+      <Route element={<AppShell />}>
+        <Route path="/" element={<RouteViewer />} />
+        <Route path="/rotas" element={<RoutesPage />} />
+      </Route>
+      {/* Focus screens (FocusShell, no bottom nav) are added here by TASK-RF-022. */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
 }
 
 export default App;

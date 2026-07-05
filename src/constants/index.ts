@@ -42,6 +42,13 @@ export const UPLOAD_INSTRUCTIONS = [
   "Não compartilhe dados pertencentes à empresa com ninguém fora do grupo de escala.",
 ] as const;
 
+/** Instructions for the single-route flow, shown as the 2nd block of the HOME spoiler (fluxo §15.2, TASK-RF-022.2). */
+export const UPLOAD_INSTRUCTIONS_SINGLE_ROUTE = [
+  "Exporte a sua rota no app oficial da empresa e importe o arquivo aqui.",
+  'A rota única é detectada automaticamente (planilha sem a coluna "Corridor Cage").',
+  'Colunas obrigatórias: apenas "Latitude" e "Longitude".',
+] as const;
+
 // ========================================
 // FILE VALIDATION CONFIG
 // ========================================

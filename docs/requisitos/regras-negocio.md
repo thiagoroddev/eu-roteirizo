@@ -42,4 +42,4 @@
 | RN-20 | O ponto inicial vem de GPS/toque/endereço — **nunca** geocoding pago (digitar endereço) | a construir | 🔭 | fluxo decisão 5 | TASK-RF-006.3 |
 | RN-21 | No máximo **1 Roteiro por rota** (single = 1; multi = até 1 por rota). O Roteiro fica **atrelado** ao seu Romaneio — ou **avulso** quando importado sem o romaneio | a construir | 🔭 | fluxo §15; decisão 24/06 | TASK-RF-008 |
 | RN-22 | Durante a **execução** o Roteiro **não é editável**; 'Pausar rota' salva o progresso e libera a edição | a construir | 🔭 | fluxo §14 | TASK-RF-009 |
-| RN-23 | Import de arquivo **exatamente igual** a um já salvo → **não duplica**: avisa "já importado" e **vai para Rotas com ele selecionado** (ex.: hash do conteúdo) | a construir | 🔭 | fluxo §11/§13 | TASK-RF-022.1 (hash/dedup), TASK-RF-022.3 (redirect) |
+| RN-23 | Import de arquivo **exatamente igual** a um já salvo → **não duplica**: avisa "já importado" e **vai para Rotas com ele selecionado** (hash SHA-256 do conteúdo como id) | `saveManifest` (`services/manifestStorage.ts`) + redirect `/rotas?sel=` (`pages/RouteViewer.tsx`) | ✅ | fluxo §11/§13 | TASK-RF-022.1 (hash/dedup), TASK-RF-022.3 (redirect) |

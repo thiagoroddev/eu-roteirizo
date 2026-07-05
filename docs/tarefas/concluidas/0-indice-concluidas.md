@@ -46,6 +46,11 @@
 | TASK-RF-020.3 | Interações: expandir/colapsar parada, seleção e popup do endereço (markerModels puro) — **fecha o épico RF-020** | [abrir](./2026-06-26--16h12--TASK-RF-020.3.md) |
 | TASK-REF-010 | Profissionalizar o pacote de agente e torná-lo auto-carregável (Claude/Codex/Copilot): entry points, 9 Skills, 7 instructions, renome .md.md→.md, 489 links corrigidos, geral-leve arquivado — pacote v4.0 | [abrir](./2026-06-26--10h19--TASK-REF-010.md) |
 | TASK-RF-021 | Migrar modelo para a "parada do veículo" (`anchorPointId` → `vehicleStop: LatLng`) — destrava RF-006 | [abrir](./2026-07-05--03h47--TASK-RF-021.md) |
+| TASK-RF-011 | App shell mobile-first: BrowserRouter + AppShell/FocusShell (HOME/Rotas, nav some no foco) + `_redirects` Cloudflare Pages — ADR-003 atualizada | [abrir](./2026-07-05--04h47--TASK-RF-011.md) |
+| TASK-CHORE-003 | Blindar ambiente hostil: `.npmrc` include=dev + `test.env` no Vitest + env do Claude Code (NODE_ENV limpo, TLS reativado) + VS Code | [abrir](./2026-07-05--04h57--TASK-CHORE-003.md) |
+| TASK-RF-022.1 | Serviço de romaneios salvos: `manifestStorage` (IndexedDB, bytes brutos + meta) + `sha256Hex` + dedup RN-23 — suíte completa 384/384 (fecha também a CHORE-002) | [abrir](./2026-07-05--18h08--TASK-RF-022.1.md) |
+| TASK-RF-022.2 | HOME: spoiler de instruções (multi + rota única, `<details>` nativo), botão Importar JSON stub, salvar romaneio no upload + avisos RN-23 | [abrir](./2026-07-05--19h20--TASK-RF-022.2.md) |
+| TASK-RF-022.3 | Aba Rotas: cards tipados + chips por rota/AT, reabrir via deep link `/?romaneio&rota`, apagar c/ confirmação, busca por AT, RN-23 completa — RF-46 ✅ | [abrir](./2026-07-05--19h42--TASK-RF-022.3.md) |
 
 <!-- Exemplo:
 | TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [abrir](./2026-05-16--20h21--TASK-REF-03.md) |
