@@ -9,13 +9,15 @@ import { MAP_CONFIG, UI_LABELS } from "../constants";
 import { Button } from "./ui/button";
 
 // SVG markers (ADR-008): one marker per stop; click expands a stop into its address
-// circles, click an address opens a popup. The view-model logic is pure (markerModels).
+// circles, click an address opens the AddressSheet bottom panel (fluxo-modo-original §6).
+// The view-model logic is pure (markerModels).
 import { createMarkerDivIcon } from "../utils/markers/markerIcon";
 import { MARKER_GEOMETRY } from "../utils/markers/markerSvg";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
 import { colorForLocationType } from "../utils/markers/markerColors";
 import { scaleForZoom, MARKER_MAX_SCALE } from "../utils/markers/markerScale";
-import { computeMarkerModels, nextInteraction, collapseInteraction, type MarkerModel } from "../utils/markers/markerModels";
+import { computeMarkerModels, nextInteraction, collapseInteraction, findAddressByKey, type MarkerModel } from "../utils/markers/markerModels";
+import { AddressSheet } from "./map/AddressSheet";
 
 /* ============================================================================
    GLOBAL CONFIGURATION (OUTSIDE COMPONENT)
@@ -47,7 +49,7 @@ const Z_SELECTED = 200000;
  * RouteMap - Fullscreen map component displaying route deliveries (Original mode).
  *
  * Draws one SVG marker per stop (square). Clicking a stop expands its addresses as
- * circles labeled `stop-sequence`; clicking an address opens a popup with its packages
+ * circles labeled `stop-sequence`; clicking an address opens the AddressSheet with its packages
  * and details. Clicking the empty map collapses and clears the selection.
  *
  * @param {RowData[]} rows - All deliveries for the selected route
@@ -79,6 +81,8 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false }) =
 
   const stops = useMemo(() => groupRowsByStop(rows), [rows]);
   const models = useMemo(() => computeMarkerModels(stops, expandedStopKey, selectedAddressKey), [stops, expandedStopKey, selectedAddressKey]);
+  /** Selected address for the bottom sheet (null-safe against stale keys). */
+  const selected = useMemo(() => findAddressByKey(stops, selectedAddressKey), [stops, selectedAddressKey]);
 
   // 1) MAP INITIALIZATION (Leaflet Setup)
   useEffect(() => {
@@ -185,7 +189,6 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false }) =
     };
 
     const entries: { marker: L.Marker; model: MarkerModel }[] = [];
-    let selectedMarker: L.Marker | null = null;
 
     // Squares and address circles share the zoom-based scale (same proportion); the
     // selected address is always enlarged for emphasis (alone or within a group).
@@ -209,7 +212,6 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false }) =
       });
 
       if (model.tooltipHtml) marker.bindTooltip(model.tooltipHtml, { direction: "top", offset: [0, TOOLTIP_OFFSET_Y] });
-      if (model.popupHtml) marker.bindPopup(model.popupHtml);
 
       marker.on("click", () => {
         const next = nextInteraction({ expandedStopKey, selectedAddressKey }, model, stops);
@@ -219,12 +221,10 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false }) =
 
       marker.addTo(markersLayer);
       entries.push({ marker, model });
-
-      if (model.kind === "address" && model.addressKey === selectedAddressKey) selectedMarker = marker;
     });
 
-    // Open the popup of the selected address (selection survives the redraw).
-    if (selectedMarker) (selectedMarker as L.Marker).openPopup();
+    // Address detail is no longer a Leaflet popup: the selected address feeds
+    // the AddressSheet rendered below (TASK-RF-022.6, fluxo-modo-original §6).
 
     // Squares grow with zoom; address circles keep their fixed scale. Rebuilding the
     // icon re-derives the anchor so the tip stays on the point.
@@ -253,14 +253,17 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false }) =
     };
   }, []);
 
-  // 5) KEYBOARD HANDLER
+  // 5) KEYBOARD HANDLER — Escape closes the AddressSheet first; with nothing
+  // selected it leaves the map (same destination as the close/back button).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      if (selectedAddressKey !== null) setSelectedAddressKey(null);
+      else onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, selectedAddressKey]);
 
   // Embedded: fill the parent (focus screen, header back = way out). Legacy
   // modal: portal to body as a fixed overlay with its own close button.
@@ -268,6 +271,10 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false }) =
   const content = (
     <div {...containerProps} aria-label={UI_LABELS.ROUTE_MAP.FULLSCREEN_ARIA}>
       <div ref={mapContainerRef} data-testid="map-container" className="absolute inset-0 w-full h-full" />
+
+      {/* Shared bottom panel (§6) — sibling of the Leaflet container, so taps
+          inside it never reach the map. Closing it keeps the stop expanded. */}
+      <AddressSheet address={selected?.address ?? null} stopNumber={selected && selected.stop.hasStop ? selected.stop.stop : null} onClose={() => setSelectedAddressKey(null)} />
 
       {!embedded && (
         <Button onClick={onClose} type="button" className="fixed right-4 top-4 z-[3000] shadow-lg">

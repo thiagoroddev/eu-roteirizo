@@ -83,14 +83,10 @@
 ### ✅ TASK-RF-022.5 - Tela do mapa (foco) + toggle `Original | Meu roteiro` — CONCLUÍDA (05/07)
 > `/mapa?romaneio&rota` no `FocusShell`; `MapModeToggle` segmentado (contrato `roteiroEnabled?` p/ RF-010; "Meu roteiro" desabilitado); `RouteMap.embedded` (sem portal e **sem botão de fechar** — o voltar do header cumpre; regra: fechar só quando não há voltar); "Ver Original" do Sumário navega. RF-20 → 🟡. Ver `concluidas/2026-07-05--20h18--TASK-RF-022.5.md`.
 
-### TASK-RF-022.6 - Painel inferior do endereço compartilhado (read-only no Original)
-- **Esforço-H/IA:** M/G · **Dep:** 022.5 (integração; o componente pode nascer antes, sobre o `RouteMap` atual)
-- Substituir o **popup** do endereço (RF-020.3) pelo **painel inferior (bottom sheet) único dos dois modos** — `fluxo-modo-original.md` §6: **lista de pacotes** (código `SPX TN` + sequência), **endereço completo**, **complemento** e **tipo em texto** (Comercial/Residencial/Indefinido). **Contrato de reuso:** prop de modo (`readOnly`) + slots tipados para as ações do Meu roteiro (âncora/edição — RF-006) e dados de execução (RF-009); no Original **nada de botão de edição**. Trocar de endereço na mesma parada troca o conteúdo **sem colapsar** a expansão. Texto via `UI_LABELS` (ADR-001).
-- **Aceite:** clicar num endereço expandido abre o painel (não mais popup); multi-pacote lista todos os pacotes com Stop/Seq/código; alternância entre endereços sem fechar; componente aceita o modo editável futuro sem refactor (props/slots tipados).
+### ✅ TASK-RF-022.6 - Painel inferior do endereço compartilhado — CONCLUÍDA (05/07)
+> `AddressSheet` (§6) substitui o popup: read-only no Original (X é o único botão) + **slot `actions`** pronto p/ RF-006/009; `findAddressByKey` defensivo; Escape fecha o painel antes do mapa; trocar endereço na parada não colapsa. Mocks de popup removidos dos testes = trava de regressão. Ver `concluidas/2026-07-05--21h05--TASK-RF-022.6.md`.
 
-**Critérios de aceite (RF-022):** fluxo HOME → Rotas → Sumário → mapa Original ponta a ponta com romaneios persistidos; visualizador atual (multi e rota única) **sem regressão** (testes de integração verdes); contrato de reuso documentado nas props dos componentes compartilhados.
-**Dependências novas:** nenhuma (`idb`/`fake-indexeddb` já instalados; `react-router-dom` entra pela RF-011).
-**Riscos:** regressão do fluxo atual do `RouteViewer` (mitigar com os testes de integração existentes); escopo de UI crescer para edição — **segurar no read-only** (edição é RF-006); decisão de persistência (bruto × processado) na 022.1 — registrar no plano fino, ADR só se virar decisão estrutural.
+> 🏁 **ÉPICO TASK-RF-022 CONCLUÍDO (05/07/26) — FASE 1 DA UI ENCERRADA.** Fluxo da spec ponta a ponta: **HOME** (enviar + spoiler + salvar/dedup) → **Rotas** (cards/chips + busca + apagar) → **Sumário** (foco, botões RF-43, Info Meu Roteiro pronta) → **Mapa** (foco, toggle `Original | Meu roteiro`, `AddressSheet` §6). Suíte 431/431. Contratos prontos para: RF-006 (slot `actions`, `roteiroEnabled`, botão adaptativo), RF-008 (`hasRoteiro` nos chips, `PlannedRouteInfo`), RF-009 (painel), RF-010 (toggle), RF-013 (Importar JSON, card Roteiro Exportado). **Próximo épico: TASK-RF-006 (UI de construção — Meu roteiro).**
 
 ---
 
@@ -338,6 +334,7 @@
 <!-- ✅ TASK-CHORE-002 encerrada (05/07/26): suíte completa rodou verde em Windows nativo — 384/384 em 40 arquivos, ~13s (registrado em concluidas/2026-07-05--18h08--TASK-RF-022.1.md). O travamento era do sandbox antigo. -->
 <!-- ✅ TASK-CHORE-003 concluída (05/07) — ambiente blindado (.npmrc include=dev, test.env no Vitest, env do Claude Code, TLS reativado) — ver concluidas/2026-07-05--04h57--TASK-CHORE-003.md -->
 | TASK-DOC-003 | Sincronizar `contexto-projeto-ai.md`: deixa de ser "SPA de página única sem router" (ADR-003) | Standard | Importante | Normal | P/P | TASK-RF-011 | ADR-003 | [ ] | 22/06/26 23:50 |
+| TASK-REF-011 | Remover o fluxo inline legado do `RouteViewer` (pós-upload navega desde a 022.4; seletor/sumário/modais inline = código morto no caminho normal) + extrair hook `useManifestFromUrl` (Regra de Três: SummaryPage/MapPage) | Standard | Importante | Normal | M/M | TASK-RF-022 ✅ | origem: revisão da TASK-RF-022.6 | [ ] | 05/07/26 21:05 |
 | TASK-TEST-002 | Testar o zoom do mapa e definir o limite mínimo ideal (detalhe de rua p/ roteirizar a pé); alinhar `MAP_CONFIG.ZOOM.MIN` com o bloqueio do tile worker (hoje z<14) | Standard | Importante | Normal | P/M | - | RNF-12, RNF-15 | [ ] | 24/06/26 14:50 |
 
 

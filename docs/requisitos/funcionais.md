@@ -19,7 +19,7 @@
 | RF-09 | O usuário vê um resumo estatístico da rota selecionada (sem ESEDC; rota única oculta Turno/Tempo/Distância/Hub e conta comerciais por inferência) | SHOULD | ✅ | `components/RouteSummary.tsx`, `hooks/useRouteSummary.ts` | TASK-RF-003, TASK-RF-015, TASK-RF-017, TASK-REF-007 |
 | RF-10 | O usuário visualiza as entregas como marcadores num mapa (Leaflet) | MUST | ✅ | `components/RouteMap.tsx` | - |
 | RF-11 | Os marcadores diferenciam o **tipo de local** por ícone (home/office/indefinido ± corrigido; rota única: só inferência) | SHOULD | 🟡 | `utils/mapIcons.ts`, `utils/iconPicker.ts` | TASK-REF-007 |
-| RF-12 | Ao tocar um marcador, o usuário vê os dados da entrega (HTML escapado; tipo de local inferido, sem ESEDC) | SHOULD | ✅ | `components/RouteMap.tsx`, `utils/escapeHtml.ts` | TASK-BG-003, TASK-RF-003, TASK-RF-017, TASK-REF-007 |
+| RF-12 | Ao tocar um marcador, o usuário vê os dados da entrega no **painel inferior compartilhado** (`AddressSheet`, fluxo-modo-original §6: pacotes SPX/seq, complemento, tipo em texto; tooltip segue escapado) | SHOULD | ✅ | `components/map/AddressSheet.tsx`, `components/RouteMap.tsx` | TASK-BG-003, TASK-RF-003, TASK-RF-017, TASK-REF-007, TASK-RF-022.6 |
 | RF-13 | O usuário pode abrir o mapa em tela cheia | COULD | ✅ | `components/RouteMap.tsx` | - |
 | RF-14 | O usuário pode ver a rota como tabela completa (todas as colunas) | SHOULD | ✅ | `components/RouteTable.tsx` | - |
 | RF-15 | O usuário pode ver uma tabela simplificada com o **status comercial** do endereço (coluna Correios removida) | SHOULD | ✅ | `components/RouteSimpleTable.tsx` | TASK-RF-003, TASK-REF-007 |

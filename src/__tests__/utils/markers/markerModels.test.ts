@@ -1,12 +1,13 @@
 /**
- * Tests for markerModels — interaction view-models + transitions + popup (RF-020.3).
+ * Tests for markerModels — interaction view-models + transitions + address helpers
+ * (RF-020.3; popup HTML replaced by the AddressSheet in TASK-RF-022.6).
  *
  * Pure logic. Stops are built with the real groupRowsByStop for realistic fixtures.
  */
 
 import { describe, it, expect } from "vitest";
 import { groupRowsByStop } from "../../../utils/markers/stopGrouping";
-import { computeMarkerModels, nextInteraction, collapseInteraction, buildAddressPopupHtml, extractComplement, locationTypeLabel } from "../../../utils/markers/markerModels";
+import { computeMarkerModels, nextInteraction, collapseInteraction, findAddressByKey, extractComplement, locationTypeLabel } from "../../../utils/markers/markerModels";
 import { COLUMN_NAMES, ICON_KEYS } from "../../../constants";
 import type { RowData } from "../../../types";
 
@@ -88,7 +89,8 @@ describe("computeMarkerModels", () => {
     // The 2-package address gets a packages badge; the single-package ones do not.
     expect(addresses[1].iconProps.badge).toEqual({ kind: "packages", count: 2 });
     expect(addresses[0].iconProps.badge).toBeNull();
-    expect(addresses.every((m) => typeof m.popupHtml === "string")).toBe(true);
+    // Every address model carries its key — the AddressSheet resolves detail from it.
+    expect(addresses.every((m) => typeof m.addressKey === "string")).toBe(true);
   });
 
   it("gives every focused address the white border; only the selected one is emphasized", () => {
@@ -133,29 +135,26 @@ describe("nextInteraction", () => {
   });
 });
 
-describe("buildAddressPopupHtml / helpers", () => {
-  it("lists the packages (SPX TN + seq), address, complement and type text", () => {
-    const stop18 = stops[0];
-    const addressB = stop18.addresses[1]; // 2 packages, residential, "Apt 8"
-    const html = buildAddressPopupHtml(addressB);
-    expect(html).toContain("BR-B1");
-    expect(html).toContain("BR-B2");
-    expect(html).toContain("Rua Y, 200, Apt 8");
-    expect(html).toContain("Apt 8"); // complement
-    expect(html).toContain("Residencial"); // type in text
-    expect(html).toContain("Pacotes (2)");
-    expect(html).toContain("Abrir no Google Maps");
+describe("findAddressByKey", () => {
+  it("resolves a valid key to its stop and address", () => {
+    const found = findAddressByKey(stops, "0:1");
+    expect(found).not.toBeNull();
+    expect(found!.stop).toBe(stops[0]);
+    expect(found!.address).toBe(stops[0].addresses[1]);
   });
 
-  it("escapes untrusted spreadsheet content in the popup", () => {
-    const malicious = groupRowsByStop([
-      row({ [COLUMN_NAMES.STOP]: 1, [COLUMN_NAMES.SEQUENCE]: 1, [COLUMN_NAMES.SPX_TN]: "<img src=x onerror=alert(1)>", [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua A, 1, Apt 1" }),
-    ]);
-    const html = buildAddressPopupHtml(malicious[0].addresses[0]);
-    expect(html).not.toContain("<img src=x");
-    expect(html).toContain("&lt;img");
+  it("returns null for a null key", () => {
+    expect(findAddressByKey(stops, null)).toBeNull();
   });
 
+  it("returns null for malformed or out-of-range keys (stale selection safety)", () => {
+    for (const key of ["x", "0", "0:x", "0:9", "9:0", "0:-1", "0:1:2"]) {
+      expect(findAddressByKey(stops, key)).toBeNull();
+    }
+  });
+});
+
+describe("address helpers", () => {
   it("extractComplement reads the text after the 2nd comma, '—' when absent", () => {
     expect(extractComplement(stops[0].addresses[1])).toBe("Apt 8");
     expect(extractComplement(stops[0].addresses[2])).toBe("—"); // "Rua Z, 300" has no complement

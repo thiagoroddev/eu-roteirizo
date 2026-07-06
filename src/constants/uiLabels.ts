@@ -90,8 +90,11 @@ export const UI_LABELS = {
       ZIPCODE: "CEP:",
       COMMERCIAL: "Horário comercial?",
     },
-    // Popup do endereço (modo Original, ADR-008 §10 / fluxo §6 — TASK-RF-020.3).
-    POPUP: {
+    // Painel inferior do endereço — único dos dois modos (fluxo-modo-original §6 — TASK-RF-022.6; antes era o popup da RF-020.3).
+    ADDRESS_SHEET: {
+      ARIA: "Detalhes do endereço",
+      CLOSE: "Fechar painel",
+      STOP: "Parada:",
       PACKAGES_HEADER: (count: number) => `Pacotes (${count})`,
       SEQUENCE: "seq",
       ADDRESS: "Endereço:",

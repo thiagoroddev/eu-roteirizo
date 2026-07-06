@@ -15,9 +15,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { RouteMap } from "../../components/RouteMap";
-import { COLUMN_NAMES } from "../../constants";
+import { COLUMN_NAMES, UI_LABELS } from "../../constants";
 import type { RowData } from "../../types";
 
 // =============================================================================
@@ -44,9 +44,9 @@ const layerGroupMethods = {
 const markerMethods = {
   addTo: vi.fn().mockReturnThis(),
   bindTooltip: vi.fn().mockReturnThis(),
-  bindPopup: vi.fn().mockReturnThis(), // Address popup (RF-020.3)
-  openPopup: vi.fn().mockReturnThis(),
-  closePopup: vi.fn().mockReturnThis(),
+  // No bindPopup/openPopup here on purpose: address detail moved to the
+  // AddressSheet (TASK-RF-022.6). If RouteMap ever calls them again, these
+  // tests break with a TypeError — that's the regression guard.
   on: vi.fn(), // Intercept click events
   setIcon: vi.fn().mockReturnThis(), // Re-scaled on zoomend (RF-020.4)
 };
@@ -637,5 +637,58 @@ describe("RouteMap embedded mode (TASK-RF-022.5)", () => {
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
+  });
+});
+
+// =============================================================================
+// ADDRESS SHEET INTEGRATION (TASK-RF-022.6) — detail moved from popup to panel
+// =============================================================================
+
+describe("RouteMap + AddressSheet integration (TASK-RF-022.6)", () => {
+  const SHEET_NAME = UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.ARIA;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /** Invokes the click handler RouteMap registered on the first marker. */
+  const clickFirstMarker = () => {
+    const call = markerMethods.on.mock.calls.find(([event]) => event === "click");
+    expect(call).toBeDefined();
+    act(() => {
+      (call![1] as () => void)();
+    });
+  };
+
+  it("clicking a single-address stop opens the AddressSheet with its details", () => {
+    renderRouteMap();
+    expect(screen.queryByRole("region", { name: SHEET_NAME })).not.toBeInTheDocument();
+
+    clickFirstMarker(); // stop with 1 address → auto-selects it (nextInteraction)
+
+    expect(screen.getByRole("region", { name: SHEET_NAME })).toBeInTheDocument();
+    expect(screen.getByText("Rua A, 123")).toBeInTheDocument();
+  });
+
+  it("clicking the empty map collapses and hides the sheet", () => {
+    renderRouteMap();
+    clickFirstMarker();
+
+    const mapClick = mapMethods.on.mock.calls.find(([event]) => event === "click");
+    expect(mapClick).toBeDefined();
+    act(() => {
+      (mapClick![1] as () => void)();
+    });
+
+    expect(screen.queryByRole("region", { name: SHEET_NAME })).not.toBeInTheDocument();
+  });
+
+  it("the sheet's close button clears only the selection", () => {
+    renderRouteMap();
+    clickFirstMarker();
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.CLOSE }));
+
+    expect(screen.queryByRole("region", { name: SHEET_NAME })).not.toBeInTheDocument();
   });
 });
