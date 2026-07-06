@@ -133,10 +133,8 @@
 
 **Objetivo:** o mapa Original ganha o painel inferior do protótipo (tela 5, versão read-only): persistente, expansível, navegável por paradas, com drill-down endereço → pacotes — estrutura pronta para os modos do Meu roteiro.
 
-### TASK-RF-023.1 - Doc de design + sincronizar a spec
-- **Esforço-H/IA:** M/M · **Dep:** -
-- Criar `docs/design/arvore-componentes-mapa.md`: árvore de componentes, contratos de slot por modo (visualização/edição/rascunho/execução), mapeamento tela-a-tela (5–9) do que cada modo preenche. Atualizar `fluxo-modo-original.md` §5/§6 com a diretriz nova (painel sempre visível/colapsado com nº parada + endereço; steppers ‹ ›; expansão) — **os `.md` decidem**.
-- **Aceite:** doc revisável pelo humano; fluxo atualizado sem conflito com as imagens.
+### ✅ TASK-RF-023.1 - Doc de design + sincronizar a spec — CONCLUÍDA (05/07)
+> **`docs/design/arvore-componentes-mapa.md`** criado (árvore MapPanel, contratos TS, **matriz modo × slot** cobrindo as telas 5–9, estados/interações, lib × novo, recorte Original) + `fluxo-modo-original.md` §5/§6/§8 atualizados (painel persistente centrado na parada; menor parada; nunca vazio). **Aguarda revisão do humano antes da .2.** Ver `concluidas/2026-07-05--22h58--TASK-RF-023.1.md`.
 
 ### TASK-RF-023.2 - Fundação MapPanel (colapsado ↔ expandido + slots)
 - **Esforço-H/IA:** G/G · **Dep:** 023.1

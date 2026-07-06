@@ -6,6 +6,8 @@
 
 *(Nenhuma tarefa em andamento.)*
 
+<!-- TASK-RF-023.1 concluída em 05/07/26 22:58 — registro em concluidas/2026-07-05--22h58--TASK-RF-023.1.md. Próxima: TASK-RF-023.2 (fundação MapPanel com vaul), após revisão do doc de design pelo humano. -->
+
 <!-- TASK-REF-012 concluída em 05/07/26 22:41 — registro em concluidas/2026-07-05--22h41--TASK-REF-012.md. Próxima: TASK-RF-023.1 (doc de design do painel). -->
 
 <!-- TASK-RF-022.6 concluída em 05/07/26 21:05 — FECHA O ÉPICO RF-022 (fase 1 da UI). Registro em concluidas/2026-07-05--21h05--TASK-RF-022.6.md. Próximo épico: TASK-RF-006 (Meu roteiro). -->
