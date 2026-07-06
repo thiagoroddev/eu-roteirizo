@@ -57,8 +57,8 @@ vi.mock("../../hooks/useRouteUploader", () => ({
 // Stub RouteMap (Leaflet) — exposes the controlled-interaction contract so the
 // tests can drive selections the way the real map would (RF-023.2).
 vi.mock("../../components/RouteMap", () => ({
-  RouteMap: ({ embedded, onInteractionChange }: { embedded?: boolean; onInteractionChange?: (next: InteractionState) => void }) => (
-    <div data-testid="route-map-stub" data-embedded={String(!!embedded)} data-controlled={String(!!onInteractionChange)}>
+  RouteMap: ({ embedded, interaction, onInteractionChange }: { embedded?: boolean; interaction?: InteractionState; onInteractionChange?: (next: InteractionState) => void }) => (
+    <div data-testid="route-map-stub" data-embedded={String(!!embedded)} data-controlled={String(!!onInteractionChange)} data-expanded-stop={String(interaction?.expandedStopKey ?? null)}>
       <button type="button" onClick={() => onInteractionChange?.({ expandedStopKey: "0", selectedAddressKey: "0:0" })}>
         stub-select-first-address
       </button>
@@ -144,11 +144,46 @@ describe("MapPage (focus screen)", () => {
 
   it("selecting an address raises a collapsed panel to half (design §5 — detail visible without dragging)", () => {
     renderPage();
-    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "96px");
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "132px");
 
     fireEvent.click(screen.getByRole("button", { name: "stub-select-first-address" }));
 
     expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.45");
+  });
+
+  // ==========================================================================
+  // Header real: ModeBar + StopStepper + métricas (TASK-RF-023.3)
+  // ==========================================================================
+
+  it("shows the mode label and the metric chips in the header", () => {
+    renderPage();
+
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.MODE_VIEW)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(1))).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.METRIC_PACKAGES(1))).toBeInTheDocument();
+  });
+
+  it("stepper › advances to the next NUMERIC stop and syncs the map (panel → map)", () => {
+    // Appearance order: index 0 = stop 10, index 1 = stop 2. Numeric order: 2 → 10.
+    uploaderState.routes = { "A-1": rowsStops10e2 };
+    renderPage();
+    expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 2`)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.NEXT_STOP }));
+
+    expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 10`)).toBeInTheDocument();
+    // The controlled RouteMap receives the expansion — the map focuses the stop.
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-expanded-stop", "0");
+  });
+
+  it("stepper ‹ is circular (from the smallest stop it wraps to the largest)", () => {
+    uploaderState.routes = { "A-1": rowsStops10e2 };
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.PREV_STOP }));
+
+    expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 10`)).toBeInTheDocument();
+    expect(screen.getByText("Rua Dez, 10")).toBeInTheDocument();
   });
 
   it("collapsing on the map keeps the panel on the last stop (memory never clears)", () => {

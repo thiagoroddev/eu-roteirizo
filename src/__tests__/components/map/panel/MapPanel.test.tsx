@@ -86,13 +86,13 @@ describe("MapPanel", () => {
     expect(root).toHaveAttribute("data-open", "true");
     expect(root).toHaveAttribute("data-modal", "false");
     expect(root).toHaveAttribute("data-dismissible", "false");
-    expect(root).toHaveAttribute("data-snap-points", JSON.stringify(["96px", 0.45, 0.9]));
+    expect(root).toHaveAttribute("data-snap-points", JSON.stringify(["132px", 0.45, 0.9]));
   });
 
   it("starts collapsed when uncontrolled", () => {
     renderPanel();
 
-    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "96px");
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "132px");
   });
 
   it("honors the controlled snap prop", () => {

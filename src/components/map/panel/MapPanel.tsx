@@ -25,7 +25,7 @@ export type PanelSnap = "collapsed" | "half" | "full";
 
 /** Snap values (identity matters: vaul compares activeSnapPoint by value/reference). */
 const SNAP_VALUES: Record<PanelSnap, string | number> = {
-  collapsed: "96px", // header only (grabber + stop + address)
+  collapsed: "132px", // full header (grabber + mode bar + title + metrics) — calibrated on device
   half: 0.45, // fraction of the viewport height
   full: 0.9,
 };
@@ -63,12 +63,18 @@ export const MapPanel = ({ header, children, footer, snap, onSnapChange }: Props
     <Drawer.Root open modal={false} dismissible={false} snapPoints={SNAP_POINTS} activeSnapPoint={SNAP_VALUES[effectiveSnap]} setActiveSnapPoint={handleSnapValue} snapToSequentialPoint>
       <Drawer.Portal>
         {/* No Drawer.Overlay on purpose: non-modal persistent panel — the map stays interactive. */}
-        <Drawer.Content aria-describedby={undefined} className="fixed inset-x-0 bottom-0 z-[1200] flex h-full max-h-[90%] flex-col rounded-t-2xl border-t border-input bg-background outline-none">
+        {/* h-full WITHOUT a max-h cap: vaul computes snap offsets assuming the content
+            spans the viewport — capping it (e.g. max-h-[90%]) shifts EVERY snap down by
+            the capped amount (collapsed ends up cut). The "full" snap (0.9) already
+            limits how far up the panel goes. */}
+        <Drawer.Content aria-describedby={undefined} className="fixed inset-x-0 bottom-0 z-[1200] flex h-full flex-col rounded-t-2xl border-t border-input bg-background outline-none">
           <Drawer.Title className="sr-only">{UI_LABELS.MAP_PANEL.ARIA}</Drawer.Title>
           {/* Grabber — visual hint that the panel drags. */}
           <div aria-hidden className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-muted" />
           {header}
-          <div className={effectiveSnap === "full" ? "flex-1 overflow-y-auto" : "flex-1 overflow-hidden"}>{children}</div>
+          {/* pb-[10dvh]: at the full snap (0.9) the content's bottom 10% sits below the
+              viewport — the padding keeps the last scrolled item reachable/visible. */}
+          <div className={effectiveSnap === "full" ? "flex-1 overflow-y-auto pb-[10dvh]" : "flex-1 overflow-hidden"}>{children}</div>
           {footer}
         </Drawer.Content>
       </Drawer.Portal>

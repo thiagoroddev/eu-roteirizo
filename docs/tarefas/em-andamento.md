@@ -6,9 +6,9 @@
 
 *(Nenhuma tarefa em andamento.)*
 
-<!-- Concluídas em 05/07/26 (ver concluidas/): RF-021 · RF-011 · CHORE-003 · RF-022.1–.6 (épico fase 1) · REF-012 (tema Neon Flux) · RF-023.1 (design doc) · RF-023.2 (fundação MapPanel/vaul, 23h42). -->
-<!-- ⚠️ SMOKE MANUAL PENDENTE (humano, da RF-023.2): arrastar snaps no dispositivo + pan/zoom do Leaflet com o painel colapsado (risco: pointer-events do vaul não-modal). -->
-<!-- Próxima: TASK-RF-023.3 (header real do painel: ModeBar + StopStepper + título/métricas). -->
+<!-- Concluídas até 06/07/26 (ver concluidas/): RF-021 · RF-011 · CHORE-003 · RF-022.1–.6 (épico fase 1) · REF-012 (tema Neon Flux) · RF-023.1 (design doc) · RF-023.2 (fundação MapPanel/vaul) · RF-023.3 (header real: ModeBar+steppers+métricas, 00h00). -->
+<!-- ⚠️ SMOKE MANUAL PENDENTE (humano, .2+.3): steppers com foco/zoom; header inteiro no snap colapsado (132px é chute); arrasto partindo do header; pan/zoom do Leaflet com painel colapsado; scroll interno só no full. -->
+<!-- Próxima: TASK-RF-023.4 (StopItemList Original: endereços por Sequence → PackageRow; absorve AddressSheet). -->
 
 ---
 

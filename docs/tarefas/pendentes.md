@@ -139,10 +139,8 @@
 ### ✅ TASK-RF-023.2 - Fundação MapPanel — CONCLUÍDA (05/07)
 > `MapPanel` com **vaul@1.1.2** (snaps `96px/45%/90%`, não-modal, nunca fecha; sem Overlay; slots header/body/footer); **estado de interação lift-ado p/ a MapPage** (RouteMap controlado-com-fallback — **42/42 sem editar testes**); memória "nunca vazio" (abre na **menor parada**, derivação pura; clique fora não esvazia); corpo interino = AddressSheet `inline`. **Recorte:** seleção inicial veio da .5 p/ cá. ⚠️ **Smoke manual pendente** (gesto + pan/zoom c/ painel colapsado). Ver `concluidas/2026-07-05--23h42--TASK-RF-023.2.md`.
 
-### TASK-RF-023.3 - Header Original (modo bar + steppers + título/métricas)
-- **Esforço-H/IA:** M/G · **Dep:** 023.2
-- `PanelModeBar` ("Modo visualização") + `StopStepper` ‹ › navegando as paradas (sincroniza com a seleção/zoom do mapa nos DOIS sentidos) + `PanelTitle` ("Parada {Stop}" + endereço do representante) + `MetricsRow` (N endereços · N pacotes — sem tempo no Original).
-- **Aceite:** steppers percorrem as paradas; tocar marcador atualiza o header e vice-versa.
+### ✅ TASK-RF-023.3 - Header Original (modo bar + steppers + título/métricas) — CONCLUÍDA (06/07)
+> `PanelModeBar` ("Modo visualização" + StopStepper ‹ › **circular por Stop numérico**, sem-número no fim; `data-vaul-no-drag`) + `PanelTitle`/`MetricsRow` (chips endereços·pacotes). Sincronia mapa↔painel nos dois sentidos via o estado único da MapPage — **RouteMap intocado** (efeito 2b já foca a parada expandida). Derivações puras `adjacentStopKey`/`panelMetrics` em `panelModels`. Snap colapsado 96→132px (calibrar no smoke). Suíte 471 ✅. Ver `concluidas/2026-07-06--00h00--TASK-RF-023.3.md`.
 
 ### TASK-RF-023.4 - StopItemList Original (endereços → pacotes)
 - **Esforço-H/IA:** G/G · **Dep:** 023.2

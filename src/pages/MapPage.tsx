@@ -4,11 +4,13 @@ import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { RouteMap } from "../components/RouteMap";
 import { MapModeToggle, type MapMode } from "../components/map/MapModeToggle";
 import { MapPanel, type PanelSnap } from "../components/map/panel/MapPanel";
+import { PanelModeBar } from "../components/map/panel/PanelModeBar";
+import { PanelTitle } from "../components/map/panel/PanelTitle";
 import { AddressSheet } from "../components/map/AddressSheet";
 import { useRouteUploader } from "../hooks/useRouteUploader";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
 import { collapseInteraction, findAddressByKey, type InteractionState } from "../utils/markers/markerModels";
-import { smallestStopKey } from "../utils/markers/panelModels";
+import { adjacentStopKey, panelMetrics, smallestStopKey } from "../utils/markers/panelModels";
 import { COLUMN_NAMES } from "../constants";
 import { UI_LABELS } from "../constants/uiLabels";
 
@@ -25,9 +27,12 @@ import { UI_LABELS } from "../constants/uiLabels";
  *   opens on the smallest numeric stop and clicking the empty map collapses
  *   the markers without clearing the panel.
  *
- * Phase-.2 interim: provisional header (stop + address) and the AddressSheet
- * inline as body — TASK-RF-023.3/.4 bring the real ModeBar/steppers and the
- * StopItemList. Leaving the screen is the header back arrow (FocusShell).
+ * Header (TASK-RF-023.3): PanelModeBar ("Modo visualização" + StopStepper) +
+ * PanelTitle (stop + address + metrics). The steppers only emit an interaction
+ * transition — the controlled RouteMap reacts by expanding/focusing the stop,
+ * so map↔panel stay in sync through the single lifted state. Body is still the
+ * interim inline AddressSheet — TASK-RF-023.4 brings the StopItemList. Leaving
+ * the screen is the header back arrow (FocusShell).
  */
 function MapPage() {
   const navigate = useNavigate();
@@ -77,6 +82,15 @@ function MapPage() {
   const panelStop = effectivePanelStopKey !== null ? (stops[Number(effectivePanelStopKey)] ?? null) : null;
   const panelAddress = String(panelStop?.representative.rows[0]?.[COLUMN_NAMES.DESTINATION_ADDRESS] || UI_LABELS.COMMON.NO_DATA);
   const selected = findAddressByKey(stops, interaction.selectedAddressKey);
+  const metrics = panelMetrics(panelStop);
+
+  /** StopStepper: expands + focuses the target on the map (controlled RouteMap
+      reacts to expandedStopKey) and moves the panel memory. Snap untouched —
+      only an address selection raises the panel (design doc §5). */
+  const handleStepStop = (direction: 1 | -1) => {
+    const nextKey = adjacentStopKey(stops, effectivePanelStopKey, direction);
+    if (nextKey !== null) handleInteractionChange({ expandedStopKey: nextKey, selectedAddressKey: null });
+  };
 
   return (
     <div className="relative h-[calc(100vh-3.5rem)]">
@@ -100,15 +114,19 @@ function MapPage() {
             <MapModeToggle mode={mode} onModeChange={setMode} />
           </div>
 
-          {/* Persistent bottom panel (RF-023.2): collapsed shows the provisional
-              header; body is the interim inline AddressSheet until .3/.4. */}
+          {/* Persistent bottom panel: real header since RF-023.3 (ModeBar +
+              steppers + title/metrics); body is the interim AddressSheet until .4. */}
           <MapPanel
             snap={panelSnap}
             onSnapChange={setPanelSnap}
             header={
-              <div className="px-4 pb-3 pt-1">
-                <p className="text-sm font-semibold">{panelStop && panelStop.hasStop ? `${UI_LABELS.MAP_PANEL.STOP_PREFIX} ${panelStop.stop}` : UI_LABELS.MAP_PANEL.NO_STOP}</p>
-                <p className="truncate text-xs text-muted-foreground">{panelAddress}</p>
+              <div className="pt-1">
+                <PanelModeBar modeLabel={UI_LABELS.MAP_PANEL.MODE_VIEW} onPrevStop={() => handleStepStop(-1)} onNextStop={() => handleStepStop(1)} />
+                <PanelTitle
+                  stopNumber={panelStop && panelStop.hasStop ? panelStop.stop : null}
+                  address={panelAddress}
+                  metrics={panelStop ? [{ label: UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(metrics.addressCount) }, { label: UI_LABELS.MAP_PANEL.METRIC_PACKAGES(metrics.packageCount) }] : []}
+                />
               </div>
             }
           >

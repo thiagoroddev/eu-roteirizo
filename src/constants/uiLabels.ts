@@ -78,6 +78,11 @@ export const UI_LABELS = {
     STOP_PREFIX: "Parada",
     NO_STOP: "Sem número de parada",
     NO_ADDRESS_HINT: "Toque num endereço no mapa para ver os detalhes.",
+    MODE_VIEW: "Modo visualização",
+    PREV_STOP: "Parada anterior",
+    NEXT_STOP: "Próxima parada",
+    METRIC_ADDRESSES: (count: number) => (count === 1 ? "1 endereço" : `${count} endereços`),
+    METRIC_PACKAGES: (count: number) => (count === 1 ? "1 pacote" : `${count} pacotes`),
   },
   // Toggle de modos do mapa (fluxo §11 "Modos do mapa" — TASK-RF-022.5)
   MAP_MODE: {
