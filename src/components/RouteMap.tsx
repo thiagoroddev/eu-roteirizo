@@ -16,7 +16,7 @@ import { MARKER_GEOMETRY } from "../utils/markers/markerSvg";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
 import { colorForLocationType } from "../utils/markers/markerColors";
 import { scaleForZoom, MARKER_MAX_SCALE } from "../utils/markers/markerScale";
-import { computeMarkerModels, nextInteraction, collapseInteraction, findAddressByKey, type MarkerModel } from "../utils/markers/markerModels";
+import { computeMarkerModels, nextInteraction, collapseInteraction, findAddressByKey, type MarkerModel, type InteractionState } from "../utils/markers/markerModels";
 import { AddressSheet } from "./map/AddressSheet";
 
 /* ============================================================================
@@ -68,16 +68,37 @@ interface Props {
    * behavior (its own close button, since no header back exists there).
    */
   embedded?: boolean;
+  /**
+   * Controlled interaction (TASK-RF-023.2): when present, the parent (MapPage)
+   * owns the state — the map only EMITS transitions via onInteractionChange,
+   * so the MapPanel and the map share one source of truth. Absent = internal
+   * state (legacy fullscreen modal stays untouched).
+   */
+  interaction?: InteractionState;
+  onInteractionChange?: (next: InteractionState) => void;
 }
 
-export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false }) => {
+export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false, interaction, onInteractionChange }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
 
-  // Interaction state (ADR-008 §10): which stop is expanded, which address is selected.
-  const [expandedStopKey, setExpandedStopKey] = useState<string | null>(null);
-  const [selectedAddressKey, setSelectedAddressKey] = useState<string | null>(null);
+  // Interaction state (ADR-008 §10): which stop is expanded, which address is
+  // selected. Controlled-with-fallback since TASK-RF-023.2 (see Props).
+  const [internalInteraction, setInternalInteraction] = useState<InteractionState>(collapseInteraction());
+  const isControlled = interaction !== undefined;
+  const { expandedStopKey, selectedAddressKey } = isControlled ? interaction : internalInteraction;
+
+  // Latest-callback ref: effects registered once (deps []) apply transitions
+  // through it without re-subscribing Leaflet handlers on every state change.
+  // Kept fresh in an effect (refs must not be written during render).
+  const applyInteractionRef = useRef<(next: InteractionState) => void>(() => {});
+  useEffect(() => {
+    applyInteractionRef.current = (next: InteractionState) => {
+      if (!isControlled) setInternalInteraction(next);
+      onInteractionChange?.(next);
+    };
+  });
 
   const stops = useMemo(() => groupRowsByStop(rows), [rows]);
   const models = useMemo(() => computeMarkerModels(stops, expandedStopKey, selectedAddressKey), [stops, expandedStopKey, selectedAddressKey]);
@@ -214,9 +235,7 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false }) =
       if (model.tooltipHtml) marker.bindTooltip(model.tooltipHtml, { direction: "top", offset: [0, TOOLTIP_OFFSET_Y] });
 
       marker.on("click", () => {
-        const next = nextInteraction({ expandedStopKey, selectedAddressKey }, model, stops);
-        setExpandedStopKey(next.expandedStopKey);
-        setSelectedAddressKey(next.selectedAddressKey);
+        applyInteractionRef.current(nextInteraction({ expandedStopKey, selectedAddressKey }, model, stops));
       });
 
       marker.addTo(markersLayer);
@@ -243,9 +262,7 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false }) =
     const map = mapInstanceRef.current;
     if (!map) return;
     const onMapClick = () => {
-      const collapsed = collapseInteraction();
-      setExpandedStopKey(collapsed.expandedStopKey);
-      setSelectedAddressKey(collapsed.selectedAddressKey);
+      applyInteractionRef.current(collapseInteraction());
     };
     map.on("click", onMapClick);
     return () => {
@@ -253,17 +270,17 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false }) =
     };
   }, []);
 
-  // 5) KEYBOARD HANDLER — Escape closes the AddressSheet first; with nothing
-  // selected it leaves the map (same destination as the close/back button).
+  // 5) KEYBOARD HANDLER — Escape clears the address selection first; with
+  // nothing selected it leaves the map (same destination as the close/back button).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      if (selectedAddressKey !== null) setSelectedAddressKey(null);
+      if (selectedAddressKey !== null) applyInteractionRef.current({ expandedStopKey, selectedAddressKey: null });
       else onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, selectedAddressKey]);
+  }, [onClose, selectedAddressKey, expandedStopKey]);
 
   // Embedded: fill the parent (focus screen, header back = way out). Legacy
   // modal: portal to body as a fixed overlay with its own close button.
@@ -272,9 +289,15 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false }) =
     <div {...containerProps} aria-label={UI_LABELS.ROUTE_MAP.FULLSCREEN_ARIA}>
       <div ref={mapContainerRef} data-testid="map-container" className="absolute inset-0 w-full h-full" />
 
-      {/* Shared bottom panel (§6) — sibling of the Leaflet container, so taps
-          inside it never reach the map. Closing it keeps the stop expanded. */}
-      <AddressSheet address={selected?.address ?? null} stopNumber={selected && selected.stop.hasStop ? selected.stop.stop : null} onClose={() => setSelectedAddressKey(null)} />
+      {/* Legacy fullscreen modal only: address detail overlay. In embedded mode
+          the MapPanel (MapPage) owns the detail — no internal sheet (RF-023.2). */}
+      {!embedded && (
+        <AddressSheet
+          address={selected?.address ?? null}
+          stopNumber={selected && selected.stop.hasStop ? selected.stop.stop : null}
+          onClose={() => applyInteractionRef.current({ expandedStopKey, selectedAddressKey: null })}
+        />
+      )}
 
       {!embedded && (
         <Button onClick={onClose} type="button" className="fixed right-4 top-4 z-[3000] shadow-lg">

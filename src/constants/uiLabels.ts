@@ -72,6 +72,13 @@ export const UI_LABELS = {
     // (modo rota única: o próprio entregador envia uma rota só).
     SINGLE_ROUTE_NAME: "Minha rota",
   },
+  // Painel inferior persistente do mapa (design doc arvore-componentes-mapa — TASK-RF-023)
+  MAP_PANEL: {
+    ARIA: "Painel da parada",
+    STOP_PREFIX: "Parada",
+    NO_STOP: "Sem número de parada",
+    NO_ADDRESS_HINT: "Toque num endereço no mapa para ver os detalhes.",
+  },
   // Toggle de modos do mapa (fluxo §11 "Modos do mapa" — TASK-RF-022.5)
   MAP_MODE: {
     ARIA: "Modo do mapa",

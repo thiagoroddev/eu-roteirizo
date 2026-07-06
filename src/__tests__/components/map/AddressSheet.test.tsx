@@ -96,6 +96,18 @@ describe("AddressSheet", () => {
     expect(screen.getByRole("button", { name: "Tornar âncora" })).toBeInTheDocument();
   });
 
+  it("inline variant drops the overlay positioning — the MapPanel frames it (RF-023.2)", () => {
+    render(<AddressSheet address={multiPackageAddress} onClose={() => {}} variant="inline" />);
+
+    expect(screen.getByRole("region", { name: SHEET.ARIA }).className).not.toContain("absolute");
+  });
+
+  it("default overlay variant keeps the absolute positioning (legacy modal)", () => {
+    render(<AddressSheet address={multiPackageAddress} onClose={() => {}} />);
+
+    expect(screen.getByRole("region", { name: SHEET.ARIA }).className).toContain("absolute");
+  });
+
   it("renders spreadsheet content as text, never as HTML (React auto-escapes)", () => {
     const malicious = groupRowsByStop([
       row({ [COLUMN_NAMES.STOP]: 1, [COLUMN_NAMES.SEQUENCE]: 1, [COLUMN_NAMES.SPX_TN]: "<img src=x onerror=alert(1)>", [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua A, 1, Apt 1" }),

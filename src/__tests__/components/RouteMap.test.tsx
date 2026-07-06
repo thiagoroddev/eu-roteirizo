@@ -692,3 +692,35 @@ describe("RouteMap + AddressSheet integration (TASK-RF-022.6)", () => {
     expect(screen.queryByRole("region", { name: SHEET_NAME })).not.toBeInTheDocument();
   });
 });
+
+// =============================================================================
+// CONTROLLED INTERACTION (TASK-RF-023.2) — state lifted to the MapPage
+// =============================================================================
+
+describe("RouteMap controlled interaction (TASK-RF-023.2)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("emits transitions via onInteractionChange without mutating on its own", () => {
+    const onChange = vi.fn();
+    render(<RouteMap rows={mockRowsWithCoordinates} onClose={mockOnClose} interaction={{ expandedStopKey: null, selectedAddressKey: null }} onInteractionChange={onChange} />);
+
+    const call = markerMethods.on.mock.calls.find(([event]) => event === "click");
+    expect(call).toBeDefined();
+    act(() => {
+      (call![1] as () => void)();
+    });
+
+    // Single-address stop auto-selects (nextInteraction) — the parent decides.
+    expect(onChange).toHaveBeenCalledWith({ expandedStopKey: "0", selectedAddressKey: "0:0" });
+    // Controlled + parent didn't update → no sheet appears on its own.
+    expect(screen.queryByRole("region", { name: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.ARIA })).not.toBeInTheDocument();
+  });
+
+  it("embedded mode renders NO internal AddressSheet even with a selected address", () => {
+    render(<RouteMap rows={mockRowsWithCoordinates} onClose={mockOnClose} embedded interaction={{ expandedStopKey: "0", selectedAddressKey: "0:0" }} onInteractionChange={() => {}} />);
+
+    expect(screen.queryByRole("region", { name: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.ARIA })).not.toBeInTheDocument();
+  });
+});

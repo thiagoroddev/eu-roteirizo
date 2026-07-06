@@ -23,6 +23,12 @@ interface Props {
    * switching modes only changes data/slots, never the structure.
    */
   actions?: ReactNode;
+  /**
+   * "overlay" (default): self-positioned bottom overlay (legacy fullscreen map
+   * modal). "inline": plain block — the MapPanel provides position and frame
+   * (TASK-RF-023.2 interim body until the StopItemList of .4 absorbs this).
+   */
+  variant?: "overlay" | "inline";
 }
 
 /**
@@ -36,7 +42,7 @@ interface Props {
  * Content is plain text through React (auto-escaped) — the escapeHtml guidance
  * of TASK-BG-003 applies to HTML strings injected into Leaflet, not here.
  */
-export const AddressSheet = ({ address, stopNumber = null, onClose, actions }: Props) => {
+export const AddressSheet = ({ address, stopNumber = null, onClose, actions, variant = "overlay" }: Props) => {
   if (!address) return null;
 
   const head: RowData = address.rows[0] ?? {};
@@ -45,7 +51,11 @@ export const AddressSheet = ({ address, stopNumber = null, onClose, actions }: P
   return (
     <section
       aria-label={SHEET.ARIA}
-      className="absolute inset-x-0 bottom-0 z-[1000] max-h-[45%] overflow-y-auto rounded-t-2xl border-t border-input bg-background shadow-[0_-4px_16px_rgba(0,0,0,0.15)]"
+      className={
+        variant === "overlay"
+          ? "absolute inset-x-0 bottom-0 z-[1000] max-h-[45%] overflow-y-auto rounded-t-2xl border-t border-input bg-background shadow-[0_-4px_16px_rgba(0,0,0,0.15)]"
+          : "overflow-y-auto"
+      }
     >
       <div className="flex items-start justify-between gap-2 p-4 pb-2">
         <div>

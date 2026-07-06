@@ -136,10 +136,8 @@
 ### ✅ TASK-RF-023.1 - Doc de design + sincronizar a spec — CONCLUÍDA (05/07)
 > **`docs/design/arvore-componentes-mapa.md`** criado (árvore MapPanel, contratos TS, **matriz modo × slot** cobrindo as telas 5–9, estados/interações, lib × novo, recorte Original) + `fluxo-modo-original.md` §5/§6/§8 atualizados (painel persistente centrado na parada; menor parada; nunca vazio). **Aguarda revisão do humano antes da .2.** Ver `concluidas/2026-07-05--22h58--TASK-RF-023.1.md`.
 
-### TASK-RF-023.2 - Fundação MapPanel (colapsado ↔ expandido + slots)
-- **Esforço-H/IA:** G/G · **Dep:** 023.1
-- `MapPanel` persistente com **`vaul`** (instalar — aprovado): snap points (colapsado = header / meio / cheio), `dismissible=false`, `modal=false` (mapa interativo), slots `actions`/`banner`/`footer`. Substitui o posicionamento do `AddressSheet`.
-- **Aceite:** painel sempre visível; arrasta entre os snaps; mapa utilizável com o painel colapsado.
+### ✅ TASK-RF-023.2 - Fundação MapPanel — CONCLUÍDA (05/07)
+> `MapPanel` com **vaul@1.1.2** (snaps `96px/45%/90%`, não-modal, nunca fecha; sem Overlay; slots header/body/footer); **estado de interação lift-ado p/ a MapPage** (RouteMap controlado-com-fallback — **42/42 sem editar testes**); memória "nunca vazio" (abre na **menor parada**, derivação pura; clique fora não esvazia); corpo interino = AddressSheet `inline`. **Recorte:** seleção inicial veio da .5 p/ cá. ⚠️ **Smoke manual pendente** (gesto + pan/zoom c/ painel colapsado). Ver `concluidas/2026-07-05--23h42--TASK-RF-023.2.md`.
 
 ### TASK-RF-023.3 - Header Original (modo bar + steppers + título/métricas)
 - **Esforço-H/IA:** M/G · **Dep:** 023.2

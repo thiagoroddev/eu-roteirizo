@@ -6,16 +6,9 @@
 
 *(Nenhuma tarefa em andamento.)*
 
-<!-- TASK-RF-023.1 concluída em 05/07/26 22:58 — registro em concluidas/2026-07-05--22h58--TASK-RF-023.1.md. Próxima: TASK-RF-023.2 (fundação MapPanel com vaul), após revisão do doc de design pelo humano. -->
-
-<!-- TASK-REF-012 concluída em 05/07/26 22:41 — registro em concluidas/2026-07-05--22h41--TASK-REF-012.md. Próxima: TASK-RF-023.1 (doc de design do painel). -->
-
-<!-- TASK-RF-022.6 concluída em 05/07/26 21:05 — FECHA O ÉPICO RF-022 (fase 1 da UI). Registro em concluidas/2026-07-05--21h05--TASK-RF-022.6.md. Próximo épico: TASK-RF-006 (Meu roteiro). -->
-
-<!-- TASK-RF-022.5 concluída em 05/07/26 20:18 — registro em concluidas/2026-07-05--20h18--TASK-RF-022.5.md. Resta da fase 1: TASK-RF-022.6 (painel inferior compartilhado). -->
-
-<!-- Concluídas em 05/07/26 (ver concluidas/): TASK-RF-021 (03h47) · TASK-RF-011 (04h47) · TASK-CHORE-003 (04h57) · TASK-RF-022.1 (18h08) · TASK-RF-022.2 (19h20) · TASK-RF-022.3 (19h42) · TASK-RF-022.4 (19h58). -->
-<!-- Restam da fase 1: TASK-RF-022.5 (mapa de foco + toggle Original|Meu roteiro) e TASK-RF-022.6 (painel inferior compartilhado). -->
+<!-- Concluídas em 05/07/26 (ver concluidas/): RF-021 · RF-011 · CHORE-003 · RF-022.1–.6 (épico fase 1) · REF-012 (tema Neon Flux) · RF-023.1 (design doc) · RF-023.2 (fundação MapPanel/vaul, 23h42). -->
+<!-- ⚠️ SMOKE MANUAL PENDENTE (humano, da RF-023.2): arrastar snaps no dispositivo + pan/zoom do Leaflet com o painel colapsado (risco: pointer-events do vaul não-modal). -->
+<!-- Próxima: TASK-RF-023.3 (header real do painel: ModeBar + StopStepper + título/métricas). -->
 
 ---
 

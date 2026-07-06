@@ -56,6 +56,7 @@
 | TASK-RF-022.6 | AddressSheet: painel inferior compartilhado (§6) substitui o popup — read-only + slot `actions` p/ RF-006/009; `findAddressByKey`; Escape em 2 estágios — **fecha o épico RF-022 / fase 1** | [abrir](./2026-07-05--21h05--TASK-RF-022.6.md) |
 | TASK-REF-012 | Tema **Neon Flux dark como padrão** (verde #00FF9D → azul #00D1FF; tokens `--gradient-*`; accent2 tokenizado; default no service+anti-flash) — ADR-006 revisada; personalizar = editar só theme.css | [abrir](./2026-07-05--22h41--TASK-REF-012.md) |
 | TASK-RF-023.1 | Doc de design do MapPanel (`docs/design/arvore-componentes-mapa.md`: árvore, contratos TS, matriz modo×slot telas 5–9) + fluxo-modo-original §5/§6/§8 sincronizados (painel persistente, menor parada, nunca vazio) | [abrir](./2026-07-05--22h58--TASK-RF-023.1.md) |
+| TASK-RF-023.2 | Fundação MapPanel: vaul@1.1.2 (snaps 96px/45%/90%, não-modal, nunca fecha) + lift do estado p/ MapPage + memória "nunca vazio" (menor parada derivada) + AddressSheet inline interino — RouteMap 42/42 sem edição | [abrir](./2026-07-05--23h42--TASK-RF-023.2.md) |
 
 <!-- Exemplo:
 | TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [abrir](./2026-05-16--20h21--TASK-REF-03.md) |
