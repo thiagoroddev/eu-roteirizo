@@ -1,10 +1,21 @@
 /**
- * Design tokens — shadcn/ui convention (ADR-004 + ADR-006).
+ * Design tokens — shadcn/ui convention (ADR-004 + ADR-006 rev. 05/07/26).
  * HSL triplets consumed via hsl(var(--token)) in tailwind.config.js.
- * Identidade "Cyanide Precision": marca ciano #0DC2D6 = --primary (texto escuro no botão).
- * Claro (:root) para uso ao sol; Escuro (.dark) "Cyanide" para pouca luz. Troca automática por sistema.
- * `warning` é extensão do projeto. Identidade completa em docs/arquitetura/tema-tailwind.md.
+ *
+ * Identidade "Neon Flux" (prototipos/telas-media-fidelidade/neonflux.md):
+ * DARK É O PADRÃO (decisão do humano 05/07/26 — supersede "claro é padrão").
+ * Marca = verde elétrico #00FF9D → azul claro #00D1FF (gradiente em
+ * --gradient-from/--gradient-to, utilitário bg-brand-gradient).
+ *
+ * ESTE ARQUIVO É O ÚNICO LUGAR DE COR DO CHROME: personalizar a paleta =
+ * editar os valores aqui. Nenhum componente pode hardcodear cor (ADR-004).
+ * A paleta FUNCIONAL do mapa (verde res / azul com / cinza / badge amarelo,
+ * ADR-008) é independente e vive em utils/markers/markerColors.
+ * `warning` e `accent2` são extensões do projeto.
  */
+
+/* Claro (disponível no toggle): superfícies claras, marca na família verde/azul
+   em tons mais escuros para contraste. */
 :root {
   --background: 210 40% 99%;
   --foreground: 222 47% 11%;
@@ -15,8 +26,8 @@
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
 
-  --primary: 186 88% 44%; /* #0DC2D6 ciano (marca) */
-  --primary-foreground: 187 100% 12%; /* texto escuro sobre o ciano */
+  --primary: 157 100% 36%; /* verde da marca, escurecido p/ contraste no claro */
+  --primary-foreground: 158 100% 8%; /* texto escuro sobre o verde */
 
   --secondary: 210 24% 94%;
   --secondary-foreground: 222 47% 11%;
@@ -27,49 +38,66 @@
   --accent: 210 24% 94%;
   --accent-foreground: 222 47% 11%;
 
-  --destructive: 0 75% 42%; /* Vermelho erro */
+  --destructive: 345 85% 45%; /* coral escurecido p/ fundo claro */
   --destructive-foreground: 0 0% 100%;
 
-  --warning: 45 100% 50%; /* Amarelo aviso (extensão do projeto) */
+  --warning: 45 100% 50%; /* amarelo aviso (extensão do projeto) */
   --warning-foreground: 0 0% 13%;
 
   --border: 214 25% 88%;
   --input: 214 25% 88%;
-  --ring: 186 88% 44%;
+  --ring: 191 100% 36%; /* azul claro da marca, escurecido */
 
-  --radius: 1rem; /* Cyanide: arredondado/pill */
+  /* Gradiente da marca (verde → azul) — bg-brand-gradient */
+  --gradient-from: 157 100% 36%;
+  --gradient-to: 191 100% 36%;
+
+  /* Acento secundário (chips/status) — extensão do projeto */
+  --accent2: 191 100% 36%;
+  --accent2-foreground: 191 100% 10%;
+
+  --radius: 1rem; /* pill/arredondado (neonflux sugere 0.5rem — pendência estética) */
 }
 
+/* Escuro "Neon Flux" — PADRÃO. Valores da prosa do neonflux.md (o que as telas seguem). */
 .dark,
 [data-theme="dark"] {
-  --background: 222 55% 10%; /* #0b1326 slate/navy */
-  --foreground: 226 90% 92%; /* #dae2fd */
+  --background: 220 23% 5%; /* #0A0C10 base canvas (obsidiana) */
+  --foreground: 0 0% 98%; /* branco alto contraste */
 
-  --card: 223 38% 15%; /* #171f33 */
-  --card-foreground: 226 90% 92%;
+  --card: 215 21% 11%; /* #161B22 surface */
+  --card-foreground: 0 0% 98%;
 
-  --popover: 223 38% 15%;
-  --popover-foreground: 226 90% 92%;
+  --popover: 215 21% 11%;
+  --popover-foreground: 0 0% 98%;
 
-  --primary: 186 88% 44%; /* #0DC2D6 ciano */
-  --primary-foreground: 187 100% 12%; /* #00363d texto escuro */
+  --primary: 157 100% 50%; /* #00FF9D verde elétrico */
+  --primary-foreground: 220 23% 5%; /* texto escuro sobre o verde (legibilidade máxima) */
 
-  --secondary: 222 28% 19%;
-  --secondary-foreground: 226 90% 92%;
+  --secondary: 214 19% 15%; /* superfície de botão secundário */
+  --secondary-foreground: 0 0% 98%;
 
-  --muted: 222 41% 13%;
-  --muted-foreground: 200 12% 72%;
+  --muted: 215 21% 11%; /* #161B22 */
+  --muted-foreground: 212 9% 58%; /* #8B949E silver-grey */
 
-  --accent: 224 24% 23%;
-  --accent-foreground: 226 90% 92%;
+  --accent: 213 15% 17%; /* hover/realce sutil */
+  --accent-foreground: 0 0% 98%;
 
-  --destructive: 0 75% 55%;
+  --destructive: 345 100% 59%; /* #FF2E63 coral vibrante */
   --destructive-foreground: 0 0% 100%;
 
   --warning: 45 100% 55%;
   --warning-foreground: 0 0% 13%;
 
-  --border: 222 20% 24%;
-  --input: 222 20% 24%;
-  --ring: 186 88% 44%;
+  --border: 212 12% 21%; /* #30363D stroke 1px */
+  --input: 212 12% 21%;
+  --ring: 191 100% 50%; /* #00D1FF azul claro (foco/glow) */
+
+  /* Gradiente da marca (verde → azul) — bg-brand-gradient */
+  --gradient-from: 157 100% 50%; /* #00FF9D */
+  --gradient-to: 191 100% 50%; /* #00D1FF */
+
+  /* Acento secundário (chips/status) */
+  --accent2: 191 100% 50%; /* #00D1FF */
+  --accent2-foreground: 191 100% 10%;
 }

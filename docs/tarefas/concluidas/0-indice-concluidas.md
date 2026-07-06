@@ -54,6 +54,7 @@
 | TASK-RF-022.4 | Sumário como tela de foco (`/sumario` no FocusShell + voltar no header): botões RF-43 ("Ver Original", Criar Roteiro stub, extraActions), PlannedRouteInfo pronta, pós-upload navega (single→Sumário, multi→Rotas) | [abrir](./2026-07-05--19h58--TASK-RF-022.4.md) |
 | TASK-RF-022.5 | Tela do mapa de foco (`/mapa`) + `MapModeToggle` (Meu roteiro stub) + `RouteMap.embedded` (sem portal/fechar; voltar no header) — RF-20 🟡 | [abrir](./2026-07-05--20h18--TASK-RF-022.5.md) |
 | TASK-RF-022.6 | AddressSheet: painel inferior compartilhado (§6) substitui o popup — read-only + slot `actions` p/ RF-006/009; `findAddressByKey`; Escape em 2 estágios — **fecha o épico RF-022 / fase 1** | [abrir](./2026-07-05--21h05--TASK-RF-022.6.md) |
+| TASK-REF-012 | Tema **Neon Flux dark como padrão** (verde #00FF9D → azul #00D1FF; tokens `--gradient-*`; accent2 tokenizado; default no service+anti-flash) — ADR-006 revisada; personalizar = editar só theme.css | [abrir](./2026-07-05--22h41--TASK-REF-012.md) |
 
 <!-- Exemplo:
 | TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [abrir](./2026-05-16--20h21--TASK-REF-03.md) |

@@ -2,7 +2,9 @@
 
 > Fonte da verdade dos **design tokens**. Consumidos por [`src/styles/theme.css`](../../src/styles/theme.css) + [`tailwind.config.js`](../../tailwind.config.js). Implementação via shadcn/ui ([ADR-004](./ADR/ADR-004.md) + [ADR-006](./ADR/ADR-006.md)).
 >
-> **Status:** ✅ **Aceita (24/06/26)** — identidade **"Cyanide Precision"**: marca **ciano `#0DC2D6`**, **claro + escuro** (troca automática por sistema), formato **pill**. Implementada na **TASK-REF-009** (TASK-REF-008 foi um azul interino da mesma sessão).
+> **Status:** ✅ **Revisada (05/07/26, TASK-REF-012)** — identidade **"Neon Flux"** (`prototipos/telas-media-fidelidade/neonflux.md`): **DARK é o PADRÃO** (decisão do humano; claro segue no toggle p/ uso ao sol), marca **verde `#00FF9D` → azul `#00D1FF`** (gradiente `bg-brand-gradient`), destructive coral `#FF2E63` no escuro. **Cores provisórias por design: personalizar a paleta = editar apenas `src/styles/theme.css`** (todo o chrome via tokens; `accent2` incluído). As tabelas §2 abaixo descrevem a identidade Cyanide anterior — **os valores vigentes são os do `theme.css`** (fonte da verdade executável); atualizar as tabelas quando a paleta estabilizar. Paleta funcional do mapa (§3/ADR-008) **intocada**.
+>
+> *(Anterior: ✅ Aceita 24/06/26 — "Cyanide Precision", ciano `#0DC2D6`, claro padrão — ADR-006 original.)*
 
 ---
 

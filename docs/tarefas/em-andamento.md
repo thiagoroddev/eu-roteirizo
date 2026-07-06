@@ -6,6 +6,8 @@
 
 *(Nenhuma tarefa em andamento.)*
 
+<!-- TASK-REF-012 concluída em 05/07/26 22:41 — registro em concluidas/2026-07-05--22h41--TASK-REF-012.md. Próxima: TASK-RF-023.1 (doc de design do painel). -->
+
 <!-- TASK-RF-022.6 concluída em 05/07/26 21:05 — FECHA O ÉPICO RF-022 (fase 1 da UI). Registro em concluidas/2026-07-05--21h05--TASK-RF-022.6.md. Próximo épico: TASK-RF-006 (Meu roteiro). -->
 
 <!-- TASK-RF-022.5 concluída em 05/07/26 20:18 — registro em concluidas/2026-07-05--20h18--TASK-RF-022.5.md. Resta da fase 1: TASK-RF-022.6 (painel inferior compartilhado). -->

@@ -267,7 +267,7 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false }) =
 
   // Embedded: fill the parent (focus screen, header back = way out). Legacy
   // modal: portal to body as a fixed overlay with its own close button.
-  const containerProps = embedded ? ({ className: "relative h-full w-full bg-white", role: "region" } as const) : ({ className: "fixed inset-0 bg-white z-[2000]", role: "dialog" } as const);
+  const containerProps = embedded ? ({ className: "relative h-full w-full bg-background", role: "region" } as const) : ({ className: "fixed inset-0 bg-background z-[2000]", role: "dialog" } as const);
   const content = (
     <div {...containerProps} aria-label={UI_LABELS.ROUTE_MAP.FULLSCREEN_ARIA}>
       <div ref={mapContainerRef} data-testid="map-container" className="absolute inset-0 w-full h-full" />

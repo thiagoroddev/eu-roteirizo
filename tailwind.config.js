@@ -44,11 +44,15 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        /** Acento secundário de marca (ciano) — chips/status, uso parcial (ver tema-tailwind.md §2). */
+        /** Acento secundário de marca — chips/status; valores nos tokens (theme.css). */
         accent2: {
-          DEFAULT: "#0dc2d6",
-          foreground: "#00363d",
+          DEFAULT: "hsl(var(--accent2))",
+          foreground: "hsl(var(--accent2-foreground))",
         },
+      },
+      backgroundImage: {
+        /** Gradiente da marca Neon Flux (verde → azul, 135°) — CTAs de alta intenção. */
+        "brand-gradient": "linear-gradient(135deg, hsl(var(--gradient-from)), hsl(var(--gradient-to)))",
       },
       borderRadius: {
         lg: "var(--radius)",

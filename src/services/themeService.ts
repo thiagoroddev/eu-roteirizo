@@ -26,13 +26,17 @@ export const systemPrefersDark = (): boolean => {
 /** Resolve o modo escolhido para um tema concreto (claro/escuro). */
 export const resolveTheme = (mode: ThemeMode): "light" | "dark" => (mode === "system" ? (systemPrefersDark() ? "dark" : "light") : mode);
 
-/** Lê o modo salvo; default "system" (automático). */
+/**
+ * Lê o modo salvo; default "dark" — o tema Neon Flux escuro é o padrão do app
+ * (decisão 05/07/26, TASK-REF-012). "system"/"light" seguem disponíveis no toggle.
+ * Manter em sincronia com o script anti-flash do index.html.
+ */
 export const getStoredMode = (): ThemeMode => {
   try {
     const value = localStorage.getItem(STORAGE_KEY);
-    return value === "light" || value === "dark" || value === "system" ? value : "system";
+    return value === "light" || value === "dark" || value === "system" ? value : "dark";
   } catch {
-    return "system";
+    return "dark";
   }
 };
 

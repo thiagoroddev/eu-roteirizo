@@ -10,7 +10,7 @@
 
 > Tarefas urgentes que carregam contexto extra. Bloco em lista, no topo.
 >
-> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). **Ordem sugerida (rev. 05/07/26):** **fase 1 de UI — RF-011 (shell) → RF-022 (.1→.6, telas de média fidelidade com modo Original/visualização)** → depois **RF-006 (.1→.7, Meu roteiro/edição) → RF-007 → RF-008 → RF-010 → RF-009 (.1→.4, execução) → RF-012 → RF-013**. (RF-003/004/005/020/021 ✅; RF-014 absorvida pela RF-022.) Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
+> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). **Ordem sugerida (rev. 05/07/26 22h05):** fase 1 ✅ (RF-011 + RF-022) → **RF-023.1 (doc de design) ∥ REF-012 (tema Neon Flux dark) → RF-023.2→.5 (painel dinâmico — fase Original)** → depois **RF-006 (.1→.7, Meu roteiro/edição) → RF-007 → RF-008 → RF-010 → RF-009 (.1→.4, execução) → RF-012 → RF-013**. (RF-003/004/005/020/021/022 ✅; RF-014 absorvida pela RF-022.) Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
 >
 > ⚠️ **Decisões transversais (valem para o épico todo):**
 > - **Estado:** `useReducer` por feature (conforme draft §6). Zustand só se a complexidade exigir — e **não instalar sem aprovação** (anti-padrão do núcleo §5).
@@ -86,7 +86,81 @@
 ### ✅ TASK-RF-022.6 - Painel inferior do endereço compartilhado — CONCLUÍDA (05/07)
 > `AddressSheet` (§6) substitui o popup: read-only no Original (X é o único botão) + **slot `actions`** pronto p/ RF-006/009; `findAddressByKey` defensivo; Escape fecha o painel antes do mapa; trocar endereço na parada não colapsa. Mocks de popup removidos dos testes = trava de regressão. Ver `concluidas/2026-07-05--21h05--TASK-RF-022.6.md`.
 
-> 🏁 **ÉPICO TASK-RF-022 CONCLUÍDO (05/07/26) — FASE 1 DA UI ENCERRADA.** Fluxo da spec ponta a ponta: **HOME** (enviar + spoiler + salvar/dedup) → **Rotas** (cards/chips + busca + apagar) → **Sumário** (foco, botões RF-43, Info Meu Roteiro pronta) → **Mapa** (foco, toggle `Original | Meu roteiro`, `AddressSheet` §6). Suíte 431/431. Contratos prontos para: RF-006 (slot `actions`, `roteiroEnabled`, botão adaptativo), RF-008 (`hasRoteiro` nos chips, `PlannedRouteInfo`), RF-009 (painel), RF-010 (toggle), RF-013 (Importar JSON, card Roteiro Exportado). **Próximo épico: TASK-RF-006 (UI de construção — Meu roteiro).**
+> 🏁 **ÉPICO TASK-RF-022 CONCLUÍDO (05/07/26) — FASE 1 DA UI ENCERRADA.** Fluxo da spec ponta a ponta: **HOME** (enviar + spoiler + salvar/dedup) → **Rotas** (cards/chips + busca + apagar) → **Sumário** (foco, botões RF-43, Info Meu Roteiro pronta) → **Mapa** (foco, toggle `Original | Meu roteiro`, `AddressSheet` §6). Suíte 431/431. Contratos prontos para: RF-006 (slot `actions`, `roteiroEnabled`, botão adaptativo), RF-008 (`hasRoteiro` nos chips, `PlannedRouteInfo`), RF-009 (painel), RF-010 (toggle), RF-013 (Importar JSON, card Roteiro Exportado). **Próximo épico: TASK-RF-023 (painel dinâmico do mapa — fase Original), depois TASK-RF-006 (Meu roteiro).**
+
+---
+
+## ✅ TASK-REF-012 - Tema Neon Flux (dark) como padrão — CONCLUÍDA (05/07)
+> App abre em **dark Neon Flux** (verde `#00FF9D` → azul `#00D1FF`; superfícies `#0A0C10`/`#161B22`); claro no toggle; **personalizar = editar só `src/styles/theme.css`** (accent2 tokenizado; `bg-brand-gradient` pronto p/ CTAs). ADR-006 revisada. Pendência estética anotada: radius 0.5rem do neonflux (hoje 1rem/pill). **Validação visual pendente pelo humano** (`npm run dev`). Ver `concluidas/2026-07-05--22h41--TASK-REF-012.md`.
+
+<!-- Bloco original preservado abaixo para referência do escopo:
+
+- **Status:** Pendente
+- **Modo:** Standard
+- **Valor:** Importante
+- **Urgência:** IMEDIATA
+- **Esforço-H/IA:** M/M
+- **Data-hora origem:** 05/07/26 22:05
+- **Dependências:** - (executar **antes da TASK-RF-023.2**, para o painel já nascer com o tema)
+- **REQ/ADR/DT:** ADR-006 (revisar com nota — supersede parcial da identidade "Cyanide" claro-padrão); `prototipos/telas-media-fidelidade/neonflux.md` (fonte das cores); `tema-tailwind.md`
+- **Observações:** **Decisão do humano (05/07/26):** usar **já** as cores do `neonflux.md` (**dark-native**, gradiente **verde `#00FF9D` → ciano/azul claro `#00D1FF`**, superfícies slate/navy) como **tema padrão** — *supersede* a nota "tema claro é o padrão" do README dos protótipos (o claro continua disponível no toggle). **Cores são provisórias por design**: o critério central é a **personalização fácil depois** — todo o chrome via **tokens CSS variables** (um lugar só para trocar a paleta), nada de cor hardcoded em componente (lei da ADR-004/módulo 13). **NÃO tocar** na paleta funcional do mapa (verde res / azul com / cinza indef / badge amarelo — ADR-008, locked) nem no marcador da âncora (slate + anel ciano, fluxo §3).
+
+**Objetivo:** app abre em dark Neon Flux por padrão; claro/escuro alternáveis (`ThemeToggle` mantido); trocar a paleta futura = editar variáveis num único arquivo.
+
+**Subtarefas:**
+- Mapear as cores do `neonflux.md` para os tokens shadcn existentes (`--primary`, `--background`, `--card`, etc.) nos dois temas (dark = padrão Neon Flux; light = variante clara coerente).
+- **Default dark**: `useTheme` passa a iniciar em dark (hoje: automático por sistema); toggle continua ciclando.
+- Varredura de cores hardcoded fora de tokens nos componentes novos da fase 1 (shell, cards, chips, painel) — corrigir para tokens.
+- Atualizar ADR-006 (nota de revisão: Neon Flux dark padrão, decisão 05/07) e `tema-tailwind.md`.
+
+**Critérios de aceite:** app abre em Neon Flux dark; toggle claro/escuro funciona; **trocar a paleta = editar 1 arquivo de tokens** (provar trocando uma cor e vendo refletir); paleta funcional do mapa intocada; suíte verde.
+**Dependências novas:** nenhuma.
+-->
+
+---
+
+## TASK-RF-023 - Painel dinâmico do mapa (MapPanel) — fase Original [G, dividir]
+
+- **Status:** Pendente
+- **Modo:** Standard (épico com subtarefas; segue ADR-004/008 e os fluxos — sem decisão arquitetural nova)
+- **Valor:** Crítico
+- **Urgência:** IMEDIATA
+- **Esforço-H/IA:** G/G
+- **Data-hora origem:** 05/07/26 21:46
+- **Dependências:** TASK-RF-022 ✅ (AddressSheet/MapPage/toggle); TASK-REF-012 (tema Neon Flux — antes da .2, p/ o painel nascer com o tema; componentes do painel **só via tokens**, zero cor hardcoded)
+- **REQ/ADR/DT:** RF-12, RF-27 (drill-down), RF-28 (estrutura do card de pacotes); ADR-004 (shadcn), ADR-008; `fluxo-modo-original.md` §5/§6 (**a atualizar na .1**); `prototipos/telas-media-fidelidade/` telas 5–9 + README
+- **Observações:** **Origem: feedback do humano 05/07** — o `AddressSheet` (022.6) cobre a informação da §6, mas o protótipo define um **painel inferior persistente e composto**, distante do card atual. **Diretriz do humano:** painel **sempre visível por padrão**, colapsado mostrando a parte superior (nº da parada + endereço); dinâmico e extensível por **slots**. **Fase Original primeiro** (só dados da planilha, SEM numeração nova — usar Stop/Sequence); o Meu roteiro (visualização/edição/rascunho/execução) preenche os slots depois (RF-006/009), sem reestruturar. Anatomia comum das telas 5–9: header (alça + modo/progresso + steppers ‹ › de parada + título/métricas) · corpo (ações contextuais [slot] + banner [slot] + lista de endereços com expansão até pacotes) · footer CTA [slot]. Árvore proposta: `MapPanel > PanelHeader (PanelModeBar + StopStepper + PanelTitle/MetricsRow) + PanelBody (slots + StopItemList > StopItem > PackageRow) + footer`, em `src/components/map/panel/`. ✅ **Decisões fechadas pelo humano (05/07/26):** (a) **`vaul` APROVADO** (Drawer do shadcn — gesto de arrastar + snap points + `modal=false`/fundo interativo + `dismissible=false`; dependência nova **já aprovada**, instalar na .2); (b) **nunca existe "nenhuma parada selecionada"**: o mapa abre com a **menor parada** já selecionada e o painel sempre mostra a **última selecionada** — clicar fora colapsa os marcadores expandidos, mas o painel **mantém** a parada (a .1 ajusta o `fluxo-modo-original.md` §5/§8, que hoje diz "limpa a seleção").
+
+**Objetivo:** o mapa Original ganha o painel inferior do protótipo (tela 5, versão read-only): persistente, expansível, navegável por paradas, com drill-down endereço → pacotes — estrutura pronta para os modos do Meu roteiro.
+
+### TASK-RF-023.1 - Doc de design + sincronizar a spec
+- **Esforço-H/IA:** M/M · **Dep:** -
+- Criar `docs/design/arvore-componentes-mapa.md`: árvore de componentes, contratos de slot por modo (visualização/edição/rascunho/execução), mapeamento tela-a-tela (5–9) do que cada modo preenche. Atualizar `fluxo-modo-original.md` §5/§6 com a diretriz nova (painel sempre visível/colapsado com nº parada + endereço; steppers ‹ ›; expansão) — **os `.md` decidem**.
+- **Aceite:** doc revisável pelo humano; fluxo atualizado sem conflito com as imagens.
+
+### TASK-RF-023.2 - Fundação MapPanel (colapsado ↔ expandido + slots)
+- **Esforço-H/IA:** G/G · **Dep:** 023.1
+- `MapPanel` persistente com **`vaul`** (instalar — aprovado): snap points (colapsado = header / meio / cheio), `dismissible=false`, `modal=false` (mapa interativo), slots `actions`/`banner`/`footer`. Substitui o posicionamento do `AddressSheet`.
+- **Aceite:** painel sempre visível; arrasta entre os snaps; mapa utilizável com o painel colapsado.
+
+### TASK-RF-023.3 - Header Original (modo bar + steppers + título/métricas)
+- **Esforço-H/IA:** M/G · **Dep:** 023.2
+- `PanelModeBar` ("Modo visualização") + `StopStepper` ‹ › navegando as paradas (sincroniza com a seleção/zoom do mapa nos DOIS sentidos) + `PanelTitle` ("Parada {Stop}" + endereço do representante) + `MetricsRow` (N endereços · N pacotes — sem tempo no Original).
+- **Aceite:** steppers percorrem as paradas; tocar marcador atualiza o header e vice-versa.
+
+### TASK-RF-023.4 - StopItemList Original (endereços → pacotes)
+- **Esforço-H/IA:** G/G · **Dep:** 023.2
+- Lista dos endereços da parada por `Sequence` (mini-marcador cor do tipo + nº da planilha; endereço/complemento; badge de pacotes); expansão por item → `PackageRow` (etiqueta `Parada/Seq` + código SPX + badge de tipo — RF-28). Tocar item ↔ destacar marcador no mapa. Absorve o conteúdo do `AddressSheet` (testes migram).
+- **Aceite:** drill-down parada → endereço → pacotes fiel à tela 5 (read-only); seleção espelhada mapa↔painel.
+
+### TASK-RF-023.5 - Seleção inicial + integração + limpeza
+- **Esforço-H/IA:** M/M · **Dep:** 023.3, 023.4
+- Decisão (b): abrir o mapa com a **menor parada** selecionada; painel sempre com a última selecionada (clique fora não esvazia); `AddressSheet` legado absorvido/aposentado; testes de integração (MapPage + RouteMap + painel); docs (RF-12/27/28) e registro.
+- **Aceite:** abrir o mapa já mostra "Parada {menor}" no painel; nunca há painel vazio; suíte verde; sem componente morto.
+
+**Critérios de aceite (RF-023):** tela 5 em read-only razoavelmente fiel (estrutura e informação; estética final é outra decisão — README dos protótipos); slots documentados para RF-006/009.
+**Dependências novas:** `vaul` (**aprovada pelo humano em 05/07/26** — instalar na .2).
+**Riscos:** gestos/scroll do painel × pan do mapa (mitigar: painel irmão do container Leaflet, padrão da 022.6); regressão das interações RF-020 (suíte de RouteMap vigia).
 
 ---
 
