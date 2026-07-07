@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { groupRowsByStop } from "../../../utils/markers/stopGrouping";
-import { adjacentStopKey, panelMetrics, smallestStopKey } from "../../../utils/markers/panelModels";
-import { COLUMN_NAMES } from "../../../constants";
+import { adjacentStopKey, buildPanelItems, panelMetrics, smallestStopKey } from "../../../utils/markers/panelModels";
+import { COLUMN_NAMES, UI_LABELS } from "../../../constants";
 import type { RowData } from "../../../types";
 
 const row = (stop: unknown, seq: number): RowData => ({
@@ -72,6 +72,84 @@ describe("adjacentStopKey", () => {
 
   it("returns null for an empty list", () => {
     expect(adjacentStopKey([], null, 1)).toBeNull();
+  });
+});
+
+describe("buildPanelItems", () => {
+  const rowsStop7: RowData[] = [
+    // Two packages at the SAME building (merge into one address, minSequence 2)…
+    {
+      [COLUMN_NAMES.STOP]: 7,
+      [COLUMN_NAMES.SEQUENCE]: 9,
+      [COLUMN_NAMES.LATITUDE]: -22.9,
+      [COLUMN_NAMES.LONGITUDE]: -43.2,
+      [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Alfa, 10, casa 2",
+      [COLUMN_NAMES.SPX_TN]: "BR111",
+      [COLUMN_NAMES.NEIGHBORHOOD]: "Botafogo",
+      [COLUMN_NAMES.ZIPCODE]: "22271-110",
+    },
+    {
+      [COLUMN_NAMES.STOP]: 7,
+      [COLUMN_NAMES.SEQUENCE]: 2,
+      [COLUMN_NAMES.LATITUDE]: -22.9,
+      [COLUMN_NAMES.LONGITUDE]: -43.2,
+      [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Alfa, 10, casa 2",
+      [COLUMN_NAMES.SPX_TN]: "BR222",
+    },
+    // …and another address with a SMALLER sequence than the first row (1 < 9),
+    // appearing later — the ordering must follow minSequence, not appearance.
+    {
+      [COLUMN_NAMES.STOP]: 7,
+      [COLUMN_NAMES.SEQUENCE]: 1,
+      [COLUMN_NAMES.LATITUDE]: -22.91,
+      [COLUMN_NAMES.LONGITUDE]: -43.21,
+      [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Beta, 20",
+      [COLUMN_NAMES.SPX_TN]: "BR333",
+    },
+  ];
+
+  it("orders the stop's addresses by their smallest Sequence", () => {
+    const items = buildPanelItems(groupRowsByStop(rowsStop7), "0");
+
+    expect(items.map((item) => item.addressLine)).toEqual(["Rua Beta, 20", "Rua Alfa, 10, casa 2"]);
+    expect(items.map((item) => item.markerNumber)).toEqual(["1", "2"]);
+  });
+
+  it("keeps the map identity (addressKey i:j of the ORIGINAL index) after sorting", () => {
+    const stops = groupRowsByStop(rowsStop7);
+    const items = buildPanelItems(stops, "0");
+
+    // "Rua Beta" was grouped second (j = 1) but sorts first.
+    expect(items[0].addressKey).toBe("0:1");
+    expect(items[1].addressKey).toBe("0:0");
+  });
+
+  it("maps the full detail: complement, neighborhood/zipcode and one package row per spreadsheet row", () => {
+    const items = buildPanelItems(groupRowsByStop(rowsStop7), "0");
+    const alfa = items[1];
+
+    expect(alfa.complement).toBe("casa 2");
+    expect(alfa.neighborhood).toBe("Botafogo");
+    expect(alfa.zipcode).toBe("22271-110");
+    expect(alfa.packageCount).toBe(2);
+    expect(alfa.packages.map((pkg) => pkg.spxTn)).toEqual(["BR111", "BR222"]);
+    expect(alfa.packages[0].label).toBe(UI_LABELS.MAP_PANEL.ITEM.PACKAGE_LABEL("7", "9"));
+    expect(alfa.mapsUrl).toContain("google.com/maps");
+  });
+
+  it("omits the stop from the package label when the Stop column is absent", () => {
+    const noStop: RowData[] = [
+      { [COLUMN_NAMES.SEQUENCE]: 4, [COLUMN_NAMES.LATITUDE]: -22.9, [COLUMN_NAMES.LONGITUDE]: -43.2, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Gama, 30", [COLUMN_NAMES.SPX_TN]: "BR444" },
+    ];
+    const items = buildPanelItems(groupRowsByStop(noStop), "0");
+
+    expect(items[0].packages[0].label).toBe(UI_LABELS.MAP_PANEL.ITEM.PACKAGE_LABEL(null, "4"));
+  });
+
+  it("returns [] for a null or out-of-range stop key", () => {
+    const stops = groupRowsByStop(rowsStop7);
+    expect(buildPanelItems(stops, null)).toEqual([]);
+    expect(buildPanelItems(stops, "99")).toEqual([]);
   });
 });
 

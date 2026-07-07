@@ -58,6 +58,7 @@
 | TASK-RF-023.1 | Doc de design do MapPanel (`docs/design/arvore-componentes-mapa.md`: árvore, contratos TS, matriz modo×slot telas 5–9) + fluxo-modo-original §5/§6/§8 sincronizados (painel persistente, menor parada, nunca vazio) | [abrir](./2026-07-05--22h58--TASK-RF-023.1.md) |
 | TASK-RF-023.2 | Fundação MapPanel: vaul@1.1.2 (snaps 96px/45%/90%, não-modal, nunca fecha) + lift do estado p/ MapPage + memória "nunca vazio" (menor parada derivada) + AddressSheet inline interino — RouteMap 42/42 sem edição | [abrir](./2026-07-05--23h42--TASK-RF-023.2.md) |
 | TASK-RF-023.3 | Header Original do painel: PanelModeBar ("Modo visualização" + StopStepper ‹ › circular por Stop numérico) + PanelTitle/MetricsRow (endereços·pacotes), sincronia mapa↔painel via estado único (RouteMap intocado) | [abrir](./2026-07-06--00h00--TASK-RF-023.3.md) |
+| TASK-RF-023.4 | StopItemList Original: endereços por Sequence com drill-down p/ pacotes (etiqueta Parada·Seq + SPX + tipo — RF-27/28); buildPanelItems puro; seleção espelhada mapa↔painel; absorve conteúdo do AddressSheet | [abrir](./2026-07-07--12h27--TASK-RF-023.4.md) |
 
 <!-- Exemplo:
 | TASK-REF-03 | Instalar shadcn/ui e criar wrappers em components/ui | [abrir](./2026-05-16--20h21--TASK-REF-03.md) |

@@ -77,12 +77,17 @@ export const UI_LABELS = {
     ARIA: "Painel da parada",
     STOP_PREFIX: "Parada",
     NO_STOP: "Sem número de parada",
-    NO_ADDRESS_HINT: "Toque num endereço no mapa para ver os detalhes.",
     MODE_VIEW: "Modo visualização",
     PREV_STOP: "Parada anterior",
     NEXT_STOP: "Próxima parada",
     METRIC_ADDRESSES: (count: number) => (count === 1 ? "1 endereço" : `${count} endereços`),
     METRIC_PACKAGES: (count: number) => (count === 1 ? "1 pacote" : `${count} pacotes`),
+    // Lista de endereços da parada (StopItemList — TASK-RF-023.4, RF-27/28)
+    ITEM: {
+      LIST_ARIA: "Endereços da parada",
+      NO_ITEMS: "Nenhum endereço com coordenada válida nesta parada.",
+      PACKAGE_LABEL: (stop: string | null, seq: string) => (stop !== null ? `Parada ${stop} · Seq ${seq}` : `Seq ${seq}`),
+    },
   },
   // Toggle de modos do mapa (fluxo §11 "Modos do mapa" — TASK-RF-022.5)
   MAP_MODE: {

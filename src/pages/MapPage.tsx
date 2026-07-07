@@ -6,11 +6,11 @@ import { MapModeToggle, type MapMode } from "../components/map/MapModeToggle";
 import { MapPanel, type PanelSnap } from "../components/map/panel/MapPanel";
 import { PanelModeBar } from "../components/map/panel/PanelModeBar";
 import { PanelTitle } from "../components/map/panel/PanelTitle";
-import { AddressSheet } from "../components/map/AddressSheet";
+import { StopItemList } from "../components/map/panel/StopItemList";
 import { useRouteUploader } from "../hooks/useRouteUploader";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
-import { collapseInteraction, findAddressByKey, type InteractionState } from "../utils/markers/markerModels";
-import { adjacentStopKey, panelMetrics, smallestStopKey } from "../utils/markers/panelModels";
+import { collapseInteraction, type InteractionState } from "../utils/markers/markerModels";
+import { adjacentStopKey, buildPanelItems, panelMetrics, smallestStopKey } from "../utils/markers/panelModels";
 import { COLUMN_NAMES } from "../constants";
 import { UI_LABELS } from "../constants/uiLabels";
 
@@ -28,11 +28,11 @@ import { UI_LABELS } from "../constants/uiLabels";
  *   the markers without clearing the panel.
  *
  * Header (TASK-RF-023.3): PanelModeBar ("Modo visualização" + StopStepper) +
- * PanelTitle (stop + address + metrics). The steppers only emit an interaction
- * transition — the controlled RouteMap reacts by expanding/focusing the stop,
- * so map↔panel stay in sync through the single lifted state. Body is still the
- * interim inline AddressSheet — TASK-RF-023.4 brings the StopItemList. Leaving
- * the screen is the header back arrow (FocusShell).
+ * PanelTitle (stop + address + metrics). Body (TASK-RF-023.4): StopItemList —
+ * the stop's addresses by Sequence, drill-down to packages. Both only emit
+ * interaction transitions — the controlled RouteMap reacts (expand/focus/
+ * emphasis), so map↔panel stay in sync through the single lifted state.
+ * Leaving the screen is the header back arrow (FocusShell).
  */
 function MapPage() {
   const navigate = useNavigate();
@@ -81,8 +81,8 @@ function MapPage() {
 
   const panelStop = effectivePanelStopKey !== null ? (stops[Number(effectivePanelStopKey)] ?? null) : null;
   const panelAddress = String(panelStop?.representative.rows[0]?.[COLUMN_NAMES.DESTINATION_ADDRESS] || UI_LABELS.COMMON.NO_DATA);
-  const selected = findAddressByKey(stops, interaction.selectedAddressKey);
   const metrics = panelMetrics(panelStop);
+  const panelItems = buildPanelItems(stops, effectivePanelStopKey);
 
   /** StopStepper: expands + focuses the target on the map (controlled RouteMap
       reacts to expandedStopKey) and moves the panel memory. Snap untouched —
@@ -90,6 +90,13 @@ function MapPage() {
   const handleStepStop = (direction: 1 | -1) => {
     const nextKey = adjacentStopKey(stops, effectivePanelStopKey, direction);
     if (nextKey !== null) handleInteractionChange({ expandedStopKey: nextKey, selectedAddressKey: null });
+  };
+
+  /** StopItem tap: mirrors the selection on the map (expand stop + emphasize the
+      address); tapping the expanded item again collapses just the detail. */
+  const handleItemTap = (addressKey: string) => {
+    const next = interaction.selectedAddressKey === addressKey ? null : addressKey;
+    handleInteractionChange({ expandedStopKey: effectivePanelStopKey, selectedAddressKey: next });
   };
 
   return (
@@ -130,16 +137,7 @@ function MapPage() {
               </div>
             }
           >
-            {selected ? (
-              <AddressSheet
-                variant="inline"
-                address={selected.address}
-                stopNumber={selected.stop.hasStop ? selected.stop.stop : null}
-                onClose={() => handleInteractionChange({ expandedStopKey: interaction.expandedStopKey, selectedAddressKey: null })}
-              />
-            ) : (
-              <p className="px-4 text-sm text-muted-foreground">{UI_LABELS.MAP_PANEL.NO_ADDRESS_HINT}</p>
-            )}
+            <StopItemList items={panelItems} expandedKey={interaction.selectedAddressKey} onItemTap={handleItemTap} />
           </MapPanel>
         </>
       )}

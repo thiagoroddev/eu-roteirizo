@@ -142,10 +142,8 @@
 ### ✅ TASK-RF-023.3 - Header Original (modo bar + steppers + título/métricas) — CONCLUÍDA (06/07)
 > `PanelModeBar` ("Modo visualização" + StopStepper ‹ › **circular por Stop numérico**, sem-número no fim; `data-vaul-no-drag`) + `PanelTitle`/`MetricsRow` (chips endereços·pacotes). Sincronia mapa↔painel nos dois sentidos via o estado único da MapPage — **RouteMap intocado** (efeito 2b já foca a parada expandida). Derivações puras `adjacentStopKey`/`panelMetrics` em `panelModels`. Snap colapsado 96→132px (calibrar no smoke). Suíte 471 ✅. Ver `concluidas/2026-07-06--00h00--TASK-RF-023.3.md`.
 
-### TASK-RF-023.4 - StopItemList Original (endereços → pacotes)
-- **Esforço-H/IA:** G/G · **Dep:** 023.2
-- Lista dos endereços da parada por `Sequence` (mini-marcador cor do tipo + nº da planilha; endereço/complemento; badge de pacotes); expansão por item → `PackageRow` (etiqueta `Parada/Seq` + código SPX + badge de tipo — RF-28). Tocar item ↔ destacar marcador no mapa. Absorve o conteúdo do `AddressSheet` (testes migram).
-- **Aceite:** drill-down parada → endereço → pacotes fiel à tela 5 (read-only); seleção espelhada mapa↔painel.
+### ✅ TASK-RF-023.4 - StopItemList Original (endereços → pacotes) — CONCLUÍDA (07/07)
+> `buildPanelItems` puro (endereços por `minSequence`, identidade `i:j` do mapa preservada pós-sort) + `StopItem`/`StopItemList` (mini-marcador cor do tipo + nº Sequence; expandido = bairro/CEP/tipo + `PackageRow` Parada·Seq/SPX/badge de tipo + Maps — **absorve todo o conteúdo do AddressSheet**, testes migrados). Tap item ↔ marcador espelhado nos dois sentidos; `data-vaul-no-drag` nas linhas. Bairro/CEP mantidos no expandido (evita regressão de info). AddressSheet intocado até a .5. Suíte 482 ✅. Ver `concluidas/2026-07-07--12h27--TASK-RF-023.4.md`.
 
 ### TASK-RF-023.5 - Seleção inicial + integração + limpeza
 - **Esforço-H/IA:** M/M · **Dep:** 023.3, 023.4

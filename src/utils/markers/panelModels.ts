@@ -5,7 +5,13 @@
  * view-models). Grows with .3/.4 (panel items, metrics, prev/next stop).
  */
 
+import type { RowData } from "../../types";
 import type { StopGroup } from "./stopGrouping";
+import { COLUMN_NAMES, UI_LABELS } from "../../constants";
+import { extractComplement, locationTypeLabel } from "./markerModels";
+import { resolveLocationType } from "../inferLocationType";
+
+const NO_DATA = UI_LABELS.COMMON.NO_DATA;
 
 /**
  * Key (stop index as string — same format as `expandedStopKey`) of the stop
@@ -65,4 +71,67 @@ export const panelMetrics = (stop: StopGroup | null): { addressCount: number; pa
     addressCount: stop.addresses.length,
     packageCount: stop.addresses.reduce((sum, address) => sum + address.rows.length, 0),
   };
+};
+
+/** One package line of an expanded StopItem (RF-28): spreadsheet label + SPX code + type. */
+export interface PackageRowData {
+  /** "Parada {Stop} · Seq {Sequence}" — Stop omitted when the column is absent. */
+  label: string;
+  spxTn: string;
+  /** Per-package inferred type ("Comercial" / "Residencial" / "Indefinido"). */
+  typeLabel: string;
+}
+
+/** View-model of one address in the panel's StopItemList (design doc §3). */
+export interface StopItemData {
+  /** "i:j" — same identity the map uses (findAddressByKey / selectedAddressKey). */
+  addressKey: string;
+  /** Number on the mini-marker: the address' smallest Sequence (Original mode). */
+  markerNumber: string;
+  /** ICON_KEYS type — colorForLocationType gives the mini-marker color. */
+  markerType: string;
+  addressLine: string;
+  complement: string;
+  neighborhood: string;
+  zipcode: string;
+  typeLabel: string;
+  packageCount: number;
+  packages: PackageRowData[];
+  mapsUrl: string;
+}
+
+const packageRow = (row: RowData, stop: StopGroup): PackageRowData => ({
+  label: UI_LABELS.MAP_PANEL.ITEM.PACKAGE_LABEL(stop.hasStop ? stop.stop : null, String(row[COLUMN_NAMES.SEQUENCE] || NO_DATA)),
+  spxTn: String(row[COLUMN_NAMES.SPX_TN] || NO_DATA),
+  typeLabel: locationTypeLabel(resolveLocationType(row)),
+});
+
+/**
+ * Items for the panel's StopItemList: the addresses of `stopKey`'s stop, ordered
+ * by their smallest Sequence (Original = spreadsheet order), each carrying its
+ * packages. Null/invalid key → [] (the list renders its empty state).
+ */
+export const buildPanelItems = (stops: StopGroup[], stopKey: string | null): StopItemData[] => {
+  const stop = stopKey !== null ? stops[Number(stopKey)] : undefined;
+  if (!stop) return [];
+
+  return stop.addresses
+    .map((address, j) => ({ address, j }))
+    .sort((a, b) => a.address.minSequence - b.address.minSequence)
+    .map(({ address, j }) => {
+      const head: RowData = address.rows[0] ?? {};
+      return {
+        addressKey: `${stopKey}:${j}`,
+        markerNumber: Number.isFinite(address.minSequence) ? String(address.minSequence) : NO_DATA,
+        markerType: address.type,
+        addressLine: String(head[COLUMN_NAMES.DESTINATION_ADDRESS] || NO_DATA),
+        complement: extractComplement(address),
+        neighborhood: String(head[COLUMN_NAMES.NEIGHBORHOOD] || NO_DATA),
+        zipcode: String(head[COLUMN_NAMES.ZIPCODE] || NO_DATA),
+        typeLabel: locationTypeLabel(address.type),
+        packageCount: address.rows.length,
+        packages: address.rows.map((row) => packageRow(row, stop)),
+        mapsUrl: `https://www.google.com/maps?q=${address.lat},${address.lng}`,
+      };
+    });
 };

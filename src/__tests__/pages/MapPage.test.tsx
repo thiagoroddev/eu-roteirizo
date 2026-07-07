@@ -114,7 +114,8 @@ describe("MapPage (focus screen)", () => {
     renderPage();
 
     expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`)).toBeInTheDocument();
-    expect(screen.getByText("Rua Mapa, 10")).toBeInTheDocument();
+    // Address appears in the header AND as the list item.
+    expect(screen.getAllByText("Rua Mapa, 10").length).toBeGreaterThan(0);
     expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-dismissible", "false");
   });
 
@@ -123,23 +124,38 @@ describe("MapPage (focus screen)", () => {
     renderPage();
 
     expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 2`)).toBeInTheDocument();
-    expect(screen.getByText("Rua Dois, 2")).toBeInTheDocument();
+    expect(screen.getAllByText("Rua Dois, 2").length).toBeGreaterThan(0);
   });
 
-  it("shows the tap hint while no address is selected", () => {
+  it("renders the stop's address list as the panel body (RF-023.4)", () => {
     renderPage();
 
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.NO_ADDRESS_HINT)).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: UI_LABELS.MAP_PANEL.ITEM.LIST_ARIA })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Rua Mapa, 10/, expanded: false })).toBeInTheDocument();
   });
 
-  it("selecting an address on the map fills the panel body (inline AddressSheet)", () => {
+  it("selecting an address on the map expands its StopItem in the panel (map → panel)", () => {
     renderPage();
 
     fireEvent.click(screen.getByRole("button", { name: "stub-select-first-address" }));
 
-    expect(screen.getByRole("region", { name: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.ARIA })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Rua Mapa, 10/, expanded: true })).toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.PACKAGES_HEADER(1))).toBeInTheDocument();
-    expect(screen.queryByText(UI_LABELS.MAP_PANEL.NO_ADDRESS_HINT)).not.toBeInTheDocument();
+  });
+
+  it("tapping a StopItem mirrors the selection on the map and toggles the detail (panel → map)", () => {
+    renderPage();
+    const itemButton = () => screen.getByRole("button", { name: /Rua Mapa, 10/ });
+
+    fireEvent.click(itemButton());
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-expanded-stop", "0");
+    expect(itemButton()).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.PACKAGES_HEADER(1))).toBeInTheDocument();
+
+    // Second tap collapses just the detail (stop stays expanded on the map).
+    fireEvent.click(itemButton());
+    expect(itemButton()).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.PACKAGES_HEADER(1))).not.toBeInTheDocument();
   });
 
   it("selecting an address raises a collapsed panel to half (design §5 — detail visible without dragging)", () => {
@@ -183,7 +199,7 @@ describe("MapPage (focus screen)", () => {
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.PREV_STOP }));
 
     expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 10`)).toBeInTheDocument();
-    expect(screen.getByText("Rua Dez, 10")).toBeInTheDocument();
+    expect(screen.getAllByText("Rua Dez, 10").length).toBeGreaterThan(0);
   });
 
   it("collapsing on the map keeps the panel on the last stop (memory never clears)", () => {
@@ -192,9 +208,10 @@ describe("MapPage (focus screen)", () => {
     fireEvent.click(screen.getByRole("button", { name: "stub-select-first-address" }));
     fireEvent.click(screen.getByRole("button", { name: "stub-collapse" }));
 
-    // Address detail closes, but the header still shows the stop.
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.NO_ADDRESS_HINT)).toBeInTheDocument();
+    // Address detail closes, but the header and the list still show the stop.
     expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Rua Mapa, 10/, expanded: false })).toBeInTheDocument();
+    expect(screen.queryByText(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.PACKAGES_HEADER(1))).not.toBeInTheDocument();
   });
 
   it("shows the error state when the manifest cannot be reopened", () => {
