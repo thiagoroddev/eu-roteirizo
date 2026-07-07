@@ -6,6 +6,10 @@
 
 *(Nenhuma tarefa em andamento.)*
 
+<!-- 07/07/26: épico RF-023 encerrado (com Refinos 2–6 aprovados) e TASK-REF-013 ✅ 18h16 (card multi-rota colapsável na aba Rotas; filtro estreita chips). Suíte: 502. -->
+<!-- ⚠️ SMOKE PENDENTE (humano, REF-013): card das 153 rotas colapsado; "Mostrar rotas (153)" com rolagem; filtro "L-23" → 1 chip + "1 de 153 rotas". -->
+<!-- Próximos candidatos: TASK-REF-011 (fluxo legado + aposentar AddressSheet/modal), TASK-RF-006 (Meu roteiro) / RF-010 (toggle), radius 0.5rem neonflux (estética). -->
+
 <!-- ÉPICO TASK-RF-023 100% ENCERRADO (07/07 ~17h50): .1–.5 + iterações .6/.7/.8 com Refinos 2–6, TODOS os smokes do humano aprovados ("excelente, finalizado"). Painel Original completo: duas visões, 1º endereço sempre selecionado, snap dimensionado, resumo bairro (CEP) + chips por tipo, complemento por pacote c/ rótulo, etiqueta "Ordem | Parada"+SPX, badges caixa+nº, header com a rota. Suíte: 500. ⚠️ Trabalho pós-commit do humano (RF-023.5→Refino 6) ainda NÃO commitado. -->
 <!-- Próximos candidatos: TASK-REF-011 (fluxo legado + aposentar AddressSheet/modal), TASK-RF-006 (Meu roteiro) / RF-010 (toggle), radius 0.5rem neonflux (estética). -->
 

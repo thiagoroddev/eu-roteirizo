@@ -38,6 +38,17 @@ const multi: ManifestMeta = {
   importedAt: "2026-07-05T12:00:00.000Z",
 };
 
+/** 8 routes (> COLLAPSE_THRESHOLD = 6): collapses by default (TASK-REF-013). */
+const big: ManifestMeta = {
+  id: "id-big",
+  fileName: "romaneio-grande.xlsx",
+  fileType: "application/vnd.ms-excel",
+  fileSize: 300,
+  kind: "multi",
+  routes: Array.from({ length: 8 }, (_, i) => ({ name: `L-${i + 1}`, at: `AT2025110${i}`, rowCount: 5 })),
+  importedAt: "2026-07-06T12:00:00.000Z",
+};
+
 /** Probe route that prints the current URL so chip navigation can be asserted. */
 const LocationProbe = () => {
   const location = useLocation();
@@ -90,6 +101,47 @@ describe("RoutesPage", () => {
 
     fireEvent.change(screen.getByPlaceholderText(UI_LABELS.ROUTES_PAGE.SEARCH_PLACEHOLDER), { target: { value: "zzz" } });
     expect(screen.getByText(UI_LABELS.ROUTES_PAGE.NO_SEARCH_RESULTS)).toBeInTheDocument();
+  });
+
+  // ==========================================================================
+  // Card multi colapsável (TASK-REF-013)
+  // ==========================================================================
+
+  it("collapses a BIG multi card by default; the toggle shows/hides the scrollable chips", async () => {
+    mockList.mockResolvedValue([big, multi]);
+    renderPage();
+    await screen.findByText("romaneio-grande.xlsx");
+
+    // Big card: no chips, only the toggle. Small card: chips as always, no toggle.
+    expect(screen.queryByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("L-1") })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("A-1") })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: UI_LABELS.ROUTES_PAGE.HIDE_ROUTES })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.ROUTES_PAGE.SHOW_ROUTES(8) }));
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("L-1") })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("L-8") })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.ROUTES_PAGE.HIDE_ROUTES }));
+    expect(screen.queryByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("L-1") })).not.toBeInTheDocument();
+  });
+
+  it("the page filter narrows the CHIPS inside the card and auto-expands it", async () => {
+    mockList.mockResolvedValue([big]);
+    renderPage();
+    await screen.findByText("romaneio-grande.xlsx");
+
+    fireEvent.change(screen.getByPlaceholderText(UI_LABELS.ROUTES_PAGE.SEARCH_PLACEHOLDER), { target: { value: "L-3" } });
+
+    // Only the matching chip, without touching the toggle; count shows "1 de 8".
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("L-3") })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("L-1") })).not.toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.ROUTES_PAGE.ROUTE_COUNT_FILTERED(1, 8))).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: UI_LABELS.ROUTES_PAGE.SHOW_ROUTES(8) })).not.toBeInTheDocument();
+
+    // Clearing the filter collapses the big card again.
+    fireEvent.change(screen.getByPlaceholderText(UI_LABELS.ROUTES_PAGE.SEARCH_PLACEHOLDER), { target: { value: "" } });
+    expect(screen.queryByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("L-3") })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTES_PAGE.SHOW_ROUTES(8) })).toBeInTheDocument();
   });
 
   it("navigates to the Sumário deep link when a chip is tapped (TASK-RF-022.4)", async () => {

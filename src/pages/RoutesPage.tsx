@@ -59,7 +59,7 @@ function RoutesPage() {
 
       <div className="space-y-3">
         {visible.map((manifest) => (
-          <ManifestCard key={manifest.id} manifest={manifest} selected={manifest.id === selectedId} onOpenRoute={openRoute} onDelete={(m) => void removeManifest(m)} />
+          <ManifestCard key={manifest.id} manifest={manifest} selected={manifest.id === selectedId} filter={filter} onOpenRoute={openRoute} onDelete={(m) => void removeManifest(m)} />
         ))}
       </div>
     </div>

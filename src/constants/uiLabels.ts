@@ -61,6 +61,10 @@ export const UI_LABELS = {
     KIND_MULTI: "Romaneio Multi",
     IMPORTED_AT: (date: string) => `Importado em ${date}`,
     ROUTE_COUNT: (count: number) => (count === 1 ? "1 rota" : `${count} rotas`),
+    // Card multi colapsável (TASK-REF-013): rotas escondidas até pedir/filtrar.
+    ROUTE_COUNT_FILTERED: (shown: number, total: number) => `${shown} de ${total} rotas`,
+    SHOW_ROUTES: (count: number) => `Mostrar rotas (${count})`,
+    HIDE_ROUTES: "Esconder rotas",
     CHIP_ARIA: (routeName: string) => `Abrir a rota ${routeName}`,
     CHIP_NO_ROTEIRO_ARIA: "Sem roteiro",
     DELETE_ARIA: (fileName: string) => `Apagar o romaneio ${fileName}`,
