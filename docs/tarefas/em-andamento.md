@@ -6,6 +6,10 @@
 
 *(Nenhuma tarefa em andamento.)*
 
+<!-- 07/07/26: RF-023 (épico + Refinos 2–6) ✅ · REF-013 (card colapsável) ✅ · REF-011 (fluxo legado removido: HomePage só-upload, RouteMap só-embedded/controlado, AddressSheet aposentado, useManifestFromUrl) ✅ 18h35. Suíte: 443 (remoção líquida de legados). -->
+<!-- ⚠️ SMOKE PENDENTE (humano, REF-011): fluxo ponta a ponta — HOME sobe e navega (single/multi/duplicado); Sumário e mapa intactos. -->
+<!-- Próximos candidatos: TASK-RF-006 (Meu roteiro — edição) / RF-010 (destravar toggle), TASK-DOC-003 (sync contexto-projeto-ai), TASK-TEST-002 (zoom), radius 0.5rem neonflux. -->
+
 <!-- 07/07/26: épico RF-023 encerrado (com Refinos 2–6 aprovados) e TASK-REF-013 ✅ 18h16 (card multi-rota colapsável na aba Rotas; filtro estreita chips). Suíte: 502. -->
 <!-- ⚠️ SMOKE PENDENTE (humano, REF-013): card das 153 rotas colapsado; "Mostrar rotas (153)" com rolagem; filtro "L-23" → 1 chip + "1 de 153 rotas". -->
 <!-- Próximos candidatos: TASK-REF-011 (fluxo legado + aposentar AddressSheet/modal), TASK-RF-006 (Meu roteiro) / RF-010 (toggle), radius 0.5rem neonflux (estética). -->

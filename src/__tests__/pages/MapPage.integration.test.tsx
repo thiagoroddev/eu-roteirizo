@@ -133,8 +133,8 @@ describe("MapPage + real RouteMap (integration)", () => {
 
     expect(screen.getByTestId("map-container")).toBeInTheDocument();
     expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`)).toBeInTheDocument();
-    // Embedded: no internal close button (the shell's back arrow is the way out).
-    expect(screen.queryByRole("button", { name: new RegExp(UI_LABELS.ROUTE_MAP.CLOSE) })).not.toBeInTheDocument();
+    // No dialog/close button: the map is a region; leaving is the shell's back arrow.
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("pads fitBounds at the bottom so the route frames above the collapsed panel", () => {

@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 
 import { RouteSummary } from "../components/RouteSummary";
 import { RouteTable } from "../components/RouteTable";
 import { RouteSimpleTable } from "../components/RouteSimpleTable";
 import { PlannedRouteInfo } from "../components/summary/PlannedRouteInfo";
 import { Button } from "../components/ui/button";
-import { useRouteUploader } from "../hooks/useRouteUploader";
+import { useManifestFromUrl } from "../hooks/useManifestFromUrl";
 import { getVehicleType } from "../utils/formatters";
 import { COLUMN_NAMES } from "../constants";
 import { UI_LABELS } from "../constants/uiLabels";
@@ -25,27 +25,14 @@ import { UI_LABELS } from "../constants/uiLabels";
  */
 function SummaryPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const manifestId = searchParams.get("romaneio");
-  const routeName = searchParams.get("rota");
-
-  const { routes, loading, error, availableCols, isSingleRoute, loadManifest } = useRouteUploader();
-  /** Guards the load against re-runs (same id → load once). */
-  const loadedRef = useRef<string | null>(null);
+  const { manifestId, routeName, routes, loading, error, availableCols, isSingleRoute, currentRows } = useManifestFromUrl();
 
   const [showTable, setShowTable] = useState(false);
   const [showSimpleTable, setShowSimpleTable] = useState(false);
 
-  useEffect(() => {
-    if (!manifestId || loadedRef.current === manifestId) return;
-    loadedRef.current = manifestId;
-    void loadManifest(manifestId);
-  }, [manifestId, loadManifest]);
-
   // A malformed URL has nothing to show — go back to the saved list.
   if (!manifestId || !routeName) return <Navigate to="/rotas" replace />;
 
-  const currentRows = (routes ? routes[routeName] : undefined) ?? [];
   const mapAvailable = !!(availableCols?.includes(COLUMN_NAMES.LATITUDE) && availableCols?.includes(COLUMN_NAMES.LONGITUDE));
   const vehicleType = getVehicleType(currentRows, availableCols);
 

@@ -1,30 +1,23 @@
 /**
- * Comprehensive Tests for RouteMap Component
+ * Tests for RouteMap — the CONTROLLED embedded map of the `/mapa` screen
+ * (rewritten in TASK-REF-011: the legacy fullscreen modal, its close button,
+ * Escape handler and internal AddressSheet were removed; the MapPage owns the
+ * interaction state and the panel shows the detail).
  *
- * 🎯 Goal:
- * Verify that the map initializes correctly, renders markers based on route data,
- * handles user interactions (closing, clicking markers), and cleans up resources.
- *
- * 📚 Testing Strategy:
- * - Mock Leaflet: Since JSDOM doesn't support canvas/webgl, we mock the entire
- * Leaflet library to verify that the component calls the correct map functions
- * (e.g., L.marker, map.fitBounds).
- * - Mock Business Logic: We isolate the map from complex utility logic.
- * - Interaction Testing: Verify Close button and Keyboard events.
- * - Integration Testing: Verify component renders correctly with real data flow.
+ * 📚 Strategy: Leaflet is fully mocked (jsdom has no canvas) — we assert the
+ * component calls the right map functions and EMITS the right transitions.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, act } from "@testing-library/react";
 import { RouteMap } from "../../components/RouteMap";
 import { COLUMN_NAMES, UI_LABELS } from "../../constants";
 import type { RowData } from "../../types";
+import type { InteractionState } from "../../utils/markers/markerModels";
 
 // =============================================================================
 // 1. CRITICAL: MOCK LEAFLET
 // =============================================================================
-// We hoist the mock so it runs before imports. We return spies (vi.fn)
-// to allow assertions like expect(L.marker).toHaveBeenCalled().
 
 const mapMethods = {
   remove: vi.fn(),
@@ -44,56 +37,40 @@ const layerGroupMethods = {
 const markerMethods = {
   addTo: vi.fn().mockReturnThis(),
   bindTooltip: vi.fn().mockReturnThis(),
-  // No bindPopup/openPopup here on purpose: address detail moved to the
-  // AddressSheet (TASK-RF-022.6). If RouteMap ever calls them again, these
-  // tests break with a TypeError — that's the regression guard.
-  on: vi.fn(), // Intercept click events
-  setIcon: vi.fn().mockReturnThis(), // Re-scaled on zoomend (RF-020.4)
+  // No bindPopup/openPopup on purpose: the detail lives in the MapPage panel
+  // (TASK-RF-023.4). If RouteMap ever calls them again, TypeError = regression.
+  on: vi.fn(),
+  setIcon: vi.fn().mockReturnThis(),
 };
 
-vi.mock("leaflet", () => {
-  return {
-    default: {
-      map: vi.fn(() => mapMethods),
-      tileLayer: vi.fn(() => ({ addTo: vi.fn() })),
-      layerGroup: vi.fn(() => layerGroupMethods),
-      // Mock L.latLng to simply return the object, enabling easy equality checks
-      latLng: vi.fn((lat, lng) => ({ lat, lng })),
-      latLngBounds: vi.fn(() => ({
-        contains: vi.fn(() => true),
-      })),
-      marker: vi.fn(() => markerMethods),
-      Icon: vi.fn(),
-      // SVG markers (ADR-008) wrap their html in L.divIcon.
-      divIcon: vi.fn(() => ({})),
-      DivIcon: vi.fn(),
-      // Grouping leader line + dots for the expanded stop (RF-020.3).
-      polyline: vi.fn(() => ({ addTo: vi.fn() })),
-      circleMarker: vi.fn(() => ({ addTo: vi.fn() })),
-    },
-  };
-});
+vi.mock("leaflet", () => ({
+  default: {
+    map: vi.fn(() => mapMethods),
+    tileLayer: vi.fn(() => ({ addTo: vi.fn() })),
+    layerGroup: vi.fn(() => layerGroupMethods),
+    latLng: vi.fn((lat, lng) => ({ lat, lng })),
+    latLngBounds: vi.fn(() => ({ contains: vi.fn(() => true) })),
+    marker: vi.fn(() => markerMethods),
+    Icon: vi.fn(),
+    divIcon: vi.fn(() => ({})),
+    DivIcon: vi.fn(),
+    polyline: vi.fn(() => ({ addTo: vi.fn() })),
+    circleMarker: vi.fn(() => ({ addTo: vi.fn() })),
+  },
+}));
 
-// Import Leaflet after mocking to use the spies in assertions
 import L from "leaflet";
 
-// =============================================================================
-// 2. MOCK UTILITIES & DEPENDENCIES
-// =============================================================================
-
-// resolveLocationType is used by the stop-grouping logic (RF-020.2); the marker
-// color/type follows from it. getCommercialDisplayStatus feeds the tooltip.
 vi.mock("../../utils/inferLocationType", () => ({
   resolveLocationType: vi.fn(() => "RESIDENTIAL"),
   getCommercialDisplayStatus: vi.fn(() => "Não"),
 }));
 
-// Mock CSS imports to prevent parse errors
 vi.mock("leaflet/dist/leaflet.css", () => ({}));
 vi.mock("../../utils/markers/markerIcon.css", () => ({}));
 
 // =============================================================================
-// 3. TEST DATA FIXTURES
+// 2. FIXTURES & HELPERS
 // =============================================================================
 
 const mockRowsWithCoordinates: RowData[] = [
@@ -111,7 +88,7 @@ const mockRowsWithCoordinates: RowData[] = [
     [COLUMN_NAMES.SEQUENCE]: 2,
     [COLUMN_NAMES.STOP]: 2,
     [COLUMN_NAMES.LATITUDE]: -22.8, // Already float
-    [COLUMN_NAMES.LONGITUDE]: -43.2, // Already float
+    [COLUMN_NAMES.LONGITUDE]: -43.2,
     [COLUMN_NAMES.DESTINATION_ADDRESS]: "Av B, 456",
     [COLUMN_NAMES.NEIGHBORHOOD]: "Ipanema",
     [COLUMN_NAMES.ZIPCODE]: "22410-001",
@@ -119,346 +96,57 @@ const mockRowsWithCoordinates: RowData[] = [
   },
 ];
 
-const mockRowsWithoutCoordinates: RowData[] = [
-  {
-    [COLUMN_NAMES.SEQUENCE]: 1,
-    [COLUMN_NAMES.STOP]: 1,
-    [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua A, 123",
-  },
-];
-
 const mockRowsInvalid: RowData[] = [
   {
     [COLUMN_NAMES.SEQUENCE]: 3,
     [COLUMN_NAMES.DESTINATION_ADDRESS]: "Nowhere",
-    [COLUMN_NAMES.LATITUDE]: "invalid", // Should be ignored
+    [COLUMN_NAMES.LATITUDE]: "invalid",
     [COLUMN_NAMES.LONGITUDE]: null,
   },
 ];
 
-const mockRowsWithMissingData: RowData[] = [
-  {
-    [COLUMN_NAMES.LATITUDE]: -229000000,
-    [COLUMN_NAMES.LONGITUDE]: -431000000,
-    // Missing other data
-  },
-];
+const collapsed: InteractionState = { expandedStopKey: null, selectedAddressKey: null };
 
-const mockOnClose = vi.fn();
+const renderRouteMap = (rows: RowData[] = mockRowsWithCoordinates, props: Partial<React.ComponentProps<typeof RouteMap>> = {}) =>
+  render(<RouteMap rows={rows} interaction={collapsed} onInteractionChange={vi.fn()} {...props} />);
 
-// =============================================================================
-// 4. TEST HELPERS
-// =============================================================================
-
-const renderRouteMap = (rows: RowData[] = mockRowsWithCoordinates, onClose = mockOnClose) => {
-  return render(<RouteMap rows={rows} onClose={onClose} />);
+/** Invokes the click handler RouteMap registered on the first marker. */
+const clickFirstMarker = () => {
+  const call = markerMethods.on.mock.calls.find(([event]) => event === "click");
+  expect(call).toBeDefined();
+  act(() => {
+    (call![1] as () => void)();
+  });
 };
 
-describe("RouteMap Component - Comprehensive Tests", () => {
-  const defaultProps = {
-    rows: mockRowsWithCoordinates,
-    onClose: mockOnClose,
-    availableCols: [],
-  };
-
+describe("RouteMap (controlled embedded map)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Mock window.open for Google Maps tests
-    vi.stubGlobal("open", vi.fn());
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
   });
 
   // ==========================================================================
-  // 1. INITIALIZATION & RENDERING
+  // INITIALIZATION & CONFIGURATION
   // ==========================================================================
 
-  it("renders the map container and close button", () => {
+  it("renders as a region filling the parent — no dialog, no internal close button", () => {
     renderRouteMap();
 
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
-    // Check if the Leaflet map initialization function was called
+    expect(screen.getByRole("region", { name: UI_LABELS.ROUTE_MAP.FULLSCREEN_ARIA })).toBeInTheDocument();
+    expect(screen.getByTestId("map-container")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(L.map).toHaveBeenCalled();
-    // Check if TileLayer (the visual map) was added
     expect(L.tileLayer).toHaveBeenCalled();
-  });
-
-  it("initializes a Marker Layer Group", () => {
-    render(<RouteMap {...defaultProps} />);
     expect(L.layerGroup).toHaveBeenCalled();
-    expect(layerGroupMethods.addTo).toHaveBeenCalled();
   });
 
-  it("initializes Leaflet map on mount", () => {
+  it("initializes the map with the Rio bounds and zoom limits", () => {
     renderRouteMap();
 
-    // Checks if the map container was created (rendered via portal)
-    const mapDiv = screen.getByTestId("map-container");
-    expect(mapDiv).toBeInTheDocument();
-  });
-
-  // ==========================================================================
-  // 2. MARKER LOGIC & COORDINATE PARSING
-  // ==========================================================================
-
-  it("parses coordinates and creates markers for valid rows", async () => {
-    render(<RouteMap {...defaultProps} />);
-
-    // Wait for useEffect to execute
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // The component should render without errors
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
-  });
-
-  it("correctly parses coordinate values", () => {
-    renderRouteMap();
-
-    // Parsing converts -229000000 to -22.9 (divide by 10M)
-    // This is tested indirectly through mocks
-    expect(true).toBe(true); // Placeholder - lógica testada via integração
-  });
-
-  it("ignores rows with invalid or missing coordinates", () => {
-    render(<RouteMap {...defaultProps} rows={mockRowsInvalid} />);
-
-    // Should NOT attempt to create a marker for invalid data
-    expect(L.marker).not.toHaveBeenCalled();
-  });
-
-  it("does not render markers for rows without coordinates", () => {
-    renderRouteMap(mockRowsWithoutCoordinates);
-
-    // For lines without coordinates, utility functions should not be called
-    // expect(vi.mocked(resolveLocationType)).not.toHaveBeenCalled();
-  });
-
-  it("handles invalid coordinate values gracefully", () => {
-    const rowsWithInvalidCoords: RowData[] = [
-      {
-        [COLUMN_NAMES.LATITUDE]: "invalid",
-        [COLUMN_NAMES.LONGITUDE]: null,
-      },
-    ];
-
-    renderRouteMap(rowsWithInvalidCoords);
-
-    // Should not break with invalid coordinates
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
-  });
-
-  // ==========================================================================
-  // 3. MARKER MANAGEMENT
-  // ==========================================================================
-
-  it("clears previous markers when rows change", async () => {
-    const { rerender } = render(<RouteMap {...defaultProps} />);
-
-    // Wait for initial render
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Rerender with new data
-    rerender(<RouteMap rows={mockRowsInvalid} onClose={mockOnClose} />);
-
-    // Wait for rerender
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Component should still render correctly
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
-  });
-
-  it("renders markers for rows with valid coordinates", async () => {
-    renderRouteMap(mockRowsWithCoordinates);
-
-    // Wait a while for useEffect to be executed
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Instead of checking specific mocks, just check that the component renders without errors
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
-  });
-
-  // ==========================================================================
-  // 4. TOOLTIPS & CONTENT
-  // ==========================================================================
-
-  it("binds correct tooltip content to markers", async () => {
-    render(<RouteMap {...defaultProps} />);
-
-    // Wait for useEffect
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Component should render with tooltip functionality
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
-  });
-
-  it("formats tooltip content correctly", async () => {
-    renderRouteMap(mockRowsWithCoordinates);
-
-    // Wait a while for useEffect to be executed
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Just check that the component renders
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
-  });
-
-  it("handles missing data gracefully in tooltips", () => {
-    renderRouteMap(mockRowsWithMissingData);
-
-    // Should not break with missing data
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
-  });
-
-  // ==========================================================================
-  // 5. MAP BEHAVIOR (ZOOM & BOUNDS)
-  // ==========================================================================
-
-  it("fits map bounds to include all markers", async () => {
-    render(<RouteMap {...defaultProps} />);
-
-    // Wait for useEffect
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Component should render and handle bounds fitting
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
-  });
-
-  it("fits bounds when there are valid coordinates", () => {
-    renderRouteMap(mockRowsWithCoordinates);
-
-    // Auto-zoom is tested indirectly through mocks
-    expect(true).toBe(true); // Placeholder
-  });
-
-  it("does NOT fit bounds if no markers are valid", () => {
-    render(<RouteMap {...defaultProps} rows={mockRowsInvalid} />);
-    expect(mapMethods.fitBounds).not.toHaveBeenCalled();
-  });
-
-  // ==========================================================================
-  // 6. USER INTERACTION
-  // ==========================================================================
-
-  it("opens Google Maps when a marker is clicked", async () => {
-    render(<RouteMap {...defaultProps} />);
-
-    // Wait for useEffect
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Component should render with click functionality
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
-  });
-
-  it("calls onClose when the close button is clicked", () => {
-    const mockClose = vi.fn();
-    renderRouteMap(mockRowsWithCoordinates, mockClose);
-
-    const closeButton = screen.getByRole("button", { name: /fechar mapa/i });
-    fireEvent.click(closeButton);
-
-    expect(mockClose).toHaveBeenCalledTimes(1);
-  });
-
-  it("calls onClose when close button is clicked", () => {
-    render(<RouteMap {...defaultProps} />);
-
-    const closeBtn = screen.getByRole("button", { name: /fechar mapa/i });
-    fireEvent.click(closeBtn);
-
-    expect(mockOnClose).toHaveBeenCalledTimes(1);
-  });
-
-  it("registers a map click handler to collapse the expanded stop (RF-020.3)", () => {
-    render(<RouteMap {...defaultProps} />);
-    // The empty-map click collapses/clears the selection.
-    expect(mapMethods.on).toHaveBeenCalledWith("click", expect.any(Function));
-  });
-
-  it("calls onClose when Escape key is pressed", () => {
-    const mockClose = vi.fn();
-    renderRouteMap(mockRowsWithCoordinates, mockClose);
-
-    fireEvent.keyDown(window, { key: "Escape" });
-
-    expect(mockClose).toHaveBeenCalledTimes(1);
-  });
-
-  it("calls onClose when Escape key is pressed", () => {
-    render(<RouteMap {...defaultProps} />);
-
-    fireEvent.keyDown(window, { key: "Escape" });
-
-    expect(mockOnClose).toHaveBeenCalledTimes(1);
-  });
-
-  it("does not call onClose for other keys", () => {
-    const mockClose = vi.fn();
-    renderRouteMap(mockRowsWithCoordinates, mockClose);
-
-    fireEvent.keyDown(window, { key: "Enter" });
-
-    expect(mockClose).not.toHaveBeenCalled();
-  });
-
-  it("ignores other keys (e.g., Enter)", () => {
-    render(<RouteMap {...defaultProps} />);
-
-    fireEvent.keyDown(window, { key: "Enter" });
-
-    expect(mockOnClose).not.toHaveBeenCalled();
-  });
-
-  // ==========================================================================
-  // 7. FALLBACKS & SAFETY
-  // ==========================================================================
-
-  it("uses fallback icon when icon key is not found", () => {
-    // Mock pickIconKey para retornar uma chave inexistente
-    // vi.mocked(pickIconKey).mockReturnValue("non-existent-key");
-
-    renderRouteMap(mockRowsWithCoordinates);
-
-    // Deve usar o ícone INDEFINITE como fallback
-    expect(true).toBe(true); // Placeholder - testado via mocks
-  });
-
-  // ==========================================================================
-  // 8. CLEANUP
-  // ==========================================================================
-
-  it("removes the map instance on unmount", () => {
-    const { unmount } = render(<RouteMap {...defaultProps} />);
-
-    unmount();
-
-    // Ensures Leaflet map is properly destroyed to prevent memory leaks
-    expect(mapMethods.remove).toHaveBeenCalled();
-  });
-
-  it("cleans up event listeners on unmount", () => {
-    const { unmount } = renderRouteMap();
-
-    // Spy no removeEventListener
-    const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
-
-    unmount();
-
-    expect(removeEventListenerSpy).toHaveBeenCalledWith("keydown", expect.any(Function));
-  });
-
-  // ==========================================================================
-  // 9. MAP CONFIGURATION & BOUNDS
-  // ==========================================================================
-
-  it("initializes map with correct Rio bounds", () => {
-    render(<RouteMap {...defaultProps} />);
-
-    // Verify map was created with Rio bounds
     expect(L.map).toHaveBeenCalledWith(
       expect.any(Object),
       expect.objectContaining({
-        maxBounds: expect.any(Object), // Rio bounds object
+        maxBounds: expect.any(Object),
         maxBoundsViscosity: 1.0,
         maxZoom: 19,
         minZoom: 14,
@@ -467,212 +155,81 @@ describe("RouteMap Component - Comprehensive Tests", () => {
     );
   });
 
-  it("configures tile layer with correct settings", () => {
-    render(<RouteMap {...defaultProps} />);
+  it("configures the tile proxy layer with the correct settings", () => {
+    renderRouteMap();
 
     expect(L.tileLayer).toHaveBeenCalledWith(
       "https://tile-proxy.thiagorod-dev.workers.dev/tiles/{z}/{x}/{y}.png",
-      expect.objectContaining({
-        maxZoom: 19,
-        minZoom: 14,
-        tileSize: 256,
-        updateWhenIdle: true,
-        keepBuffer: 2,
-      })
+      expect.objectContaining({ maxZoom: 19, minZoom: 14, tileSize: 256, updateWhenIdle: true, keepBuffer: 2 })
     );
   });
 
   // ==========================================================================
-  // 10. COORDINATE PARSING EDGE CASES
+  // MARKERS & BOUNDS
   // ==========================================================================
 
-  it("handles extreme coordinate values", () => {
-    const extremeRows: RowData[] = [
-      {
-        [COLUMN_NAMES.LATITUDE]: -90000000, // Very south
-        [COLUMN_NAMES.LONGITUDE]: -44000000, // Very west
-      },
-      {
-        [COLUMN_NAMES.LATITUDE]: 90000000, // Very north (invalid for Rio)
-        [COLUMN_NAMES.LONGITUDE]: 44000000, // Very east (invalid for Rio)
-      },
-    ];
-
-    renderRouteMap(extremeRows);
-
-    // Component should handle extreme values gracefully
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
-  });
-
-  // ==========================================================================
-  // 11. BUSINESS LOGIC INTEGRATION
-  // ==========================================================================
-
-  it("integrates with location type resolution", () => {
-    const commercialRow: RowData[] = [
-      {
-        [COLUMN_NAMES.LATITUDE]: -22.9,
-        [COLUMN_NAMES.LONGITUDE]: -43.1,
-        [COLUMN_NAMES.LOCATION_TYPE]: "Commercial",
-      },
-    ];
-
-    renderRouteMap(commercialRow);
-
-    // Component should call business logic functions
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
-  });
-
-  // ==========================================================================
-  // 12. ICON SYSTEM INTEGRATION
-  // ==========================================================================
-
-  it("uses correct icon scaling factor", () => {
+  it("creates markers for valid rows and none for invalid coordinates", () => {
     renderRouteMap();
+    expect(L.marker).toHaveBeenCalled();
 
-    // The icon scaling is calculated once at module level
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
+    vi.clearAllMocks();
+    renderRouteMap(mockRowsInvalid);
+    expect(L.marker).not.toHaveBeenCalled();
   });
 
-  it("handles icon key resolution and fallbacks", () => {
-    const testRows: RowData[] = [
-      {
-        [COLUMN_NAMES.LATITUDE]: -22.9,
-        [COLUMN_NAMES.LONGITUDE]: -43.1,
-        [COLUMN_NAMES.LOCATION_TYPE]: "Residential",
-        [COLUMN_NAMES.ZIPCODE]: "22041-001",
-      },
+  it("fits bounds with the bottom obstruction padding (collapsed panel — RF-023.5)", () => {
+    renderRouteMap(mockRowsWithCoordinates, { bottomObstructionPx: 200 });
+
+    expect(mapMethods.fitBounds).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ paddingTopLeft: [50, 50], paddingBottomRight: [50, 250] }));
+  });
+
+  it("does NOT fit bounds when no markers are valid", () => {
+    renderRouteMap(mockRowsInvalid);
+    expect(mapMethods.fitBounds).not.toHaveBeenCalled();
+  });
+
+  it("survives malformed and extreme row data without crashing", () => {
+    const malformedRows: RowData[] = [
+      {},
+      { [COLUMN_NAMES.LATITUDE]: null, [COLUMN_NAMES.LONGITUDE]: undefined, [COLUMN_NAMES.DESTINATION_ADDRESS]: "" },
+      { [COLUMN_NAMES.LATITUDE]: NaN, [COLUMN_NAMES.LONGITUDE]: Infinity },
+      { [COLUMN_NAMES.LATITUDE]: 90000000, [COLUMN_NAMES.LONGITUDE]: 44000000 }, // out of Rio bounds
     ];
+    renderRouteMap(malformedRows);
 
-    renderRouteMap(testRows);
-
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: UI_LABELS.ROUTE_MAP.FULLSCREEN_ARIA })).toBeInTheDocument();
   });
 
-  // ==========================================================================
-  // 13. PERFORMANCE & LARGE DATASETS
-  // ==========================================================================
-
-  it("handles large datasets efficiently", () => {
-    // Create a large dataset (100 markers)
+  it("handles large datasets (100 stops) without crashing", () => {
     const largeDataset: RowData[] = Array.from({ length: 100 }, (_, i) => ({
       [COLUMN_NAMES.SEQUENCE]: i + 1,
       [COLUMN_NAMES.STOP]: i + 1,
       [COLUMN_NAMES.LATITUDE]: -22.9 + i * 0.001,
       [COLUMN_NAMES.LONGITUDE]: -43.1 + i * 0.001,
-      [COLUMN_NAMES.DESTINATION_ADDRESS]: `Address ${i}`,
-      [COLUMN_NAMES.NEIGHBORHOOD]: `Neighborhood ${i}`,
-      [COLUMN_NAMES.ZIPCODE]: `20000-00${i}`,
+      [COLUMN_NAMES.DESTINATION_ADDRESS]: `Address ${i}, ${i}`,
     }));
-
     renderRouteMap(largeDataset);
 
-    // Component should handle large datasets without crashing
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: UI_LABELS.ROUTE_MAP.FULLSCREEN_ARIA })).toBeInTheDocument();
   });
 
   // ==========================================================================
-  // 14. ACCESSIBILITY & UX
+  // CONTROLLED INTERACTION (TASK-RF-023.2 / REF-011)
   // ==========================================================================
 
-  it("provides accessible close button", () => {
-    renderRouteMap();
+  it("marker click EMITS the transition (stop click → first address selected) without mutating on its own", () => {
+    const onChange = vi.fn();
+    renderRouteMap(mockRowsWithCoordinates, { onInteractionChange: onChange });
 
-    const closeButton = screen.getByRole("button", { name: /fechar mapa/i });
-
-    expect(closeButton).toBeInTheDocument();
-    // Styling is owned by the shadcn Button; here we assert the accessible affordance.
-    expect(closeButton).toBeEnabled();
-  });
-
-  it("supports keyboard navigation", () => {
-    const mockClose = vi.fn();
-    renderRouteMap(mockRowsWithCoordinates, mockClose);
-
-    // Test Escape key (primary keyboard interaction)
-    fireEvent.keyDown(window, { key: "Escape" });
-    expect(mockClose).toHaveBeenCalledTimes(1);
-  });
-
-  // ==========================================================================
-  // 15. ERROR HANDLING & ROBUSTNESS
-  // ==========================================================================
-
-  it("handles malformed row data gracefully", () => {
-    const malformedRows: RowData[] = [
-      {}, // Completely empty row
-      {
-        [COLUMN_NAMES.LATITUDE]: null,
-        [COLUMN_NAMES.LONGITUDE]: undefined,
-        [COLUMN_NAMES.DESTINATION_ADDRESS]: "",
-      },
-      {
-        [COLUMN_NAMES.LATITUDE]: NaN,
-        [COLUMN_NAMES.LONGITUDE]: Infinity,
-      },
-    ];
-
-    renderRouteMap(malformedRows);
-
-    // Component should not crash with malformed data
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
-  });
-});
-
-// =============================================================================
-// EMBEDDED MODE (TASK-RF-022.5) — map focus screen
-// =============================================================================
-
-describe("RouteMap embedded mode (TASK-RF-022.5)", () => {
-  it("fills the parent as a region WITHOUT the internal close button (header back is the way out)", () => {
-    render(<RouteMap rows={mockRowsWithCoordinates} onClose={mockOnClose} embedded />);
-
-    expect(screen.getByRole("region")).toBeInTheDocument();
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /fechar mapa/i })).not.toBeInTheDocument();
-  });
-
-  it("keeps the legacy modal (dialog + own close button) by default", () => {
-    renderRouteMap();
-
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /fechar mapa/i })).toBeInTheDocument();
-  });
-});
-
-// =============================================================================
-// ADDRESS SHEET INTEGRATION (TASK-RF-022.6) — detail moved from popup to panel
-// =============================================================================
-
-describe("RouteMap + AddressSheet integration (TASK-RF-022.6)", () => {
-  const SHEET_NAME = UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.ARIA;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  /** Invokes the click handler RouteMap registered on the first marker. */
-  const clickFirstMarker = () => {
-    const call = markerMethods.on.mock.calls.find(([event]) => event === "click");
-    expect(call).toBeDefined();
-    act(() => {
-      (call![1] as () => void)();
-    });
-  };
-
-  it("clicking a single-address stop opens the AddressSheet with its details", () => {
-    renderRouteMap();
-    expect(screen.queryByRole("region", { name: SHEET_NAME })).not.toBeInTheDocument();
-
-    clickFirstMarker(); // stop with 1 address → auto-selects it (nextInteraction)
-
-    expect(screen.getByRole("region", { name: SHEET_NAME })).toBeInTheDocument();
-    expect(screen.getByText("Rua A, 123")).toBeInTheDocument();
-  });
-
-  it("clicking the empty map collapses and hides the sheet", () => {
-    renderRouteMap();
     clickFirstMarker();
+
+    // Single-address stop auto-selects its first address — the PARENT decides what to do.
+    expect(onChange).toHaveBeenCalledWith({ expandedStopKey: "0", selectedAddressKey: "0:0" });
+  });
+
+  it("empty-map click emits the collapse transition", () => {
+    const onChange = vi.fn();
+    renderRouteMap(mockRowsWithCoordinates, { onInteractionChange: onChange });
 
     const mapClick = mapMethods.on.mock.calls.find(([event]) => event === "click");
     expect(mapClick).toBeDefined();
@@ -680,47 +237,27 @@ describe("RouteMap + AddressSheet integration (TASK-RF-022.6)", () => {
       (mapClick![1] as () => void)();
     });
 
-    expect(screen.queryByRole("region", { name: SHEET_NAME })).not.toBeInTheDocument();
+    expect(onChange).toHaveBeenCalledWith({ expandedStopKey: null, selectedAddressKey: null });
   });
 
-  it("the sheet's close button clears only the selection", () => {
-    renderRouteMap();
-    clickFirstMarker();
-
-    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.CLOSE }));
-
-    expect(screen.queryByRole("region", { name: SHEET_NAME })).not.toBeInTheDocument();
-  });
-});
-
-// =============================================================================
-// CONTROLLED INTERACTION (TASK-RF-023.2) — state lifted to the MapPage
-// =============================================================================
-
-describe("RouteMap controlled interaction (TASK-RF-023.2)", () => {
-  beforeEach(() => {
+  it("refits to the expanded stop when the controlled interaction changes", () => {
+    const { rerender } = renderRouteMap();
     vi.clearAllMocks();
+
+    rerender(<RouteMap rows={mockRowsWithCoordinates} interaction={{ expandedStopKey: "0", selectedAddressKey: "0:0" }} onInteractionChange={vi.fn()} />);
+
+    // Expanded-stop framing uses the tighter padding and MAX zoom.
+    expect(mapMethods.fitBounds).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ paddingTopLeft: [40, 40], maxZoom: 19 }));
   });
 
-  it("emits transitions via onInteractionChange without mutating on its own", () => {
-    const onChange = vi.fn();
-    render(<RouteMap rows={mockRowsWithCoordinates} onClose={mockOnClose} interaction={{ expandedStopKey: null, selectedAddressKey: null }} onInteractionChange={onChange} />);
+  // ==========================================================================
+  // CLEANUP
+  // ==========================================================================
 
-    const call = markerMethods.on.mock.calls.find(([event]) => event === "click");
-    expect(call).toBeDefined();
-    act(() => {
-      (call![1] as () => void)();
-    });
+  it("removes the map instance on unmount", () => {
+    const { unmount } = renderRouteMap();
+    unmount();
 
-    // Single-address stop auto-selects (nextInteraction) — the parent decides.
-    expect(onChange).toHaveBeenCalledWith({ expandedStopKey: "0", selectedAddressKey: "0:0" });
-    // Controlled + parent didn't update → no sheet appears on its own.
-    expect(screen.queryByRole("region", { name: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.ARIA })).not.toBeInTheDocument();
-  });
-
-  it("embedded mode renders NO internal AddressSheet even with a selected address", () => {
-    render(<RouteMap rows={mockRowsWithCoordinates} onClose={mockOnClose} embedded interaction={{ expandedStopKey: "0", selectedAddressKey: "0:0" }} onInteractionChange={() => {}} />);
-
-    expect(screen.queryByRole("region", { name: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.ARIA })).not.toBeInTheDocument();
+    expect(mapMethods.remove).toHaveBeenCalled();
   });
 });

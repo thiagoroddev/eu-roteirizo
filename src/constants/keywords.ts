@@ -162,6 +162,7 @@ const commercialRaw = [
   "estacao",
   "estacionamento",
   "escola",
+  "faculdade",
   "farmacia",
   "farma",
   "farmalife",

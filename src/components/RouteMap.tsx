@@ -1,23 +1,20 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import React, { useEffect, useMemo, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 // Tipos e Constantes
 import type { RowData } from "../types";
 import { MAP_CONFIG, UI_LABELS } from "../constants";
-import { Button } from "./ui/button";
 
 // SVG markers (ADR-008): one marker per stop; click expands a stop into its address
-// circles, click an address opens the AddressSheet bottom panel (fluxo-modo-original §6).
-// The view-model logic is pure (markerModels).
+// circles, click an address selects it — the MapPage's persistent panel shows the
+// detail (RF-023). The view-model logic is pure (markerModels).
 import { createMarkerDivIcon } from "../utils/markers/markerIcon";
 import { MARKER_GEOMETRY } from "../utils/markers/markerSvg";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
 import { colorForLocationType } from "../utils/markers/markerColors";
 import { scaleForZoom, MARKER_MAX_SCALE } from "../utils/markers/markerScale";
-import { computeMarkerModels, nextInteraction, collapseInteraction, findAddressByKey, type MarkerModel, type InteractionState } from "../utils/markers/markerModels";
-import { AddressSheet } from "./map/AddressSheet";
+import { computeMarkerModels, nextInteraction, collapseInteraction, type MarkerModel, type InteractionState } from "../utils/markers/markerModels";
 
 /* ============================================================================
    GLOBAL CONFIGURATION (OUTSIDE COMPONENT)
@@ -46,70 +43,44 @@ const Z_SELECTED = 200000;
 ============================================================================ */
 
 /**
- * RouteMap - Fullscreen map component displaying route deliveries (Original mode).
+ * RouteMap - the embedded Leaflet map of the `/mapa` focus screen (Original mode).
  *
- * Draws one SVG marker per stop (square). Clicking a stop expands its addresses as
- * circles labeled `stop-sequence`; clicking an address opens the AddressSheet with its packages
- * and details. Clicking the empty map collapses and clears the selection.
- *
- * @param {RowData[]} rows - All deliveries for the selected route
- * @param {() => void} onClose - Callback to close the fullscreen map modal
- * @param {string[] | null} availableCols - Available columns from Excel file
- * @returns {JSX.Element} The rendered RouteMap component
+ * Draws one SVG marker per stop (square). Clicking a stop expands its addresses
+ * as circles and selects the first one; clicking an address selects it; clicking
+ * the empty map collapses. FULLY CONTROLLED (TASK-REF-011): the parent (MapPage)
+ * owns the interaction state — this component only draws it and EMITS transitions
+ * via onInteractionChange, so the persistent MapPanel and the map share one
+ * source of truth. Escape/close are the page's business, not this component's.
  */
 interface Props {
   rows: RowData[];
-  onClose: () => void;
-  availableCols?: string[] | null;
-  /**
-   * Embedded mode (TASK-RF-022.5): fills the parent layout instead of a fixed
-   * fullscreen overlay, and hides the internal close button — the shell's
-   * header back arrow is the way out. Default false keeps the legacy modal
-   * behavior (its own close button, since no header back exists there).
-   */
-  embedded?: boolean;
-  /**
-   * Controlled interaction (TASK-RF-023.2): when present, the parent (MapPage)
-   * owns the state — the map only EMITS transitions via onInteractionChange,
-   * so the MapPanel and the map share one source of truth. Absent = internal
-   * state (legacy fullscreen modal stays untouched).
-   */
-  interaction?: InteractionState;
-  onInteractionChange?: (next: InteractionState) => void;
+  interaction: InteractionState;
+  onInteractionChange: (next: InteractionState) => void;
   /**
    * Height (px) of whatever covers the map's bottom (the collapsed MapPanel).
    * Added to the fitBounds bottom padding so markers never frame behind it
-   * (TASK-RF-023.5). Default 0 = legacy modal (nothing persistent on top).
+   * (TASK-RF-023.5).
    */
   bottomObstructionPx?: number;
 }
 
-export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false, interaction, onInteractionChange, bottomObstructionPx = 0 }) => {
+export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChange, bottomObstructionPx = 0 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
 
-  // Interaction state (ADR-008 §10): which stop is expanded, which address is
-  // selected. Controlled-with-fallback since TASK-RF-023.2 (see Props).
-  const [internalInteraction, setInternalInteraction] = useState<InteractionState>(collapseInteraction());
-  const isControlled = interaction !== undefined;
-  const { expandedStopKey, selectedAddressKey } = isControlled ? interaction : internalInteraction;
+  const { expandedStopKey, selectedAddressKey } = interaction;
 
-  // Latest-callback ref: effects registered once (deps []) apply transitions
+  // Latest-callback ref: effects registered once (deps []) emit transitions
   // through it without re-subscribing Leaflet handlers on every state change.
   // Kept fresh in an effect (refs must not be written during render).
   const applyInteractionRef = useRef<(next: InteractionState) => void>(() => {});
   useEffect(() => {
-    applyInteractionRef.current = (next: InteractionState) => {
-      if (!isControlled) setInternalInteraction(next);
-      onInteractionChange?.(next);
-    };
+    applyInteractionRef.current = onInteractionChange;
   });
 
   const stops = useMemo(() => groupRowsByStop(rows), [rows]);
   const models = useMemo(() => computeMarkerModels(stops, expandedStopKey, selectedAddressKey), [stops, expandedStopKey, selectedAddressKey]);
-  /** Selected address for the bottom sheet (null-safe against stale keys). */
-  const selected = useMemo(() => findAddressByKey(stops, selectedAddressKey), [stops, selectedAddressKey]);
 
   // 1) MAP INITIALIZATION (Leaflet Setup)
   useEffect(() => {
@@ -276,45 +247,11 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false, int
     };
   }, []);
 
-  // 5) KEYBOARD HANDLER (legacy modal only) — Escape clears the address selection
-  // first; with nothing selected it leaves the map (same destination as the close
-  // button). Embedded: the MapPage owns Escape (steps down the panel snaps — design §5).
-  useEffect(() => {
-    if (embedded) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      if (selectedAddressKey !== null) applyInteractionRef.current({ expandedStopKey, selectedAddressKey: null });
-      else onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, selectedAddressKey, expandedStopKey, embedded]);
-
-  // Embedded: fill the parent (focus screen, header back = way out). Legacy
-  // modal: portal to body as a fixed overlay with its own close button.
-  const containerProps = embedded ? ({ className: "relative h-full w-full bg-background", role: "region" } as const) : ({ className: "fixed inset-0 bg-background z-[2000]", role: "dialog" } as const);
-  const content = (
-    <div {...containerProps} aria-label={UI_LABELS.ROUTE_MAP.FULLSCREEN_ARIA}>
+  // Fills the parent (focus screen layout); leaving the screen is the shell's
+  // header back arrow / the page's Escape handler (TASK-RF-023.5).
+  return (
+    <div className="relative h-full w-full bg-background" role="region" aria-label={UI_LABELS.ROUTE_MAP.FULLSCREEN_ARIA}>
       <div ref={mapContainerRef} data-testid="map-container" className="absolute inset-0 w-full h-full" />
-
-      {/* Legacy fullscreen modal only: address detail overlay. In embedded mode
-          the MapPanel (MapPage) owns the detail — no internal sheet (RF-023.2). */}
-      {!embedded && (
-        <AddressSheet
-          address={selected?.address ?? null}
-          stopNumber={selected && selected.stop.hasStop ? selected.stop.stop : null}
-          onClose={() => applyInteractionRef.current({ expandedStopKey, selectedAddressKey: null })}
-        />
-      )}
-
-      {!embedded && (
-        <Button onClick={onClose} type="button" className="fixed right-4 top-4 z-[3000] shadow-lg">
-          <span aria-hidden>×</span>
-          {UI_LABELS.ROUTE_MAP.CLOSE}
-        </Button>
-      )}
     </div>
   );
-
-  return embedded ? content : createPortal(content, document.body);
 };

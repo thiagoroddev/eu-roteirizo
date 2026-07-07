@@ -112,7 +112,6 @@ export const UI_LABELS = {
     MY_ROTEIRO_SOON: "Em breve — montar e ver o seu roteiro",
   },
   ROUTE_MAP: {
-    CLOSE: "Fechar Mapa",
     FULLSCREEN_ARIA: "Mapa em tela cheia",
     TOOLTIP: {
       SEQUENCE: "Sequência:",
@@ -122,16 +121,10 @@ export const UI_LABELS = {
       ZIPCODE: "CEP:",
       COMMERCIAL: "Horário comercial?",
     },
-    // Painel inferior do endereço — único dos dois modos (fluxo-modo-original §6 — TASK-RF-022.6; antes era o popup da RF-020.3).
+    // Textos do detalhe do endereço, hoje renderizado pelo painel do mapa
+    // (StopItemDetail — RF-023.4; o componente AddressSheet foi aposentado na REF-011).
     ADDRESS_SHEET: {
-      ARIA: "Detalhes do endereço",
-      CLOSE: "Fechar painel",
-      STOP: "Parada:",
       PACKAGES_HEADER: (count: number) => `Pacotes nesse endereço (${count})`,
-      SEQUENCE: "seq",
-      ADDRESS: "Endereço:",
-      NEIGHBORHOOD: "Bairro:",
-      ZIPCODE: "CEP:",
       COMPLEMENT: "Complemento:",
       NO_COMPLEMENT: "—",
       TYPE: "Tipo:",

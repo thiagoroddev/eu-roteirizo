@@ -80,8 +80,8 @@ vi.mock("../../hooks/useRouteUploader", () => ({
 // Stub RouteMap (Leaflet) — exposes the controlled-interaction contract so the
 // tests can drive selections the way the real map would (RF-023.2).
 vi.mock("../../components/RouteMap", () => ({
-  RouteMap: ({ embedded, interaction, onInteractionChange }: { embedded?: boolean; interaction?: InteractionState; onInteractionChange?: (next: InteractionState) => void }) => (
-    <div data-testid="route-map-stub" data-embedded={String(!!embedded)} data-controlled={String(!!onInteractionChange)} data-expanded-stop={String(interaction?.expandedStopKey ?? null)}>
+  RouteMap: ({ interaction, onInteractionChange }: { interaction?: InteractionState; onInteractionChange?: (next: InteractionState) => void }) => (
+    <div data-testid="route-map-stub" data-controlled={String(!!onInteractionChange)} data-expanded-stop={String(interaction?.expandedStopKey ?? null)}>
       <button type="button" onClick={() => onInteractionChange?.({ expandedStopKey: "0", selectedAddressKey: "0:0" })}>
         stub-select-first-address
       </button>
@@ -120,13 +120,11 @@ describe("MapPage (focus screen)", () => {
     uploaderState.loading = false;
   });
 
-  it("loads the manifest from the URL and renders the map in embedded/controlled mode", () => {
+  it("loads the manifest from the URL and renders the CONTROLLED map", () => {
     renderPage();
 
     expect(uploaderState.loadManifest).toHaveBeenCalledWith("hash-1");
-    const stub = screen.getByTestId("route-map-stub");
-    expect(stub).toHaveAttribute("data-embedded", "true");
-    expect(stub).toHaveAttribute("data-controlled", "true");
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-controlled", "true");
   });
 
   it("shows the segmented toggle with 'Meu roteiro' disabled until TASK-RF-010", () => {

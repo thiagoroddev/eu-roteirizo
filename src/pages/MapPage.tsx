@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
 
 import { RouteMap } from "../components/RouteMap";
@@ -10,7 +10,7 @@ import { PanelModeBar } from "../components/map/panel/PanelModeBar";
 import { PanelTitle } from "../components/map/panel/PanelTitle";
 import { StopItemList } from "../components/map/panel/StopItemList";
 import { StopItemRow, StopItemDetail } from "../components/map/panel/StopItem";
-import { useRouteUploader } from "../hooks/useRouteUploader";
+import { useManifestFromUrl } from "../hooks/useManifestFromUrl";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
 import { collapseInteraction, firstAddressKey, type InteractionState } from "../utils/markers/markerModels";
 import { adjacentStopKey, buildPanelItems, panelMetrics, smallestStopKey, stopPlaceSummary } from "../utils/markers/panelModels";
@@ -41,13 +41,7 @@ type PanelView = "selected" | "list";
  */
 function MapPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const manifestId = searchParams.get("romaneio");
-  const routeName = searchParams.get("rota");
-
-  const { routes, loading, error, availableCols, loadManifest } = useRouteUploader();
-  /** Guards the load against re-runs (same id → load once). */
-  const loadedRef = useRef<string | null>(null);
+  const { manifestId, routeName, routes, loading, error, currentRows } = useManifestFromUrl();
 
   // Phase 1: always "original"; the setter exists for TASK-RF-010 to flip.
   const [mode, setMode] = useState<MapMode>("original");
@@ -83,12 +77,6 @@ function MapPage() {
     [applyInteraction]
   );
 
-  useEffect(() => {
-    if (!manifestId || loadedRef.current === manifestId) return;
-    loadedRef.current = manifestId;
-    void loadManifest(manifestId);
-  }, [manifestId, loadManifest]);
-
   // Escape steps DOWN before leaving (design §5, rev. 07/07): list view →
   // selected view; taller snap → collapsed; collapsed → same destination as the
   // header back arrow. Selection is untouched — the panel never empties.
@@ -109,7 +97,6 @@ function MapPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [panelView, panelSnap, navigate]);
 
-  const currentRows = useMemo(() => (routeName && routes ? (routes[routeName] ?? []) : []), [routeName, routes]);
   const stops = useMemo(() => groupRowsByStop(currentRows), [currentRows]);
 
   // Initial selection = smallest numeric stop (decision 05/07). Derived — no
@@ -203,17 +190,9 @@ function MapPage() {
 
       {!loading && !error && routes && (
         <>
-          {/* Embedded: no internal close/Escape (this page owns both); fitBounds pads
-              the bottom so the route never frames behind the collapsed panel. */}
-          <RouteMap
-            rows={currentRows}
-            availableCols={availableCols}
-            embedded
-            onClose={() => navigate(-1)}
-            interaction={interaction}
-            onInteractionChange={handleMapInteraction}
-            bottomObstructionPx={PANEL_COLLAPSED_PX}
-          />
+          {/* Controlled map; fitBounds pads the bottom so the route never frames
+              behind the collapsed panel. Escape/back are this page's handlers. */}
+          <RouteMap rows={currentRows} interaction={interaction} onInteractionChange={handleMapInteraction} bottomObstructionPx={PANEL_COLLAPSED_PX} />
 
           {/* Toggle floats OVER the map (fluxo §15.4: dominant map, compact overlays —
               no dedicated bar). z-index above Leaflet's panes/controls (~1000). */}

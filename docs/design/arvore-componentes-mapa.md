@@ -58,7 +58,7 @@ MapPage ✅                              /mapa?romaneio&rota (FocusShell: header
     └── [slot] footer 🔮                CTA fixo (Salvar alterações / Desfazer / Iniciar rota)
 ```
 
-**Destino do `AddressSheet` (022.6):** ✅ absorvido na **023.4** — o conteúdo virou o `StopItem` expandido (endereço/complemento, bairro/CEP/tipo, `PackageRow`×N, link Maps); testes de conteúdo migrados. O componente sobrevive **apenas no modal fullscreen legado** (`RouteMap !embedded`, aberto pelo fluxo inline do RouteViewer) — aposentadoria total junto com a **TASK-REF-011** (remoção do fluxo legado). Variante `inline` removida na 023.5.
+**Destino do `AddressSheet` (022.6):** ✅ **APOSENTADO na TASK-REF-011 (07/07)** — o conteúdo foi absorvido pelo `StopItem`/`StopItemDetail` na 023.4 e o último consumidor (o modal fullscreen legado do RouteViewer) foi removido junto com o fluxo inline. O `RouteMap` é hoje **só-embedded e totalmente controlado** (`interaction`/`onInteractionChange` obrigatórias; sem portal, botão de fechar ou Escape próprio).
 
 ---
 

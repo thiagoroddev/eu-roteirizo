@@ -401,7 +401,6 @@
 <!-- ✅ TASK-CHORE-002 encerrada (05/07/26): suíte completa rodou verde em Windows nativo — 384/384 em 40 arquivos, ~13s (registrado em concluidas/2026-07-05--18h08--TASK-RF-022.1.md). O travamento era do sandbox antigo. -->
 <!-- ✅ TASK-CHORE-003 concluída (05/07) — ambiente blindado (.npmrc include=dev, test.env no Vitest, env do Claude Code, TLS reativado) — ver concluidas/2026-07-05--04h57--TASK-CHORE-003.md -->
 | TASK-DOC-003 | Sincronizar `contexto-projeto-ai.md`: deixa de ser "SPA de página única sem router" (ADR-003) | Standard | Importante | Normal | P/P | TASK-RF-011 | ADR-003 | [ ] | 22/06/26 23:50 |
-| TASK-REF-011 | Remover o fluxo inline legado do `RouteViewer` (pós-upload navega desde a 022.4; seletor/sumário/modais inline = código morto no caminho normal) + extrair hook `useManifestFromUrl` (Regra de Três: SummaryPage/MapPage) + **aposentar `AddressSheet` e o modal fullscreen do `RouteMap`** (`!embedded` + handler de Escape legado — únicos consumidores; conteúdo absorvido pelo painel na RF-023.4) | Standard | Importante | Normal | M/M | TASK-RF-022 ✅, TASK-RF-023 ✅ | origem: revisão da TASK-RF-022.6; escopo ampliado na RF-023.5 | [ ] | 05/07/26 21:05 |
 | TASK-TEST-002 | Testar o zoom do mapa e definir o limite mínimo ideal (detalhe de rua p/ roteirizar a pé); alinhar `MAP_CONFIG.ZOOM.MIN` com o bloqueio do tile worker (hoje z<14) | Standard | Importante | Normal | P/M | - | RNF-12, RNF-15 | [ ] | 24/06/26 14:50 |
 
 
