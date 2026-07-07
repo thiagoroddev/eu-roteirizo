@@ -7,10 +7,24 @@ import type { RowData } from "../../types";
 import type { InteractionState } from "../../utils/markers/markerModels";
 
 // vaul cannot run in jsdom — passthrough mock (gesture is validated on device).
+// The extra button simulates a DRAG SETTLE (vaul calling setActiveSnapPoint).
 vi.mock("vaul", () => ({
   Drawer: {
-    Root: ({ children, dismissible, activeSnapPoint }: { children?: ReactNode; dismissible?: boolean; activeSnapPoint?: number | string | null }) => (
+    Root: ({
+      children,
+      dismissible,
+      activeSnapPoint,
+      setActiveSnapPoint,
+    }: {
+      children?: ReactNode;
+      dismissible?: boolean;
+      activeSnapPoint?: number | string | null;
+      setActiveSnapPoint?: (snap: number | string | null) => void;
+    }) => (
       <div data-testid="vaul-root" data-dismissible={String(!!dismissible)} data-active-snap={String(activeSnapPoint)}>
+        <button type="button" onClick={() => setActiveSnapPoint?.(0.45)}>
+          stub-drag-to-half
+        </button>
         {children}
       </div>
     ),
@@ -29,7 +43,16 @@ const rowsA1: RowData[] = [
     [COLUMN_NAMES.LATITUDE]: -229000000,
     [COLUMN_NAMES.LONGITUDE]: -431000000,
     [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Mapa, 10",
+    // No inferable complement → the column decides (RF-016, value = ICON_KEYS
+    // "Home"): deterministic residential chip.
+    [COLUMN_NAMES.LOCATION_TYPE]: "Home",
   },
+];
+
+/** One stop with TWO addresses (keys "0:0"/"0:1") — header-row selection tests. */
+const rowsStop1TwoAddresses: RowData[] = [
+  { [COLUMN_NAMES.SEQUENCE]: 1, [COLUMN_NAMES.STOP]: 1, [COLUMN_NAMES.LATITUDE]: -22.9, [COLUMN_NAMES.LONGITUDE]: -43.2, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Mapa, 10" },
+  { [COLUMN_NAMES.SEQUENCE]: 2, [COLUMN_NAMES.STOP]: 1, [COLUMN_NAMES.LATITUDE]: -22.91, [COLUMN_NAMES.LONGITUDE]: -43.21, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Beta, 20" },
 ];
 
 /** Two stops whose numeric order differs from the lexicographic one ("10" < "2"). */
@@ -62,6 +85,9 @@ vi.mock("../../components/RouteMap", () => ({
       <button type="button" onClick={() => onInteractionChange?.({ expandedStopKey: "0", selectedAddressKey: "0:0" })}>
         stub-select-first-address
       </button>
+      <button type="button" onClick={() => onInteractionChange?.({ expandedStopKey: "0", selectedAddressKey: "0:1" })}>
+        stub-select-second-address
+      </button>
       <button type="button" onClick={() => onInteractionChange?.({ expandedStopKey: null, selectedAddressKey: null })}>
         stub-collapse
       </button>
@@ -80,6 +106,11 @@ const renderPage = (initialPath = "/mapa?romaneio=hash-1&rota=A-1") =>
       </Routes>
     </MemoryRouter>
   );
+
+// TWO VIEWS (TASK-RF-023.7): each address renders as ONE row — the selected
+// card (default view) or the list item (list view) — so name queries are unique.
+const addressRow = (name: RegExp) => screen.getByRole("button", { name });
+const openListView = () => fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_FULL_LIST }));
 
 describe("MapPage (focus screen)", () => {
   beforeEach(() => {
@@ -127,56 +158,143 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getAllByText("Rua Dois, 2").length).toBeGreaterThan(0);
   });
 
-  it("renders the stop's address list as the panel body (RF-023.4)", () => {
+  // ==========================================================================
+  // Duas visões do painel (TASK-RF-023.7)
+  // ==========================================================================
+
+  it("default view: stop summary + selected-address card, NO list (no duplication)", () => {
     renderPage();
 
-    expect(screen.getByRole("list", { name: UI_LABELS.MAP_PANEL.ITEM.LIST_ARIA })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Rua Mapa, 10/, expanded: false })).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_FULL_LIST })).toBeInTheDocument();
+    // The card falls back to the first-by-Sequence address, collapsed.
+    expect(addressRow(/Rua Mapa, 10/)).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("list", { name: UI_LABELS.MAP_PANEL.ITEM.LIST_ARIA })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Rua Mapa, 10/ })).toHaveLength(1);
   });
 
-  it("selecting an address on the map expands its StopItem in the panel (map → panel)", () => {
+  it("tapping the card expands its detail IN the panel (half snap) and mirrors the map", () => {
     renderPage();
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "224px");
 
-    fireEvent.click(screen.getByRole("button", { name: "stub-select-first-address" }));
+    fireEvent.click(addressRow(/Rua Mapa, 10/));
 
-    expect(screen.getByRole("button", { name: /Rua Mapa, 10/, expanded: true })).toBeInTheDocument();
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.45");
+    expect(addressRow(/Rua Mapa, 10/)).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.PACKAGES_HEADER(1))).toBeInTheDocument();
-  });
-
-  it("tapping a StopItem mirrors the selection on the map and toggles the detail (panel → map)", () => {
-    renderPage();
-    const itemButton = () => screen.getByRole("button", { name: /Rua Mapa, 10/ });
-
-    fireEvent.click(itemButton());
     expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-expanded-stop", "0");
-    expect(itemButton()).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByText(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.PACKAGES_HEADER(1))).toBeInTheDocument();
 
-    // Second tap collapses just the detail (stop stays expanded on the map).
-    fireEvent.click(itemButton());
-    expect(itemButton()).toHaveAttribute("aria-expanded", "false");
+    // Second tap collapses just the detail (panel stays where it is).
+    fireEvent.click(addressRow(/Rua Mapa, 10/));
+    expect(addressRow(/Rua Mapa, 10/)).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByText(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.PACKAGES_HEADER(1))).not.toBeInTheDocument();
   });
 
-  it("selecting an address raises a collapsed panel to half (design §5 — detail visible without dragging)", () => {
+  it("the card follows the SELECTION on the map — panel untouched (rev. 07/07: no auto-raise, no auto-detail)", () => {
+    uploaderState.routes = { "A-1": rowsStop1TwoAddresses };
     renderPage();
-    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "132px");
+    expect(addressRow(/Rua Mapa, 10/)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "stub-select-first-address" }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-select-second-address" }));
 
+    expect(addressRow(/Rua Beta, 20/)).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "224px");
+    expect(screen.queryByText(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.PACKAGES_HEADER(1))).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Rua Mapa, 10/ })).not.toBeInTheDocument();
+  });
+
+  it("'Ver lista completa' opens the LIST view at the full snap, with 'Ver no mapa' per card", () => {
+    uploaderState.routes = { "A-1": rowsStop1TwoAddresses };
+    renderPage();
+
+    openListView();
+
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.9");
+    expect(screen.getByRole("list", { name: UI_LABELS.MAP_PANEL.ITEM.LIST_ARIA })).toBeInTheDocument();
+    expect(addressRow(/Rua Mapa, 10/)).toBeInTheDocument();
+    expect(addressRow(/Rua Beta, 20/)).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_ON_MAP })).toHaveLength(2);
+    // No selected-address section inside the list view; the toggle FLIPS to
+    // "Esconder lista" (it never disappears — rev. 07/07).
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_FULL_LIST })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.HIDE_FULL_LIST })).toBeInTheDocument();
+  });
+
+  it("'Esconder lista' returns to the selected view at half", () => {
+    renderPage();
+    openListView();
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.HIDE_FULL_LIST }));
+
+    expect(screen.queryByRole("list", { name: UI_LABELS.MAP_PANEL.ITEM.LIST_ARIA })).not.toBeInTheDocument();
     expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.45");
+    expect(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_FULL_LIST })).toBeInTheDocument();
+  });
+
+  it("the card opens at FULL when the address holds more than 2 packages (size-aware — rev. 07/07)", () => {
+    uploaderState.routes = {
+      "A-1": [
+        { ...rowsA1[0], [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Mapa, 10, Apto 1" },
+        { ...rowsA1[0], [COLUMN_NAMES.SEQUENCE]: 2, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Mapa, 10, Apto 2" },
+        { ...rowsA1[0], [COLUMN_NAMES.SEQUENCE]: 3, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Mapa, 10, Apto 3" },
+      ],
+    };
+    renderPage();
+
+    fireEvent.click(addressRow(/Rua Mapa, 10/));
+
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.9");
+    expect(screen.getByText(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.PACKAGES_HEADER(3))).toBeInTheDocument();
+  });
+
+  it("'Ver no mapa' selects the address and returns to the default view at half", () => {
+    uploaderState.routes = { "A-1": rowsStop1TwoAddresses };
+    renderPage();
+    openListView();
+
+    fireEvent.click(screen.getAllByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_ON_MAP })[1]);
+
+    expect(screen.queryByRole("list", { name: UI_LABELS.MAP_PANEL.ITEM.LIST_ARIA })).not.toBeInTheDocument();
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.45");
+    expect(addressRow(/Rua Beta, 20/)).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-expanded-stop", "0");
+  });
+
+  it("dragging the panel below full leaves the list view (back to the selected view)", () => {
+    renderPage();
+    openListView();
+    expect(screen.getByRole("list", { name: UI_LABELS.MAP_PANEL.ITEM.LIST_ARIA })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "stub-drag-to-half" }));
+
+    expect(screen.queryByRole("list", { name: UI_LABELS.MAP_PANEL.ITEM.LIST_ARIA })).not.toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).toBeInTheDocument();
+  });
+
+  it("stop summary shows the neighborhoods with the zipcodes in parentheses (rev. 07/07)", () => {
+    uploaderState.routes = {
+      "A-1": [{ ...rowsA1[0], [COLUMN_NAMES.NEIGHBORHOOD]: "Copacabana", [COLUMN_NAMES.ZIPCODE]: "22050-002" }],
+    };
+    renderPage();
+
+    expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1 — Copacabana (22050-002)`)).toBeInTheDocument();
   });
 
   // ==========================================================================
   // Header real: ModeBar + StopStepper + métricas (TASK-RF-023.3)
   // ==========================================================================
 
-  it("shows the mode label and the metric chips in the header", () => {
+  it("shows the mode label and the metric chips (packages PER TYPE — rev. 07/07)", () => {
     renderPage();
 
     expect(screen.getByText(UI_LABELS.MAP_PANEL.MODE_VIEW)).toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(1))).toBeInTheDocument();
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.METRIC_PACKAGES(1))).toBeInTheDocument();
+    // rowsA1 is typed Residential via the column → one typed chip; no other types cited.
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.METRIC_TYPED_PACKAGES(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.TYPE_LABELS.RESIDENTIAL, 1))).toBeInTheDocument();
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.METRIC_TYPED_PACKAGES(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.TYPE_LABELS.COMMERCIAL, 0))).not.toBeInTheDocument();
+    expect(screen.queryByText(new RegExp(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.TYPE_LABELS.INDEFINITE))).not.toBeInTheDocument();
   });
 
   it("stepper › advances to the next NUMERIC stop and syncs the map (panel → map)", () => {
@@ -208,10 +326,42 @@ describe("MapPage (focus screen)", () => {
     fireEvent.click(screen.getByRole("button", { name: "stub-select-first-address" }));
     fireEvent.click(screen.getByRole("button", { name: "stub-collapse" }));
 
-    // Address detail closes, but the header and the list still show the stop.
+    // Detail closes, but the summary and the fallback card still show the stop.
     expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Rua Mapa, 10/, expanded: false })).toBeInTheDocument();
+    expect(addressRow(/Rua Mapa, 10/)).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByText(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.PACKAGES_HEADER(1))).not.toBeInTheDocument();
+  });
+
+  // ==========================================================================
+  // Escape por snaps (TASK-RF-023.5, design §5)
+  // ==========================================================================
+
+  it("Escape steps down: list view → selected view → collapsed → leaves the map", () => {
+    render(
+      <MemoryRouter initialEntries={["/rotas", "/mapa?romaneio=hash-1&rota=A-1"]} initialIndex={1}>
+        <Routes>
+          <Route path="/mapa" element={<MapPage />} />
+          <Route path="/rotas" element={<div data-testid="rotas-page-stub" />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    openListView();
+    expect(screen.getByRole("list", { name: UI_LABELS.MAP_PANEL.ITEM.LIST_ARIA })).toBeInTheDocument();
+
+    // 1st Escape: leaves the list view, back to the selected view at half.
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByRole("list", { name: UI_LABELS.MAP_PANEL.ITEM.LIST_ARIA })).not.toBeInTheDocument();
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.45");
+
+    // 2nd Escape: collapses the panel, stays on the map (card intact).
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "224px");
+    expect(addressRow(/Rua Mapa, 10/)).toBeInTheDocument();
+
+    // 3rd Escape: leaves the map (same destination as the back arrow).
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.getByTestId("rotas-page-stub")).toBeInTheDocument();
   });
 
   it("shows the error state when the manifest cannot be reopened", () => {

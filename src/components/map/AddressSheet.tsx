@@ -23,26 +23,18 @@ interface Props {
    * switching modes only changes data/slots, never the structure.
    */
   actions?: ReactNode;
-  /**
-   * "overlay" (default): self-positioned bottom overlay (legacy fullscreen map
-   * modal). "inline": plain block — the MapPanel provides position and frame
-   * (TASK-RF-023.2 interim body until the StopItemList of .4 absorbs this).
-   */
-  variant?: "overlay" | "inline";
 }
 
 /**
- * AddressSheet - the shared bottom panel with the selected address' details
- * (fluxo-modo-original §6, TASK-RF-022.6 — replaces the RF-020.3 Leaflet popup).
- * Shows the spreadsheet numbers (Stop/Sequence), full address, complement, the
- * inferred type as TEXT, and every package of the address (multi-package lists
- * all). Rendered as a sibling of the Leaflet container, so taps/scroll inside
- * it never reach the map (no accidental pan/collapse).
+ * AddressSheet - bottom overlay with the selected address' details, now used
+ * ONLY by the legacy fullscreen map modal (RouteMap !embedded). The map screen
+ * (MapPage) shows this content inside the MapPanel's StopItemList since
+ * TASK-RF-023.4. Retires together with the legacy inline flow (TASK-REF-011).
  *
  * Content is plain text through React (auto-escaped) — the escapeHtml guidance
  * of TASK-BG-003 applies to HTML strings injected into Leaflet, not here.
  */
-export const AddressSheet = ({ address, stopNumber = null, onClose, actions, variant = "overlay" }: Props) => {
+export const AddressSheet = ({ address, stopNumber = null, onClose, actions }: Props) => {
   if (!address) return null;
 
   const head: RowData = address.rows[0] ?? {};
@@ -51,11 +43,7 @@ export const AddressSheet = ({ address, stopNumber = null, onClose, actions, var
   return (
     <section
       aria-label={SHEET.ARIA}
-      className={
-        variant === "overlay"
-          ? "absolute inset-x-0 bottom-0 z-[1000] max-h-[45%] overflow-y-auto rounded-t-2xl border-t border-input bg-background shadow-[0_-4px_16px_rgba(0,0,0,0.15)]"
-          : "overflow-y-auto"
-      }
+      className="absolute inset-x-0 bottom-0 z-[1000] max-h-[45%] overflow-y-auto rounded-t-2xl border-t border-input bg-background shadow-[0_-4px_16px_rgba(0,0,0,0.15)]"
     >
       <div className="flex items-start justify-between gap-2 p-4 pb-2">
         <div>

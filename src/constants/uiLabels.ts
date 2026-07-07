@@ -43,6 +43,8 @@ export const UI_LABELS = {
   // App shell (header + bottom nav) — ADR-003 / fluxo §11 (rev. 26/06)
   SHELL: {
     APP_TITLE: "Pré-Rota",
+    /** Focus screens (Sumário/mapa) append the current route (rev. 07/07). */
+    APP_TITLE_WITH_ROUTE: (route: string) => `Pré-Rota · ${route}`,
     NAV_ARIA: "Navegação principal",
     NAV_HOME: "Início",
     NAV_ROUTES: "Rotas",
@@ -80,13 +82,22 @@ export const UI_LABELS = {
     MODE_VIEW: "Modo visualização",
     PREV_STOP: "Parada anterior",
     NEXT_STOP: "Próxima parada",
+    // Duas visões do painel (rev. 07/07 — TASK-RF-023.7)
+    SECTION_STOP: "Resumo da parada",
+    SECTION_SELECTED: "Endereço selecionado",
+    VIEW_FULL_LIST: "Ver lista completa",
+    HIDE_FULL_LIST: "Esconder lista",
+    VIEW_ON_MAP: "Ver no mapa",
     METRIC_ADDRESSES: (count: number) => (count === 1 ? "1 endereço" : `${count} endereços`),
     METRIC_PACKAGES: (count: number) => (count === 1 ? "1 pacote" : `${count} pacotes`),
+    /** Package count per inferred type — "Residencial: 2 pacotes" (rev. 07/07). */
+    METRIC_TYPED_PACKAGES: (typeLabel: string, count: number) => `${typeLabel}: ${count === 1 ? "1 pacote" : `${count} pacotes`}`,
     // Lista de endereços da parada (StopItemList — TASK-RF-023.4, RF-27/28)
     ITEM: {
       LIST_ARIA: "Endereços da parada",
       NO_ITEMS: "Nenhum endereço com coordenada válida nesta parada.",
-      PACKAGE_LABEL: (stop: string | null, seq: string) => (stop !== null ? `Parada ${stop} · Seq ${seq}` : `Seq ${seq}`),
+      // Espelha a etiqueta física do pacote: "Ordem xx | Parada xx" (rev. 07/07).
+      PACKAGE_LABEL: (stop: string | null, seq: string) => (stop !== null ? `Ordem ${seq} | Parada ${stop}` : `Ordem ${seq}`),
     },
   },
   // Toggle de modos do mapa (fluxo §11 "Modos do mapa" — TASK-RF-022.5)
@@ -112,7 +123,7 @@ export const UI_LABELS = {
       ARIA: "Detalhes do endereço",
       CLOSE: "Fechar painel",
       STOP: "Parada:",
-      PACKAGES_HEADER: (count: number) => `Pacotes (${count})`,
+      PACKAGES_HEADER: (count: number) => `Pacotes nesse endereço (${count})`,
       SEQUENCE: "seq",
       ADDRESS: "Endereço:",
       NEIGHBORHOOD: "Bairro:",

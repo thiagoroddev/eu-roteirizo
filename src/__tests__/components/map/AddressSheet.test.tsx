@@ -96,13 +96,7 @@ describe("AddressSheet", () => {
     expect(screen.getByRole("button", { name: "Tornar âncora" })).toBeInTheDocument();
   });
 
-  it("inline variant drops the overlay positioning — the MapPanel frames it (RF-023.2)", () => {
-    render(<AddressSheet address={multiPackageAddress} onClose={() => {}} variant="inline" />);
-
-    expect(screen.getByRole("region", { name: SHEET.ARIA }).className).not.toContain("absolute");
-  });
-
-  it("default overlay variant keeps the absolute positioning (legacy modal)", () => {
+  it("positions itself as a bottom overlay (legacy modal is its only consumer since RF-023.5)", () => {
     render(<AddressSheet address={multiPackageAddress} onClose={() => {}} />);
 
     expect(screen.getByRole("region", { name: SHEET.ARIA }).className).toContain("absolute");

@@ -2,9 +2,10 @@ import { Badge } from "../../ui/badge";
 import { UI_LABELS } from "../../../constants/uiLabels";
 
 /**
- * PanelTitle - identity row of the MapPanel header (design doc §2/§3):
- * "Parada {Stop}" + representative address, with the MetricsRow chips below
- * ("N endereços · N pacotes"; leg time/distance arrives with RF-007).
+ * PanelTitle - identity row of the MapPanel header (design doc §2/§3, rev.
+ * 07/07): "Parada {Stop} — {bairros}" + zipcode line + the MetricsRow chips
+ * ("N endereços · N pacotes"; walk time/distance arrives with RF-007). NO
+ * address here — the selected address has its own card in the header.
  */
 export interface PanelMetric {
   label: string;
@@ -13,25 +14,31 @@ export interface PanelMetric {
 interface Props {
   /** Stop number from the spreadsheet; null (no Stop column) hides the prefix. */
   stopNumber: string | null;
-  /** Representative address of the stop (or the focused address, later modes). */
-  address: string;
+  /** Stop-level place info (rev. 07/07 — moved out of the address detail). */
+  neighborhoods?: string[];
+  zipcodes?: string[];
   metrics: PanelMetric[];
 }
 
 const MetricsRow = ({ metrics }: Pick<Props, "metrics">) => (
-  <div className="mt-1.5 flex flex-wrap gap-1.5">
+  <div className="mt-1.5 flex flex-wrap gap-1">
     {metrics.map((metric) => (
-      <Badge key={metric.label} variant="secondary">
+      // Compact type: up to 4 chips must fit ONE line on mobile (rev. 07/07).
+      <Badge key={metric.label} variant="secondary" className="px-1.5 py-0 text-[10px] font-medium">
         {metric.label}
       </Badge>
     ))}
   </div>
 );
 
-export const PanelTitle = ({ stopNumber, address, metrics }: Props) => (
-  <div className="px-4 pb-3">
-    <p className="text-sm font-semibold">{stopNumber !== null ? `${UI_LABELS.MAP_PANEL.STOP_PREFIX} ${stopNumber}` : UI_LABELS.MAP_PANEL.NO_STOP}</p>
-    <p className="truncate text-xs text-muted-foreground">{address}</p>
-    {metrics.length > 0 && <MetricsRow metrics={metrics} />}
-  </div>
-);
+export const PanelTitle = ({ stopNumber, neighborhoods = [], zipcodes = [], metrics }: Props) => {
+  const title = stopNumber !== null ? `${UI_LABELS.MAP_PANEL.STOP_PREFIX} ${stopNumber}` : UI_LABELS.MAP_PANEL.NO_STOP;
+  // Place on ONE line: "Parada 31 — Botafogo (22290-160)" (rev. 07/07).
+  const place = [neighborhoods.join(", "), zipcodes.length > 0 ? `(${zipcodes.join(", ")})` : ""].filter(Boolean).join(" ");
+  return (
+    <div className="px-4 pb-2">
+      <p className="truncate text-sm font-semibold">{place ? `${title} — ${place}` : title}</p>
+      {metrics.length > 0 && <MetricsRow metrics={metrics} />}
+    </div>
+  );
+};

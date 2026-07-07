@@ -76,9 +76,15 @@ interface Props {
    */
   interaction?: InteractionState;
   onInteractionChange?: (next: InteractionState) => void;
+  /**
+   * Height (px) of whatever covers the map's bottom (the collapsed MapPanel).
+   * Added to the fitBounds bottom padding so markers never frame behind it
+   * (TASK-RF-023.5). Default 0 = legacy modal (nothing persistent on top).
+   */
+  bottomObstructionPx?: number;
 }
 
-export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false, interaction, onInteractionChange }) => {
+export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false, interaction, onInteractionChange, bottomObstructionPx = 0 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
@@ -172,12 +178,12 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false, int
     const expanded = expandedStopKey !== null ? stops[Number(expandedStopKey)] : undefined;
     if (expanded) {
       const bounds = L.latLngBounds(expanded.addresses.map((addr) => L.latLng(addr.lat, addr.lng)));
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: MAP_CONFIG.ZOOM.MAX });
+      map.fitBounds(bounds, { paddingTopLeft: [40, 40], paddingBottomRight: [40, 40 + bottomObstructionPx], maxZoom: MAP_CONFIG.ZOOM.MAX });
     } else {
       const bounds = L.latLngBounds(stops.map((stop) => L.latLng(stop.representative.lat, stop.representative.lng)));
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: MAP_CONFIG.ZOOM.DEFAULT });
+      map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50 + bottomObstructionPx], maxZoom: MAP_CONFIG.ZOOM.DEFAULT });
     }
-  }, [stops, expandedStopKey]);
+  }, [stops, expandedStopKey, bottomObstructionPx]);
 
   // 3) MARKERS RENDERING — redraws when the data OR the interaction state changes.
   useEffect(() => {
@@ -270,9 +276,11 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false, int
     };
   }, []);
 
-  // 5) KEYBOARD HANDLER — Escape clears the address selection first; with
-  // nothing selected it leaves the map (same destination as the close/back button).
+  // 5) KEYBOARD HANDLER (legacy modal only) — Escape clears the address selection
+  // first; with nothing selected it leaves the map (same destination as the close
+  // button). Embedded: the MapPage owns Escape (steps down the panel snaps — design §5).
   useEffect(() => {
+    if (embedded) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (selectedAddressKey !== null) applyInteractionRef.current({ expandedStopKey, selectedAddressKey: null });
@@ -280,7 +288,7 @@ export const RouteMap: React.FC<Props> = ({ rows, onClose, embedded = false, int
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, selectedAddressKey, expandedStopKey]);
+  }, [onClose, selectedAddressKey, expandedStopKey, embedded]);
 
   // Embedded: fill the parent (focus screen, header back = way out). Legacy
   // modal: portal to body as a fixed overlay with its own close button.

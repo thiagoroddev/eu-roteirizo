@@ -7,6 +7,8 @@ import { UI_LABELS } from "../../constants/uiLabels";
 interface Props {
   /** Show the back arrow (focus screens — RF-38 "voltar quando aplicável"). */
   showBack?: boolean;
+  /** Header title; focus screens override it with the current route (rev. 07/07). */
+  title?: string;
 }
 
 /**
@@ -15,17 +17,17 @@ interface Props {
  * title and global controls; the route-settings gear ships disabled until the
  * settings panel exists (TASK-RF-007).
  */
-export const AppHeader = ({ showBack = false }: Props) => {
+export const AppHeader = ({ showBack = false, title = UI_LABELS.SHELL.APP_TITLE }: Props) => {
   const navigate = useNavigate();
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-input bg-background px-4">
-      <div className="flex items-center gap-1">
+      <div className="flex min-w-0 items-center gap-1">
         {showBack && (
           <Button variant="ghost" size="icon" aria-label={UI_LABELS.SHELL.BACK_ARIA} title={UI_LABELS.SHELL.BACK_ARIA} onClick={() => navigate(-1)}>
             <ArrowLeft />
           </Button>
         )}
-        <h1 className="text-lg font-bold">{UI_LABELS.SHELL.APP_TITLE}</h1>
+        <h1 className="truncate text-lg font-bold">{title}</h1>
       </div>
       <div className="flex items-center gap-2">
         <ThemeToggle />

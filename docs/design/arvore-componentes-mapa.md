@@ -27,30 +27,38 @@ MapPage ✅                              /mapa?romaneio&rota (FocusShell: header
 │   └── (markerModels ✅)               view-models puros; findAddressByKey ✅
 └── MapPanel 🆕                         bottom sheet persistente (vaul: snaps colapsado/meio/cheio,
     │                                   dismissible=false, modal=false — mapa segue interativo)
-    ├── PanelHeader 🆕                  SEMPRE visível (snap mínimo); área de arrasto
-    │   ├── (alça/grabber) 🆕           indicador visual de arrastável
-    │   ├── PanelModeBar 🆕             rótulo do modo ("Modo visualização") + barra de progresso
-    │   │   └── StopStepper 🆕          ‹ › — parada anterior/próxima (ordem: nº da parada)
-    │   └── PanelTitle 🆕               "Parada {Stop}" + endereço (representante) 
-    │       └── MetricsRow 🆕           chips: "N endereços · N pacotes" (+ "~min e m" 🔮 RF-007)
+    ├── PanelHeader ✅ (rev. 07/07 — DUAS VISÕES, .7)  SEMPRE visível; área de arrasto
+    │   ├── (alça/grabber) ✅           indicador visual de arrastável
+    │   ├── PanelModeBar ✅             rótulo do modo ("Modo visualização") + barra de progresso
+    │   │   └── StopStepper ✅          ‹ › — parada anterior/próxima (ordem: nº da parada)
+    │   ├── [seção "Resumo da parada"] ✅  rótulo + PanelTitle + botão "Ver lista completa"
+    │   │   └── PanelTitle ✅           "Parada {Stop} — {bairros} ({CEPs})" numa linha (rev. 07/07:
+    │   │       │                       bairro/CEP saíram do detalhe do endereço p/ cá)
+    │   │       └── MetricsRow ✅       chips: "N endereços" + pacotes POR TIPO ("Residencial: 1 pacote ·
+    │   │                               Comercial: 2 pacotes" — tipos ausentes omitidos; shopping mistura)
+    │   └── [seção "Endereço selecionado"] ✅  (só na VISÃO PADRÃO) sob divisória: rótulo + card do
+    │                                   endereço SELECIONADO (StopItemRow; fallback 1º por Sequence);
+    │                                   tap → painel sobe p/ o MEIO e o StopItemDetail vira o corpo
     ├── PanelBody 🆕                    conteúdo do snap expandido; scroll interno
     │   ├── [slot] actions 🔮           grade de botões contextuais (telas 5–9: Editar/Iniciar/
     │   │                               Remover/Tornar âncora/Mover âncora/Criar parada/Salvar…)
     │   ├── [slot] banner 🔮            avisos (ex.: raio engloba N candidatos — tela 9)
     │   └── StopItemList 🆕             endereços da parada, ordem = Sequence (Original)
-    │       └── StopItem 🆕             1 por endereço; expansível (um por vez)
+    │       └── StopItem ✅             1 por endereço; expansível (um por vez)
     │           ├── [slot] itemLeading 🔮   drag handle (reordenar — telas 6/7)
-    │           ├── ItemMarker 🆕           mini-marcador: cor do tipo + nº (Sequence no Original;
+    │           ├── ItemMarker ✅           mini-marcador: cor do tipo + nº (Sequence no Original;
     │           │                           ordinal/âncora 🔮 no Meu roteiro)
-    │           ├── ItemInfo 🆕             endereço + complemento
-    │           ├── ItemMeta 🆕             badge de pacotes (>1); tempo/dist da perna 🔮 RF-007
-    │           └── PackageList 🆕          expandido: PackageRow × N
-    │               └── PackageRow 🆕       etiqueta "Parada {Stop} · Seq {Sequence}" + código
-    │                                       SPX TN (mono) + TypeBadge (Residencial/Comercial)
+    │           ├── ItemInfo ✅             endereço + complemento (complemento SÓ com 1 pacote —
+    │           │                           rev. 07/07: multi-pacote mostra por pacote)
+    │           ├── ItemMeta ✅             badge de pacotes (>1); tempo/dist da perna 🔮 RF-007
+    │           └── PackageList ✅          expandido: PackageRow × N
+    │               └── PackageRow ✅       etiqueta "Ordem {Seq} | Parada {Stop}" (formato da etiqueta
+    │                                       física) + COMPLEMENTO do pacote + código SPX TN (mono) +
+    │                                       TypeBadge colorido (verde/azul/cinza — paleta funcional)
     └── [slot] footer 🔮                CTA fixo (Salvar alterações / Desfazer / Iniciar rota)
 ```
 
-**Destino do `AddressSheet` (022.6):** absorvido — o conteúdo vira `ItemInfo`+`PackageList` do `StopItem` expandido; o link "Abrir no Google Maps" migra para o item expandido (ou `ItemMeta`). Os testes de conteúdo migram junto; o componente é aposentado na 023.5.
+**Destino do `AddressSheet` (022.6):** ✅ absorvido na **023.4** — o conteúdo virou o `StopItem` expandido (endereço/complemento, bairro/CEP/tipo, `PackageRow`×N, link Maps); testes de conteúdo migrados. O componente sobrevive **apenas no modal fullscreen legado** (`RouteMap !embedded`, aberto pelo fluxo inline do RouteViewer) — aposentadoria total junto com a **TASK-REF-011** (remoção do fluxo legado). Variante `inline` removida na 023.5.
 
 ---
 
@@ -75,9 +83,10 @@ interface PanelModeBarProps {
 }
 interface PanelTitleProps {
   stopNumber: string | null;    // Stop da planilha (null se coluna ausente → oculta "Parada:")
-  address: string;              // endereço do representante (ou do endereço em foco 🔮)
   metrics: PanelMetric[];       // [{ label }] — "4 endereços", "6 pacotes", 🔮 "~15 min e 900 m"
 }
+// (rev. 07/07: PanelTitle NÃO carrega endereço; o endereço selecionado vira uma
+// StopItemRow própria no header — mesma linha da lista, exportada de StopItem.)
 
 // StopItemList / StopItem
 interface StopItemData {        // derivado puro de AddressGroup (buildPanelItems, novo util)
@@ -92,11 +101,15 @@ interface StopItemData {        // derivado puro de AddressGroup (buildPanelItem
 }
 interface StopItemListProps {
   items: StopItemData[];
-  expandedKey: string | null;   // sincronizado com selectedAddressKey do RouteMap
-  onItemTap: (addressKey: string) => void; // seleciona no mapa + expande no painel
-  itemLeading?: (item: StopItemData) => ReactNode; // 🔮 drag handle
-  itemActions?: (item: StopItemData) => ReactNode; // 🔮 "Tornar âncora"/"Remover" (tela 6)
+  selectedKey: string | null;   // seleção do mapa → destaque + auto-scroll (rev. 07/07)
+  itemLeading?: (item: StopItemData) => ReactNode;  // 🔮 drag handle
+  itemActions?: (item: StopItemData) => ReactNode;  // 🔮 "Tornar âncora"/"Remover" (tela 6)
+  itemTrailing?: (item: StopItemData) => ReactNode; // "Ver no mapa" (ícone) ao lado da linha
 }
+// (rev. 07/07: a lista abre com TODOS os itens expandidos; o toque numa linha
+// alterna só a expansão daquele item (estado interno). Selecionar = "Ver no mapa".
+// addressLine = SÓ rua + número; complemento vive nos pacotes — exceção: parada
+// com 1 endereço e 1 pacote mantém o complemento na linha.)
 ```
 
 **Estado (quem manda):** `RouteMap` continua dono de `expandedStopKey`/`selectedAddressKey` (RF-020.3). O painel **lê** a seleção e **emite** intenções (steppers, tap em item) — sobe via callbacks para o mesmo estado. Nenhum estado duplicado. Na 023.2, esse estado sobe do `RouteMap` para a `MapPage` (lift) para painel e mapa consumirem irmãmente — mudança mecânica, contratos puros intactos.
@@ -123,12 +136,16 @@ interface StopItemListProps {
 
 - **Abertura:** painel **colapsado** (header) com a **menor parada** selecionada (menor `Stop` numérico; sem coluna Stop → primeira da ordem atual). Mapa dá `fitBounds` normal (não foca a parada até interação).
 - **Snaps (vaul):** `collapsed` (altura do header) · `half` (~45%) · `full` (~90%). `dismissible=false` — nunca fecha. `modal=false` — mapa interativo no collapsed/half.
-- **Steppers ‹ ›:** navegam pela ordem de `Stop` (circular); atualizam seleção no mapa (expande a parada + foco/zoom, comportamento atual de expandir).
-- **Tocar marcador de parada** (mapa): seleciona/expande → header atualiza; painel mantém o snap atual.
-- **Tocar marcador de endereço** (mapa): seleciona → painel expande para `half` (se colapsado) e o `StopItem` correspondente expande/rola à vista.
-- **Tocar `StopItem`** (painel): espelha no mapa (seleção/ênfase) e expande os pacotes (um item expandido por vez).
+- **Steppers ‹ ›:** navegam pela ordem de `Stop` (circular); expandem a parada no mapa (foco/zoom) **selecionando o 1º endereço** (menor Sequence — rev. 07/07; no Meu roteiro será a âncora/veículo).
+- **Tocar marcador de parada** (mapa): expande **e seleciona o 1º endereço** (menor Sequence) — ícone destacado; card do painel atualiza. **O painel não muda de snap.**
+- **Tocar marcador de endereço** (mapa): seleciona → card do painel atualiza. **O painel NUNCA se eleva/expande por seleção no mapa** (rev. 07/07): o padrão é colapsado — sempre há um endereço selecionado; só toques DENTRO do painel (card, "Ver lista completa", "Ver no mapa") mudam snap/visão.
+- **DUAS VISÕES do painel (rev. 07/07 — TASK-RF-023.7, sem endereço duplicado):**
+  - **Visão padrão (default):** header = ModeBar + seção "Resumo da parada" (título + métricas + botão **"Ver lista completa"**) + divisória + seção "Endereço selecionado" (card do selecionado; fallback 1º por Sequence — nunca vazio). **Tocar o card** → painel sobe p/ o **meio** e o `StopItemDetail` (bairro/CEP/tipo + pacotes + Maps) vira o corpo, contíguo ao card; segundo toque recolhe. Corpo vazio com card recolhido.
+  - **Visão lista ("Ver lista completa"):** painel no snap **cheio** (único cujo corpo rola), corpo = `StopItemList` completa (abre rolada até o selecionado); cada card tem **"Ver no mapa"** (trailing) → seleciona, volta à visão padrão no meio, mapa foca. Sair do snap cheio (arrasto/Escape) também volta à padrão.
+- **Tocar `StopItem`** (visão lista): espelha no mapa (seleção/ênfase) e expande os pacotes inline (um por vez); o selecionado fica **destacado** (`bg-accent` + `aria-current`).
+- **Seleção vinda do MAPA** abre o card na visão padrão (troca de visão se necessário); taps dentro da lista não tiram o usuário da lista.
 - **Clique no mapa vazio:** colapsa os círculos expandidos no mapa; **o painel mantém a última parada** (nunca esvazia). *(Supersede o "limpa a seleção" antigo — fluxo-modo-original §5/§8 atualizados.)*
-- **Escape:** painel `full/half` → `collapsed`; já colapsado → sai do mapa (mesmo destino do voltar).
+- **Escape (rev. 07/07):** visão lista → visão padrão (meio); painel `full/half` → `collapsed`; já colapsado → sai do mapa (mesmo destino do voltar). Seleção nunca é limpa pelo Escape.
 
 ---
 

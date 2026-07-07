@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from "vitest";
 import { groupRowsByStop } from "../../../utils/markers/stopGrouping";
-import { computeMarkerModels, nextInteraction, collapseInteraction, findAddressByKey, extractComplement, locationTypeLabel } from "../../../utils/markers/markerModels";
+import { computeMarkerModels, nextInteraction, collapseInteraction, findAddressByKey, firstAddressKey, extractComplement, locationTypeLabel } from "../../../utils/markers/markerModels";
 import { COLUMN_NAMES, ICON_KEYS } from "../../../constants";
 import type { RowData } from "../../../types";
 
@@ -115,9 +115,10 @@ describe("computeMarkerModels", () => {
 describe("nextInteraction", () => {
   const collapsed = { expandedStopKey: null, selectedAddressKey: null };
 
-  it("expands a multi-address stop without selecting", () => {
+  it("expands a multi-address stop selecting its FIRST address (lowest Sequence — rev. 07/07)", () => {
     const stopModel = computeMarkerModels(stops, null, null)[0];
-    expect(nextInteraction(collapsed, stopModel, stops)).toEqual({ expandedStopKey: "0", selectedAddressKey: null });
+    // Stop 18: seq 49 lives at address index 0.
+    expect(nextInteraction(collapsed, stopModel, stops)).toEqual({ expandedStopKey: "0", selectedAddressKey: "0:0" });
   });
 
   it("auto-selects the single address when expanding a single-address stop", () => {
@@ -132,6 +133,21 @@ describe("nextInteraction", () => {
 
   it("collapse clears both expansion and selection", () => {
     expect(collapseInteraction()).toEqual({ expandedStopKey: null, selectedAddressKey: null });
+  });
+});
+
+describe("firstAddressKey", () => {
+  it("returns the LOWEST-Sequence address of the stop, even when grouped later", () => {
+    // Second row appears later but has the smaller sequence.
+    const reordered = groupRowsByStop([
+      row({ [COLUMN_NAMES.STOP]: 1, [COLUMN_NAMES.SEQUENCE]: 9, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Nove, 9" }),
+      row({ [COLUMN_NAMES.STOP]: 1, [COLUMN_NAMES.SEQUENCE]: 2, [COLUMN_NAMES.LATITUDE]: -22.91, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Dois, 2" }),
+    ]);
+    expect(firstAddressKey(reordered, 0)).toBe("0:1");
+  });
+
+  it("returns null for an unknown stop index", () => {
+    expect(firstAddressKey([], 0)).toBeNull();
   });
 });
 

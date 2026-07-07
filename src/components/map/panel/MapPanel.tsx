@@ -23,9 +23,17 @@ import { UI_LABELS } from "../../../constants/uiLabels";
 
 export type PanelSnap = "collapsed" | "half" | "full";
 
+/**
+ * Height (px) of the collapsed snap = the always-visible header (grabber + mode
+ * bar + "Resumo da parada" section + divider + "Endereço selecionado" card),
+ * calibrated on device. Exported so the map can pad its fitBounds and keep
+ * markers above the panel (RF-023.5).
+ */
+export const PANEL_COLLAPSED_PX = 224;
+
 /** Snap values (identity matters: vaul compares activeSnapPoint by value/reference). */
 const SNAP_VALUES: Record<PanelSnap, string | number> = {
-  collapsed: "132px", // full header (grabber + mode bar + title + metrics) — calibrated on device
+  collapsed: `${PANEL_COLLAPSED_PX}px`,
   half: 0.45, // fraction of the viewport height
   full: 0.9,
 };

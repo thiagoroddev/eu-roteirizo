@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { StopItemList } from "../../../../components/map/panel/StopItemList";
 import { UI_LABELS, ICON_KEYS } from "../../../../constants";
@@ -12,64 +12,80 @@ const makeItem = (overrides: Partial<StopItemData> = {}): StopItemData => ({
   markerType: ICON_KEYS.HOME_CORRECTED,
   addressLine: "Rua Alfa, 10",
   complement: "casa 2",
-  neighborhood: "Botafogo",
-  zipcode: "22271-110",
-  typeLabel: SHEET.TYPE_LABELS.RESIDENTIAL,
   packageCount: 2,
   packages: [
-    { label: "Parada 7 · Seq 2", spxTn: "BR222", typeLabel: SHEET.TYPE_LABELS.RESIDENTIAL },
-    { label: "Parada 7 · Seq 9", spxTn: "BR111", typeLabel: SHEET.TYPE_LABELS.RESIDENTIAL },
+    { label: "Ordem 2 | Parada 7", complement: "Apto 101", spxTn: "BR222", type: ICON_KEYS.HOME_CORRECTED, typeLabel: SHEET.TYPE_LABELS.RESIDENTIAL },
+    { label: "Ordem 9 | Parada 7", complement: "Loja 3", spxTn: "BR111", type: ICON_KEYS.OFFICE_CORRECTED, typeLabel: SHEET.TYPE_LABELS.COMMERCIAL },
   ],
   mapsUrl: "https://www.google.com/maps?q=-22.9,-43.2",
   ...overrides,
 });
 
-describe("StopItemList / StopItem", () => {
-  it("renders one collapsed item per address: marker number, address, complement and package badge (>1)", () => {
-    render(<StopItemList items={[makeItem()]} expandedKey={null} onItemTap={vi.fn()} />);
+const twoItems = () => [makeItem(), makeItem({ addressKey: "0:1", addressLine: "Rua Beta, 20", packageCount: 1, packages: [makeItem().packages[0]] })];
 
-    expect(screen.getByRole("list", { name: UI_LABELS.MAP_PANEL.ITEM.LIST_ARIA })).toBeInTheDocument();
-    expect(screen.getByText("5")).toBeInTheDocument();
-    expect(screen.getByText("Rua Alfa, 10")).toBeInTheDocument();
-    expect(screen.getByText("casa 2")).toBeInTheDocument();
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.METRIC_PACKAGES(2))).toBeInTheDocument();
-    // Collapsed: no detail.
-    expect(screen.queryByText(SHEET.PACKAGES_HEADER(2))).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { expanded: false })).toBeInTheDocument();
-  });
+describe("StopItemList / StopItem (list view — rev. 07/07)", () => {
+  it("opens with EVERY item expanded (scan mode) and the badge as box glyph + count", () => {
+    render(<StopItemList items={twoItems()} selectedKey={null} />);
 
-  it("hides the package badge and the complement line when there is nothing to show", () => {
-    render(<StopItemList items={[makeItem({ packageCount: 1, complement: SHEET.NO_COMPLEMENT })]} expandedKey={null} onItemTap={vi.fn()} />);
-
-    expect(screen.queryByText(UI_LABELS.MAP_PANEL.METRIC_PACKAGES(1))).not.toBeInTheDocument();
-    expect(screen.queryByText(SHEET.NO_COMPLEMENT)).not.toBeInTheDocument();
-  });
-
-  it("expands the item matching expandedKey: detail, package rows and Maps link", () => {
-    render(<StopItemList items={[makeItem()]} expandedKey="0:0" onItemTap={vi.fn()} />);
-
-    expect(screen.getByRole("button", { expanded: true })).toBeInTheDocument();
-    expect(screen.getByText("Botafogo")).toBeInTheDocument();
-    expect(screen.getByText("22271-110")).toBeInTheDocument();
+    const rows = screen.getAllByRole("button", { expanded: true });
+    expect(rows).toHaveLength(2); // nothing starts collapsed
     expect(screen.getByText(SHEET.PACKAGES_HEADER(2))).toBeInTheDocument();
-    expect(screen.getByText("Parada 7 · Seq 2")).toBeInTheDocument();
+    expect(screen.getByText(SHEET.PACKAGES_HEADER(1))).toBeInTheDocument();
+    // Badge = icon + count only (accessible name keeps the full text).
+    const badge = screen.getByLabelText(UI_LABELS.MAP_PANEL.METRIC_PACKAGES(2));
+    expect(badge).toHaveTextContent("2");
+    expect(badge.querySelector("svg")).not.toBeNull();
+  });
+
+  it("tapping a row toggles ONLY that item's expansion", () => {
+    render(<StopItemList items={twoItems()} selectedKey={null} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Rua Alfa, 10/ }));
+
+    expect(screen.getByRole("button", { name: /Rua Alfa, 10/ })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: /Rua Beta, 20/ })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.queryByText(SHEET.PACKAGES_HEADER(2))).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Rua Alfa, 10/ }));
+    expect(screen.getByRole("button", { name: /Rua Alfa, 10/ })).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("highlights the SELECTED item (aria-current), independent of expansion", () => {
+    render(<StopItemList items={twoItems()} selectedKey="0:1" />);
+
+    expect(screen.getByRole("button", { name: /Rua Beta, 20/ })).toHaveAttribute("aria-current", "true");
+    expect(screen.getByRole("button", { name: /Rua Alfa, 10/ })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("button", { name: /Rua Beta, 20/ }).className).toContain("bg-accent");
+  });
+
+  it("shows the full drill-down: per-package label/complement/code, typed badges and Maps link", () => {
+    render(<StopItemList items={[makeItem()]} selectedKey={null} />);
+
+    expect(screen.getByText("Ordem 2 | Parada 7")).toBeInTheDocument();
+    expect(screen.getByText("Apto 101")).toBeInTheDocument();
+    expect(screen.getByText("Loja 3")).toBeInTheDocument();
     expect(screen.getByText("BR222")).toBeInTheDocument();
-    expect(screen.getAllByText(SHEET.TYPE_LABELS.RESIDENTIAL).length).toBeGreaterThan(0);
+    expect(screen.getByText(SHEET.TYPE_LABELS.RESIDENTIAL)).toBeInTheDocument();
+    expect(screen.getByText(SHEET.TYPE_LABELS.COMMERCIAL)).toBeInTheDocument();
+    expect(screen.queryByText(SHEET.TYPE)).not.toBeInTheDocument(); // no address-level "Tipo:" line
     expect(screen.getByRole("link", { name: SHEET.GOOGLE_MAPS })).toHaveAttribute("href", "https://www.google.com/maps?q=-22.9,-43.2");
   });
 
-  it("taps emit onItemTap with the item's addressKey", () => {
-    const onItemTap = vi.fn();
-    const items = [makeItem(), makeItem({ addressKey: "0:1", addressLine: "Rua Beta, 20" })];
-    render(<StopItemList items={items} expandedKey={null} onItemTap={onItemTap} />);
+  it("keeps the badge for a SINGLE package (always indicates 1+) and hides the placeholder complement", () => {
+    render(<StopItemList items={[makeItem({ packageCount: 1, complement: SHEET.NO_COMPLEMENT })]} selectedKey={null} />);
 
-    fireEvent.click(screen.getByText("Rua Beta, 20"));
+    expect(screen.getByLabelText(UI_LABELS.MAP_PANEL.METRIC_PACKAGES(1))).toHaveTextContent("1");
+    expect(screen.queryByText(new RegExp(`${SHEET.COMPLEMENT} ${SHEET.NO_COMPLEMENT}`))).not.toBeInTheDocument();
+  });
 
-    expect(onItemTap).toHaveBeenCalledWith("0:1");
+  it("renders the itemTrailing slot BESIDE each row (list view's 'Ver no mapa')", () => {
+    render(<StopItemList items={[makeItem()]} selectedKey={null} itemTrailing={(item) => <button type="button">{`ver-${item.addressKey}`}</button>} />);
+
+    expect(screen.getByRole("button", { name: "ver-0:0" })).toBeInTheDocument();
   });
 
   it("shows the empty state when the stop has no plottable address", () => {
-    render(<StopItemList items={[]} expandedKey={null} onItemTap={vi.fn()} />);
+    render(<StopItemList items={[]} selectedKey={null} />);
 
     expect(screen.getByText(UI_LABELS.MAP_PANEL.ITEM.NO_ITEMS)).toBeInTheDocument();
     expect(screen.queryByRole("list")).not.toBeInTheDocument();

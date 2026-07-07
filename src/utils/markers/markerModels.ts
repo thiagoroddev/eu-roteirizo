@@ -47,12 +47,17 @@ export interface InteractionState {
    PURE HELPERS
 ============================================================================ */
 
-/** The complement is the address text after the 2nd comma (same split as inferLocationType). */
-export const extractComplement = (address: AddressGroup): string => {
-  const full = String(address.rows[0]?.[COLUMN_NAMES.DESTINATION_ADDRESS] ?? "");
-  const complement = full.split(",").slice(2).join(", ").trim();
-  return complement || SHEET.NO_COMPLEMENT;
-};
+/** Complement of ONE row: the address text after the 2nd comma (same split as
+    inferLocationType); "" when absent. Per-package display (rev. 07/07). */
+export const extractRowComplement = (row: RowData): string =>
+  String(row[COLUMN_NAMES.DESTINATION_ADDRESS] ?? "")
+    .split(",")
+    .slice(2)
+    .join(", ")
+    .trim();
+
+/** Address-level complement (first row's), with the "—" fallback. */
+export const extractComplement = (address: AddressGroup): string => extractRowComplement(address.rows[0] ?? {}) || SHEET.NO_COMPLEMENT;
 
 /** ICON_KEYS → human label ("Comercial" / "Residencial" / "Indefinido"). */
 export const locationTypeLabel = (type: string): string => {
@@ -166,17 +171,30 @@ export const computeMarkerModels = (stops: StopGroup[], expandedStopKey: string 
 };
 
 /**
+ * Key ("i:j") of a stop's FIRST address — the lowest Sequence. Opening a stop
+ * auto-selects it (rev. 07/07: "nunca há endereço sem seleção"; in the Meu
+ * roteiro mode this becomes the vehicle/anchor position).
+ */
+export const firstAddressKey = (stops: StopGroup[], stopIndex: number): string | null => {
+  const stop = stops[stopIndex];
+  if (!stop || stop.addresses.length === 0) return null;
+  let best = 0;
+  stop.addresses.forEach((address, j) => {
+    if (address.minSequence < stop.addresses[best].minSequence) best = j;
+  });
+  return `${stopIndex}:${best}`;
+};
+
+/**
  * Computes the next interaction state from a marker click.
- * Clicking a stop expands it (auto-selecting its single address, if only one);
- * clicking an address selects it (keeping the stop expanded).
+ * Clicking a stop expands it AND selects its first address (lowest Sequence —
+ * rev. 07/07); clicking an address selects it (keeping the stop expanded).
  */
 export const nextInteraction = (current: InteractionState, clicked: MarkerModel, stops: StopGroup[]): InteractionState => {
   if (clicked.kind === "address") {
     return { expandedStopKey: current.expandedStopKey, selectedAddressKey: clicked.addressKey ?? null };
   }
-  const stopKey = String(clicked.stopIndex);
-  const single = stops[clicked.stopIndex]?.addresses.length === 1;
-  return { expandedStopKey: stopKey, selectedAddressKey: single ? `${clicked.stopIndex}:0` : null };
+  return { expandedStopKey: String(clicked.stopIndex), selectedAddressKey: firstAddressKey(stops, clicked.stopIndex) };
 };
 
 /** Click on the empty map → collapse and clear selection. */

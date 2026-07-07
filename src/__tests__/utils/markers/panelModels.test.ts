@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { groupRowsByStop } from "../../../utils/markers/stopGrouping";
-import { adjacentStopKey, buildPanelItems, panelMetrics, smallestStopKey } from "../../../utils/markers/panelModels";
+import { adjacentStopKey, buildPanelItems, panelMetrics, smallestStopKey, stopPlaceSummary } from "../../../utils/markers/panelModels";
 import { COLUMN_NAMES, UI_LABELS } from "../../../constants";
 import type { RowData } from "../../../types";
 
@@ -108,10 +108,10 @@ describe("buildPanelItems", () => {
     },
   ];
 
-  it("orders the stop's addresses by their smallest Sequence", () => {
+  it("orders by smallest Sequence, with the address line as BUILDING only (street + number — rev. 07/07)", () => {
     const items = buildPanelItems(groupRowsByStop(rowsStop7), "0");
 
-    expect(items.map((item) => item.addressLine)).toEqual(["Rua Beta, 20", "Rua Alfa, 10, casa 2"]);
+    expect(items.map((item) => item.addressLine)).toEqual(["Rua Beta, 20", "Rua Alfa, 10"]);
     expect(items.map((item) => item.markerNumber)).toEqual(["1", "2"]);
   });
 
@@ -124,17 +124,39 @@ describe("buildPanelItems", () => {
     expect(items[1].addressKey).toBe("0:0");
   });
 
-  it("maps the full detail: complement, neighborhood/zipcode and one package row per spreadsheet row", () => {
+  it("maps the detail: PER-PACKAGE complement/type; multi-package address hides its own complement (rev. 07/07)", () => {
     const items = buildPanelItems(groupRowsByStop(rowsStop7), "0");
-    const alfa = items[1];
+    const alfa = items[1]; // 2 packages
+    const beta = items[0]; // 1 package
 
-    expect(alfa.complement).toBe("casa 2");
-    expect(alfa.neighborhood).toBe("Botafogo");
-    expect(alfa.zipcode).toBe("22271-110");
+    // The complement lives ONLY on the packages (rev. 07/07: the address line is
+    // the building; the multi-address stop never shows it on the row).
+    expect(alfa.complement).toBe(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.NO_COMPLEMENT);
+    expect(alfa.packages.map((pkg) => pkg.complement)).toEqual(["casa 2", "casa 2"]);
+    expect(beta.complement).toBe(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.NO_COMPLEMENT);
     expect(alfa.packageCount).toBe(2);
     expect(alfa.packages.map((pkg) => pkg.spxTn)).toEqual(["BR111", "BR222"]);
     expect(alfa.packages[0].label).toBe(UI_LABELS.MAP_PANEL.ITEM.PACKAGE_LABEL("7", "9"));
+    expect(alfa.packages[0].type).toBeTruthy(); // ICON_KEYS — colors the type badge (rev. 07/07)
+    expect(alfa.packages[0].typeLabel).toBeTruthy();
     expect(alfa.mapsUrl).toContain("google.com/maps");
+  });
+
+  it("keeps the row complement ONLY for a stop with 1 address and 1 package (no expand needed)", () => {
+    const single: RowData[] = [
+      { [COLUMN_NAMES.STOP]: 2, [COLUMN_NAMES.SEQUENCE]: 1, [COLUMN_NAMES.LATITUDE]: -22.9, [COLUMN_NAMES.LONGITUDE]: -43.2, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Delta, 40, Apto 5" },
+    ];
+    const items = buildPanelItems(groupRowsByStop(single), "0");
+    expect(items[0].addressLine).toBe("Rua Delta, 40");
+    expect(items[0].complement).toBe("Apto 5");
+    expect(items[0].packages[0].complement).toBe("Apto 5");
+  });
+
+  it("stopPlaceSummary collects UNIQUE neighborhoods/zipcodes for the stop summary (rev. 07/07)", () => {
+    const stops = groupRowsByStop(rowsStop7);
+    // Only the first row has place info; duplicates and blanks are skipped.
+    expect(stopPlaceSummary(stops[0])).toEqual({ neighborhoods: ["Botafogo"], zipcodes: ["22271-110"] });
+    expect(stopPlaceSummary(null)).toEqual({ neighborhoods: [], zipcodes: [] });
   });
 
   it("omits the stop from the package label when the Stop column is absent", () => {
@@ -154,17 +176,25 @@ describe("buildPanelItems", () => {
 });
 
 describe("panelMetrics", () => {
-  it("counts addresses and total packages (rows) of the stop", () => {
+  it("counts addresses and packages PER inferred type (rev. 07/07 — no-complement rows → indefinite)", () => {
     // Stop 1: two rows at the SAME building (merge into one address) + one other address.
     const sameBuilding: RowData = { ...row(1, 1), [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Una, 100" };
     const sameBuildingAgain: RowData = { ...row(1, 2), [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Una, 100" };
     const other: RowData = { ...row(1, 3), [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Outra, 200" };
     const stops = groupRowsByStop([sameBuilding, sameBuildingAgain, other]);
 
-    expect(panelMetrics(stops[0])).toEqual({ addressCount: 2, packageCount: 3 });
+    expect(panelMetrics(stops[0])).toEqual({ addressCount: 2, packagesByType: { commercial: 0, residential: 0, indefinite: 3 } });
+  });
+
+  it("splits the packages by type when the stop mixes them (mall case)", () => {
+    const home: RowData = { ...row(1, 1), [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Mista, 100, Apto 12" };
+    const shop: RowData = { ...row(1, 2), [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Mista, 100, Loja 3" };
+    const stops = groupRowsByStop([home, shop]);
+
+    expect(panelMetrics(stops[0]).packagesByType).toEqual({ commercial: 1, residential: 1, indefinite: 0 });
   });
 
   it("returns zeros for null (defensive)", () => {
-    expect(panelMetrics(null)).toEqual({ addressCount: 0, packageCount: 0 });
+    expect(panelMetrics(null)).toEqual({ addressCount: 0, packagesByType: { commercial: 0, residential: 0, indefinite: 0 } });
   });
 });

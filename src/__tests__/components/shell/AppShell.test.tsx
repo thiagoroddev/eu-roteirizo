@@ -66,6 +66,20 @@ describe("AppShell (integration)", () => {
     expect(screen.getByRole("button", { name: UI_LABELS.SHELL.BACK_ARIA })).toBeInTheDocument();
   });
 
+  it("FocusShell shows the CURRENT ROUTE in the header title (rev. 07/07)", () => {
+    render(
+      <MemoryRouter initialEntries={["/foco?romaneio=h1&rota=L-23"]}>
+        <Routes>
+          <Route element={<FocusShell />}>
+            <Route path="/foco" element={<div>conteúdo de foco</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText(UI_LABELS.SHELL.APP_TITLE_WITH_ROUTE("L-23"))).toBeInTheDocument();
+  });
+
   it("keeps the settings gear disabled until TASK-RF-007", () => {
     renderApp();
 

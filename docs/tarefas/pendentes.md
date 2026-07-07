@@ -54,9 +54,9 @@
 
 ---
 
-## TASK-RF-022 - Telas de média fidelidade — fase 1: navegação + modo Original (visualização) [XG, dividir]
+## ✅ TASK-RF-022 - Telas de média fidelidade — fase 1: navegação + modo Original (visualização) [XG] — ÉPICO CONCLUÍDO (05/07/26)
 
-- **Status:** Pendente
+- **Status:** Concluído (todas as subtarefas .1–.6 ✅)
 - **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
@@ -119,9 +119,9 @@
 
 ---
 
-## TASK-RF-023 - Painel dinâmico do mapa (MapPanel) — fase Original [G, dividir]
+## ✅ TASK-RF-023 - Painel dinâmico do mapa (MapPanel) — fase Original [G] — ÉPICO CONCLUÍDO (07/07/26)
 
-- **Status:** Pendente
+- **Status:** Concluído (todas as subtarefas .1–.5 ✅; smokes do humano aprovados 06–07/07)
 - **Modo:** Standard (épico com subtarefas; segue ADR-004/008 e os fluxos — sem decisão arquitetural nova)
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
@@ -145,10 +145,11 @@
 ### ✅ TASK-RF-023.4 - StopItemList Original (endereços → pacotes) — CONCLUÍDA (07/07)
 > `buildPanelItems` puro (endereços por `minSequence`, identidade `i:j` do mapa preservada pós-sort) + `StopItem`/`StopItemList` (mini-marcador cor do tipo + nº Sequence; expandido = bairro/CEP/tipo + `PackageRow` Parada·Seq/SPX/badge de tipo + Maps — **absorve todo o conteúdo do AddressSheet**, testes migrados). Tap item ↔ marcador espelhado nos dois sentidos; `data-vaul-no-drag` nas linhas. Bairro/CEP mantidos no expandido (evita regressão de info). AddressSheet intocado até a .5. Suíte 482 ✅. Ver `concluidas/2026-07-07--12h27--TASK-RF-023.4.md`.
 
-### TASK-RF-023.5 - Seleção inicial + integração + limpeza
-- **Esforço-H/IA:** M/M · **Dep:** 023.3, 023.4
-- Decisão (b): abrir o mapa com a **menor parada** selecionada; painel sempre com a última selecionada (clique fora não esvazia); `AddressSheet` legado absorvido/aposentado; testes de integração (MapPage + RouteMap + painel); docs (RF-12/27/28) e registro.
-- **Aceite:** abrir o mapa já mostra "Parada {menor}" no painel; nunca há painel vazio; suíte verde; sem componente morto.
+### ✅ TASK-RF-023.5 - Integração + limpeza — CONCLUÍDA (07/07)
+> **Escape por snaps** na MapPage (full/half → collapsed → sai; seleção intacta; handler do RouteMap restrito ao modal legado) + **fitBounds com padding inferior** (`bottomObstructionPx` = `PANEL_COLLAPSED_PX` exportado do MapPanel) + variante `inline` do AddressSheet removida (aposentadoria total → **REF-011**, anotada) + **teste de integração MapPage+RouteMap real** (Leaflet espionado: clique de marcador → item expande; padding; Escape encadeado) + docs (RF-12 ✅ atualizado, RF-27/28 🟡 com a parte Original ✅). Seleção inicial (decisão b) já entregue na .2. Ver `concluidas/2026-07-07--12h51--TASK-RF-023.5.md`.
+
+### ✅ TASK-RF-023.7 - Painel em DUAS VISÕES: padrão × lista completa — CONCLUÍDA (07/07)
+> Redesign pós-.6 (duplicação header×lista): **visão padrão** = "Resumo da parada" (+ "Ver lista completa") + card do "Endereço selecionado" (tap → detalhe no próprio painel, snap meio; `StopItemDetail` extraído); **visão lista** = snap cheio rolável, "Ver no mapa" por card (trailing) volta selecionando. Escape/arrasto saem da lista; seleção do mapa abre o card. Suíte 490 ✅. Ver `concluidas/2026-07-07--15h35--TASK-RF-023.7.md`.
 
 **Critérios de aceite (RF-023):** tela 5 em read-only razoavelmente fiel (estrutura e informação; estética final é outra decisão — README dos protótipos); slots documentados para RF-006/009.
 **Dependências novas:** `vaul` (**aprovada pelo humano em 05/07/26** — instalar na .2).
@@ -400,7 +401,7 @@
 <!-- ✅ TASK-CHORE-002 encerrada (05/07/26): suíte completa rodou verde em Windows nativo — 384/384 em 40 arquivos, ~13s (registrado em concluidas/2026-07-05--18h08--TASK-RF-022.1.md). O travamento era do sandbox antigo. -->
 <!-- ✅ TASK-CHORE-003 concluída (05/07) — ambiente blindado (.npmrc include=dev, test.env no Vitest, env do Claude Code, TLS reativado) — ver concluidas/2026-07-05--04h57--TASK-CHORE-003.md -->
 | TASK-DOC-003 | Sincronizar `contexto-projeto-ai.md`: deixa de ser "SPA de página única sem router" (ADR-003) | Standard | Importante | Normal | P/P | TASK-RF-011 | ADR-003 | [ ] | 22/06/26 23:50 |
-| TASK-REF-011 | Remover o fluxo inline legado do `RouteViewer` (pós-upload navega desde a 022.4; seletor/sumário/modais inline = código morto no caminho normal) + extrair hook `useManifestFromUrl` (Regra de Três: SummaryPage/MapPage) | Standard | Importante | Normal | M/M | TASK-RF-022 ✅ | origem: revisão da TASK-RF-022.6 | [ ] | 05/07/26 21:05 |
+| TASK-REF-011 | Remover o fluxo inline legado do `RouteViewer` (pós-upload navega desde a 022.4; seletor/sumário/modais inline = código morto no caminho normal) + extrair hook `useManifestFromUrl` (Regra de Três: SummaryPage/MapPage) + **aposentar `AddressSheet` e o modal fullscreen do `RouteMap`** (`!embedded` + handler de Escape legado — únicos consumidores; conteúdo absorvido pelo painel na RF-023.4) | Standard | Importante | Normal | M/M | TASK-RF-022 ✅, TASK-RF-023 ✅ | origem: revisão da TASK-RF-022.6; escopo ampliado na RF-023.5 | [ ] | 05/07/26 21:05 |
 | TASK-TEST-002 | Testar o zoom do mapa e definir o limite mínimo ideal (detalhe de rua p/ roteirizar a pé); alinhar `MAP_CONFIG.ZOOM.MIN` com o bloqueio do tile worker (hoje z<14) | Standard | Importante | Normal | P/M | - | RNF-12, RNF-15 | [ ] | 24/06/26 14:50 |
 
 

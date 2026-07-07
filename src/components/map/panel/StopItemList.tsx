@@ -1,26 +1,44 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { UI_LABELS } from "../../../constants/uiLabels";
 import type { StopItemData } from "../../../utils/markers/panelModels";
 import { StopItem } from "./StopItem";
 
 /**
- * StopItemList - the panel body of the Original mode (design doc §2/§3, tela 5):
- * the current stop's addresses ordered by Sequence, one expandable StopItem
- * each. Selection is OWNED by the parent (expandedKey mirrors the map's
- * selectedAddressKey; onItemTap emits the intent) — no duplicated state.
+ * StopItemList - the panel's LIST view body (design doc §2/§3, rev. 07/07):
+ * the current stop's addresses ordered by Sequence. The list opens with EVERY
+ * item expanded (scan-everything mode); tapping a row toggles only THAT item.
+ * The highlight follows the map selection (`selectedKey`); selecting happens
+ * through the per-item "Ver no mapa" trailing action, not by tapping rows.
  *
  * `itemLeading`/`itemActions` are the 🔮 per-item slots (drag handle, edit
  * actions — RF-006/009); absent in the Original mode.
  */
 interface Props {
   items: StopItemData[];
-  expandedKey: string | null;
-  onItemTap: (addressKey: string) => void;
+  /** The map's selected address — highlighted and auto-scrolled into view. */
+  selectedKey: string | null;
   itemLeading?: (item: StopItemData) => ReactNode;
   itemActions?: (item: StopItemData) => ReactNode;
+  /** Per-item element BESIDE the row (list view's "Ver no mapa" — rev. 07/07). */
+  itemTrailing?: (item: StopItemData) => ReactNode;
+  /** Bumped to re-scroll the selected item into view (list view opens at full). */
+  scrollSignal?: number;
 }
 
-export const StopItemList = ({ items, expandedKey, onItemTap, itemLeading, itemActions }: Props) => {
+export const StopItemList = ({ items, selectedKey, itemLeading, itemActions, itemTrailing, scrollSignal }: Props) => {
+  // Everything starts EXPANDED; taps collapse/expand individually. The state
+  // resets naturally: the component unmounts when the list view closes, and a
+  // stop change renews the keys ("i:j").
+  const [collapsedKeys, setCollapsedKeys] = useState<ReadonlySet<string>>(new Set());
+
+  const toggle = (addressKey: string) =>
+    setCollapsedKeys((previous) => {
+      const next = new Set(previous);
+      if (next.has(addressKey)) next.delete(addressKey);
+      else next.add(addressKey);
+      return next;
+    });
+
   if (items.length === 0) {
     return <p className="px-4 text-sm text-muted-foreground">{UI_LABELS.MAP_PANEL.ITEM.NO_ITEMS}</p>;
   }
@@ -28,7 +46,17 @@ export const StopItemList = ({ items, expandedKey, onItemTap, itemLeading, itemA
   return (
     <ul aria-label={UI_LABELS.MAP_PANEL.ITEM.LIST_ARIA}>
       {items.map((item) => (
-        <StopItem key={item.addressKey} item={item} expanded={item.addressKey === expandedKey} onTap={() => onItemTap(item.addressKey)} leading={itemLeading?.(item)} actions={itemActions?.(item)} />
+        <StopItem
+          key={item.addressKey}
+          item={item}
+          expanded={!collapsedKeys.has(item.addressKey)}
+          highlighted={item.addressKey === selectedKey}
+          onTap={() => toggle(item.addressKey)}
+          leading={itemLeading?.(item)}
+          actions={itemActions?.(item)}
+          trailing={itemTrailing?.(item)}
+          scrollSignal={scrollSignal}
+        />
       ))}
     </ul>
   );
