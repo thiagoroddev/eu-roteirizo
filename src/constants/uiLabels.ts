@@ -96,6 +96,9 @@ export const UI_LABELS = {
     METRIC_PACKAGES: (count: number) => (count === 1 ? "1 pacote" : `${count} pacotes`),
     /** Package count per inferred type — "Residencial: 2 pacotes" (rev. 07/07). */
     METRIC_TYPED_PACKAGES: (typeLabel: string, count: number) => `${typeLabel}: ${count === 1 ? "1 pacote" : `${count} pacotes`}`,
+    // HUD do modo Meu roteiro (RF-32 parcial — TASK-RF-006.2): o que falta rotear.
+    ROTEIRO_REMAINING: (addresses: number, packages: number) => `Faltando: ${addresses === 1 ? "1 endereço" : `${addresses} endereços`} · ${packages === 1 ? "1 pacote" : `${packages} pacotes`}`,
+    ROTEIRO_HINT_START: "A construção começa definindo o ponto inicial da rota (em breve).",
     // Lista de endereços da parada (StopItemList — TASK-RF-023.4, RF-27/28)
     ITEM: {
       LIST_ARIA: "Endereços da parada",
@@ -109,7 +112,8 @@ export const UI_LABELS = {
     ARIA: "Modo do mapa",
     ORIGINAL: "Original",
     MY_ROTEIRO: "Meu roteiro",
-    MY_ROTEIRO_SOON: "Em breve — montar e ver o seu roteiro",
+    // Only shown while the side is disabled — since TASK-RF-006.2 that means "no plottable points".
+    MY_ROTEIRO_SOON: "Indisponível — nenhum endereço com coordenada válida",
   },
   ROUTE_MAP: {
     FULLSCREEN_ARIA: "Mapa em tela cheia",
@@ -120,6 +124,8 @@ export const UI_LABELS = {
       NEIGHBORHOOD: "Bairro:",
       ZIPCODE: "CEP:",
       COMMERCIAL: "Horário comercial?",
+      // Tooltip dos pontos livres do modo Meu roteiro (TASK-RF-006.2).
+      PACKAGES: "Pacotes:",
     },
     // Textos do detalhe do endereço, hoje renderizado pelo painel do mapa
     // (StopItemDetail — RF-023.4; o componente AddressSheet foi aposentado na REF-011).
@@ -180,9 +186,9 @@ export const UI_LABELS = {
     // "Ver Original" abre o mapa no modo Original (RF-43, rev. 26/06 — antes "Ver no Mapa")
     VIEW_MAP: "Ver Original",
     NO_COORDINATES: "Sem Coordenadas",
-    // Botão adaptativo (RF-43): "Criar Roteiro" quando não há; vira "Ver Meu Roteiro" com a RF-006/008
+    // Botão adaptativo (RF-43): "Criar Roteiro" abre o mapa em Meu roteiro (TASK-RF-006.2);
+    // vira "Ver Meu Roteiro" quando a rota já tiver roteiro salvo (RF-008).
     CREATE_ROTEIRO: "Criar Roteiro",
-    CREATE_ROTEIRO_SOON: "Em breve — montar o roteiro manual (Meu roteiro)",
     SIMPLE_TABLE: "Tabela Simplificada",
     ORIGINAL_TABLE: "Tabela Original",
   },

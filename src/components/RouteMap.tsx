@@ -43,14 +43,19 @@ const Z_SELECTED = 200000;
 ============================================================================ */
 
 /**
- * RouteMap - the embedded Leaflet map of the `/mapa` focus screen (Original mode).
+ * RouteMap - the embedded Leaflet map of the `/mapa` focus screen.
  *
- * Draws one SVG marker per stop (square). Clicking a stop expands its addresses
- * as circles and selects the first one; clicking an address selects it; clicking
- * the empty map collapses. FULLY CONTROLLED (TASK-REF-011): the parent (MapPage)
- * owns the interaction state — this component only draws it and EMITS transitions
- * via onInteractionChange, so the persistent MapPanel and the map share one
- * source of truth. Escape/close are the page's business, not this component's.
+ * Original mode (default): draws one SVG marker per stop (square). Clicking a
+ * stop expands its addresses as circles and selects the first one; clicking an
+ * address selects it; clicking the empty map collapses. FULLY CONTROLLED
+ * (TASK-REF-011): the parent (MapPage) owns the interaction state — this
+ * component only draws it and EMITS transitions via onInteractionChange, so the
+ * persistent MapPanel and the map share one source of truth. Escape/close are
+ * the page's business, not this component's.
+ *
+ * Meu roteiro mode (ADR-009): the parent passes ready-made view-models via
+ * `models` and this component just draws them — the internal computation
+ * (groupRowsByStop) stays exclusive to the Original mode.
  */
 interface Props {
   rows: RowData[];
@@ -62,9 +67,16 @@ interface Props {
    * (TASK-RF-023.5).
    */
   bottomObstructionPx?: number;
+  /**
+   * External view-model override — the Meu roteiro mode (ADR-009, TASK-RF-006.2).
+   * When present, RouteMap draws THESE models, frames them in fitBounds and does
+   * NOT bind marker click handlers (the builder's context panels arrive in later
+   * slices); when absent, the Original-mode computation above applies.
+   */
+  models?: MarkerModel[];
 }
 
-export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChange, bottomObstructionPx = 0 }) => {
+export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChange, bottomObstructionPx = 0, models }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
@@ -80,7 +92,10 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
   });
 
   const stops = useMemo(() => groupRowsByStop(rows), [rows]);
-  const models = useMemo(() => computeMarkerModels(stops, expandedStopKey, selectedAddressKey), [stops, expandedStopKey, selectedAddressKey]);
+  const internalModels = useMemo(() => computeMarkerModels(stops, expandedStopKey, selectedAddressKey), [stops, expandedStopKey, selectedAddressKey]);
+  /** External models (Meu roteiro) win; otherwise the Original-mode computation. */
+  const isExternal = models !== undefined;
+  const renderModels = models ?? internalModels;
 
   // 1) MAP INITIALIZATION (Leaflet Setup)
   useEffect(() => {
@@ -140,11 +155,20 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
     return () => clearTimeout(resizeTimeout);
   }, [stops, rows]);
 
-  // 2b) FOCUS — fit the expanded stop's addresses at MAX zoom (closest focus);
-  //     otherwise frame the whole route. Re-runs only on data/expansion change.
+  // 2b) FOCUS — external models (Meu roteiro): frame them all; Original: fit the
+  //     expanded stop's addresses at MAX zoom (closest focus) or the whole route.
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || stops.length === 0) return;
+    if (!map) return;
+
+    if (isExternal) {
+      if (renderModels.length === 0) return;
+      const bounds = L.latLngBounds(renderModels.map((model) => L.latLng(model.lat, model.lng)));
+      map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50 + bottomObstructionPx], maxZoom: MAP_CONFIG.ZOOM.DEFAULT });
+      return;
+    }
+
+    if (stops.length === 0) return;
 
     const expanded = expandedStopKey !== null ? stops[Number(expandedStopKey)] : undefined;
     if (expanded) {
@@ -154,7 +178,7 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
       const bounds = L.latLngBounds(stops.map((stop) => L.latLng(stop.representative.lat, stop.representative.lng)));
       map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50 + bottomObstructionPx], maxZoom: MAP_CONFIG.ZOOM.DEFAULT });
     }
-  }, [stops, expandedStopKey, bottomObstructionPx]);
+  }, [stops, expandedStopKey, bottomObstructionPx, isExternal, renderModels]);
 
   // 3) MARKERS RENDERING — redraws when the data OR the interaction state changes.
   useEffect(() => {
@@ -203,7 +227,7 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
       return model.addressKey === selectedAddressKey ? Z_SELECTED : Z_GROUP;
     };
 
-    models.forEach((model) => {
+    renderModels.forEach((model) => {
       const marker = L.marker([model.lat, model.lng], {
         icon: createMarkerDivIcon({ ...model.iconProps, scale: scaleFor(model) }),
         zIndexOffset: zIndexFor(model),
@@ -211,9 +235,13 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
 
       if (model.tooltipHtml) marker.bindTooltip(model.tooltipHtml, { direction: "top", offset: [0, TOOLTIP_OFFSET_Y] });
 
-      marker.on("click", () => {
-        applyInteractionRef.current(nextInteraction({ expandedStopKey, selectedAddressKey }, model, stops));
-      });
+      // External models (Meu roteiro) get no click handler yet — the builder's
+      // context panels arrive in RF-006.3/.4 (ADR-009).
+      if (!isExternal) {
+        marker.on("click", () => {
+          applyInteractionRef.current(nextInteraction({ expandedStopKey, selectedAddressKey }, model, stops));
+        });
+      }
 
       marker.addTo(markersLayer);
       entries.push({ marker, model });
@@ -232,7 +260,7 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
     return () => {
       map.off("zoomend", applyScaleForZoom);
     };
-  }, [models, stops, expandedStopKey, selectedAddressKey]);
+  }, [renderModels, stops, expandedStopKey, selectedAddressKey, isExternal]);
 
   // 4) CLICK OUTSIDE (empty map) → collapse and clear selection.
   useEffect(() => {

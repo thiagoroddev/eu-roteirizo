@@ -1,13 +1,15 @@
 /**
- * markerColors - Location-type → marker color, for the Original mode only (ADR-008 §5).
+ * markerColors - The map's functional marker palettes (ADR-008 §5, ADR-009).
  *
- * The SVG marker (`markerSvg.ts`) is color-agnostic: it takes raw color values so
- * the same component serves "Meu roteiro" later with a categorical per-stop palette.
- * This module owns the Original-mode mapping (type → color), because cor-por-tipo is
- * exclusive to the Original mode. Commercial = blue, Residential = green, Indefinite =
- * gray (with a dark number ink for AA contrast, since the gray fill is light).
+ * The SVG marker (`markerSvg.ts`) is color-agnostic: it takes raw color values, so
+ * the same component serves both modes. This module owns the palettes:
+ * - Original mode: type → color (commercial blue / residential green / indefinite
+ *   gray with dark number ink for AA contrast). LOCKED — do not retheme.
+ * - Meu roteiro mode: the neutral FADED palette for unassigned points (spec passo 0:
+ *   "pontos cinza desbotados"). Fading is done by COLOR, not CSS opacity, because
+ *   faded free points and full-color committed stops coexist in the same render.
  *
- * Input keys are the ICON_KEYS returned by `resolveLocationType`.
+ * Input keys of `colorForLocationType` are the ICON_KEYS returned by `resolveLocationType`.
  */
 
 import { ICON_KEYS } from "../../constants";
@@ -18,6 +20,14 @@ export const ORIGINAL_MARKER_COLORS: Record<"commercial" | "residential" | "inde
   commercial: { top: "#3DA0FF", bottom: "#1559C9", glow: "rgba(45,127,240,.55)" },
   residential: { top: "#34D27A", bottom: "#0E8C49", glow: "rgba(34,184,102,.50)" },
   indefinite: { top: "#B6BCC6", bottom: "#8A909C", glow: "rgba(0,0,0,.18)", numberInk: "#2A2F38" },
+};
+
+/**
+ * Meu roteiro palettes (TASK-RF-006.2). `unassigned` is deliberately lighter than
+ * the Original's `indefinite` gray — it must read as "not routed yet", not as a type.
+ */
+export const ROTEIRO_MARKER_COLORS: Record<"unassigned", MarkerColor> = {
+  unassigned: { top: "#D9DDE3", bottom: "#B4BAC4", glow: "rgba(0,0,0,.10)", numberInk: "#4A505A" },
 };
 
 /**

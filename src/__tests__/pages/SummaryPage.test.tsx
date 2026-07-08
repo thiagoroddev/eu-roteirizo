@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { UI_LABELS, COLUMN_NAMES } from "../../constants";
 import type { RowData } from "../../types";
 
@@ -34,13 +34,16 @@ vi.mock("../../hooks/useRouteUploader", () => ({
 
 import SummaryPage from "../../pages/SummaryPage";
 
+/** The /mapa stub also exposes the search string, so navigation params are assertable. */
+const MapPageStub = () => <div data-testid="map-page-stub">{useLocation().search}</div>;
+
 const renderPage = (initialPath = "/sumario?romaneio=hash-1&rota=A-1") =>
   render(
     <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
         <Route path="/sumario" element={<SummaryPage />} />
         <Route path="/rotas" element={<div data-testid="rotas-page-stub" />} />
-        <Route path="/mapa" element={<div data-testid="map-page-stub" />} />
+        <Route path="/mapa" element={<MapPageStub />} />
       </Routes>
     </MemoryRouter>
   );
@@ -74,10 +77,23 @@ describe("SummaryPage (focus screen)", () => {
     expect(screen.getByText(UI_LABELS.ROUTE_TABLE.TITLE("A-1"))).toBeInTheDocument();
   });
 
-  it("ships the adaptive 'Criar Roteiro' button disabled (RF-43 — wired by RF-006/008)", () => {
+  it("'Criar Roteiro' opens the map in the Meu roteiro mode (TASK-RF-006.2)", () => {
     renderPage();
 
-    expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.CREATE_ROTEIRO_SOON })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.CREATE_ROTEIRO }));
+
+    const stub = screen.getByTestId("map-page-stub");
+    expect(stub.textContent).toContain("romaneio=hash-1");
+    expect(stub.textContent).toContain("rota=A-1");
+    expect(stub.textContent).toContain("modo=roteiro");
+  });
+
+  it("'Criar Roteiro' is disabled without coordinate columns (same gate as the map)", () => {
+    uploaderState.availableCols = [COLUMN_NAMES.SEQUENCE, COLUMN_NAMES.STOP];
+    renderPage();
+
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.CREATE_ROTEIRO })).toBeDisabled();
+    uploaderState.availableCols = [COLUMN_NAMES.LATITUDE, COLUMN_NAMES.LONGITUDE, COLUMN_NAMES.SEQUENCE, COLUMN_NAMES.STOP, COLUMN_NAMES.PLANNED_VEHICLE_TYPE];
   });
 
   it("does not render the 'Info Meu Roteiro' section while no Roteiro exists", () => {

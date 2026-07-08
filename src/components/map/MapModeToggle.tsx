@@ -3,6 +3,14 @@ import { UI_LABELS } from "../../constants/uiLabels";
 
 export type MapMode = "original" | "roteiro";
 
+/**
+ * Query-param contract of the map mode (TASK-RF-006.2): `/mapa?...&modo=roteiro`
+ * opens in Meu roteiro. Lives beside MapMode so SummaryPage (writes the link)
+ * and MapPage (derives the mode) share one source instead of magic strings.
+ */
+export const MODE_QUERY_PARAM = "modo";
+export const MODE_QUERY_ROTEIRO = "roteiro";
+
 interface Props {
   mode: MapMode;
   onModeChange: (mode: MapMode) => void;

@@ -6,6 +6,11 @@
 
 *(Nenhuma tarefa em andamento.)*
 
+<!-- 08/07/26 12h40: TASK-RF-006.2 ✅ (modo Meu roteiro na tela: toggle destravado/RF-010 absorvida, ?modo=roteiro, pontos desbotados, HUD, Criar Roteiro navega; ADR-009). Suíte 506/506. -->
+<!-- ⚠️ SMOKE PENDENTE (humano, RF-006.2): Sumário → "Criar Roteiro" (pontos desbotados + HUD); alternar modos (memória volta); F5 com ?modo=roteiro; rota sem coords → desabilitado; avaliar badge amarelo sobre o desbotado. -->
+<!-- Próxima: TASK-RF-006.3 (ponto inicial GPS/toque/endereço + useRoadGraph lazy + sugestão tracejada). -->
+<!-- ⚠️ COMMIT PENDENTE do humano: REF-013 + REF-011 + RF-006.1 + RF-006.2 (e smoke da REF-011 ainda pendente). -->
+
 <!-- 07/07/26 20h40: TASK-RF-006.1 ✅ (reducer puro do Meu roteiro + walkOrder/vehicleStop/pointsWithinRadius + useRouteBuilder; suíte 485/485). Épico RF-006 re-fatiado em pendentes.md: RF-010 absorvida na .2; RF-008 antecipada pós-.4; @turf descartada. -->
 <!-- Próxima: TASK-RF-006.2 (entrar no modo Meu roteiro — toggle destravado, pontos desbotados, HUD, "Criar Roteiro" navega; ADR da interop StopGroup×DeliveryPoint). -->
 <!-- ⚠️ COMMIT PENDENTE do humano: REF-013 + REF-011 + RF-006.1 (e smoke da REF-011 ainda pendente). -->

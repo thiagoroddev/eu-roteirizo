@@ -31,4 +31,12 @@ describe("PanelModeBar", () => {
     expect(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.PREV_STOP })).toHaveAttribute("data-vaul-no-drag");
     expect(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.NEXT_STOP })).toHaveAttribute("data-vaul-no-drag");
   });
+
+  it("hides the stepper without handlers (Meu roteiro .2 has no stops to step — RF-006.2)", () => {
+    render(<PanelModeBar modeLabel={UI_LABELS.MAP_MODE.MY_ROTEIRO} />);
+
+    expect(screen.getByText(UI_LABELS.MAP_MODE.MY_ROTEIRO)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: UI_LABELS.MAP_PANEL.PREV_STOP })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: UI_LABELS.MAP_PANEL.NEXT_STOP })).not.toBeInTheDocument();
+  });
 });

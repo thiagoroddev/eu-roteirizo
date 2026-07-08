@@ -6,6 +6,7 @@ import { RouteTable } from "../components/RouteTable";
 import { RouteSimpleTable } from "../components/RouteSimpleTable";
 import { PlannedRouteInfo } from "../components/summary/PlannedRouteInfo";
 import { Button } from "../components/ui/button";
+import { MODE_QUERY_PARAM, MODE_QUERY_ROTEIRO } from "../components/map/MapModeToggle";
 import { useManifestFromUrl } from "../hooks/useManifestFromUrl";
 import { getVehicleType } from "../utils/formatters";
 import { COLUMN_NAMES } from "../constants";
@@ -19,9 +20,10 @@ import { UI_LABELS } from "../constants/uiLabels";
  *
  * Reuses the same RouteSummary card as the legacy inline flow — no summary
  * info is lost — plus the RF-43 buttons: "Ver Original" navigates to the map
- * focus screen (`/mapa`, TASK-RF-022.5) and the adaptive "Criar Roteiro"
- * ships disabled until TASK-RF-006/008 wire the Roteiro flow. The "Info Meu
- * Roteiro" section renders only when a Roteiro exists (phase 1: never).
+ * focus screen (`/mapa`, TASK-RF-022.5) and "Criar Roteiro" opens the same
+ * screen in the Meu roteiro mode (`&modo=roteiro` — TASK-RF-006.2; it becomes
+ * "Ver Meu Roteiro" once RF-008 persists roteiros). The "Info Meu Roteiro"
+ * section renders only when a Roteiro exists (RF-007/008 feed it).
  */
 function SummaryPage() {
   const navigate = useNavigate();
@@ -60,7 +62,12 @@ function SummaryPage() {
             onShowSimpleTable={() => setShowSimpleTable(true)}
             mapAvailable={mapAvailable}
             extraActions={
-              <Button variant="outline" disabled title={UI_LABELS.ROUTE_SUMMARY.CREATE_ROTEIRO_SOON} aria-label={UI_LABELS.ROUTE_SUMMARY.CREATE_ROTEIRO_SOON}>
+              <Button
+                variant="outline"
+                disabled={!mapAvailable}
+                title={mapAvailable ? undefined : UI_LABELS.ROUTE_SUMMARY.NO_COORDINATES}
+                onClick={() => navigate(`/mapa?romaneio=${encodeURIComponent(manifestId)}&rota=${encodeURIComponent(routeName)}&${MODE_QUERY_PARAM}=${MODE_QUERY_ROTEIRO}`)}
+              >
                 {UI_LABELS.ROUTE_SUMMARY.CREATE_ROTEIRO}
               </Button>
             }

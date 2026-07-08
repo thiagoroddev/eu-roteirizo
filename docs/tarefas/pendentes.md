@@ -159,7 +159,7 @@
 
 ## TASK-RF-006 - UI de construção da rota (Meu roteiro) [XG, dividir]
 
-- **Status:** Pendente (**.1 ✅ 07/07** — próxima: **.2**)
+- **Status:** Pendente (**.1 ✅ 07/07 · .2 ✅ 08/07** — próxima: **.3**)
 - **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
@@ -174,10 +174,8 @@
 ### ✅ TASK-RF-006.1 - Estado da construção (reducer puro + geometria de apoio) — CONCLUÍDA (07/07)
 > `routeBuilderReducer` (17 ações + seletores) + `walkOrder`/`vehicleStop`/`pointsWithinRadius` + casca `useRouteBuilder`; invariantes testadas (ponto em 1 parada só, order contíguo, round-trip `toPlannedRoute`↔`HYDRATE`). Suíte 485/485. Ver `concluidas/2026-07-07--20h40--TASK-RF-006.1.md`.
 
-### TASK-RF-006.2 - Entrar no modo (ABSORVE RF-010) + pontos desbotados + HUD
-- **Esforço-H/IA:** M/G · **Dep:** 006.1
-- Toggle destravado (`roteiroEnabled`); MapPage instancia o builder no modo roteiro; `roteiroModels.ts` renderiza não-atribuídos cinza desbotados; PanelModeBar "Meu roteiro" + progresso faltando X/Y; "Criar Roteiro" do Sumário habilita e navega `/mapa?modo=roteiro`. **ADR da interop (decisão A).**
-- **Aceite:** alternar modos funciona sem regressão do Original; contadores batem com os seletores.
+### ✅ TASK-RF-006.2 - Entrar no modo (ABSORVEU RF-010) + pontos desbotados + HUD — CONCLUÍDA (08/07)
+> Toggle destravado; `?modo=roteiro` fonte do modo; pontos livres desbotados (`roteiroModels` + `models?` no RouteMap); HUD "Faltando: X · Y"; "Criar Roteiro" navega; `MapScreen` com key; **ADR-009**. Suíte 506/506. Ver `concluidas/2026-07-08--12h40--TASK-RF-006.2.md`.
 
 ### TASK-RF-006.3 - Ponto inicial + grafo OSM + sugestão tracejada (passos 1–2)
 - **Esforço-H/IA:** M/G · **Dep:** 006.2

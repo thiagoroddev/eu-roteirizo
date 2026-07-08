@@ -251,6 +251,67 @@ describe("RouteMap (controlled embedded map)", () => {
   });
 
   // ==========================================================================
+  // EXTERNAL MODELS — Meu roteiro mode (TASK-RF-006.2, ADR-009)
+  // ==========================================================================
+
+  const externalModels = [
+    {
+      key: "pt_a",
+      kind: "address" as const,
+      lat: -22.95,
+      lng: -43.15,
+      stopIndex: -1,
+      iconProps: { shape: "circle" as const, color: { top: "#D9DDE3", bottom: "#B4BAC4", glow: "rgba(0,0,0,.10)" }, number: null, badge: null },
+      tooltipHtml: "<div>tooltip-a</div>",
+    },
+    {
+      key: "pt_b",
+      kind: "address" as const,
+      lat: -22.96,
+      lng: -43.16,
+      stopIndex: -1,
+      iconProps: { shape: "circle" as const, color: { top: "#D9DDE3", bottom: "#B4BAC4", glow: "rgba(0,0,0,.10)" }, number: null, badge: { kind: "packages" as const, count: 2 } },
+    },
+  ];
+
+  it("draws the EXTERNAL models (not the internal stop grouping) when `models` is provided", () => {
+    renderRouteMap(mockRowsWithCoordinates, { models: externalModels });
+
+    // One marker per external model, at the models' positions (not the rows').
+    expect(L.marker).toHaveBeenCalledTimes(2);
+    expect(L.marker).toHaveBeenCalledWith([-22.95, -43.15], expect.anything());
+    expect(L.marker).toHaveBeenCalledWith([-22.96, -43.16], expect.anything());
+  });
+
+  it("does NOT bind marker click handlers for external models (no-op until RF-006.3/.4)", () => {
+    renderRouteMap(mockRowsWithCoordinates, { models: externalModels });
+
+    const markerClicks = markerMethods.on.mock.calls.filter(([event]) => event === "click");
+    expect(markerClicks).toHaveLength(0);
+  });
+
+  it("fits bounds over the external models with the obstruction padding", () => {
+    renderRouteMap(mockRowsWithCoordinates, { models: externalModels, bottomObstructionPx: 224 });
+
+    expect(L.latLng).toHaveBeenCalledWith(-22.95, -43.15);
+    expect(mapMethods.fitBounds).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ paddingTopLeft: [50, 50], paddingBottomRight: [50, 274] }));
+  });
+
+  it("binds the tooltip of external models when present", () => {
+    renderRouteMap(mockRowsWithCoordinates, { models: externalModels });
+
+    expect(markerMethods.bindTooltip).toHaveBeenCalledTimes(1);
+    expect(markerMethods.bindTooltip).toHaveBeenCalledWith("<div>tooltip-a</div>", expect.anything());
+  });
+
+  it("skips fitBounds for an empty external model list without crashing", () => {
+    renderRouteMap(mockRowsWithCoordinates, { models: [] });
+
+    expect(mapMethods.fitBounds).not.toHaveBeenCalled();
+    expect(L.marker).not.toHaveBeenCalled();
+  });
+
+  // ==========================================================================
   // CLEANUP
   // ==========================================================================
 

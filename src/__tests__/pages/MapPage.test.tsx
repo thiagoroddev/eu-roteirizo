@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { UI_LABELS, COLUMN_NAMES } from "../../constants";
 import type { RowData } from "../../types";
@@ -78,10 +78,17 @@ vi.mock("../../hooks/useRouteUploader", () => ({
 }));
 
 // Stub RouteMap (Leaflet) — exposes the controlled-interaction contract so the
-// tests can drive selections the way the real map would (RF-023.2).
+// tests can drive selections the way the real map would (RF-023.2), plus the
+// external-models contract of the Meu roteiro mode (RF-006.2/ADR-009).
 vi.mock("../../components/RouteMap", () => ({
-  RouteMap: ({ interaction, onInteractionChange }: { interaction?: InteractionState; onInteractionChange?: (next: InteractionState) => void }) => (
-    <div data-testid="route-map-stub" data-controlled={String(!!onInteractionChange)} data-expanded-stop={String(interaction?.expandedStopKey ?? null)}>
+  RouteMap: ({ interaction, onInteractionChange, models }: { interaction?: InteractionState; onInteractionChange?: (next: InteractionState) => void; models?: unknown[] }) => (
+    <div
+      data-testid="route-map-stub"
+      data-controlled={String(!!onInteractionChange)}
+      data-expanded-stop={String(interaction?.expandedStopKey ?? null)}
+      data-external-models={String(models !== undefined)}
+      data-model-count={String(models?.length ?? "none")}
+    >
       <button type="button" onClick={() => onInteractionChange?.({ expandedStopKey: "0", selectedAddressKey: "0:0" })}>
         stub-select-first-address
       </button>
@@ -96,6 +103,9 @@ vi.mock("../../components/RouteMap", () => ({
 }));
 
 import MapPage from "../../pages/MapPage";
+
+/** Renders the current location's search string (URL-write assertions). */
+const LocationProbe = () => <div data-testid="location-probe">{useLocation().search}</div>;
 
 const renderPage = (initialPath = "/mapa?romaneio=hash-1&rota=A-1") =>
   render(
@@ -127,12 +137,14 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-controlled", "true");
   });
 
-  it("shows the segmented toggle with 'Meu roteiro' disabled until TASK-RF-010", () => {
+  it("shows the segmented toggle with 'Meu roteiro' ENABLED (TASK-RF-006.2, ex-RF-010)", () => {
     renderPage();
 
     expect(screen.getByRole("group", { name: UI_LABELS.MAP_MODE.ARIA })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.ORIGINAL })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.MY_ROTEIRO_SOON })).toBeDisabled();
+    expect(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.MY_ROTEIRO })).toBeEnabled();
+    // Original mode by default: the map computes its own models.
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-external-models", "false");
   });
 
   // ==========================================================================
@@ -360,6 +372,92 @@ describe("MapPage (focus screen)", () => {
     // 3rd Escape: leaves the map (same destination as the back arrow).
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.getByTestId("rotas-page-stub")).toBeInTheDocument();
+  });
+
+  // ==========================================================================
+  // Modo Meu roteiro (TASK-RF-006.2 — absorve RF-010, ADR-009)
+  // ==========================================================================
+
+  it("switching to 'Meu roteiro' shows the remaining-work HUD and feeds the map external models", () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.MY_ROTEIRO }));
+
+    // HUD over rowsA1: 1 address, 1 package, nothing committed yet.
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_HINT_START)).toBeInTheDocument();
+    // No Original sections, no stop steppers (there are no stops to step).
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_FULL_LIST })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: UI_LABELS.MAP_PANEL.NEXT_STOP })).not.toBeInTheDocument();
+    // The map draws the external (faded free points) models.
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-external-models", "true");
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-model-count", "1");
+  });
+
+  it("entering the roteiro collapses the map expansion; returning restores the Original panel from memory", () => {
+    uploaderState.routes = { "A-1": rowsStop1TwoAddresses };
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "stub-select-first-address" }));
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-expanded-stop", "0");
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.MY_ROTEIRO }));
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-expanded-stop", "null");
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-external-models", "true");
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.ORIGINAL }));
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-external-models", "false");
+    // The panel re-derives from its memory (panelStopKey survives the round trip).
+    expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
+  });
+
+  it("?modo=roteiro deep-links straight into the roteiro mode (URL is the source of truth)", () => {
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+
+    expect(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.MY_ROTEIRO })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+  });
+
+  it("the toggle writes the mode to the URL preserving romaneio/rota (replace)", () => {
+    render(
+      <MemoryRouter initialEntries={["/mapa?romaneio=hash-1&rota=A-1"]}>
+        <Routes>
+          <Route
+            path="/mapa"
+            element={
+              <>
+                <MapPage />
+                <LocationProbe />
+              </>
+            }
+          />
+          <Route path="/rotas" element={<div data-testid="rotas-page-stub" />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.MY_ROTEIRO }));
+    const probeAfterEnter = screen.getByTestId("location-probe").textContent ?? "";
+    expect(probeAfterEnter).toContain("romaneio=hash-1");
+    expect(probeAfterEnter).toContain("rota=A-1");
+    expect(probeAfterEnter).toContain("modo=roteiro");
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.ORIGINAL }));
+    const probeAfterLeave = screen.getByTestId("location-probe").textContent ?? "";
+    expect(probeAfterLeave).toContain("romaneio=hash-1");
+    expect(probeAfterLeave).not.toContain("modo=");
+  });
+
+  it("with no plottable points the roteiro side is disabled and ?modo=roteiro falls back to Original", () => {
+    uploaderState.routes = { "A-1": [{ [COLUMN_NAMES.SEQUENCE]: 1, [COLUMN_NAMES.STOP]: 1, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Sem Coord, 1" }] };
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+
+    expect(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.MY_ROTEIRO_SOON })).toBeDisabled();
+    expect(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.ORIGINAL })).toHaveAttribute("aria-pressed", "true");
+    // Original header, not the roteiro HUD.
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.MODE_VIEW)).toBeInTheDocument();
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.ROTEIRO_HINT_START)).not.toBeInTheDocument();
   });
 
   it("shows the error state when the manifest cannot be reopened", () => {
