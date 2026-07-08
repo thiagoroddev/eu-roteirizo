@@ -1,4 +1,4 @@
-# Requisitos Funcionais (RF)
+﻿# Requisitos Funcionais (RF)
 
 > O que o sistema faz. IDs `RF-NN`. Extraídos do **código atual** (código é a verdade primária); itens planejados (🔭) sempre ligados a tarefa/ADR. Formato em `.github/agents/geral-robusto/templates/38-requisitos.md`.
 >
@@ -52,8 +52,8 @@
 | ID | Requisito | Prioridade | Status | Origem | Tarefas / ADR |
 |---|---|:---:|:---:|---|---|
 | RF-20 | Toggle no mapa **`Original \| Meu roteiro`** (read-only × editável; padrão Original) — na rota única e numa rota selecionada de Romaneio (Multi). Em **Roteiro importado avulso**, 'Original' fica desativado | MUST | 🟡 | Tela `/mapa` + `MapModeToggle` (TASK-RF-022.5 ✅); **lado Meu roteiro destravado — TASK-RF-006.2 ✅** (modo via `?modo=roteiro`, pontos livres desbotados + HUD; conteúdo evolui com RF-006.3+); avulso = TASK-RF-013 | TASK-RF-022.5 ✅, TASK-RF-006.2 ✅ (absorveu a TASK-RF-010), TASK-RF-013; ADR-009 |
-| RF-21 | Definir o ponto inicial da rota (GPS, toque no mapa ou endereço da planilha) | MUST | 🔭 | fluxo §4/decisão 5; tela 1 | TASK-RF-006.3 |
-| RF-22 | Sugerir o próximo endereço/parada mais próximo (linha tracejada), re-selecionável ao tocar | MUST | 🔭 | fluxo §6; telas 1/3 | TASK-RF-006.3 |
+| RF-21 | Definir o ponto inicial da rota (GPS, toque no mapa **armado por botão** ou endereço da planilha **com confirmação** — decisões 08/07) | MUST | ✅ | fluxo §4/decisão 5 | TASK-RF-006.3 ✅ |
+| RF-22 | Sugerir o próximo endereço/parada mais próximo (linha tracejada desbotada), re-selecionável ao tocar, com distância a pé | MUST | ✅ | fluxo §6 | TASK-RF-006.3 ✅ |
 | RF-23 | Criar parada a partir de um endereço, **sugerindo** os que estão dentro do raio (o usuário escolhe quais entram) | MUST | 🔭 | fluxo §4/§8; tela 3 | TASK-RF-006.4 |
 | RF-24 | Ajustar a parada manualmente (adicionar/remover endereços) | MUST | 🔭 | fluxo §5/§9; telas 5/6 | TASK-RF-006.4 |
 | RF-25 | **Âncora** (parada do veículo): **mover** (arrastar na rua), **tornar âncora** (assume a coordenada de um endereço) e **resetar** (padrão: em frente ao selecionado). Ponto livre **no meio da rua**; mover recalcula a ordem a pé | SHOULD | 🔭 | fluxo §6/§9; tela 6/7 | TASK-RF-006, TASK-RF-021 |
@@ -61,7 +61,7 @@
 | RF-27 | Expandir/colapsar parada (drill-down parada → endereços → pacotes) — **✅ no modo Original** (MapPanel/StopItemList, mapa↔painel espelhados); modos do Meu roteiro reutilizam a estrutura por slots | MUST | 🟡 | fluxo §5; tela 5; `components/map/panel/` | **TASK-RF-023 ✅**, TASK-RF-006.5 |
 | RF-28 | Exibir card "Etiqueta do Pacote" (endereço + Parada/Seq + SPX TN); multi-pacote lista cada um — **✅ no painel do mapa** (`PackageRow`: etiqueta + SPX mono + badge de tipo); outros contextos (telas 3/4) ficam com RF-006 | SHOULD | 🟡 | fluxo §9/§14; telas 3/4; `components/map/panel/StopItem.tsx` | **TASK-RF-023.4 ✅**, TASK-RF-006 |
 | RF-29 | Traçar o caminho de veículo pela rua real **entre paradas do veículo**, respeitando mão única, com km — **motor pronto (TASK-RF-005); falta UI** | MUST | 🟡 | ADR-002; fluxo §6; `utils/routing/` | TASK-RF-005, TASK-RF-006.6 |
-| RF-30 | Mostrar a distância a pé pelas ruas até o alvo selecionado (A* por alvo; reta como fallback) — **A*/distância/map matching prontos (TASK-RF-005); falta variante a-pé (ignora mão única), fallback reta e UI** | SHOULD | 🟡 | fluxo §6; ADR-002; `utils/routing/` | TASK-RF-005 |
+| RF-30 | Mostrar a distância a pé pelas ruas até o alvo selecionado (A* por alvo; reta como fallback) — **variante a-pé (`pedestrianGraph`, ignora mão única), fallback reta e UI da SUGESTÃO entregues (TASK-RF-006.3); falta a distância nas demais telas (pernas/paradas)** | SHOULD | 🟡 | fluxo §6; ADR-002; `utils/routing/` | TASK-RF-005 ✅, TASK-RF-006.3 ✅ |
 | RF-31 | Estimar tempo (a pé na parada + veículo entre paradas); exibir total e próximo trecho | MUST | 🔭 | fluxo §6; tela 5 | TASK-RF-007 |
 | RF-32 | HUD com contadores sempre visíveis (faltando endereços/pacotes, paradas, distância, tempo) | SHOULD | 🔭 | fluxo §7; telas 1/7 | TASK-RF-006.2 |
 | RF-33 | Salvar é **livre** (rascunho auto-salvo, mesmo incompleto); o botão **'Iniciar roteiro'** (executar) só aparece com **0 faltando** — completude exigida só para executar | MUST | 🔭 | fluxo §12; tela 7 | TASK-RF-006.7 |

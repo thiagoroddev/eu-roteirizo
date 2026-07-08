@@ -365,6 +365,17 @@ export function normalizeString(text: string): string {
     .trim();
 }
 
+/** Formats a distance in meters for the UI: "230 m" below 1 km, "1,2 km" above
+ * (pt-BR decimal comma). Used by the suggestion line (TASK-RF-006.3).
+ *
+ * @param {number} meters - The distance in meters.
+ * @returns {string} Formatted distance string.
+ */
+export function formatMeters(meters: number): string {
+  if (meters < 1000) return `${Math.round(meters)} m`;
+  return `${(meters / 1000).toFixed(1).replace(".", ",")} km`;
+}
+
 /** * Converts text to Title Case
  *
  * @param {string} text - The text to convert

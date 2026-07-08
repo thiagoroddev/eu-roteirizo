@@ -23,11 +23,15 @@ export const ORIGINAL_MARKER_COLORS: Record<"commercial" | "residential" | "inde
 };
 
 /**
- * Meu roteiro palettes (TASK-RF-006.2). `unassigned` is deliberately lighter than
- * the Original's `indefinite` gray — it must read as "not routed yet", not as a type.
+ * Meu roteiro palettes (TASK-RF-006.2/.3). `unassigned` is deliberately lighter
+ * than the Original's `indefinite` gray — it must read as "not routed yet", not
+ * as a type. `start` is the route start's OWN green (spec §3 "início = marcador
+ * verde próprio") — brighter/deeper than the residential type green so the two
+ * never read as the same thing.
  */
-export const ROTEIRO_MARKER_COLORS: Record<"unassigned", MarkerColor> = {
+export const ROTEIRO_MARKER_COLORS: Record<"unassigned" | "start", MarkerColor> = {
   unassigned: { top: "#D9DDE3", bottom: "#B4BAC4", glow: "rgba(0,0,0,.10)", numberInk: "#4A505A" },
+  start: { top: "#3EE08F", bottom: "#0A6B3C", glow: "rgba(20,180,100,.55)" },
 };
 
 /**

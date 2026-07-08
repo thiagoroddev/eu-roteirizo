@@ -4,6 +4,7 @@ import {
   routeBuilderReducer,
   draftCandidateIds,
   suggestedNextPointId,
+  suggestionOrigin,
   remainingCounts,
   isComplete,
   toPlannedRoute,
@@ -83,6 +84,16 @@ describe("start and next suggestion", () => {
   it("with an open draft the suggestion departs from the draft anchor and skips its points", () => {
     const state = run(openDraftOnA(initial()), { type: "TOGGLE_DRAFT_POINT", pointId: "e" });
     expect(suggestedNextPointId(state)).toBe("b");
+  });
+
+  it("suggestionOrigin follows draft anchor > last stop anchor > start (null before)", () => {
+    expect(suggestionOrigin(initial())).toBeNull();
+    const started = run(initial(), { type: "SET_START", position: START });
+    expect(suggestionOrigin(started)).toEqual(START);
+    const committed = withStopAB(started);
+    expect(suggestionOrigin(committed)).toEqual({ lat: a.lat, lng: a.lng });
+    const drafting = run(committed, { type: "OPEN_STOP_DRAFT", seedPointId: "e", suggestedVehicleStop: { lat: e.lat, lng: e.lng } });
+    expect(suggestionOrigin(drafting)).toEqual({ lat: e.lat, lng: e.lng });
   });
 });
 

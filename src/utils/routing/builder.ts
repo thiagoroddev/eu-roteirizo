@@ -293,10 +293,16 @@ export const draftCandidateIds = (state: RouteBuilderState): string[] => {
 };
 
 /**
+ * Where the vehicle currently "is" — the origin both the suggestion RANK and
+ * the drawn suggestion line depart from (fluxo §6: draft's anchor, else the
+ * last stop's anchor, else the start point). Null before a start is chosen.
+ */
+export const suggestionOrigin = (state: RouteBuilderState): LatLng | null => state.draft?.vehicleStop ?? (state.stops.length > 0 ? state.stops[state.stops.length - 1].vehicleStop : state.startPoint);
+
+/**
  * The point the next-stop suggestion should target (fluxo §4 passo 2): a valid
- * manual override wins; otherwise the nearest free point (haversine) from where
- * the vehicle currently "is" — the draft's anchor, else the last stop's anchor,
- * else the start. Null before a start is chosen or when nothing is left.
+ * manual override wins; otherwise the nearest free point (haversine) from the
+ * suggestion origin. Null before a start is chosen or when nothing is left.
  */
 export const suggestedNextPointId = (state: RouteBuilderState): string | null => {
   const free = unassignedPoints(state.points, state.stops).filter((p) => !state.draft?.pointIds.includes(p.id));
@@ -306,7 +312,7 @@ export const suggestedNextPointId = (state: RouteBuilderState): string | null =>
     return state.nextSuggestionOverride;
   }
 
-  const origin = state.draft?.vehicleStop ?? (state.stops.length > 0 ? state.stops[state.stops.length - 1].vehicleStop : state.startPoint);
+  const origin = suggestionOrigin(state);
   if (!origin) return null;
 
   let best = free[0];

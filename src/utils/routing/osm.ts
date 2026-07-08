@@ -102,6 +102,39 @@ export const bboxFromBounds = (bounds: { SOUTH_WEST: { lat: number; lng: number 
   east: bounds.NORTH_EAST.lng,
 });
 
+/** Meters per degree of latitude (spherical approximation, same model as geo.ts). */
+const METERS_PER_DEGREE_LAT = 111_320;
+
+/**
+ * Envelope of a set of coordinates expanded by a margin, as a BBox — the
+ * neighborhood-sized area to load the road graph for (TASK-RF-006.3, DT-005).
+ * The margin gives map matching/A* street context around border points.
+ *
+ * @param coords - The coordinates to cover (e.g. the route's delivery points).
+ * @param marginMeters - How far beyond the envelope to extend, in meters.
+ * @returns The expanded BBox, or `null` for an empty list (nothing to load).
+ */
+export const bboxFromPoints = (coords: { lat: number; lng: number }[], marginMeters: number): BBox | null => {
+  if (coords.length === 0) return null;
+
+  let south = Infinity;
+  let west = Infinity;
+  let north = -Infinity;
+  let east = -Infinity;
+  for (const c of coords) {
+    if (c.lat < south) south = c.lat;
+    if (c.lat > north) north = c.lat;
+    if (c.lng < west) west = c.lng;
+    if (c.lng > east) east = c.lng;
+  }
+
+  const latMargin = marginMeters / METERS_PER_DEGREE_LAT;
+  /** Longitude degrees shrink with latitude; use the envelope's center latitude. */
+  const lngMargin = marginMeters / (METERS_PER_DEGREE_LAT * Math.cos(((south + north) / 2) * (Math.PI / 180)));
+
+  return { south: south - latMargin, west: west - lngMargin, north: north + latMargin, east: east + lngMargin };
+};
+
 /**
  * Fetches the navigable road network for a bbox from Overpass and builds the
  * directed RoadGraph.

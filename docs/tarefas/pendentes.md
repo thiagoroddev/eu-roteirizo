@@ -159,7 +159,7 @@
 
 ## TASK-RF-006 - UI de construção da rota (Meu roteiro) [XG, dividir]
 
-- **Status:** Pendente (**.1 ✅ 07/07 · .2 ✅ 08/07** — próxima: **.3**)
+- **Status:** Pendente (**.1 ✅ · .2 ✅ · .3 ✅ 08/07** — próxima: **.4**, depois **RF-008 antecipada**)
 - **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
@@ -177,10 +177,8 @@
 ### ✅ TASK-RF-006.2 - Entrar no modo (ABSORVEU RF-010) + pontos desbotados + HUD — CONCLUÍDA (08/07)
 > Toggle destravado; `?modo=roteiro` fonte do modo; pontos livres desbotados (`roteiroModels` + `models?` no RouteMap); HUD "Faltando: X · Y"; "Criar Roteiro" navega; `MapScreen` com key; **ADR-009**. Suíte 506/506. Ver `concluidas/2026-07-08--12h40--TASK-RF-006.2.md`.
 
-### TASK-RF-006.3 - Ponto inicial + grafo OSM + sugestão tracejada (passos 1–2)
-- **Esforço-H/IA:** M/G · **Dep:** 006.2
-- Painel "nada selecionado" (§10.10) com "Definir ponto inicial" (GPS principal, toque no mapa, "partir deste endereço"); `useRoadGraph` (lazy, cache-first, status discreto); linha tracejada ao não-atribuído mais próximo (haversine; rua real quando o grafo chegar); re-apontável.
-- **Aceite:** início definível pelos 3 caminhos; sugestão correta e trocável; tudo funciona sem grafo.
+### ✅ TASK-RF-006.3 - Ponto inicial + grafo OSM + sugestão tracejada (passos 1–2) — CONCLUÍDA (08/07)
+> Início pelos 3 caminhos (GPS · toque ARMADO · endereço c/ confirmação — decisões 08/07) + marcador verde próprio; `useRoadGraph` lazy (status discreto + retry); tracejada desbotada re-apontável com distância a pé (`pedestrianGraph` + A* só no alvo; reta como fallback). RF-21/22/RN-20 ✅. Suíte 548/548. Ver `concluidas/2026-07-08--13h45--TASK-RF-006.3.md`.
 
 ### TASK-RF-006.4 - Ponto órfão + rascunho da parada (telas 8–9; passos 3–4 e 6)
 - **Esforço-H/IA:** G/G · **Dep:** 006.3

@@ -168,3 +168,15 @@ export const nodeAt = (graph: RoadGraph, id: NodeId): GraphNode | null => {
   const c = graph.coords.get(id);
   return c ? { id, lat: c.lat, lng: c.lng } : null;
 };
+
+/**
+ * Resolves an A* path (node ids) to drawable coordinates, skipping ids the
+ * graph doesn't know (defensive — shouldn't happen with a path produced from
+ * the same graph). Use the SAME graph the path came from (synthetic nodes from
+ * map matching only exist in the matched clone).
+ *
+ * @param graph - The graph the path was computed on.
+ * @param path - The node ids, in visit order.
+ * @returns The coordinates, in the same order.
+ */
+export const pathToLatLngs = (graph: RoadGraph, path: NodeId[]): LatLng[] => path.map((id) => graph.coords.get(id)).filter((c): c is LatLng => c !== undefined);

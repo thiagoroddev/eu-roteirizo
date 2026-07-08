@@ -9,17 +9,25 @@ import { MapPanel, PANEL_COLLAPSED_PX, type PanelSnap } from "../components/map/
 import { PanelModeBar } from "../components/map/panel/PanelModeBar";
 import { PanelTitle } from "../components/map/panel/PanelTitle";
 import { RoteiroPanelHeader } from "../components/map/panel/RoteiroPanelHeader";
+import { RoteiroStartSection, type StartPhase } from "../components/map/panel/RoteiroStartSection";
 import { StopItemList } from "../components/map/panel/StopItemList";
 import { StopItemRow, StopItemDetail } from "../components/map/panel/StopItem";
 import { useManifestFromUrl } from "../hooks/useManifestFromUrl";
 import { useRouteBuilder } from "../hooks/useRouteBuilder";
+import { useRoadGraph } from "../hooks/useRoadGraph";
 import type { RowData } from "../types";
+import type { LatLng } from "../types/routing";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
-import { collapseInteraction, firstAddressKey, type InteractionState } from "../utils/markers/markerModels";
+import { collapseInteraction, firstAddressKey, type InteractionState, type MarkerModel } from "../utils/markers/markerModels";
 import { adjacentStopKey, buildPanelItems, panelMetrics, smallestStopKey, stopPlaceSummary } from "../utils/markers/panelModels";
 import { computeRoteiroMarkerModels } from "../utils/markers/roteiroModels";
 import { buildDeliveryPoints } from "../utils/routing/points";
-import { remainingCounts } from "../utils/routing/builder";
+import { remainingCounts, suggestedNextPointId, suggestionOrigin } from "../utils/routing/builder";
+import { indexPointsById } from "../utils/routing/selectors";
+import { pedestrianGraph } from "../utils/routing/pedestrian";
+import { suggestionPath } from "../utils/routing/suggestion";
+import { isWithinRioBounds } from "../utils/coordinates";
+import { formatMeters } from "../utils/formatters";
 import { UI_LABELS } from "../constants/uiLabels";
 
 /** The panel's two views (rev. 07/07 — TASK-RF-023.7). */
@@ -78,11 +86,120 @@ function MapScreen({ rows }: { rows: RowData[] }) {
 
   // ------- Meu roteiro domain (ADR-009: DeliveryPoint/RouteStop, never StopGroup) -------
   const points = useMemo(() => buildDeliveryPoints(rows), [rows]);
-  const { state: builderState } = useRouteBuilder(points); // dispatch arrives in RF-006.3
+  const { state: builderState, dispatch } = useRouteBuilder(points);
   const roteiroAvailable = points.length > 0;
   const mode: MapMode = searchParams.get(MODE_QUERY_PARAM) === MODE_QUERY_ROTEIRO && roteiroAvailable ? "roteiro" : "original";
   const roteiroModels = useMemo(() => computeRoteiroMarkerModels(points, builderState.stops), [points, builderState.stops]);
   const remaining = remainingCounts(builderState);
+  const pointsById = useMemo(() => indexPointsById(points), [points]);
+
+  // Road graph — lazy on the roteiro enter (ADR-009 decision B); everything
+  // below works with graph === null (straight-line fallbacks).
+  const { graph, status: graphLoadStatus, error: graphError, retry: retryGraph } = useRoadGraph(points, mode === "roteiro");
+  const pedGraph = useMemo(() => (graph ? pedestrianGraph(graph) : null), [graph]);
+
+  // ------- Start-definition flow (RF-21) — ephemeral UI state, never in the reducer -------
+  const [armedMapTap, setArmedMapTap] = useState(false);
+  const [pendingPointId, setPendingPointId] = useState<string | null>(null);
+  const [gpsBusy, setGpsBusy] = useState(false);
+  const [startNotice, setStartNotice] = useState<string | null>(null);
+  const [redefining, setRedefining] = useState(false);
+
+  const resetStartUi = useCallback(() => {
+    setArmedMapTap(false);
+    setPendingPointId(null);
+    setGpsBusy(false);
+    setStartNotice(null);
+    setRedefining(false);
+  }, []);
+
+  const hasStart = builderState.startPoint !== null;
+  const pendingPoint = pendingPointId !== null ? (pointsById.get(pendingPointId) ?? null) : null;
+  const startPhase: StartPhase = gpsBusy ? "locating" : pendingPointId !== null ? "confirm-point" : armedMapTap ? "arming" : !hasStart || redefining ? "no-start" : "has-start";
+
+  const defineStart = useCallback(
+    (position: LatLng) => {
+      dispatch({ type: "SET_START", position });
+      resetStartUi();
+    },
+    [dispatch, resetStartUi]
+  );
+
+  /** GPS is the primary path (fluxo §10.5/RN-20 — never paid geocoding). */
+  const handleUseGps = () => {
+    if (!navigator.geolocation) {
+      setStartNotice(UI_LABELS.ROUTING.GPS_UNAVAILABLE);
+      return;
+    }
+    setGpsBusy(true);
+    setStartNotice(null);
+    setArmedMapTap(false);
+    setPendingPointId(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setGpsBusy(false);
+        const { latitude, longitude } = position.coords;
+        if (!isWithinRioBounds(latitude, longitude)) {
+          setStartNotice(UI_LABELS.ROUTING.GPS_OUT_OF_BOUNDS);
+          return;
+        }
+        defineStart({ lat: latitude, lng: longitude });
+      },
+      (gpsError) => {
+        setGpsBusy(false);
+        setStartNotice(gpsError.code === 1 ? UI_LABELS.ROUTING.GPS_DENIED : gpsError.code === 3 ? UI_LABELS.ROUTING.GPS_TIMEOUT : UI_LABELS.ROUTING.GPS_UNAVAILABLE);
+      },
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 30_000 }
+    );
+  };
+
+  /** Armed map tap → the tapped coordinate becomes the start (decision 08/07). */
+  const handleMapTap = (latlng: LatLng) => {
+    if (!armedMapTap) return;
+    defineStart(latlng);
+  };
+
+  /** Tap on a faded point: without a start (or redefining) it asks for
+      confirmation ("partir deste endereço" — decision 08/07); with a start it
+      re-points the dashed suggestion (fluxo §6). */
+  const handleModelTap = (model: MarkerModel) => {
+    if (!hasStart || redefining) {
+      setPendingPointId(model.key);
+      setArmedMapTap(false);
+      setStartNotice(null);
+      return;
+    }
+    dispatch({ type: "SET_NEXT_SUGGESTION", pointId: model.key });
+  };
+
+  const handleConfirmPoint = () => {
+    if (!pendingPoint) return;
+    defineStart({ lat: pendingPoint.lat, lng: pendingPoint.lng });
+  };
+
+  const handleCancelStartAction = () => {
+    setArmedMapTap(false);
+    setPendingPointId(null);
+    setStartNotice(null);
+    setRedefining(false);
+  };
+
+  // ------- Suggestion line (RF-22): rank is straight-line (selector); the path
+  // and the real walking distance are computed for the chosen target only. -----
+  const origin = suggestionOrigin(builderState);
+  const suggestedId = suggestedNextPointId(builderState);
+  const suggestedPoint = suggestedId !== null ? (pointsById.get(suggestedId) ?? null) : null;
+  const suggestion = useMemo(() => (origin && suggestedPoint ? suggestionPath(pedGraph, origin, { lat: suggestedPoint.lat, lng: suggestedPoint.lng }) : null), [pedGraph, origin, suggestedPoint]);
+  const suggestionLabel =
+    suggestion && suggestedPoint
+      ? `${UI_LABELS.MAP_PANEL.ROTEIRO_START.SUGGESTION(suggestedPoint.address || UI_LABELS.COMMON.NO_DATA, formatMeters(suggestion.distanceMeters))}${suggestion.viaStreets ? "" : ` ${UI_LABELS.MAP_PANEL.ROTEIRO_START.SUGGESTION_STRAIGHT}`}`
+      : null;
+
+  const roteiroOverlay = useMemo(() => ({ start: builderState.startPoint, suggestionPath: suggestion?.path ?? null }), [builderState.startPoint, suggestion]);
+
+  /** Discreet graph status for the header (ready/idle = silence). */
+  const graphStatus =
+    graphLoadStatus === "loading" ? { text: UI_LABELS.ROUTING.LOADING_STREETS } : graphLoadStatus === "error" ? { text: graphError ?? UI_LABELS.ROUTING.NETWORK_ERROR, onRetry: retryGraph } : null;
 
   // Lifted interaction state (TASK-RF-023.2): map + panel, one source of truth.
   const [interaction, setInteraction] = useState<InteractionState>(collapseInteraction());
@@ -121,6 +238,7 @@ function MapScreen({ rows }: { rows: RowData[] }) {
       restores the Original panel from memory. */
   const handleModeChange = (next: MapMode) => {
     if (next === mode) return;
+    resetStartUi();
     if (next === "roteiro") {
       setInteraction(collapseInteraction());
       setPanelView("selected");
@@ -267,7 +385,16 @@ function MapScreen({ rows }: { rows: RowData[] }) {
       {/* Controlled map; fitBounds pads the bottom so the route never frames
           behind the collapsed panel. Escape/back are this screen's handlers.
           In the roteiro mode the models come from outside (ADR-009). */}
-      <RouteMap rows={rows} interaction={interaction} onInteractionChange={handleMapInteraction} bottomObstructionPx={PANEL_COLLAPSED_PX} models={mode === "roteiro" ? roteiroModels : undefined} />
+      <RouteMap
+        rows={rows}
+        interaction={interaction}
+        onInteractionChange={handleMapInteraction}
+        bottomObstructionPx={PANEL_COLLAPSED_PX}
+        models={mode === "roteiro" ? roteiroModels : undefined}
+        onMapTap={mode === "roteiro" ? handleMapTap : undefined}
+        onModelTap={mode === "roteiro" ? handleModelTap : undefined}
+        roteiroOverlay={mode === "roteiro" ? roteiroOverlay : undefined}
+      />
 
       {/* Toggle floats OVER the map (fluxo §15.4: dominant map, compact overlays —
           no dedicated bar). z-index above Leaflet's panes/controls (~1000). */}
@@ -280,7 +407,30 @@ function MapScreen({ rows }: { rows: RowData[] }) {
       <MapPanel
         snap={panelSnap}
         onSnapChange={handleSnapChange}
-        header={mode === "roteiro" ? <RoteiroPanelHeader remainingAddresses={remaining.addresses} remainingPackages={remaining.packages} /> : originalHeader}
+        header={
+          mode === "roteiro" ? (
+            <div>
+              <RoteiroPanelHeader remainingAddresses={remaining.addresses} remainingPackages={remaining.packages} graphStatus={graphStatus} />
+              <RoteiroStartSection
+                phase={startPhase}
+                notice={startNotice}
+                pendingAddress={pendingPoint?.address}
+                suggestionLabel={suggestionLabel}
+                onUseGps={handleUseGps}
+                onArmMapTap={() => {
+                  setArmedMapTap(true);
+                  setPendingPointId(null);
+                  setStartNotice(null);
+                }}
+                onConfirmPoint={handleConfirmPoint}
+                onCancel={handleCancelStartAction}
+                onRedefine={() => setRedefining(true)}
+              />
+            </div>
+          ) : (
+            originalHeader
+          )
+        }
       >
         {mode === "roteiro" ? null : panelView === "list" ? (
           <StopItemList

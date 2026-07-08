@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { onewayDirection, buildGraph, nearestNode, nodeAt } from "../../../utils/routing/graph";
+import { onewayDirection, buildGraph, nearestNode, nodeAt, pathToLatLngs } from "../../../utils/routing/graph";
 import type { OsmElement } from "../../../utils/routing/graph";
 import { squareGraph, A, B, C, D, COORDS, W_VERTICAL, W_HORIZONTAL } from "./__fixtures__/syntheticGraph";
 
@@ -110,5 +110,16 @@ describe("nodeAt", () => {
 
   it("returns null when absent", () => {
     expect(nodeAt(squareGraph, 999)).toBeNull();
+  });
+});
+
+describe("pathToLatLngs", () => {
+  it("resolves an A* path to coordinates in order", () => {
+    expect(pathToLatLngs(squareGraph, [A, B])).toEqual([COORDS[A], COORDS[B]]);
+  });
+
+  it("skips ids the graph doesn't know (defensive) and handles empty paths", () => {
+    expect(pathToLatLngs(squareGraph, [A, 999, B])).toEqual([COORDS[A], COORDS[B]]);
+    expect(pathToLatLngs(squareGraph, [])).toEqual([]);
   });
 });

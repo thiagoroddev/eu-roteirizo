@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { buildOverpassQuery, bboxFromBounds, fetchRoadGraph } from "../../../utils/routing/osm";
+import { buildOverpassQuery, bboxFromBounds, bboxFromPoints, fetchRoadGraph } from "../../../utils/routing/osm";
 import type { BBox } from "../../../utils/routing/osm";
 import { UI_LABELS } from "../../../constants/uiLabels";
 
@@ -55,6 +55,32 @@ describe("buildOverpassQuery", () => {
 describe("bboxFromBounds", () => {
   it("maps SOUTH_WEST/NORTH_EAST to flat south,west,north,east", () => {
     expect(bboxFromBounds({ SOUTH_WEST: { lat: -23.02, lng: -43.42 }, NORTH_EAST: { lat: -22.74, lng: -43.08 } })).toEqual({ south: -23.02, west: -43.42, north: -22.74, east: -43.08 });
+  });
+});
+
+describe("bboxFromPoints", () => {
+  it("returns the envelope with zero margin", () => {
+    const bbox = bboxFromPoints(
+      [
+        { lat: -22.98, lng: -43.2 },
+        { lat: -22.97, lng: -43.19 },
+      ],
+      0
+    );
+    expect(bbox).toEqual({ south: -22.98, west: -43.2, north: -22.97, east: -43.19 });
+  });
+
+  it("expands the envelope by the margin (meters → degrees; lng scaled by latitude)", () => {
+    const bbox = bboxFromPoints([{ lat: -22.98, lng: -43.2 }], 111_320);
+    expect(bbox).not.toBeNull();
+    // 111320 m ≈ 1° of latitude; longitude margin is wider at this latitude.
+    expect(bbox!.south).toBeCloseTo(-23.98, 5);
+    expect(bbox!.north).toBeCloseTo(-21.98, 5);
+    expect(bbox!.east - -43.2).toBeGreaterThan(1);
+  });
+
+  it("returns null for an empty list (nothing to load)", () => {
+    expect(bboxFromPoints([], 300)).toBeNull();
   });
 });
 

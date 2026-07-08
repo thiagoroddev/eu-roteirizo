@@ -98,7 +98,22 @@ export const UI_LABELS = {
     METRIC_TYPED_PACKAGES: (typeLabel: string, count: number) => `${typeLabel}: ${count === 1 ? "1 pacote" : `${count} pacotes`}`,
     // HUD do modo Meu roteiro (RF-32 parcial — TASK-RF-006.2): o que falta rotear.
     ROTEIRO_REMAINING: (addresses: number, packages: number) => `Faltando: ${addresses === 1 ? "1 endereço" : `${addresses} endereços`} · ${packages === 1 ? "1 pacote" : `${packages} pacotes`}`,
-    ROTEIRO_HINT_START: "A construção começa definindo o ponto inicial da rota (em breve).",
+    ROTEIRO_HINT_START: "A construção começa definindo o ponto inicial da rota.",
+    // Seção "Definir ponto inicial" do painel do roteiro (RF-21/22 — TASK-RF-006.3).
+    ROTEIRO_START: {
+      SECTION: "Definir ponto inicial",
+      USE_GPS: "Usar minha localização",
+      ARM_MAP_TAP: "Tocar no mapa",
+      ARMED_HINT: "Toque no mapa para definir o início.",
+      CANCEL: "Cancelar",
+      LOCATING: "Obtendo localização…",
+      CONFIRM_POINT: (address: string) => `Partir deste endereço: ${address}`,
+      CONFIRM: "Confirmar início aqui",
+      DEFINED: "Início definido",
+      REDEFINE: "Redefinir início",
+      SUGGESTION: (address: string, distance: string) => `Sugestão: ${address} — ${distance}`,
+      SUGGESTION_STRAIGHT: "(linha reta)",
+    },
     // Lista de endereços da parada (StopItemList — TASK-RF-023.4, RF-27/28)
     ITEM: {
       LIST_ARIA: "Endereços da parada",
@@ -160,6 +175,14 @@ export const UI_LABELS = {
     OVERPASS_HTTP_ERROR: (status: number) => `O servidor de mapas respondeu com erro (${status}). Tente novamente em instantes.`,
     NETWORK_ERROR: "Não foi possível baixar as ruas do mapa. Verifique sua conexão e tente novamente.",
     TIMEOUT: "O download das ruas demorou demais e foi cancelado. Tente novamente.",
+    // Status discreto do grafo no painel do roteiro (TASK-RF-006.3).
+    LOADING_STREETS: "Carregando ruas…",
+    RETRY: "Tentar de novo",
+    // Erros do GPS ao definir o ponto inicial (RF-21) — a saída é sempre o toque no mapa.
+    GPS_DENIED: 'Permissão de localização negada. Use "Tocar no mapa".',
+    GPS_TIMEOUT: 'Não foi possível obter sua localização a tempo. Use "Tocar no mapa".',
+    GPS_UNAVAILABLE: 'Localização indisponível neste aparelho. Use "Tocar no mapa".',
+    GPS_OUT_OF_BOUNDS: 'Sua localização está fora da área do mapa. Use "Tocar no mapa".',
   },
   ROUTE_TABLE: {
     TITLE: (route: string) => `Tabela Original : ${route}`,

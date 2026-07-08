@@ -4,7 +4,8 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { UI_LABELS, COLUMN_NAMES } from "../../constants";
 import type { RowData } from "../../types";
-import type { InteractionState } from "../../utils/markers/markerModels";
+import type { LatLng } from "../../types/routing";
+import type { InteractionState, MarkerModel } from "../../utils/markers/markerModels";
 
 // vaul cannot run in jsdom — passthrough mock (gesture is validated on device).
 // The extra button simulates a DRAG SETTLE (vaul calling setActiveSnapPoint).
@@ -77,18 +78,60 @@ vi.mock("../../hooks/useRouteUploader", () => ({
   useRouteUploader: () => uploaderState,
 }));
 
+// Road graph mocked: the suggestion falls back to straight lines (viaStreets
+// false) — exactly the no-graph contract the page must honor (RF-006.3).
+const roadGraphState = {
+  graph: null,
+  status: "ready" as "idle" | "loading" | "ready" | "error",
+  error: null as string | null,
+  retry: vi.fn(),
+};
+vi.mock("../../hooks/useRoadGraph", () => ({
+  useRoadGraph: () => roadGraphState,
+}));
+
+/** Per-test geolocation stub (jsdom has none). */
+const mockGeolocation = (getCurrentPosition: (ok: (pos: { coords: { latitude: number; longitude: number } }) => void, err: (e: { code: number }) => void) => void) => {
+  Object.defineProperty(navigator, "geolocation", { value: { getCurrentPosition: vi.fn(getCurrentPosition) }, configurable: true });
+};
+
 // Stub RouteMap (Leaflet) — exposes the controlled-interaction contract so the
 // tests can drive selections the way the real map would (RF-023.2), plus the
-// external-models contract of the Meu roteiro mode (RF-006.2/ADR-009).
+// external-models/tap/overlay contracts of the Meu roteiro mode (RF-006.2/.3).
 vi.mock("../../components/RouteMap", () => ({
-  RouteMap: ({ interaction, onInteractionChange, models }: { interaction?: InteractionState; onInteractionChange?: (next: InteractionState) => void; models?: unknown[] }) => (
+  RouteMap: ({
+    interaction,
+    onInteractionChange,
+    models,
+    onMapTap,
+    onModelTap,
+    roteiroOverlay,
+  }: {
+    interaction?: InteractionState;
+    onInteractionChange?: (next: InteractionState) => void;
+    models?: MarkerModel[];
+    onMapTap?: (latlng: LatLng) => void;
+    onModelTap?: (model: MarkerModel) => void;
+    roteiroOverlay?: { start: LatLng | null; suggestionPath: LatLng[] | null };
+  }) => (
     <div
       data-testid="route-map-stub"
       data-controlled={String(!!onInteractionChange)}
       data-expanded-stop={String(interaction?.expandedStopKey ?? null)}
       data-external-models={String(models !== undefined)}
       data-model-count={String(models?.length ?? "none")}
+      data-overlay-start={roteiroOverlay?.start ? `${roteiroOverlay.start.lat},${roteiroOverlay.start.lng}` : "none"}
+      data-suggestion-points={String(roteiroOverlay?.suggestionPath?.length ?? "none")}
     >
+      <button type="button" onClick={() => onMapTap?.({ lat: -22.95, lng: -43.19 })}>
+        stub-map-tap
+      </button>
+      <button type="button" onClick={() => models?.[0] && onModelTap?.(models[0])}>
+        stub-first-point-tap
+      </button>
+      <button type="button" onClick={() => models?.[1] && onModelTap?.(models[1])}>
+        stub-second-point-tap
+      </button>
       <button type="button" onClick={() => onInteractionChange?.({ expandedStopKey: "0", selectedAddressKey: "0:0" })}>
         stub-select-first-address
       </button>
@@ -122,12 +165,16 @@ const renderPage = (initialPath = "/mapa?romaneio=hash-1&rota=A-1") =>
 const addressRow = (name: RegExp) => screen.getByRole("button", { name });
 const openListView = () => fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_FULL_LIST }));
 
+const START_LABELS = UI_LABELS.MAP_PANEL.ROTEIRO_START;
+
 describe("MapPage (focus screen)", () => {
   beforeEach(() => {
     uploaderState.loadManifest.mockClear();
     uploaderState.routes = { "A-1": rowsA1 };
     uploaderState.error = null;
     uploaderState.loading = false;
+    roadGraphState.status = "ready";
+    roadGraphState.error = null;
   });
 
   it("loads the manifest from the URL and renders the CONTROLLED map", () => {
@@ -458,6 +505,125 @@ describe("MapPage (focus screen)", () => {
     // Original header, not the roteiro HUD.
     expect(screen.getByText(UI_LABELS.MAP_PANEL.MODE_VIEW)).toBeInTheDocument();
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.ROTEIRO_HINT_START)).not.toBeInTheDocument();
+  });
+
+  // ==========================================================================
+  // Ponto inicial + sugestão tracejada (TASK-RF-006.3 — RF-21/22)
+  // ==========================================================================
+
+  it("roteiro without a start opens in the no-start phase (GPS + map tap paths)", () => {
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+
+    expect(screen.getByText(START_LABELS.SECTION)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: START_LABELS.USE_GPS })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: START_LABELS.ARM_MAP_TAP })).toBeInTheDocument();
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "none");
+  });
+
+  it("'Tocar no mapa' arms the tap; the tapped coordinate becomes the start with the dashed suggestion", () => {
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+
+    // Tapping before arming does nothing (decision 08/07).
+    fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
+    expect(screen.getByText(START_LABELS.SECTION)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.ARM_MAP_TAP }));
+    expect(screen.getByText(START_LABELS.ARMED_HINT)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
+    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+    const stub = screen.getByTestId("route-map-stub");
+    expect(stub).toHaveAttribute("data-overlay-start", "-22.95,-43.19");
+    // Straight-line fallback (graph null): 2-point dashed path + "(linha reta)".
+    expect(stub).toHaveAttribute("data-suggestion-points", "2");
+    expect(screen.getByText(new RegExp(`Sugestão: Rua Mapa, 10 — .+ ${START_LABELS.SUGGESTION_STRAIGHT.replace("(", "\\(").replace(")", "\\)")}`))).toBeInTheDocument();
+  });
+
+  it("tapping a faded point without a start asks for confirmation (partir deste endereço)", () => {
+    uploaderState.routes = { "A-1": rowsStop1TwoAddresses };
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    expect(screen.getByText(START_LABELS.CONFIRM_POINT("Rua Mapa, 10"))).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.CONFIRM }));
+    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "-22.9,-43.2");
+  });
+
+  it("with a start, tapping a point RE-POINTS the suggestion and updates the distance line", () => {
+    uploaderState.routes = { "A-1": rowsStop1TwoAddresses };
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.ARM_MAP_TAP }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
+
+    // Automatic target = nearest to the start (-22.95,-43.19) → "Rua Beta, 20".
+    expect(screen.getByText(/Sugestão: Rua Beta, 20 —/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    expect(screen.getByText(/Sugestão: Rua Mapa, 10 —/)).toBeInTheDocument();
+  });
+
+  it("GPS success inside Rio defines the start", () => {
+    mockGeolocation((ok) => ok({ coords: { latitude: -22.93, longitude: -43.2 } }));
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.USE_GPS }));
+
+    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "-22.93,-43.2");
+  });
+
+  it("GPS denied warns and defines nothing", () => {
+    mockGeolocation((_ok, err) => err({ code: 1 }));
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.USE_GPS }));
+
+    expect(screen.getByText(UI_LABELS.ROUTING.GPS_DENIED)).toBeInTheDocument();
+    expect(screen.getByText(START_LABELS.SECTION)).toBeInTheDocument();
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "none");
+  });
+
+  it("GPS outside the Rio bounds warns and defines nothing", () => {
+    mockGeolocation((ok) => ok({ coords: { latitude: 0, longitude: 0 } }));
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.USE_GPS }));
+
+    expect(screen.getByText(UI_LABELS.ROUTING.GPS_OUT_OF_BOUNDS)).toBeInTheDocument();
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "none");
+  });
+
+  it("'Redefinir início' re-opens the paths keeping the current start until a new one lands", () => {
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.ARM_MAP_TAP }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
+    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.REDEFINE }));
+    expect(screen.getByText(START_LABELS.SECTION)).toBeInTheDocument();
+    // The start (and its marker) survives until redefined.
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "-22.95,-43.19");
+  });
+
+  it("switching modes resets the ephemeral start UI but keeps the defined start", () => {
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.ARM_MAP_TAP }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.ORIGINAL }));
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.MY_ROTEIRO }));
+
+    // Not armed, not confirming: straight to has-start (the reducer kept the start).
+    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+    expect(screen.queryByText(START_LABELS.ARMED_HINT)).not.toBeInTheDocument();
+  });
+
+  it("shows the discreet graph status while loading and the retry on error", () => {
+    roadGraphState.status = "loading";
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+    expect(screen.getByText(UI_LABELS.ROUTING.LOADING_STREETS)).toBeInTheDocument();
   });
 
   it("shows the error state when the manifest cannot be reopened", () => {

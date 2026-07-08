@@ -312,6 +312,77 @@ describe("RouteMap (controlled embedded map)", () => {
   });
 
   // ==========================================================================
+  // ROTEIRO INTERACTIONS + OVERLAY (TASK-RF-006.3)
+  // ==========================================================================
+
+  it("map click forwards the tapped coordinate to onMapTap (and still collapses)", () => {
+    const onMapTap = vi.fn();
+    const onChange = vi.fn();
+    renderRouteMap(mockRowsWithCoordinates, { models: externalModels, onMapTap, onInteractionChange: onChange });
+
+    const mapClick = mapMethods.on.mock.calls.find(([event]) => event === "click");
+    expect(mapClick).toBeDefined();
+    act(() => {
+      (mapClick![1] as (e?: { latlng: { lat: number; lng: number } }) => void)({ latlng: { lat: -22.94, lng: -43.18 } });
+    });
+
+    expect(onMapTap).toHaveBeenCalledWith({ lat: -22.94, lng: -43.18 });
+    expect(onChange).toHaveBeenCalledWith({ expandedStopKey: null, selectedAddressKey: null });
+  });
+
+  it("binds clicks on EXTERNAL markers only when onModelTap is given", () => {
+    renderRouteMap(mockRowsWithCoordinates, { models: externalModels });
+    expect(markerMethods.on.mock.calls.filter(([event]) => event === "click")).toHaveLength(0);
+
+    vi.clearAllMocks();
+    const onModelTap = vi.fn();
+    renderRouteMap(mockRowsWithCoordinates, { models: externalModels, onModelTap });
+
+    const clicks = markerMethods.on.mock.calls.filter(([event]) => event === "click");
+    expect(clicks).toHaveLength(2);
+    act(() => {
+      (clicks[0][1] as () => void)();
+    });
+    expect(onModelTap).toHaveBeenCalledWith(externalModels[0]);
+  });
+
+  it("draws the start marker and the dashed suggestion line on the overlay layer", () => {
+    renderRouteMap(mockRowsWithCoordinates, {
+      models: externalModels,
+      roteiroOverlay: {
+        start: { lat: -22.9, lng: -43.2 },
+        suggestionPath: [
+          { lat: -22.9, lng: -43.2 },
+          { lat: -22.95, lng: -43.15 },
+        ],
+      },
+    });
+
+    // Two layer groups now exist: markers + overlay.
+    expect(L.layerGroup).toHaveBeenCalledTimes(2);
+    expect(L.marker).toHaveBeenCalledWith([-22.9, -43.2], expect.anything());
+    expect(L.polyline).toHaveBeenCalledWith(
+      [
+        [-22.9, -43.2],
+        [-22.95, -43.15],
+      ],
+      expect.objectContaining({ dashArray: "6 8" })
+    );
+  });
+
+  it("frames the start together with the external models (GPS may sit outside the envelope)", () => {
+    renderRouteMap(mockRowsWithCoordinates, { models: externalModels, roteiroOverlay: { start: { lat: -22.7, lng: -43.4 }, suggestionPath: null } });
+
+    expect(L.latLng).toHaveBeenCalledWith(-22.7, -43.4);
+    expect(mapMethods.fitBounds).toHaveBeenCalled();
+  });
+
+  it("draws nothing extra without an overlay (no polyline)", () => {
+    renderRouteMap(mockRowsWithCoordinates, { models: externalModels });
+    expect(L.polyline).not.toHaveBeenCalled();
+  });
+
+  // ==========================================================================
   // CLEANUP
   // ==========================================================================
 

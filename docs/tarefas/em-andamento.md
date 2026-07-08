@@ -6,6 +6,11 @@
 
 *(Nenhuma tarefa em andamento.)*
 
+<!-- 08/07/26 13h45: TASK-RF-006.3 ✅ (ponto inicial 3 caminhos + useRoadGraph lazy + sugestão tracejada com distância a pé; RF-21/22/RN-20 ✅). Suíte 548/548. -->
+<!-- ⚠️ SMOKE PENDENTE (humano, RF-006.3): 3 caminhos do início; re-apontar sugestão; modo avião (reta + retry); alternância de modos; CALIBRAR altura do header colapsado + verde do início. -->
+<!-- Próxima: TASK-RF-006.4 (ponto órfão + rascunho da parada: raio, candidatos escolhíveis, banner, footer Salvar parada — telas 8–9). Depois: RF-008 ANTECIPADA (routeStorage + auto-save). -->
+<!-- ⚠️ COMMIT PENDENTE do humano: REF-013 + REF-011 + RF-006.1 + RF-006.2 + RF-006.3 (e smokes da REF-011 e RF-006.3 pendentes). -->
+
 <!-- 08/07/26 12h40: TASK-RF-006.2 ✅ (modo Meu roteiro na tela: toggle destravado/RF-010 absorvida, ?modo=roteiro, pontos desbotados, HUD, Criar Roteiro navega; ADR-009). Suíte 506/506. -->
 <!-- ⚠️ SMOKE PENDENTE (humano, RF-006.2): Sumário → "Criar Roteiro" (pontos desbotados + HUD); alternar modos (memória volta); F5 com ?modo=roteiro; rota sem coords → desabilitado; avaliar badge amarelo sobre o desbotado. -->
 <!-- Próxima: TASK-RF-006.3 (ponto inicial GPS/toque/endereço + useRoadGraph lazy + sugestão tracejada). -->

@@ -1,5 +1,17 @@
 import { describe, it, expect } from "vitest";
-import { formatDistance, formatDeliveryTime, normalizeString, toTitleCase, getDate, getTotalPacks, getNumberOfStops } from "../../utils/formatters";
+import { formatDistance, formatDeliveryTime, formatMeters, normalizeString, toTitleCase, getDate, getTotalPacks, getNumberOfStops } from "../../utils/formatters";
+
+describe("formatMeters", () => {
+  it("rounds meters below 1 km", () => {
+    expect(formatMeters(229.6)).toBe("230 m");
+    expect(formatMeters(0)).toBe("0 m");
+  });
+
+  it("switches to km with one pt-BR decimal above 1 km", () => {
+    expect(formatMeters(1234)).toBe("1,2 km");
+    expect(formatMeters(999.6)).toBe("1000 m");
+  });
+});
 // =============================================================================
 // 7. LAST STOP TESTS (getNumberOfStops)
 // =============================================================================
