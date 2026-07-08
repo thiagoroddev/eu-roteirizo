@@ -7,6 +7,7 @@
  */
 
 import type { DeliveryPoint, RouteStop, LatLng } from "../../types/routing";
+import { haversine } from "./geo";
 
 /** Index points by id for O(1) lookup. */
 export const indexPointsById = (points: DeliveryPoint[]): Map<string, DeliveryPoint> => {
@@ -33,6 +34,13 @@ export const unassignedPoints = (points: DeliveryPoint[], stops: RouteStop[]): D
   const assigned = assignedPointIds(stops);
   return points.filter((p) => !assigned.has(p.id));
 };
+
+/**
+ * Points within `radiusMeters` of `center` (haversine). Used to derive the
+ * CANDIDATES of a stop draft (fluxo §8 — the radius only suggests; the user
+ * picks which ones join the stop).
+ */
+export const pointsWithinRadius = (center: LatLng, points: DeliveryPoint[], radiusMeters: number): DeliveryPoint[] => points.filter((p) => haversine(center, p) <= radiusMeters);
 
 /** Number of addresses (points) in a stop. */
 export const addressCountInStop = (stop: RouteStop): number => stop.pointIds.length;

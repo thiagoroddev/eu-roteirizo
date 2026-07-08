@@ -6,6 +6,12 @@
 
 *(Nenhuma tarefa em andamento.)*
 
+<!-- 07/07/26 20h40: TASK-RF-006.1 ✅ (reducer puro do Meu roteiro + walkOrder/vehicleStop/pointsWithinRadius + useRouteBuilder; suíte 485/485). Épico RF-006 re-fatiado em pendentes.md: RF-010 absorvida na .2; RF-008 antecipada pós-.4; @turf descartada. -->
+<!-- Próxima: TASK-RF-006.2 (entrar no modo Meu roteiro — toggle destravado, pontos desbotados, HUD, "Criar Roteiro" navega; ADR da interop StopGroup×DeliveryPoint). -->
+<!-- ⚠️ COMMIT PENDENTE do humano: REF-013 + REF-011 + RF-006.1 (e smoke da REF-011 ainda pendente). -->
+
+
+
 <!-- 07/07/26: RF-023 (épico + Refinos 2–6) ✅ · REF-013 (card colapsável) ✅ · REF-011 (fluxo legado removido: HomePage só-upload, RouteMap só-embedded/controlado, AddressSheet aposentado, useManifestFromUrl) ✅ 18h35. Suíte: 443 (remoção líquida de legados). -->
 <!-- ⚠️ SMOKE PENDENTE (humano, REF-011): fluxo ponta a ponta — HOME sobe e navega (single/multi/duplicado); Sumário e mapa intactos. -->
 <!-- Próximos candidatos: TASK-RF-006 (Meu roteiro — edição) / RF-010 (destravar toggle), TASK-DOC-003 (sync contexto-projeto-ai), TASK-TEST-002 (zoom), radius 0.5rem neonflux. -->
