@@ -36,7 +36,7 @@
 | RN-14 | **Salvar é livre** (rascunho auto-salvo, mesmo incompleto); a **completude** (0 faltando) é exigida só para **executar** | a construir | 🔭 | fluxo §12 | TASK-RF-006.7 |
 | RN-15 | `Pn/En` é a ordem **nova** da rota; a numeração Shopee (`Stop`/`Sequence`) é preservada como identidade da **etiqueta** | a construir | 🔭 | fluxo §10.1/§14 | TASK-RF-006, TASK-RF-009 |
 | RN-16 | Marcadores no mapa **nunca** carregam texto traduzível — só número (i18n) | a construir | 🔭 | fluxo §3/decisão 6 | TASK-RF-006 |
-| RN-17 | Inclusão manual de endereço na parada **sem trava de distância** (só aviso suave); o raio só **sugere candidatos** na criação (o usuário escolhe quais entram — não auto-inclui) | a construir | 🔭 | fluxo §8/§9 | TASK-RF-006.4 |
+| RN-17 | Inclusão manual de endereço na parada **sem trava de distância** (só aviso suave; limiar max(2×raio, 150m)); o raio só **sugere candidatos** na criação (o usuário escolhe quais entram — não auto-inclui) | `farChosenPointIds`/`draftCandidateIds` (`utils/routing/builder.ts`) + painel do rascunho | ✅ | fluxo §8/§9 | TASK-RF-006.4 ✅ |
 | RN-18 | A pé **ignora** mão única (circuito da parada); o veículo (**entre paradas do veículo**) **respeita** | `utils/routing/pedestrian.ts` (`pedestrianGraph` — lado a-pé; veículo já era o grafo direcionado) | 🟡 | fluxo §6; ADR-002 | TASK-RF-005 ✅, TASK-RF-006.3 ✅ (a-pé), TASK-RF-006.7 (veículo na UI) |
 | RN-19 | Rotas salvas são **por dispositivo** (IndexedDB, sem nuvem) — consequência do sem-backend | a construir | 🔭 | fluxo §13 | TASK-RF-008 |
 | RN-20 | O ponto inicial vem de GPS/toque/endereço — **nunca** geocoding pago (digitar endereço) | `pages/MapPage.tsx` (getCurrentPosition + toque armado + confirmação no ponto) | ✅ | fluxo decisão 5 | TASK-RF-006.3 ✅ |

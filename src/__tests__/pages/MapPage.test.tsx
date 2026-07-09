@@ -56,6 +56,15 @@ const rowsStop1TwoAddresses: RowData[] = [
   { [COLUMN_NAMES.SEQUENCE]: 2, [COLUMN_NAMES.STOP]: 1, [COLUMN_NAMES.LATITUDE]: -22.91, [COLUMN_NAMES.LONGITUDE]: -43.21, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Beta, 20" },
 ];
 
+/** Three plottable points for the draft flow (RF-006.4): p2 sits ~17 m from p1
+ *  (inside the default 30 m radius → candidate); p3 sits ~556 m away (outside,
+ *  and beyond the RN-17 threshold). */
+const rowsThreePoints: RowData[] = [
+  { [COLUMN_NAMES.SEQUENCE]: 1, [COLUMN_NAMES.STOP]: 1, [COLUMN_NAMES.LATITUDE]: -22.9, [COLUMN_NAMES.LONGITUDE]: -43.2, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Mapa, 10" },
+  { [COLUMN_NAMES.SEQUENCE]: 2, [COLUMN_NAMES.STOP]: 1, [COLUMN_NAMES.LATITUDE]: -22.90015, [COLUMN_NAMES.LONGITUDE]: -43.2, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Beta, 20" },
+  { [COLUMN_NAMES.SEQUENCE]: 3, [COLUMN_NAMES.STOP]: 2, [COLUMN_NAMES.LATITUDE]: -22.905, [COLUMN_NAMES.LONGITUDE]: -43.2, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Gama, 30" },
+];
+
 /** Two stops whose numeric order differs from the lexicographic one ("10" < "2"). */
 const rowsStops10e2: RowData[] = [
   { [COLUMN_NAMES.SEQUENCE]: 1, [COLUMN_NAMES.STOP]: 10, [COLUMN_NAMES.LATITUDE]: -22.9, [COLUMN_NAMES.LONGITUDE]: -43.2, [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Dez, 10" },
@@ -79,9 +88,10 @@ vi.mock("../../hooks/useRouteUploader", () => ({
 }));
 
 // Road graph mocked: the suggestion falls back to straight lines (viaStreets
-// false) — exactly the no-graph contract the page must honor (RF-006.3).
+// false) — exactly the no-graph contract the page must honor (RF-006.3). Tests
+// can inject a real graph fixture to exercise the anchor re-projection (.4).
 const roadGraphState = {
-  graph: null,
+  graph: null as import("../../utils/routing/graph").RoadGraph | null,
   status: "ready" as "idle" | "loading" | "ready" | "error",
   error: null as string | null,
   retry: vi.fn(),
@@ -112,7 +122,7 @@ vi.mock("../../components/RouteMap", () => ({
     models?: MarkerModel[];
     onMapTap?: (latlng: LatLng) => void;
     onModelTap?: (model: MarkerModel) => void;
-    roteiroOverlay?: { start: LatLng | null; suggestionPath: LatLng[] | null };
+    roteiroOverlay?: { start: LatLng | null; suggestionPath: LatLng[] | null; radiusCircle?: { center: LatLng; meters: number } | null; anchor?: LatLng | null };
   }) => (
     <div
       data-testid="route-map-stub"
@@ -122,6 +132,14 @@ vi.mock("../../components/RouteMap", () => ({
       data-model-count={String(models?.length ?? "none")}
       data-overlay-start={roteiroOverlay?.start ? `${roteiroOverlay.start.lat},${roteiroOverlay.start.lng}` : "none"}
       data-suggestion-points={String(roteiroOverlay?.suggestionPath?.length ?? "none")}
+      data-suggestion-target={
+        roteiroOverlay?.suggestionPath?.length
+          ? `${roteiroOverlay.suggestionPath[roteiroOverlay.suggestionPath.length - 1].lat},${roteiroOverlay.suggestionPath[roteiroOverlay.suggestionPath.length - 1].lng}`
+          : "none"
+      }
+      data-radius-circle={roteiroOverlay?.radiusCircle ? `${roteiroOverlay.radiusCircle.center.lat},${roteiroOverlay.radiusCircle.center.lng}@${roteiroOverlay.radiusCircle.meters}` : "none"}
+      data-anchor={roteiroOverlay?.anchor ? `${roteiroOverlay.anchor.lat},${roteiroOverlay.anchor.lng}` : "none"}
+      data-models-summary={models?.map((m) => `${m.kind}${m.iconProps.selected ? "*" : ""}`).join(",") ?? "none"}
     >
       <button type="button" onClick={() => onMapTap?.({ lat: -22.95, lng: -43.19 })}>
         stub-map-tap
@@ -131,6 +149,9 @@ vi.mock("../../components/RouteMap", () => ({
       </button>
       <button type="button" onClick={() => models?.[1] && onModelTap?.(models[1])}>
         stub-second-point-tap
+      </button>
+      <button type="button" onClick={() => models?.[2] && onModelTap?.(models[2])}>
+        stub-third-point-tap
       </button>
       <button type="button" onClick={() => onInteractionChange?.({ expandedStopKey: "0", selectedAddressKey: "0:0" })}>
         stub-select-first-address
@@ -175,6 +196,7 @@ describe("MapPage (focus screen)", () => {
     uploaderState.loading = false;
     roadGraphState.status = "ready";
     roadGraphState.error = null;
+    roadGraphState.graph = null;
   });
 
   it("loads the manifest from the URL and renders the CONTROLLED map", () => {
@@ -551,7 +573,7 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "-22.9,-43.2");
   });
 
-  it("with a start, tapping a point RE-POINTS the suggestion and updates the distance line", () => {
+  it("with a start, tapping a point RE-POINTS the suggestion (dashed line follows; no text line in the point context)", () => {
     uploaderState.routes = { "A-1": rowsStop1TwoAddresses };
     renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
     fireEvent.click(screen.getByRole("button", { name: START_LABELS.ARM_MAP_TAP }));
@@ -560,8 +582,13 @@ describe("MapPage (focus screen)", () => {
     // Automatic target = nearest to the start (-22.95,-43.19) → "Rua Beta, 20".
     expect(screen.getByText(/Sugestão: Rua Beta, 20 —/)).toBeInTheDocument();
 
+    // Tapping p1 re-points the dashed line to it (§6); the "Sugestão:" TEXT
+    // line no longer renders in the point-selected context (rev. 08/07 .4.4 —
+    // the "Parada sugerida" section carries the information now).
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
-    expect(screen.getByText(/Sugestão: Rua Mapa, 10 —/)).toBeInTheDocument();
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-suggestion-target", "-22.9,-43.2");
+    expect(screen.queryByText(/^Sugestão:/)).not.toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SUGGESTED)).toBeInTheDocument();
   });
 
   it("GPS success inside Rio defines the start", () => {
@@ -624,6 +651,230 @@ describe("MapPage (focus screen)", () => {
     roadGraphState.status = "loading";
     renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
     expect(screen.getByText(UI_LABELS.ROUTING.LOADING_STREETS)).toBeInTheDocument();
+  });
+
+  // ==========================================================================
+  // Ponto órfão + rascunho da parada (TASK-RF-006.4 — telas 8–9)
+  // ==========================================================================
+
+  const POINT_LABELS = UI_LABELS.MAP_PANEL.ROTEIRO_POINT;
+  const DRAFT_LABELS = UI_LABELS.MAP_PANEL.ROTEIRO_DRAFT;
+
+  /** Enters the roteiro over the 3-point fixture and defines the start by tap. */
+  const startRoteiroFlow = () => {
+    uploaderState.routes = { "A-1": rowsThreePoints };
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.ARM_MAP_TAP }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
+    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+  };
+
+  it("tela 8: selected-address card with the no-stop notice + radius PREVIEW before creating; empty-map tap deselects", () => {
+    startRoteiroFlow();
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-radius-circle", "none");
+
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    // The notice lives under "Endereço selecionado" — no stop summary for an orphan (rev. 08/07).
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).not.toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_NO_STOP_YET)).toBeInTheDocument();
+    // The radius circle already PREVIEWS on the selected orphan (U6).
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-radius-circle", "-22.9,-43.2@30");
+    const card = screen.getByRole("button", { name: /Rua Mapa, 10/ });
+    expect(card).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP })).toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument(); // no stops yet → no incorporation
+    // The old "Sugestão: …" line is gone in this context (rev. 08/07 .4.4 —
+    // the suggested-stop section replaced it; the map's dashed line remains).
+    expect(screen.queryByText(/^Sugestão:/)).not.toBeInTheDocument();
+    // 3ª seção (rev. 08/07 3ª/4ª rodadas): the would-be stop's summary
+    // AGGREGATES the seed + the radius candidates (p1 + p2 → "2 endereços");
+    // the label row carries the VEHICLE distance (car icon qualifies, honest
+    // straight-line suffix while the graph is absent) — no candidates banner.
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SUGGESTED)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`^${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`))).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(2))).toBeInTheDocument();
+    expect(screen.queryByText(DRAFT_LABELS.BANNER_CANDIDATES(1))).not.toBeInTheDocument();
+    expect(screen.getByText(/Distância até aqui: .+ \(linha reta\)/)).toBeInTheDocument();
+
+    // Tapping the card opens the Original's own detail in the body.
+    fireEvent.click(card);
+    expect(screen.getByText(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.PACKAGES_HEADER(1))).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.ROTEIRO_NO_STOP_YET)).not.toBeInTheDocument();
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-radius-circle", "none");
+  });
+
+  it("the roteiro header carries the STATE: draft label + next-step hint (feedback 08/07)", () => {
+    startRoteiroFlow();
+
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.MODE_ROTEIRO_DRAFT)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_STATE_BUILDING)).toBeInTheDocument();
+  });
+
+  it("'Criar parada' COMITA na hora (RF-006.4.6): parada firmada + agrupada + painel de resumo, sem draft", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" })); // p1 → preview
+
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+
+    // No draft — the stop is firmed immediately (commit-on-create).
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.MODE_DRAFT)).not.toBeInTheDocument();
+    // Panel focuses the firmed stop (Original-style summary).
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`^${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`))).toBeInTheDocument();
+    const stub = screen.getByTestId("route-map-stub");
+    // The stop is a grouped, SELECTED square on the map (p1 + p2 from the radius).
+    expect(stub.getAttribute("data-models-summary")).toContain("stop*");
+    // Only p3 remains free; the preview circle is gone.
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+    expect(stub).toHaveAttribute("data-radius-circle", "none");
+  });
+
+  it("os candidatos do raio entram AUTOMATICAMENTE na parada ao criar (reverte §8 — RF-006.4.6)", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" })); // p1
+
+    // The preview already aggregates seed + radius candidate → "2 endereços".
+    expect(screen.getByText("2 endereços")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+
+    // The firmed stop holds BOTH p1 and p2 — no manual add needed anymore.
+    expect(screen.getByText(new RegExp(`^${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`))).toBeInTheDocument();
+    expect(screen.getByText("2 endereços")).toBeInTheDocument();
+    expect(screen.getByText(/~\d+ min/)).toBeInTheDocument();
+    // Only p3 stays free (p1 + p2 committed).
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+  });
+
+  it("o stepper de raio no preview redimensiona o círculo e a contagem; criar respeita o raio (RF-006.4.6)", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" })); // p1, raio 30
+    const stub = screen.getByTestId("route-map-stub");
+    expect(stub).toHaveAttribute("data-radius-circle", "-22.9,-43.2@30");
+    expect(screen.getByText("2 endereços")).toBeInTheDocument(); // p1 + p2
+
+    // Diminuir p/ 10 m no PREVIEW: p2 sai; círculo e contagem acompanham.
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.RADIUS_DECREASE }));
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.RADIUS_DECREASE }));
+    expect(screen.getByText(DRAFT_LABELS.RADIUS_VALUE(10))).toBeInTheDocument();
+    expect(stub).toHaveAttribute("data-radius-circle", "-22.9,-43.2@10");
+    expect(screen.getByText("1 endereço")).toBeInTheDocument(); // só a semente
+
+    // Criar com o raio reduzido → parada só com p1; p2 e p3 seguem livres.
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(2, 2))).toBeInTheDocument();
+  });
+
+  it("criar P1 e depois P2 firmam direto (épico acceptance: criar P1, P2… e ver firmar)", () => {
+    startRoteiroFlow();
+    // P1: tocar p1 → Criar comita p1 + p2 (o raio 30 engloba p2).
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+
+    const stub = screen.getByTestId("route-map-stub");
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.MODE_DRAFT)).not.toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+    expect(stub.getAttribute("data-models-summary")).toContain("stop");
+
+    // P2 sobre o ponto restante (models = [stop, p3] → segundo botão).
+    fireEvent.click(screen.getByRole("button", { name: "stub-second-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(0, 0))).toBeInTheDocument();
+    // Duas paradas firmadas e agrupadas (a última fica selecionada).
+    expect(stub.getAttribute("data-models-summary")).toBe("stop,stop*");
+  });
+
+  it("editar (REOPEN): save desabilitado no draft esvaziado; cancel descarta sem efeito colateral", () => {
+    startRoteiroFlow();
+    // Criar P1 (comita p1 + p2), depois reabrir para editar.
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.EDIT }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.MODE_DRAFT)).toBeInTheDocument();
+
+    // Esvaziar o draft → dica + salvar desabilitado.
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.REMOVE_POINT("Rua Mapa, 10") }));
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.REMOVE_POINT("Rua Beta, 20") }));
+    expect(screen.getByText(DRAFT_LABELS.EMPTY_HINT)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: DRAFT_LABELS.SAVE })).toBeDisabled();
+
+    // Cancel descarta o draft; a parada firmada (p1 + p2) permanece intacta.
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.CANCEL }));
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.MODE_DRAFT)).not.toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+  });
+
+  it("incorporates an orphan into the nearest stop (on-demand select, nearest pre-set)", () => {
+    startRoteiroFlow();
+    // Criar P1 comita p1 + p2 (raio 30) — o único órfão passa a ser p3.
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+
+    // Selecionar p3 (models = [stop, p3] → segundo botão); o select só aparece
+    // ON DEMAND e pré-seleciona a Parada 1 (a única/mais próxima, já com 2 endereços).
+    fireEvent.click(screen.getByRole("button", { name: "stub-second-point-tap" }));
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.INCORPORATE_OTHER }));
+    const select = screen.getByRole("combobox", { name: POINT_LABELS.TARGET_STOP_ARIA });
+    expect(select).toBeInTheDocument();
+    expect(screen.getByText(POINT_LABELS.STOP_OPTION(1, 2))).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CONFIRM }));
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.ROTEIRO_NO_STOP_YET)).not.toBeInTheDocument();
+    // p3 entrou na parada → nada livre.
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(0, 0))).toBeInTheDocument();
+  });
+
+  it("tapping a committed stop opens its Original-style panel; Editar reopens the draft; Desfazer frees (RF-006.4.2)", () => {
+    startRoteiroFlow();
+    // Criar P1 comita p1 + p2 direto (o raio 30 engloba p2 — RF-006.4.6).
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+
+    // Tap the committed stop (models = [stop, p3] → first button).
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`^${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`))).toBeInTheDocument();
+    // Chips include the walking estimate; the first address carries the ordinal.
+    expect(screen.getByText(/~\d+ min/)).toBeInTheDocument();
+    expect(screen.getByText("2 endereços")).toBeInTheDocument();
+    expect(screen.getByText("1º")).toBeInTheDocument();
+
+    // Editar → back to the edit draft: the body is the Original's full-list
+    // structure now (rev. 08/07 3ª rodada) — members carry the walking ordinal
+    // in the mini-marker and a remove (−) trailing action per row.
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.EDIT }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.MODE_DRAFT)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ORDINAL(1))).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ORDINAL(2))).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: DRAFT_LABELS.REMOVE_POINT("Rua Mapa, 10") })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.SAVE }));
+
+    // Desfazer → the addresses go back to free and the HUD rises (§9).
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.DISSOLVE }));
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).not.toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(3, 3))).toBeInTheDocument();
+  });
+
+  it("o círculo do preview cresce com o stepper e clampa no máximo (RF-006.4.6)", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" })); // p1, raio 30
+    const stub = screen.getByTestId("route-map-stub");
+    expect(stub).toHaveAttribute("data-radius-circle", "-22.9,-43.2@30");
+
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.RADIUS_INCREASE }));
+    expect(stub).toHaveAttribute("data-radius-circle", "-22.9,-43.2@40");
+
+    // Sobe até o máximo (200 m) e clampa; p3 (~556 m) segue fora do alcance.
+    for (let i = 0; i < 20; i += 1) fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.RADIUS_INCREASE }));
+    expect(screen.getByText(DRAFT_LABELS.RADIUS_VALUE(200))).toBeInTheDocument();
+    expect(stub).toHaveAttribute("data-radius-circle", "-22.9,-43.2@200");
+    expect(screen.getByText("2 endereços")).toBeInTheDocument(); // p1 + p2 (p3 longe demais)
   });
 
   it("shows the error state when the manifest cannot be reopened", () => {

@@ -55,6 +55,7 @@ vi.mock("leaflet", () => ({
     divIcon: vi.fn(() => ({})),
     DivIcon: vi.fn(),
     polyline: vi.fn(() => ({ addTo: vi.fn() })),
+    circle: vi.fn(() => ({ addTo: vi.fn() })),
     circleMarker: vi.fn(() => ({ addTo: vi.fn() })),
   },
 }));
@@ -380,6 +381,31 @@ describe("RouteMap (controlled embedded map)", () => {
   it("draws nothing extra without an overlay (no polyline)", () => {
     renderRouteMap(mockRowsWithCoordinates, { models: externalModels });
     expect(L.polyline).not.toHaveBeenCalled();
+  });
+
+  it("draws the draft's DASHED radius circle in real meters and its anchor with the shared VEHICLE marker (RF-006.4.1)", () => {
+    renderRouteMap(mockRowsWithCoordinates, {
+      models: externalModels,
+      roteiroOverlay: { start: null, suggestionPath: null, radiusCircle: { center: { lat: -22.94, lng: -43.18 }, meters: 40 }, anchor: { lat: -22.941, lng: -43.181 } },
+    });
+
+    expect(L.circle).toHaveBeenCalledWith([-22.94, -43.18], expect.objectContaining({ radius: 40, dashArray: "6 8" }));
+    // The anchor uses the SAME vehicle icon as the route start (decision 08/07).
+    expect(L.marker).toHaveBeenCalledWith([-22.941, -43.181], expect.anything());
+  });
+
+  it("does NOT refit when the models change identity with the same keys (candidate toggles)", () => {
+    const { rerender } = render(<RouteMap rows={mockRowsWithCoordinates} interaction={collapsed} onInteractionChange={vi.fn()} models={externalModels} />);
+    expect(mapMethods.fitBounds).toHaveBeenCalledTimes(1);
+
+    // Same keys, new array/objects (a candidate toggle re-colors markers only).
+    const recolored = externalModels.map((model) => ({ ...model, iconProps: { ...model.iconProps, selected: true } }));
+    rerender(<RouteMap rows={mockRowsWithCoordinates} interaction={collapsed} onInteractionChange={vi.fn()} models={recolored} />);
+    expect(mapMethods.fitBounds).toHaveBeenCalledTimes(1);
+
+    // A stop commits (keys change) → refit is expected.
+    rerender(<RouteMap rows={mockRowsWithCoordinates} interaction={collapsed} onInteractionChange={vi.fn()} models={externalModels.slice(0, 1)} />);
+    expect(mapMethods.fitBounds).toHaveBeenCalledTimes(2);
   });
 
   // ==========================================================================

@@ -20,7 +20,8 @@ interface Props {
   metrics: PanelMetric[];
 }
 
-const MetricsRow = ({ metrics }: Pick<Props, "metrics">) => (
+/** Exported since RF-006.4.2: the roteiro draft header reuses the SAME chips. */
+export const PanelMetricsRow = ({ metrics }: Pick<Props, "metrics">) => (
   <div className="mt-1.5 flex flex-wrap gap-1">
     {metrics.map((metric) => (
       // Compact type: up to 4 chips must fit ONE line on mobile (rev. 07/07).
@@ -38,7 +39,7 @@ export const PanelTitle = ({ stopNumber, neighborhoods = [], zipcodes = [], metr
   return (
     <div className="px-4 pb-2">
       <p className="truncate text-sm font-semibold">{place ? `${title} — ${place}` : title}</p>
-      {metrics.length > 0 && <MetricsRow metrics={metrics} />}
+      {metrics.length > 0 && <PanelMetricsRow metrics={metrics} />}
     </div>
   );
 };

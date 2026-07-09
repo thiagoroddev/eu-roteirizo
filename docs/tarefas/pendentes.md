@@ -159,7 +159,7 @@
 
 ## TASK-RF-006 - UI de construção da rota (Meu roteiro) [XG, dividir]
 
-- **Status:** Pendente (**.1 ✅ · .2 ✅ · .3 ✅ 08/07** — próxima: **.4**, depois **RF-008 antecipada**)
+- **Status:** Pendente (**.1 ✅ · .2 ✅ · .3 ✅ · .4 ✅ · .4.1 ✅ · .4.2 ✅ 08/07** — próxima: **RF-008 antecipada**, depois .5)
 - **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
@@ -180,12 +180,16 @@
 ### ✅ TASK-RF-006.3 - Ponto inicial + grafo OSM + sugestão tracejada (passos 1–2) — CONCLUÍDA (08/07)
 > Início pelos 3 caminhos (GPS · toque ARMADO · endereço c/ confirmação — decisões 08/07) + marcador verde próprio; `useRoadGraph` lazy (status discreto + retry); tracejada desbotada re-apontável com distância a pé (`pedestrianGraph` + A* só no alvo; reta como fallback). RF-21/22/RN-20 ✅. Suíte 548/548. Ver `concluidas/2026-07-08--13h45--TASK-RF-006.3.md`.
 
-### TASK-RF-006.4 - Ponto órfão + rascunho da parada (telas 8–9; passos 3–4 e 6)
-- **Esforço-H/IA:** G/G · **Dep:** 006.3
-- Tocar ponto livre → painel "Ponto livre" (actions Criar parada · Incorporar); rascunho desbotado: círculo do raio, **candidatos escolhíveis** (não entram sozinhos), banner "raio engloba N", stepper de raio, footer "Salvar parada" → firma ordinal. Aviso suave de distância (sem trava). Âncora com marcador provisório (visual definitivo na .5).
-- **Aceite:** criar P1, P2… e ver firmar; candidato só entra por escolha.
+### ✅ TASK-RF-006.4 - Ponto órfão + rascunho da parada (telas 8–9) — CONCLUÍDA (08/07)
+> Tela 8 (etiqueta + Criar/Incorporar c/ select pré-selecionado) + tela 9 (círculo tracejado do raio ajustável, candidatos âmbar por ESCOLHA, aviso suave RN-17, footer Salvar/Cancelar) → firma P1, P2… como quadrados cor-por-tipo; fitBounds por assinatura; re-projeção da âncora (decisão C). RF-23/RN-17 ✅. Suíte 577/577. Ver `concluidas/2026-07-08--15h25--TASK-RF-006.4.md`.
 
-> ⤵️ **TASK-RF-008 (persistência/auto-save) ANTECIPADA para cá** (decisão do humano 07/07): routeStorage + auto-save RF-33 + `hasRoteiro` no chip + botão adaptativo "Ver Meu Roteiro" — os smokes das fatias seguintes não perdem o roteiro ao sair do mapa.
+> ✅ **TASK-RF-006.4.1 - Consistência visual do Meu roteiro — CONCLUÍDA (08/07, feedback do smoke da .4)**
+> Cores por TIPO em paleta neon clara (spec §4 p.0 revisada); veículo único p/ início/âncora; tela 8 na língua do Original (`pointToStopItemData`); header "Roteiro incompleto — rascunho" + próximo passo; "a pé" nas distâncias; "Edição de parada" c/ CTAs sempre visíveis + estimativa. Suíte 583/583. Ver `concluidas/2026-07-08--17h40--TASK-RF-006.4.1.md`.
+
+> ✅ **TASK-RF-006.4.2 - Marcadores profissionais + parada selecionável + preview do raio — CONCLUÍDA (08/07, 2ª rodada)**
+> Losango do início; veículo = CARRO Tabler sem cone (âncora central, z abaixo dos endereços); tap na parada → painel do Original + Editar/Desfazer (antecipação parcial da .6); preview do círculo do raio no órfão; sem Sequence (ordinais "1º/2º" nos membros); parada 1.25× tocável; candidato tracejado; ciano; chips/pill/±. Suíte 598/598. Ver `concluidas/2026-07-08--19h20--TASK-RF-006.4.2.md`.
+
+> ⤵️ **TASK-RF-008 (persistência/auto-save) ANTECIPADA para cá** (decisão do humano 07/07): routeStorage + auto-save RF-33 + `hasRoteiro` no chip + botão adaptativo "Ver Meu Roteiro" + **carregar o roteiro atrelado ao entrar no modo** (item 4 do feedback 08/07) — os smokes das fatias seguintes não perdem o roteiro ao sair do mapa.
 
 ### TASK-RF-006.5 - Marcador da âncora + mover/tornar/resetar (passo 5)
 - **Esforço-H/IA:** M/G · **Dep:** 006.4
@@ -201,6 +205,13 @@
 - **Esforço-H/IA:** M/G · **Dep:** 006.4 (+ grafo da .3)
 - Linha contínua âncora→âncora pela rua real (A*, mão única; fallback reta sem grafo); laço tracejado a pé do circuito da parada selecionada; tracejado da próxima "mais forte" pós-conclusão; km acumulado no painel (tempo fino é RF-007).
 - **Aceite:** linha segue as ruas respeitando mão única; km coerente.
+
+### TASK-RF-006.8 - Visão "Roteiro completo" no painel ocioso (pedido 08/07)
+- **Esforço-H/IA:** M/M · **Dep:** 006.4.3 (PanelSection/StopItemList) · *(criada a pedido do humano 08/07; execução adiada — "ainda tem muita coisa pra arrumar" nas rodadas do .4.x)*
+- **Problema:** no Meu roteiro, quando **nenhum endereço/parada está selecionado** (ex.: logo após definir o início), o painel fica quase vazio ("Início definido" + redefinir) — estado que o Original nem tem (lá sempre há um endereço selecionado).
+- **Solução pedida:** tornar esse painel útil mostrando a **lista completa do roteiro em ordem** — mesma lógica e estrutura do "Ver lista completa" de uma parada, mas o "completão" de TODAS as paradas: Parada 1 (resumo) → endereços por ordinal → Parada 2 → … (reuso de `StopItemList`/`PanelSection`/`pointToStopItemData`; snap full rolável, como no Original).
+- **+ Botão "Ver roteiro completo"** no canto superior da **1ª seção** (header de estado) abrindo essa visão (padrão do "Ver lista completa"/slot actions).
+- **Aceite:** painel ocioso nunca fica "morto"; a visão lista todas as paradas na ordem com seus endereços ordinais; alternância abre/fecha como no Original (Ver/Esconder; Escape/arrasto saem).
 
 **Critérios de aceite (RF-006):** fluxo da spec §4 ponta a ponta; painéis por contexto do §10.10; slots preenchidos sem reestruturar o MapPanel; Original sem regressão. ~~Validação de completude p/ salvar~~ **não existe** (RF-33: salvar é livre; completude = `isComplete`, gate só do "Iniciar rota"/RF-009).
 **Dependências novas:** nenhuma (~~`@turf/turf`~~ descartada 07/07 — haversine cobre ponto-em-raio).

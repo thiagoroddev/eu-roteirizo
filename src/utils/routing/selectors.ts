@@ -49,6 +49,24 @@ export const addressCountInStop = (stop: RouteStop): number => stop.pointIds.len
 export const packagesInStop = (stop: RouteStop, pointsById: Map<string, DeliveryPoint>): number => stop.pointIds.reduce((sum, id) => sum + (pointsById.get(id)?.packageCount ?? 0), 0);
 
 /**
+ * The stop whose ANCHOR (vehicle stop) is nearest to a point — the default
+ * target when incorporating an orphan (fluxo §9: select pré-selecionando a
+ * mais próxima). Null without stops.
+ */
+export const nearestStopTo = (point: LatLng, stops: RouteStop[]): RouteStop | null => {
+  let best: RouteStop | null = null;
+  let bestDistance = Infinity;
+  for (const stop of stops) {
+    const distance = haversine(point, stop.vehicleStop);
+    if (distance < bestDistance) {
+      best = stop;
+      bestDistance = distance;
+    }
+  }
+  return best;
+};
+
+/**
  * Geographic centroid (mean) of a stop's points. Useful as a fallback position
  * for the stop marker (the vehicle stop is a separate, own marker).
  */

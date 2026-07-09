@@ -32,7 +32,8 @@ interface Props {
 }
 
 export const RoteiroStartSection = ({ phase, notice, pendingAddress, suggestionLabel, onUseGps, onArmMapTap, onConfirmPoint, onCancel, onRedefine }: Props) => (
-  <div className="px-4 pb-2">
+  // Divider below the state header — same section chrome as the rest (rev. 08/07).
+  <div className="border-t border-input px-4 pb-2 pt-2">
     {phase === "no-start" && (
       <>
         <p className="text-xs font-medium text-muted-foreground">{START.SECTION}</p>

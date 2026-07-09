@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { Badge } from "../../ui/badge";
 import { cn } from "@/lib/utils";
 import { UI_LABELS } from "../../../constants/uiLabels";
-import { colorForLocationType } from "../../../utils/markers/markerColors";
+import { colorForLocationType, roteiroColorForLocationType } from "../../../utils/markers/markerColors";
 import type { StopItemData } from "../../../utils/markers/panelModels";
 
 const SHEET = UI_LABELS.ROUTE_MAP.ADDRESS_SHEET;
@@ -38,10 +38,13 @@ interface RowProps {
   highlighted?: boolean;
   /** aria-expanded for the list usage; omit in the header shortcut row. */
   expanded?: boolean;
+  /** Meu roteiro mode: the mini-marker uses the neon type palette, matching the
+      map markers of that mode (RF-006.4.2). Default = Original palette. */
+  neon?: boolean;
 }
 
-export const StopItemRow = ({ item, onTap, leading, highlighted = false, expanded }: RowProps) => {
-  const color = colorForLocationType(item.markerType);
+export const StopItemRow = ({ item, onTap, leading, highlighted = false, expanded, neon = false }: RowProps) => {
+  const color = neon ? roteiroColorForLocationType(item.markerType) : colorForLocationType(item.markerType);
 
   return (
     <button
@@ -148,9 +151,11 @@ interface Props {
   trailing?: ReactNode;
   /** Bumped by the parent to re-scroll the SELECTED item into view (list view opens). */
   scrollSignal?: number;
+  /** Meu roteiro palette for the mini-marker (RF-006.4.3 — the edit list). */
+  neon?: boolean;
 }
 
-export const StopItem = ({ item, expanded, onTap, highlighted = false, leading, actions, trailing, scrollSignal = 0 }: Props) => {
+export const StopItem = ({ item, expanded, onTap, highlighted = false, leading, actions, trailing, scrollSignal = 0, neon = false }: Props) => {
   const ref = useRef<HTMLLIElement>(null);
 
   // Design §5: the SELECTED item scrolls into view when the list opens/changes
@@ -164,7 +169,7 @@ export const StopItem = ({ item, expanded, onTap, highlighted = false, leading, 
     <li ref={ref} className="border-b border-input last:border-b-0">
       <div className="flex items-center">
         <div className="min-w-0 flex-1">
-          <StopItemRow item={item} onTap={onTap} leading={leading} highlighted={highlighted} expanded={expanded} />
+          <StopItemRow item={item} onTap={onTap} leading={leading} highlighted={highlighted} expanded={expanded} neon={neon} />
         </div>
         {trailing && <div className="shrink-0 pr-3">{trailing}</div>}
       </div>

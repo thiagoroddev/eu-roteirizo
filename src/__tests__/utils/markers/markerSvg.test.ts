@@ -131,3 +131,33 @@ describe("buildMarkerSvg", () => {
     expect(svg).toContain('viewBox="0 0 96 102"');
   });
 });
+
+describe("buildMarkerSvg — roteiro extensions (RF-006.4.2)", () => {
+  it("renders a diamond body (route start) with the shared stroke/gradient", () => {
+    const svg = buildMarkerSvg({ shape: "diamond", color: COM, selected: true });
+    expect(svg).toContain("M48,12 L76,40 L48,68 L20,40 Z");
+    expect(svg).not.toContain("<rect");
+    expect(svg).not.toContain("<circle cx=");
+  });
+
+  it("omits the fine tip when tip=false (street-anchored vehicle)", () => {
+    const withTip = buildMarkerSvg({ shape: "circle", color: COM });
+    const tipless = buildMarkerSvg({ shape: "circle", color: COM, tip: false });
+    expect(withTip).toContain("L48,98");
+    expect(tipless).not.toContain("L48,98");
+  });
+
+  it("dashes the selected ring for radius candidates (ringStyle)", () => {
+    const dashed = buildMarkerSvg({ shape: "circle", color: COM, selected: true, ringStyle: "dashed" });
+    const solid = buildMarkerSvg({ shape: "circle", color: COM, selected: true });
+    expect(dashed).toContain('stroke-dasharray="10 7"');
+    expect(solid).not.toContain("stroke-dasharray");
+  });
+
+  it("the car glyph replaces the number (vehicle marker)", () => {
+    const svg = buildMarkerSvg({ shape: "circle", color: IND, glyph: "car", number: 9, tip: false });
+    expect(svg).not.toContain('class="mk-number"');
+    expect(svg).toContain("M5 17h-2v-6l2 -5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0h-6m-6 -6h15m-6 0v-5");
+    expect(svg).toContain('stroke="#2A2F38"'); // numberInk drives the glyph ink
+  });
+});

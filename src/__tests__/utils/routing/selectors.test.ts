@@ -9,6 +9,7 @@ import {
   packagesInStop,
   stopCentroid,
   pointsWithinRadius,
+  nearestStopTo,
 } from "../../../utils/routing/selectors";
 import type { DeliveryPoint, RouteStop } from "../../../types/routing";
 
@@ -49,6 +50,13 @@ describe("routing selectors", () => {
     expect(pointsWithinRadius(center, [near, far], 30).map((p) => p.id)).toEqual(["near"]);
     expect(pointsWithinRadius(center, [near, far], 60).map((p) => p.id)).toEqual(["near", "far"]);
     expect(pointsWithinRadius(center, [near, far], 0)).toEqual([]);
+  });
+
+  it("finds the stop whose ANCHOR is nearest to a point (incorporation default)", () => {
+    const near: RouteStop = { id: "near", order: 1, vehicleStop: { lat: -22.95, lng: -43.19 }, pointIds: ["a"], radiusMeters: 30 };
+    const far: RouteStop = { id: "far", order: 2, vehicleStop: { lat: -22.99, lng: -43.25 }, pointIds: ["b"], radiusMeters: 30 };
+    expect(nearestStopTo({ lat: -22.951, lng: -43.191 }, [far, near])?.id).toBe("near");
+    expect(nearestStopTo({ lat: -22.951, lng: -43.191 }, [])).toBeNull();
   });
 
   it("computes the centroid of a stop's points", () => {

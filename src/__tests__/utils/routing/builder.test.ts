@@ -3,6 +3,7 @@ import {
   createInitialBuilderState,
   routeBuilderReducer,
   draftCandidateIds,
+  farChosenPointIds,
   suggestedNextPointId,
   suggestionOrigin,
   remainingCounts,
@@ -12,6 +13,7 @@ import {
   type RouteBuilderState,
 } from "../../../utils/routing/builder";
 import { unassignedPoints } from "../../../utils/routing/selectors";
+import { sweepWalkingOrder } from "../../../utils/routing/walkOrder";
 import type { DeliveryPoint, LatLng } from "../../../types/routing";
 
 const pt = (id: string, lat: number, lng: number, packageCount = 1): DeliveryPoint => ({ id, lat, lng, address: id, packageCount, packages: [] });
@@ -81,9 +83,32 @@ describe("start and next suggestion", () => {
     expect(suggestedNextPointId(state)).toBe("e");
   });
 
-  it("with an open draft the suggestion departs from the draft anchor and skips its points", () => {
+  it("with an open draft the suggestion departs from the draft anchor and skips its points AND the radius (rev. .4)", () => {
     const state = run(openDraftOnA(initial()), { type: "TOGGLE_DRAFT_POINT", pointId: "e" });
-    expect(suggestedNextPointId(state)).toBe("b");
+    // b sits INSIDE the 30 m radius (a candidate, not the next stop — fluxo §6),
+    // so the nearest OUTSIDE wins: c (~56 m).
+    expect(suggestedNextPointId(state)).toBe("c");
+  });
+
+  it("with a draft open the suggestion skips points INSIDE the radius (fluxo §6: fora do raio)", () => {
+    const drafting = run(initial(), { type: "SET_START", position: START }, { type: "OPEN_STOP_DRAFT", seedPointId: "a", suggestedVehicleStop: { lat: a.lat, lng: a.lng } });
+    // b/e sit inside the 30 m radius (candidates); the nearest OUTSIDE is c.
+    expect(suggestedNextPointId(drafting)).toBe("c");
+    // An override pointing inside the radius is ignored (falls back to c).
+    expect(suggestedNextPointId(run(drafting, { type: "SET_NEXT_SUGGESTION", pointId: "b" }))).toBe("c");
+    // Radius wide enough to cover everything → nothing left to suggest.
+    expect(suggestedNextPointId(run(drafting, { type: "SET_DRAFT_RADIUS", radiusMeters: 5000 }))).toBeNull();
+  });
+
+  it("farChosenPointIds flags chosen points beyond max(2×radius, 150 m) of the anchor (RN-17)", () => {
+    expect(farChosenPointIds(initial())).toEqual([]);
+    const drafting = openDraftOnA(initial());
+    expect(farChosenPointIds(drafting)).toEqual([]); // seed sits at the anchor
+    const withNear = run(drafting, { type: "TOGGLE_DRAFT_POINT", pointId: "b" });
+    expect(farChosenPointIds(withNear)).toEqual([]); // ~17 m
+    const withFar = run(withNear, { type: "TOGGLE_DRAFT_POINT", pointId: "d" });
+    expect(farChosenPointIds(withFar)).toEqual(["d"]); // ~1.5 km > 150 m
+    expect(farChosenPointIds(run(withFar, { type: "TOGGLE_DRAFT_POINT", pointId: "d" }))).toEqual([]);
   });
 
   it("suggestionOrigin follows draft anchor > last stop anchor > start (null before)", () => {
@@ -94,6 +119,37 @@ describe("start and next suggestion", () => {
     expect(suggestionOrigin(committed)).toEqual({ lat: a.lat, lng: a.lng });
     const drafting = run(committed, { type: "OPEN_STOP_DRAFT", seedPointId: "e", suggestedVehicleStop: { lat: e.lat, lng: e.lng } });
     expect(suggestionOrigin(drafting)).toEqual({ lat: e.lat, lng: e.lng });
+  });
+});
+
+describe("CREATE_STOP (commit-on-create — RF-006.4.6)", () => {
+  it("firma uma parada direto com semente + membros do raio, sem draft, ordem varrida", () => {
+    const state = run(initial(), { type: "CREATE_STOP", seedPointId: "a", memberIds: ["b", "e"], vehicleStop: { lat: a.lat, lng: a.lng }, radiusMeters: 30 });
+    expect(state.draft).toBeNull();
+    expect(state.stops).toHaveLength(1);
+    const [stop] = state.stops;
+    expect(stop.id).toBe("stop_a");
+    expect(stop.order).toBe(1);
+    expect(stop.radiusMeters).toBe(30);
+    expect([...stop.pointIds].sort()).toEqual(["a", "b", "e"]);
+    // A ordem é a varredura horária a partir da âncora (não a de entrada).
+    expect(stop.pointIds).toEqual(sweepWalkingOrder({ lat: a.lat, lng: a.lng }, [a, b, e]));
+  });
+
+  it("de-dupa a semente, ignora pontos já assinalados e é no-op para semente desconhecida/tomada", () => {
+    // Semente incluída em memberIds não duplica.
+    const deduped = run(initial(), { type: "CREATE_STOP", seedPointId: "a", memberIds: ["a", "b"], vehicleStop: { lat: a.lat, lng: a.lng }, radiusMeters: 30 });
+    expect([...deduped.stops[0].pointIds].sort()).toEqual(["a", "b"]);
+
+    // Ponto já em outra parada é filtrado (b pertence à parada a+b).
+    const withAB = withStopAB(initial());
+    const created = run(withAB, { type: "CREATE_STOP", seedPointId: "c", memberIds: ["b", "e"], vehicleStop: { lat: c.lat, lng: c.lng }, radiusMeters: 30 });
+    expect(created.stops).toHaveLength(2);
+    expect([...created.stops[1].pointIds].sort()).toEqual(["c", "e"]); // b ficou fora
+
+    // Semente desconhecida ou já tomada → sem mudança.
+    expect(run(initial(), { type: "CREATE_STOP", seedPointId: "nope", memberIds: [], vehicleStop: START, radiusMeters: 30 }).stops).toEqual([]);
+    expect(run(withAB, { type: "CREATE_STOP", seedPointId: "b", memberIds: [], vehicleStop: START, radiusMeters: 30 })).toBe(withAB);
   });
 });
 

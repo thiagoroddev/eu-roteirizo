@@ -23,9 +23,11 @@ interface Props {
   itemTrailing?: (item: StopItemData) => ReactNode;
   /** Bumped to re-scroll the selected item into view (list view opens at full). */
   scrollSignal?: number;
+  /** Meu roteiro palette for the mini-markers (RF-006.4.3 — the edit list). */
+  neon?: boolean;
 }
 
-export const StopItemList = ({ items, selectedKey, itemLeading, itemActions, itemTrailing, scrollSignal }: Props) => {
+export const StopItemList = ({ items, selectedKey, itemLeading, itemActions, itemTrailing, scrollSignal, neon = false }: Props) => {
   // Everything starts EXPANDED; taps collapse/expand individually. The state
   // resets naturally: the component unmounts when the list view closes, and a
   // stop change renews the keys ("i:j").
@@ -56,6 +58,7 @@ export const StopItemList = ({ items, selectedKey, itemLeading, itemActions, ite
           actions={itemActions?.(item)}
           trailing={itemTrailing?.(item)}
           scrollSignal={scrollSignal}
+          neon={neon}
         />
       ))}
     </ul>

@@ -89,6 +89,8 @@ export const UI_LABELS = {
     // Duas visões do painel (rev. 07/07 — TASK-RF-023.7)
     SECTION_STOP: "Resumo da parada",
     SECTION_SELECTED: "Endereço selecionado",
+    /** 3ª seção do painel do roteiro (RF-006.4.3): preview da parada a criar. */
+    SECTION_SUGGESTED: "Parada sugerida",
     VIEW_FULL_LIST: "Ver lista completa",
     HIDE_FULL_LIST: "Esconder lista",
     VIEW_ON_MAP: "Ver no mapa",
@@ -96,9 +98,22 @@ export const UI_LABELS = {
     METRIC_PACKAGES: (count: number) => (count === 1 ? "1 pacote" : `${count} pacotes`),
     /** Package count per inferred type — "Residencial: 2 pacotes" (rev. 07/07). */
     METRIC_TYPED_PACKAGES: (typeLabel: string, count: number) => `${typeLabel}: ${count === 1 ? "1 pacote" : `${count} pacotes`}`,
-    // HUD do modo Meu roteiro (RF-32 parcial — TASK-RF-006.2): o que falta rotear.
+    // HUD do modo Meu roteiro (RF-32 parcial — TASK-RF-006.2/.4.1): estado do rascunho.
+    MODE_ROTEIRO_DRAFT: "Roteiro incompleto — rascunho",
     ROTEIRO_REMAINING: (addresses: number, packages: number) => `Faltando: ${addresses === 1 ? "1 endereço" : `${addresses} endereços`} · ${packages === 1 ? "1 pacote" : `${packages} pacotes`}`,
     ROTEIRO_HINT_START: "A construção começa definindo o ponto inicial da rota.",
+    // Linha de estado do rascunho: sempre diz O QUE FAZER agora (feedback 08/07).
+    ROTEIRO_STATE_BUILDING: "Toque num endereço no mapa para criar uma parada.",
+    ROTEIRO_STATE_COMPLETE: "Todos os endereços atribuídos.",
+    // Aviso do endereço livre — vive na seção "Endereço selecionado" (rev. 08/07).
+    ROTEIRO_NO_STOP_YET: "Este endereço ainda não pertence a nenhuma parada.",
+    /** Ordinal da ordem de visita a pé ("1º", "2º") — só p/ membros de parada (rev. 08/07). */
+    ORDINAL: (n: number) => `${n}º`,
+    // Parada firmada selecionada (RF-006.4.2 — antecipação parcial da .6, fluxo §9).
+    ROTEIRO_STOP: {
+      EDIT: "Editar parada",
+      DISSOLVE: "Desfazer parada",
+    },
     // Seção "Definir ponto inicial" do painel do roteiro (RF-21/22 — TASK-RF-006.3).
     ROTEIRO_START: {
       SECTION: "Definir ponto inicial",
@@ -111,8 +126,49 @@ export const UI_LABELS = {
       CONFIRM: "Confirmar início aqui",
       DEFINED: "Início definido",
       REDEFINE: "Redefinir início",
-      SUGGESTION: (address: string, distance: string) => `Sugestão: ${address} — ${distance}`,
+      // Distância SEMPRE qualificada (a pé / de veículo — feedback 08/07).
+      SUGGESTION: (address: string, distance: string) => `Sugestão: ${address} — ${distance} a pé`,
       SUGGESTION_STRAIGHT: "(linha reta)",
+    },
+    // Ponto livre selecionado (tela 8 — TASK-RF-006.4/.4.1, fluxo §9).
+    ROTEIRO_POINT: {
+      CREATE_STOP: "Criar parada",
+      // O select de destino só aparece ao clicar no botão (rev. 08/07 3ª rodada).
+      INCORPORATE_OTHER: "Incorporar em outra parada",
+      CONFIRM: "Confirmar",
+      CANCEL: "Cancelar",
+      TARGET_STOP_ARIA: "Parada de destino",
+      // Perna DE VEÍCULO até a âncora sugerida, na linha do rótulo da seção —
+      // o ÍCONE de carro qualifica a distância (rev. 08/07 4ª rodada).
+      DISTANCE_TO_HERE: (distance: string) => `Distância até aqui: ${distance}`,
+      /** Qualificador acessível do ícone de carro (a regra "distância sempre qualificada" vale p/ leitores de tela). */
+      VEHICLE_QUALIFIER: "de veículo",
+      STOP_OPTION: (order: number, addresses: number) => `Parada ${order} — ${addresses === 1 ? "1 endereço" : `${addresses} endereços`}`,
+      FAR_FROM_STOP: "Este endereço fica longe da âncora da parada escolhida. Pode incorporar mesmo assim — só confira a caminhada.",
+    },
+    // Edição de parada (tela 9 — TASK-RF-006.4/.4.1, fluxo §4/§8).
+    MODE_DRAFT: "Edição de parada",
+    ROTEIRO_DRAFT: {
+      TITLE: (n: number) => `Parada ${n} (rascunho)`,
+      TAP_HINT: "Tocar num endereço no mapa adiciona ou remove da parada.",
+      ESTIMATE: (minutes: number, distance: string) => `~${minutes} min · ${distance} a pé`,
+      /** Circuito irrisório (< 20 m): mostrar metros minaria a confiança. */
+      ESTIMATE_TIME_ONLY: (minutes: number) => `~${minutes} min a pé`,
+      BANNER_CANDIDATES: (n: number) => (n === 0 ? "Nenhum candidato no raio" : n === 1 ? "O raio engloba 1 candidato" : `O raio engloba ${n} candidatos`),
+      RADIUS_LABEL: "Raio de agrupamento",
+      RADIUS_VALUE: (m: number) => `${m} m`,
+      RADIUS_DECREASE: "Diminuir raio",
+      RADIUS_INCREASE: "Aumentar raio",
+      SECTION_CHOSEN: "Endereços da parada",
+      SECTION_CANDIDATES: "Candidatos no raio",
+      ADD: "Adicionar",
+      REMOVE: "Remover",
+      ADD_POINT: (address: string) => `Adicionar ${address}`,
+      REMOVE_POINT: (address: string) => `Remover ${address}`,
+      FAR_WARNING: "Há endereço escolhido longe da âncora — a caminhada desta parada pode ser maior.",
+      EMPTY_HINT: "Escolha ao menos um endereço para salvar a parada.",
+      SAVE: "Salvar parada",
+      CANCEL: "Cancelar",
     },
     // Lista de endereços da parada (StopItemList — TASK-RF-023.4, RF-27/28)
     ITEM: {

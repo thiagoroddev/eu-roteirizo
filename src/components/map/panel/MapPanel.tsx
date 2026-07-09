@@ -50,7 +50,9 @@ interface Props {
   header: ReactNode;
   /** Body content; scrolls internally only at the "full" snap (vaul pattern). */
   children: ReactNode;
-  /** CTA slot (RF-006/009) — absent in the Original mode. */
+  /** CTA slot — ⚠️ only VISIBLE at the "full" snap: the Content spans the whole
+      viewport and the slot sits at its bottom, below the fold on lower snaps
+      (RF-006.4.1). Always-visible CTAs belong in the header. */
   footer?: ReactNode;
   /** Optional controlled snap; uncontrolled by default (drag doesn't re-render the page). */
   snap?: PanelSnap;

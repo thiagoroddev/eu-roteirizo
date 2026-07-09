@@ -41,3 +41,10 @@ describe("createMarkerDivIcon", () => {
     expect(icon.options.iconAnchor).toEqual([MARKER_GEOMETRY.TIP_X * s, MARKER_GEOMETRY.TIP_Y * s]);
   });
 });
+
+describe("createMarkerDivIcon — center anchor (RF-006.4.2)", () => {
+  it("anchors tipless markers at the body center", () => {
+    const icon = createMarkerDivIcon({ shape: "circle", color: COM, glyph: "car", tip: false, anchor: "center", scale: 1 });
+    expect(icon.options.iconAnchor).toEqual([MARKER_GEOMETRY.CX, MARKER_GEOMETRY.CY_MID]);
+  });
+});

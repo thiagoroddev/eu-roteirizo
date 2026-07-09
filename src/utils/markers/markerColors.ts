@@ -23,16 +23,36 @@ export const ORIGINAL_MARKER_COLORS: Record<"commercial" | "residential" | "inde
 };
 
 /**
- * Meu roteiro palettes (TASK-RF-006.2/.3). `unassigned` is deliberately lighter
- * than the Original's `indefinite` gray — it must read as "not routed yet", not
- * as a type. `start` is the route start's OWN green (spec §3 "início = marcador
- * verde próprio") — brighter/deeper than the residential type green so the two
- * never read as the same thing.
+ * Meu roteiro type palettes (TASK-RF-006.4.1 — decision 08/07): the mode keeps
+ * the SAME type semantics as the Original (green residential / blue commercial /
+ * gray indefinite) but in a LIGHTER, neon register — the color itself tells the
+ * user which mode is active. Supersedes the spec's "pontos cinza desbotados"
+ * (§4 p.0, revised 08/07). `vehicle` is the shared slate of the route start AND
+ * the stop anchor (one icon for both — decision 08/07; the .5 gestures inherit it).
  */
-export const ROTEIRO_MARKER_COLORS: Record<"unassigned" | "start", MarkerColor> = {
-  unassigned: { top: "#D9DDE3", bottom: "#B4BAC4", glow: "rgba(0,0,0,.10)", numberInk: "#4A505A" },
-  start: { top: "#3EE08F", bottom: "#0A6B3C", glow: "rgba(20,180,100,.55)" },
+export const ROTEIRO_TYPE_COLORS: Record<"commercial" | "residential" | "indefinite", MarkerColor> = {
+  commercial: { top: "#66E0FF", bottom: "#00A8E8", glow: "rgba(0,209,255,.55)" },
+  residential: { top: "#5CFFB0", bottom: "#00C86E", glow: "rgba(0,255,157,.55)" },
+  indefinite: { top: "#E8ECF2", bottom: "#B4BAC4", glow: "rgba(160,170,190,.35)", numberInk: "#2A2F38" },
 };
+
+/** The route-infrastructure slate (start diamond + vehicle/anchor car) — cyan neon glow. */
+export const ROTEIRO_MARKER_COLORS: Record<"vehicle", MarkerColor> = {
+  vehicle: { top: "#64748B", bottom: "#334155", glow: "rgba(0,209,255,.45)" },
+};
+
+/** The mode's neon accent — suggestion line + radius circle (RF-006.4.2). */
+export const ROTEIRO_ACCENT = "#00D1FF";
+
+/**
+ * Maps a resolved location type (ICON_KEYS) to the Meu roteiro neon color —
+ * same buckets as `colorForLocationType`, lighter register.
+ */
+export function roteiroColorForLocationType(type: string): MarkerColor {
+  if (type === ICON_KEYS.OFFICE || type === ICON_KEYS.OFFICE_CORRECTED) return ROTEIRO_TYPE_COLORS.commercial;
+  if (type === ICON_KEYS.HOME || type === ICON_KEYS.HOME_CORRECTED) return ROTEIRO_TYPE_COLORS.residential;
+  return ROTEIRO_TYPE_COLORS.indefinite;
+}
 
 /**
  * Maps a resolved location type (ICON_KEYS) to the Original-mode marker color.

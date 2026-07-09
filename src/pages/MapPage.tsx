@@ -7,9 +7,14 @@ import { Button } from "../components/ui/button";
 import { MapModeToggle, MODE_QUERY_PARAM, MODE_QUERY_ROTEIRO, type MapMode } from "../components/map/MapModeToggle";
 import { MapPanel, PANEL_COLLAPSED_PX, type PanelSnap } from "../components/map/panel/MapPanel";
 import { PanelModeBar } from "../components/map/panel/PanelModeBar";
+import { PanelSection } from "../components/map/panel/PanelSection";
 import { PanelTitle } from "../components/map/panel/PanelTitle";
 import { RoteiroPanelHeader } from "../components/map/panel/RoteiroPanelHeader";
 import { RoteiroStartSection, type StartPhase } from "../components/map/panel/RoteiroStartSection";
+import { RoteiroPointSection, type StopOption } from "../components/map/panel/RoteiroPointSection";
+import { RoteiroDraftHeader, RoteiroDraftBody } from "../components/map/panel/RoteiroDraftSection";
+import { RoteiroStopSection } from "../components/map/panel/RoteiroStopSection";
+import type { PanelMetric } from "../components/map/panel/PanelTitle";
 import { StopItemList } from "../components/map/panel/StopItemList";
 import { StopItemRow, StopItemDetail } from "../components/map/panel/StopItem";
 import { useManifestFromUrl } from "../hooks/useManifestFromUrl";
@@ -19,19 +24,43 @@ import type { RowData } from "../types";
 import type { LatLng } from "../types/routing";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
 import { collapseInteraction, firstAddressKey, type InteractionState, type MarkerModel } from "../utils/markers/markerModels";
-import { adjacentStopKey, buildPanelItems, panelMetrics, smallestStopKey, stopPlaceSummary } from "../utils/markers/panelModels";
-import { computeRoteiroMarkerModels } from "../utils/markers/roteiroModels";
+import { adjacentStopKey, buildPanelItems, panelMetrics, smallestStopKey, stopPlaceSummary, type PanelMetrics } from "../utils/markers/panelModels";
+import {
+  computeRoteiroMarkerModels,
+  pointToStopItemData,
+  addressLineOf,
+  packagesByTypeFromPoints,
+  stopPlaceSummaryFromPoints,
+  walkEstimateLabel,
+  orderedStopPoints,
+} from "../utils/markers/roteiroModels";
 import { buildDeliveryPoints } from "../utils/routing/points";
-import { remainingCounts, suggestedNextPointId, suggestionOrigin } from "../utils/routing/builder";
-import { indexPointsById } from "../utils/routing/selectors";
+import { remainingCounts, suggestedNextPointId, suggestionOrigin, draftCandidateIds, farChosenPointIds, isComplete, FAR_POINT_RADIUS_FACTOR, FAR_POINT_MIN_METERS } from "../utils/routing/builder";
+import { stopWalkEstimate } from "../utils/routing/estimates";
+import { assignedPointIds, pointsWithinRadius } from "../utils/routing/selectors";
+import { indexPointsById, nearestStopTo } from "../utils/routing/selectors";
+import { suggestVehicleStop } from "../utils/routing/vehicleStop";
+import { sweepWalkingOrder } from "../utils/routing/walkOrder";
 import { pedestrianGraph } from "../utils/routing/pedestrian";
 import { suggestionPath } from "../utils/routing/suggestion";
+import { haversine } from "../utils/routing/geo";
 import { isWithinRioBounds } from "../utils/coordinates";
 import { formatMeters } from "../utils/formatters";
 import { UI_LABELS } from "../constants/uiLabels";
 
 /** The panel's two views (rev. 07/07 — TASK-RF-023.7). */
 type PanelView = "selected" | "list";
+
+const TYPE_LABELS = UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.TYPE_LABELS;
+
+/** Chips of package counts PER inferred type, omitting absent types (rev.
+    07/07) — shared by the Original summary and the roteiro's stop summaries
+    (RF-006.4.3: "exatamente a mesma coisa que no modo Original"). */
+const typedPackageChips = (packagesByType: PanelMetrics["packagesByType"]): PanelMetric[] => [
+  ...(packagesByType.residential > 0 ? [{ label: UI_LABELS.MAP_PANEL.METRIC_TYPED_PACKAGES(TYPE_LABELS.RESIDENTIAL, packagesByType.residential) }] : []),
+  ...(packagesByType.commercial > 0 ? [{ label: UI_LABELS.MAP_PANEL.METRIC_TYPED_PACKAGES(TYPE_LABELS.COMMERCIAL, packagesByType.commercial) }] : []),
+  ...(packagesByType.indefinite > 0 ? [{ label: UI_LABELS.MAP_PANEL.METRIC_TYPED_PACKAGES(TYPE_LABELS.INDEFINITE, packagesByType.indefinite) }] : []),
+];
 
 /**
  * MapPage - the map focus screen (TASK-RF-022.5 + RF-023 + RF-006.2, fluxo §11).
@@ -84,14 +113,58 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // Lifted interaction state (TASK-RF-023.2): map + panel, one source of truth.
+  const [interaction, setInteraction] = useState<InteractionState>(collapseInteraction());
+  /** The panel's "last stop" memory — never cleared (nunca "nenhuma selecionada"). */
+  const [panelStopKey, setPanelStopKey] = useState<string | null>(null);
+  /** Panel snap, controlled here so selections can raise it (design doc §5). */
+  const [panelSnap, setPanelSnap] = useState<PanelSnap>("collapsed");
+  const [panelView, setPanelView] = useState<PanelView>("selected");
+  /** Whether the selected-address card shows its detail (selected view's body). */
+  const [cardExpanded, setCardExpanded] = useState(false);
+  /** Bumped so the list view re-scrolls to the selected item when it opens. */
+  const [scrollSignal, setScrollSignal] = useState(0);
+
   // ------- Meu roteiro domain (ADR-009: DeliveryPoint/RouteStop, never StopGroup) -------
   const points = useMemo(() => buildDeliveryPoints(rows), [rows]);
   const { state: builderState, dispatch } = useRouteBuilder(points);
   const roteiroAvailable = points.length > 0;
   const mode: MapMode = searchParams.get(MODE_QUERY_PARAM) === MODE_QUERY_ROTEIRO && roteiroAvailable ? "roteiro" : "original";
-  const roteiroModels = useMemo(() => computeRoteiroMarkerModels(points, builderState.stops), [points, builderState.stops]);
   const remaining = remainingCounts(builderState);
   const pointsById = useMemo(() => indexPointsById(points), [points]);
+
+  // ------- Orphan/stop selection + stop draft (TASK-RF-006.4/.4.2, telas 8–9) -------
+  /** The tapped free point (tela 8) — ephemeral UI, never in the reducer. */
+  const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
+  /** The tapped committed stop (RF-006.4.2) — ephemeral UI too. */
+  const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
+  /** The grouping radius of the "Parada sugerida" preview — adjustable BEFORE
+      creating (RF-006.4.6). Ephemeral; resets to the default per selected orphan. */
+  const [previewRadiusMeters, setPreviewRadiusMeters] = useState(builderState.config.autoRadiusMeters);
+  const draft = builderState.draft;
+  const farIds = farChosenPointIds(builderState);
+  const selectedPoint = selectedPointId !== null ? (pointsById.get(selectedPointId) ?? null) : null;
+  /** Defensive: a dissolved/reopened stop drops the selection to the next context. */
+  const selectedStop = selectedStopId !== null ? (builderState.stops.find((s) => s.id === selectedStopId) ?? null) : null;
+
+  /** Radius PREVIEW (U6): selecting an orphan already shows the circle and its
+      candidates BEFORE creating — pure derivation, the reducer stays untouched. */
+  const previewCandidateIds = useMemo(() => {
+    if (draft || !selectedPoint) return [];
+    const assigned = assignedPointIds(builderState.stops);
+    return pointsWithinRadius(selectedPoint, points, previewRadiusMeters)
+      .filter((p) => p.id !== selectedPoint.id && !assigned.has(p.id))
+      .map((p) => p.id);
+  }, [draft, selectedPoint, points, builderState.stops, previewRadiusMeters]);
+
+  const candidateIds = draft ? draftCandidateIds(builderState) : previewCandidateIds;
+
+  const roteiroModels = useMemo(
+    () => computeRoteiroMarkerModels(points, builderState.stops, { draft, candidateIds, selectedPointId, selectedStopId }),
+    // candidateIds is derived fresh each render; its CONTENT tracks draft/points.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [points, builderState.stops, draft, selectedPointId, selectedStopId, candidateIds.join("|")]
+  );
 
   // Road graph — lazy on the roteiro enter (ADR-009 decision B); everything
   // below works with graph === null (straight-line fallbacks).
@@ -153,24 +226,111 @@ function MapScreen({ rows }: { rows: RowData[] }) {
     );
   };
 
-  /** Armed map tap → the tapped coordinate becomes the start (decision 08/07). */
+  /** Armed map tap → the tapped coordinate becomes the start (decision 08/07);
+      otherwise an empty-map tap just clears the orphan selection (tela 8). */
   const handleMapTap = (latlng: LatLng) => {
-    if (!armedMapTap) return;
-    defineStart(latlng);
+    if (armedMapTap) {
+      defineStart(latlng);
+      return;
+    }
+    setSelectedPointId(null);
+    setSelectedStopId(null);
   };
 
-  /** Tap on a faded point: without a start (or redefining) it asks for
-      confirmation ("partir deste endereço" — decision 08/07); with a start it
-      re-points the dashed suggestion (fluxo §6). */
+  /** Tap on a marker, by context (RF-006.4): during a draft it toggles the
+      point in/out (spec §4 p.4 — map taps choose candidates); without a start
+      (or redefining) it asks for confirmation ("partir deste endereço"); with a
+      start it SELECTS the orphan (tela 8) and re-points the suggestion (§6 —
+      "comparar destinos é só tocar"). Committed-stop squares are inert until
+      the edit slice (.6). */
   const handleModelTap = (model: MarkerModel) => {
+    if (model.kind === "stop") {
+      // Committed stop tapped (RF-006.4.2): open its Original-style panel.
+      // During the edit draft, squares stay inert (the taps mean membership).
+      if (draft) return;
+      setSelectedStopId(model.key);
+      setSelectedPointId(null);
+      setCardExpanded(false);
+      setPanelSnap((current) => (current === "collapsed" ? "half" : current));
+      return;
+    }
+    if (draft) {
+      dispatch({ type: "TOGGLE_DRAFT_POINT", pointId: model.key });
+      return;
+    }
     if (!hasStart || redefining) {
       setPendingPointId(model.key);
       setArmedMapTap(false);
       setStartNotice(null);
       return;
     }
+    setSelectedPointId(model.key);
+    setSelectedStopId(null);
+    setPreviewRadiusMeters(builderState.config.autoRadiusMeters); // each orphan starts at the default radius
+    setCardExpanded(false);
+    setPanelSnap((current) => (current === "collapsed" ? "half" : current));
     dispatch({ type: "SET_NEXT_SUGGESTION", pointId: model.key });
   };
+
+  /** "Criar parada" now COMMITS on the spot (RF-006.4.6): the seed + the preview
+      radius members become a firmed stop directly (no draft), and the panel
+      focuses that grouped stop. Radius was tuned in the preview; further edits
+      go through "Editar parada" (REOPEN). Reverses §8 (candidates by choice). */
+  const handleCreateStop = () => {
+    if (!selectedPoint) return;
+    const stopId = `stop_${selectedPoint.id}`;
+    dispatch({
+      type: "CREATE_STOP",
+      seedPointId: selectedPoint.id,
+      memberIds: previewCandidateIds,
+      vehicleStop: suggestVehicleStop(graph, selectedPoint),
+      radiusMeters: previewRadiusMeters,
+    });
+    setSelectedPointId(null);
+    setSelectedStopId(stopId); // focus the freshly firmed, grouped stop
+    setCardExpanded(false);
+    setPanelSnap((current) => (current === "collapsed" ? "half" : current));
+  };
+
+  /** Committed-stop actions (RF-006.4.2 — fluxo §9; REOPEN/DISSOLVE were ready). */
+  const handleEditStop = () => {
+    if (!selectedStop) return;
+    dispatch({ type: "REOPEN_STOP", stopId: selectedStop.id });
+    setSelectedStopId(null);
+    setCardExpanded(false);
+  };
+  const handleDissolveStop = () => {
+    if (!selectedStop) return;
+    dispatch({ type: "DISSOLVE_STOP", stopId: selectedStop.id });
+    setSelectedStopId(null);
+    setCardExpanded(false);
+  };
+
+  /** Tela 8: join an existing stop (fluxo §9; ADD re-sweeps that stop's order). */
+  const handleIncorporate = (stopId: string) => {
+    if (!selectedPoint) return;
+    dispatch({ type: "ADD_POINT_TO_STOP", stopId, pointId: selectedPoint.id });
+    setSelectedPointId(null);
+  };
+
+  const handleSaveStop = () => dispatch({ type: "COMMIT_STOP" });
+  const handleCancelDraft = () => dispatch({ type: "CANCEL_DRAFT" });
+
+  // ADR-009 decision C: while the draft's anchor is still the DEFAULT
+  // suggestion, re-project it onto the street as soon as the graph arrives.
+  // User-moved anchors are never overwritten (vehicleStopIsDefault false).
+  // NOTE (RF-006.4.6): since "Criar parada" now COMMITS (no create-draft) and
+  // the only remaining draft path is REOPEN (which sets default=false), this
+  // effect is currently inert — create-time snapping via suggestVehicleStop
+  // covers the graph-ready case. It stays for when .5 (anchor gestures) brings
+  // back default-anchor drafts. Offline-created anchors are provisional until then.
+  const draftSeedId = draft?.seedPointId;
+  const draftAnchorIsDefault = draft?.vehicleStopIsDefault ?? false;
+  useEffect(() => {
+    if (!graph || !draftAnchorIsDefault || !draftSeedId) return;
+    const seed = pointsById.get(draftSeedId);
+    if (seed) dispatch({ type: "RESET_VEHICLE_STOP", suggestedVehicleStop: suggestVehicleStop(graph, seed) });
+  }, [graph, draftAnchorIsDefault, draftSeedId, pointsById, dispatch]);
 
   const handleConfirmPoint = () => {
     if (!pendingPoint) return;
@@ -192,26 +352,135 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   const suggestion = useMemo(() => (origin && suggestedPoint ? suggestionPath(pedGraph, origin, { lat: suggestedPoint.lat, lng: suggestedPoint.lng }) : null), [pedGraph, origin, suggestedPoint]);
   const suggestionLabel =
     suggestion && suggestedPoint
-      ? `${UI_LABELS.MAP_PANEL.ROTEIRO_START.SUGGESTION(suggestedPoint.address || UI_LABELS.COMMON.NO_DATA, formatMeters(suggestion.distanceMeters))}${suggestion.viaStreets ? "" : ` ${UI_LABELS.MAP_PANEL.ROTEIRO_START.SUGGESTION_STRAIGHT}`}`
+      ? `${UI_LABELS.MAP_PANEL.ROTEIRO_START.SUGGESTION(addressLineOf(suggestedPoint.address), formatMeters(suggestion.distanceMeters))}${suggestion.viaStreets ? "" : ` ${UI_LABELS.MAP_PANEL.ROTEIRO_START.SUGGESTION_STRAIGHT}`}`
       : null;
 
-  const roteiroOverlay = useMemo(() => ({ start: builderState.startPoint, suggestionPath: suggestion?.path ?? null }), [builderState.startPoint, suggestion]);
+  const draftSeed = draftSeedId !== undefined ? (pointsById.get(draftSeedId) ?? null) : null;
+  const roteiroOverlay = useMemo(
+    () => ({
+      start: builderState.startPoint,
+      suggestionPath: suggestion?.path ?? null,
+      // The radius circle also PREVIEWS on the selected orphan, before creating (U6).
+      radiusCircle:
+        draft && draftSeed
+          ? { center: { lat: draftSeed.lat, lng: draftSeed.lng }, meters: draft.radiusMeters }
+          : selectedPoint
+            ? { center: { lat: selectedPoint.lat, lng: selectedPoint.lng }, meters: previewRadiusMeters }
+            : null,
+      anchor: draft?.vehicleStop ?? null,
+    }),
+    [builderState.startPoint, previewRadiusMeters, suggestion, draft, draftSeed, selectedPoint]
+  );
+
+  // ------- Roteiro panel context (RF-006.4/.4.2) -------
+  const roteiroContext: "drafting" | "stop-selected" | "point-selected" | "start-flow" = draft
+    ? "drafting"
+    : selectedStop
+      ? "stop-selected"
+      : selectedPoint && hasStart && !redefining
+        ? "point-selected"
+        : "start-flow";
+
+  /** Tela 8 targets: every committed stop, nearest first pre-selected; `far` = RN-17 hint. */
+  const stopOptions: StopOption[] = selectedPoint
+    ? builderState.stops.map((stop) => ({
+        id: stop.id,
+        label: UI_LABELS.MAP_PANEL.ROTEIRO_POINT.STOP_OPTION(stop.order, stop.pointIds.length),
+        far: haversine(selectedPoint, stop.vehicleStop) > Math.max(FAR_POINT_RADIUS_FACTOR * stop.radiusMeters, FAR_POINT_MIN_METERS),
+      }))
+    : [];
+  const defaultStopId = selectedPoint ? (nearestStopTo(selectedPoint, builderState.stops)?.id ?? null) : null;
+
+  /** Draft body/header data (tela 9). The lists render through the Original's
+      full-list structure (RF-006.4.3), so points are adapted to StopItemData —
+      members with their walking ordinal, candidates plain. */
+  const chosenPoints = draft ? draft.pointIds.map((id) => pointsById.get(id)).filter((p): p is NonNullable<typeof p> => p !== undefined) : [];
+  const candidatePoints = candidateIds.map((id) => pointsById.get(id)).filter((p): p is NonNullable<typeof p> => p !== undefined);
+  const chosenItems = chosenPoints.map((point, index) => pointToStopItemData(point, { ordinal: index + 1 }));
+  const candidateItems = candidatePoints.map((point) => pointToStopItemData(point));
+  const draftPackages = chosenPoints.reduce((sum, p) => sum + p.packageCount, 0);
+  /** "~min · m a pé" of the draft's walking circuit (coarse — RF-007 refines). */
+  const draftEstimate = draft && chosenPoints.length > 0 ? stopWalkEstimate(draft.vehicleStop, chosenPoints, builderState.config) : null;
+  const draftMetrics: PanelMetric[] = [
+    { label: UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(chosenPoints.length) },
+    { label: UI_LABELS.MAP_PANEL.METRIC_PACKAGES(draftPackages) },
+    ...(draftEstimate ? [{ label: walkEstimateLabel(draftEstimate) }] : []),
+  ];
+
+  /** Tela 8: the point through the Original panel's vocabulary (one visual language). */
+  const selectedPointItem = selectedPoint ? pointToStopItemData(selectedPoint) : null;
+
+  /** Selected committed stop (RF-006.4.2): Original-structure summary data —
+      typed package chips, exactly like the Original (RF-006.4.3), plus the
+      walking-estimate chip. */
+  const stopPoints = selectedStop ? orderedStopPoints(selectedStop, pointsById) : [];
+  const stopEstimate = selectedStop && stopPoints.length > 0 ? stopWalkEstimate(selectedStop.vehicleStop, stopPoints, builderState.config) : null;
+  const stopPlace = stopPlaceSummaryFromPoints(stopPoints);
+  const stopMetrics: PanelMetric[] = [
+    { label: UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(stopPoints.length) },
+    ...typedPackageChips(packagesByTypeFromPoints(stopPoints)),
+    ...(stopEstimate ? [{ label: walkEstimateLabel(stopEstimate) }] : []),
+  ];
+  const stopFirstItem = stopPoints[0] ? pointToStopItemData(stopPoints[0], { ordinal: 1 }) : null;
+
+  // ------- Suggested-stop preview (3ª seção do painel — RF-006.4.3/.4.4) -------
+  /** How the stop WOULD look if created now: the summary aggregates the seed
+      AND the radius candidates (what the circle shows — rev. 08/07 .4.4), in
+      the default walking sweep around the suggested anchor (the reducer's own
+      rule). Creating still seeds only the selected point — candidates enter by
+      choice (§8, decision 26/06). */
+  const suggestedOrder = builderState.stops.length + 1;
+  const suggestedAnchor = useMemo(() => (selectedPoint ? suggestVehicleStop(graph, selectedPoint) : null), [graph, selectedPoint]);
+  const suggestedPoints = useMemo(() => {
+    if (!selectedPoint || !suggestedAnchor) return [];
+    const members = [selectedPoint, ...previewCandidateIds.map((id) => pointsById.get(id)).filter((p): p is NonNullable<ReturnType<typeof pointsById.get>> => p !== undefined)];
+    const byId = indexPointsById(members);
+    return sweepWalkingOrder(suggestedAnchor, members)
+      .map((id) => byId.get(id))
+      .filter((p): p is NonNullable<ReturnType<typeof byId.get>> => p !== undefined);
+  }, [selectedPoint, suggestedAnchor, previewCandidateIds, pointsById]);
+  const suggestedEstimate = suggestedAnchor && suggestedPoints.length > 0 ? stopWalkEstimate(suggestedAnchor, suggestedPoints, builderState.config) : null;
+  const suggestedPlace = stopPlaceSummaryFromPoints(suggestedPoints);
+  const suggestedMetrics: PanelMetric[] = selectedPoint
+    ? [
+        { label: UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(suggestedPoints.length) },
+        ...typedPackageChips(packagesByTypeFromPoints(suggestedPoints)),
+        ...(suggestedEstimate ? [{ label: walkEstimateLabel(suggestedEstimate) }] : []),
+      ]
+    : [];
+  /** VEHICLE leg: last committed stop (or the start) → the suggested anchor.
+      The raw graph is directed, so one-way streets are respected; without it
+      the straight-line fallback is labeled "(linha reta)". Shown beside the
+      section label with the car icon as the qualifier (rev. 08/07 4ª rodada). */
+  const lastStop = builderState.stops.length > 0 ? builderState.stops[builderState.stops.length - 1] : null;
+  const vehicleOrigin = lastStop?.vehicleStop ?? builderState.startPoint;
+  const vehicleLeg = useMemo(() => (vehicleOrigin && suggestedAnchor ? suggestionPath(graph, vehicleOrigin, suggestedAnchor) : null), [graph, vehicleOrigin, suggestedAnchor]);
+  const vehicleDistanceLabel = vehicleLeg
+    ? `${UI_LABELS.MAP_PANEL.ROTEIRO_POINT.DISTANCE_TO_HERE(formatMeters(vehicleLeg.distanceMeters))}${vehicleLeg.viaStreets ? "" : ` ${UI_LABELS.MAP_PANEL.ROTEIRO_START.SUGGESTION_STRAIGHT}`}`
+    : null;
+
+  /** Roteiro state header (feedback 08/07: the panel always says the next step). */
+  const roteiroComplete = isComplete(builderState);
+  const roteiroModeLabel = roteiroComplete ? UI_LABELS.MAP_MODE.MY_ROTEIRO : UI_LABELS.MAP_PANEL.MODE_ROTEIRO_DRAFT;
+  const roteiroStatusHint = roteiroComplete ? UI_LABELS.MAP_PANEL.ROTEIRO_STATE_COMPLETE : hasStart && !redefining ? UI_LABELS.MAP_PANEL.ROTEIRO_STATE_BUILDING : null;
+
+  /** Tela 8 card tap: same sizing rule as the Original's selected-address card. */
+  const handleRoteiroCardTap = () => {
+    // The ACTIVE context decides which card the tap expands (RF-006.4.2).
+    const activeItem = roteiroContext === "stop-selected" ? stopFirstItem : selectedPointItem;
+    if (!activeItem) return;
+    if (cardExpanded) {
+      setCardExpanded(false);
+      return;
+    }
+    setCardExpanded(true);
+    const target: PanelSnap = activeItem.packageCount > 2 ? "full" : "half";
+    setPanelSnap((current) => (current === "full" ? "full" : target));
+  };
 
   /** Discreet graph status for the header (ready/idle = silence). */
   const graphStatus =
     graphLoadStatus === "loading" ? { text: UI_LABELS.ROUTING.LOADING_STREETS } : graphLoadStatus === "error" ? { text: graphError ?? UI_LABELS.ROUTING.NETWORK_ERROR, onRetry: retryGraph } : null;
-
-  // Lifted interaction state (TASK-RF-023.2): map + panel, one source of truth.
-  const [interaction, setInteraction] = useState<InteractionState>(collapseInteraction());
-  /** The panel's "last stop" memory — never cleared (nunca "nenhuma selecionada"). */
-  const [panelStopKey, setPanelStopKey] = useState<string | null>(null);
-  /** Panel snap, controlled here so selections can raise it (design doc §5). */
-  const [panelSnap, setPanelSnap] = useState<PanelSnap>("collapsed");
-  const [panelView, setPanelView] = useState<PanelView>("selected");
-  /** Whether the selected-address card shows its detail (selected view's body). */
-  const [cardExpanded, setCardExpanded] = useState(false);
-  /** Bumped so the list view re-scrolls to the selected item when it opens. */
-  const [scrollSignal, setScrollSignal] = useState(0);
 
   /** Shared transition: updates the markers and the panel's stop memory. */
   const applyInteraction = useCallback((next: InteractionState) => {
@@ -239,6 +508,8 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   const handleModeChange = (next: MapMode) => {
     if (next === mode) return;
     resetStartUi();
+    setSelectedPointId(null); // the draft survives on purpose (it lives in the reducer)
+    setSelectedStopId(null);
     if (next === "roteiro") {
       setInteraction(collapseInteraction());
       setPanelView("selected");
@@ -287,15 +558,7 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   const panelItems = buildPanelItems(stops, effectivePanelStopKey);
   // Chips: address total + package counts PER TYPE, omitting absent types
   // (rev. 07/07 — a mall stop mixes residential and commercial packages).
-  const TYPE_LABELS = UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.TYPE_LABELS;
-  const metricChips = panelStop
-    ? [
-        { label: UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(metrics.addressCount) },
-        ...(metrics.packagesByType.residential > 0 ? [{ label: UI_LABELS.MAP_PANEL.METRIC_TYPED_PACKAGES(TYPE_LABELS.RESIDENTIAL, metrics.packagesByType.residential) }] : []),
-        ...(metrics.packagesByType.commercial > 0 ? [{ label: UI_LABELS.MAP_PANEL.METRIC_TYPED_PACKAGES(TYPE_LABELS.COMMERCIAL, metrics.packagesByType.commercial) }] : []),
-        ...(metrics.packagesByType.indefinite > 0 ? [{ label: UI_LABELS.MAP_PANEL.METRIC_TYPED_PACKAGES(TYPE_LABELS.INDEFINITE, metrics.packagesByType.indefinite) }] : []),
-      ]
-    : [];
+  const metricChips = panelStop ? [{ label: UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(metrics.addressCount) }, ...typedPackageChips(metrics.packagesByType)] : [];
   // Selected-address card: the SELECTED address, or the first by Sequence while
   // nothing is selected — the card is never empty.
   const selectedItem = panelItems.find((item) => item.addressKey === interaction.selectedAddressKey) ?? panelItems[0] ?? null;
@@ -353,7 +616,8 @@ function MapScreen({ rows }: { rows: RowData[] }) {
     if (next !== "full") setPanelView((view) => (view === "list" ? "selected" : view));
   };
 
-  /** Original-mode panel header (TWO views — rev. 07/07). */
+  /** Original-mode panel header (TWO views — rev. 07/07). Sections render
+      through PanelSection (RF-006.4.3), the shared chrome of BOTH modes. */
   const originalHeader = (
     <div className="pt-1">
       <PanelModeBar modeLabel={UI_LABELS.MAP_PANEL.MODE_VIEW} onPrevStop={() => handleStepStop(-1)} onNextStop={() => handleStepStop(1)} />
@@ -361,21 +625,24 @@ function MapScreen({ rows }: { rows: RowData[] }) {
       {/* Section 1 — Resumo da parada. The list toggle lives BESIDE the
           section label (rev. 07/07) and never disappears: it flips to
           "Esconder lista" while the list view is open. */}
-      <div className="flex items-center justify-between gap-2 px-4">
-        <p className="text-xs font-medium text-muted-foreground">{UI_LABELS.MAP_PANEL.SECTION_STOP}</p>
-        <Button type="button" variant="outline" size="sm" data-vaul-no-drag className="shrink-0" onClick={panelView === "list" ? handleHideList : handleShowList}>
-          {panelView === "list" ? UI_LABELS.MAP_PANEL.HIDE_FULL_LIST : UI_LABELS.MAP_PANEL.VIEW_FULL_LIST}
-        </Button>
-      </div>
-      <PanelTitle stopNumber={panelStop && panelStop.hasStop ? panelStop.stop : null} neighborhoods={place.neighborhoods} zipcodes={place.zipcodes} metrics={metricChips} />
+      <PanelSection
+        label={UI_LABELS.MAP_PANEL.SECTION_STOP}
+        divider={false}
+        actions={
+          <Button type="button" variant="outline" size="sm" data-vaul-no-drag onClick={panelView === "list" ? handleHideList : handleShowList}>
+            {panelView === "list" ? UI_LABELS.MAP_PANEL.HIDE_FULL_LIST : UI_LABELS.MAP_PANEL.VIEW_FULL_LIST}
+          </Button>
+        }
+      >
+        <PanelTitle stopNumber={panelStop && panelStop.hasStop ? panelStop.stop : null} neighborhoods={place.neighborhoods} zipcodes={place.zipcodes} metrics={metricChips} />
+      </PanelSection>
 
       {/* Section 2 — Endereço selecionado (selected view only: the list
           view IS the addresses; no duplication anywhere). */}
       {panelView === "selected" && selectedItem && (
-        <div className="border-t border-input">
-          <p className="px-4 pt-2 text-xs font-medium text-muted-foreground">{UI_LABELS.MAP_PANEL.SECTION_SELECTED}</p>
+        <PanelSection label={UI_LABELS.MAP_PANEL.SECTION_SELECTED}>
           <StopItemRow item={selectedItem} onTap={handleCardTap} highlighted={cardExpanded} expanded={cardExpanded} />
-        </div>
+        </PanelSection>
       )}
     </div>
   );
@@ -402,37 +669,109 @@ function MapScreen({ rows }: { rows: RowData[] }) {
         <MapModeToggle mode={mode} onModeChange={handleModeChange} roteiroEnabled={roteiroAvailable} />
       </div>
 
-      {/* Persistent bottom panel. Original: TWO views (rev. 07/07). Roteiro
-          (.2): the remaining-work HUD only — context panels arrive in .3/.4. */}
+      {/* Persistent bottom panel. Original: TWO views (rev. 07/07). Roteiro:
+          three contexts (RF-006.4/.4.1) — start-flow (.3), point-selected
+          (tela 8, the Original's own card) and drafting (tela 9, CTAs in the
+          header — the footer slot is only visible at the full snap). */}
       <MapPanel
         snap={panelSnap}
         onSnapChange={handleSnapChange}
         header={
           mode === "roteiro" ? (
-            <div>
-              <RoteiroPanelHeader remainingAddresses={remaining.addresses} remainingPackages={remaining.packages} graphStatus={graphStatus} />
-              <RoteiroStartSection
-                phase={startPhase}
-                notice={startNotice}
-                pendingAddress={pendingPoint?.address}
-                suggestionLabel={suggestionLabel}
-                onUseGps={handleUseGps}
-                onArmMapTap={() => {
-                  setArmedMapTap(true);
-                  setPendingPointId(null);
-                  setStartNotice(null);
-                }}
-                onConfirmPoint={handleConfirmPoint}
-                onCancel={handleCancelStartAction}
-                onRedefine={() => setRedefining(true)}
+            roteiroContext === "drafting" && draft ? (
+              <RoteiroDraftHeader
+                stopNumber={builderState.stops.length + 1}
+                metrics={draftMetrics}
+                addresses={chosenPoints.length}
+                remainingAddresses={remaining.addresses}
+                remainingPackages={remaining.packages}
+                canSave={draft.pointIds.length > 0}
+                onSave={handleSaveStop}
+                onCancel={handleCancelDraft}
               />
-            </div>
+            ) : roteiroContext === "stop-selected" && selectedStop ? (
+              <div>
+                <RoteiroPanelHeader remainingAddresses={remaining.addresses} remainingPackages={remaining.packages} modeLabel={roteiroModeLabel} graphStatus={graphStatus} />
+                <RoteiroStopSection
+                  stopOrder={selectedStop.order}
+                  neighborhoods={stopPlace.neighborhoods}
+                  zipcodes={stopPlace.zipcodes}
+                  metrics={stopMetrics}
+                  item={stopFirstItem}
+                  expanded={cardExpanded}
+                  onTapCard={handleRoteiroCardTap}
+                  onEdit={handleEditStop}
+                  onDissolve={handleDissolveStop}
+                />
+              </div>
+            ) : roteiroContext === "point-selected" && selectedPointItem ? (
+              <div>
+                <RoteiroPanelHeader remainingAddresses={remaining.addresses} remainingPackages={remaining.packages} modeLabel={roteiroModeLabel} graphStatus={graphStatus} />
+                <RoteiroPointSection
+                  key={selectedPointItem.addressKey} // key-reset: the select re-anchors per point
+                  item={selectedPointItem}
+                  expanded={cardExpanded}
+                  onTapCard={handleRoteiroCardTap}
+                  suggestedOrder={suggestedOrder}
+                  suggestedPlace={suggestedPlace}
+                  suggestedMetrics={suggestedMetrics}
+                  vehicleDistanceLabel={vehicleDistanceLabel}
+                  radiusMeters={previewRadiusMeters}
+                  onRadiusChange={setPreviewRadiusMeters}
+                  stopOptions={stopOptions}
+                  defaultStopId={defaultStopId}
+                  onCreateStop={handleCreateStop}
+                  onIncorporate={handleIncorporate}
+                />
+              </div>
+            ) : (
+              <div>
+                <RoteiroPanelHeader
+                  remainingAddresses={remaining.addresses}
+                  remainingPackages={remaining.packages}
+                  modeLabel={roteiroModeLabel}
+                  statusHint={roteiroStatusHint}
+                  graphStatus={graphStatus}
+                />
+                <RoteiroStartSection
+                  phase={startPhase}
+                  notice={startNotice}
+                  pendingAddress={pendingPoint?.address}
+                  suggestionLabel={suggestionLabel}
+                  onUseGps={handleUseGps}
+                  onArmMapTap={() => {
+                    setArmedMapTap(true);
+                    setPendingPointId(null);
+                    setStartNotice(null);
+                  }}
+                  onConfirmPoint={handleConfirmPoint}
+                  onCancel={handleCancelStartAction}
+                  onRedefine={() => setRedefining(true)}
+                />
+              </div>
+            )
           ) : (
             originalHeader
           )
         }
       >
-        {mode === "roteiro" ? null : panelView === "list" ? (
+        {mode === "roteiro" ? (
+          roteiroContext === "drafting" && draft ? (
+            <RoteiroDraftBody
+              candidateCount={candidatePoints.length}
+              radiusMeters={draft.radiusMeters}
+              onRadiusChange={(meters) => dispatch({ type: "SET_DRAFT_RADIUS", radiusMeters: meters })}
+              chosen={chosenItems}
+              candidates={candidateItems}
+              onTogglePoint={(pointId) => dispatch({ type: "TOGGLE_DRAFT_POINT", pointId })}
+              farWarning={farIds.length > 0}
+            />
+          ) : roteiroContext === "stop-selected" && cardExpanded && stopFirstItem ? (
+            <StopItemDetail item={stopFirstItem} />
+          ) : roteiroContext === "point-selected" && cardExpanded && selectedPointItem ? (
+            <StopItemDetail item={selectedPointItem} />
+          ) : null
+        ) : panelView === "list" ? (
           <StopItemList
             items={panelItems}
             selectedKey={interaction.selectedAddressKey}

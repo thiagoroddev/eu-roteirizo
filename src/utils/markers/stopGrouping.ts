@@ -96,8 +96,10 @@ const sequenceOf = (row: RowData): number => {
   return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
 };
 
-/** "Commercial wins" reduction over a set of rows → a canonical ICON_KEYS type. */
-const dominantType = (rows: RowData[]): string => {
+/** "Commercial wins" reduction over a set of rows → a canonical ICON_KEYS type.
+ *  Exported since RF-006.4: the roteiro mode colors committed stops with it too
+ *  (decision 26/06 — color = type in BOTH modes). */
+export const dominantType = (rows: RowData[]): string => {
   let hasResidential = false;
   for (const row of rows) {
     const type = resolveLocationType(row);

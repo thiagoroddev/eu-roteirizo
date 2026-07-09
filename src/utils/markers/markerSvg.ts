@@ -16,8 +16,11 @@
 
 import { escapeHtml } from "../escapeHtml";
 
-/** Body geometry — "square" = stop with many addresses · "circle" = single address. */
-export type MarkerShape = "square" | "circle";
+/** Body geometry — "square" = stop · "circle" = address · "diamond" = route start (RF-006.4.2). */
+export type MarkerShape = "square" | "circle" | "diamond";
+
+/** Central glyph replacing the number — the vehicle/anchor marker (RF-006.4.2). */
+export type MarkerGlyph = "car";
 
 /** Badge glyph: a box counts packages (in an address); a pin counts addresses (in a stop). */
 export type MarkerBadgeKind = "packages" | "addresses";
@@ -46,12 +49,18 @@ export interface MarkerSvgProps {
   color: MarkerColor;
   /** The stop number; omitted (null/undefined/"") for expanded non-representative addresses. */
   number?: number | string | null;
+  /** Central glyph (vehicle marker) — WINS over `number` when present (RF-006.4.2). */
+  glyph?: MarkerGlyph | null;
   /** Count badge; ignored when count <= 1. */
   badge?: MarkerBadge | null;
   /** Thick white border. In the Original mode this marks a focused stop's address. */
   selected?: boolean;
+  /** Selected-ring style: "dashed" marks a draft CANDIDATE (RF-006.4.2); default solid. */
+  ringStyle?: "solid" | "dashed";
   /** Bright type-colored neon glow — the clicked address within a multi-address stop. */
   emphasis?: boolean;
+  /** Fine tip/cone at the bottom (default true). The street-anchored vehicle passes false. */
+  tip?: boolean;
   /** Render scale applied to the intrinsic viewBox size. Defaults to 0.8. */
   scale?: number;
 }
@@ -103,17 +112,31 @@ const BADGE_TOP = 40;
 const NUMBER_Y_WITH_BADGE = 34;
 
 /**
+ * Tabler Icons "car" (outline v3, MIT — https://tabler.io/icons), embedded as
+ * paths per the project's no-new-deps pattern (badgeGlyph/PackageGlyph). The
+ * 24×24 icon is scaled 2× and optically centered in the head (wheels sit low
+ * in the source viewBox, hence the -25 vertical offset).
+ */
+const carGlyph = (ink: string): string =>
+  `<g transform="translate(${G.CX - 24},${G.CY_MID - 25}) scale(2)" fill="none" stroke="${ink}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">` +
+  `<path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>` +
+  `<path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>` +
+  `<path d="M5 17h-2v-6l2 -5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0h-6m-6 -6h15m-6 0v-5"/>` +
+  `</g>`;
+
+/**
  * Generates the marker SVG markup as a string. Pure: same props → identical output.
  * @param props - Shape, color, optional number/badge, and selected/scale flags.
  * @returns SVG markup ready to inject as HTML (number is HTML-escaped).
  */
 export function buildMarkerSvg(props: MarkerSvgProps): string {
-  const { shape, color, number, badge, selected = false, emphasis = false, scale = G.DEFAULT_SCALE } = props;
+  const { shape, color, number, glyph = null, badge, selected = false, ringStyle = "solid", emphasis = false, tip = true, scale = G.DEFAULT_SCALE } = props;
 
   const id = gradientId(color);
   const numberInk = color.numberInk ?? "#ffffff";
-  // Selected = thick white border (a focused stop's address). Unselected = a hairline border.
-  const stroke = selected ? `stroke="#ffffff" stroke-width="4"` : `stroke="rgba(255,255,255,.4)" stroke-width="1.5"`;
+  // Selected = thick white border (a focused stop's address); "dashed" marks a
+  // draft CANDIDATE (RF-006.4.2). Unselected = a hairline border.
+  const stroke = selected ? `stroke="#ffffff" stroke-width="4"${ringStyle === "dashed" ? ` stroke-dasharray="10 7"` : ""}` : `stroke="rgba(255,255,255,.4)" stroke-width="1.5"`;
 
   // Glow (inline, self-contained): the emphasized address gets a bright type-colored neon
   // around the white border (light blue for commercial, light green for residential —
@@ -125,9 +148,12 @@ export function buildMarkerSvg(props: MarkerSvgProps): string {
   const body =
     shape === "square"
       ? `<rect x="${G.CX - 28}" y="${G.BODY_TOP}" width="56" height="${G.BODY_HEIGHT}" rx="15" fill="url(#${id})" ${stroke}/>`
-      : // Circle radius is a touch larger than the square's half-width so the number/badge
-        // get padding from the curved edge (a circle narrows at top/bottom). RF-020.3.
-        `<circle cx="${G.CX}" cy="${G.CY_MID}" r="30" fill="url(#${id})" ${stroke}/>`;
+      : shape === "diamond"
+        ? // Route-start diamond, inscribed in the same head box (RF-006.4.2).
+          `<path d="M${G.CX},${G.BODY_TOP} L${G.CX + 28},${G.CY_MID} L${G.CX},${BODY_BOTTOM} L${G.CX - 28},${G.CY_MID} Z" fill="url(#${id})" ${stroke} stroke-linejoin="round"/>`
+        : // Circle radius is a touch larger than the square's half-width so the number/badge
+          // get padding from the curved edge (a circle narrows at top/bottom). RF-020.3.
+          `<circle cx="${G.CX}" cy="${G.CY_MID}" r="30" fill="url(#${id})" ${stroke}/>`;
 
   // The label may be the stop number ("18") or a composite "stop-sequence" ("18-49");
   // the font shrinks for longer labels so it fits the head.
@@ -135,9 +161,11 @@ export function buildMarkerSvg(props: MarkerSvgProps): string {
   const label = hasNumber(number) ? String(number) : "";
   const numberY = hasBadge ? NUMBER_Y_WITH_BADGE : G.CY_MID + 9; // centered when alone, raised above the badge
   const numberFontSize = label.length >= 4 ? 16 : label.length === 3 ? 20 : 24;
-  const numberEl = label
-    ? `<text class="mk-number" x="${G.CX}" y="${numberY}" text-anchor="middle" font-size="${numberFontSize}" font-weight="800" fill="${numberInk}" font-family="Hanken Grotesk, sans-serif">${escapeHtml(label)}</text>`
-    : "";
+  const numberEl = glyph
+    ? carGlyph(numberInk)
+    : label
+      ? `<text class="mk-number" x="${G.CX}" y="${numberY}" text-anchor="middle" font-size="${numberFontSize}" font-weight="800" fill="${numberInk}" font-family="Hanken Grotesk, sans-serif">${escapeHtml(label)}</text>`
+      : "";
 
   let badgeEl = "";
   if (badge && badge.count > 1) {
@@ -149,5 +177,9 @@ export function buildMarkerSvg(props: MarkerSvgProps): string {
   const w = G.WIDTH * scale;
   const h = G.HEIGHT * scale;
 
-  return `<svg class="route-marker" width="${w}" height="${h}" viewBox="0 0 ${G.WIDTH} ${G.HEIGHT}" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color.top}"/><stop offset="1" stop-color="${color.bottom}"/></linearGradient></defs><g class="mk-body" style="filter:${glowFilter}"><path d="${tipPath}" fill="url(#${id})"/>${body}${numberEl}</g>${badgeEl}</svg>`;
+  // The fine tip is doctrine for point markers (ADR-008 §7); the street-anchored
+  // vehicle (RF-006.4.2) omits it — its icon must not cover the address marker.
+  const tipEl = tip ? `<path d="${tipPath}" fill="url(#${id})"/>` : "";
+
+  return `<svg class="route-marker" width="${w}" height="${h}" viewBox="0 0 ${G.WIDTH} ${G.HEIGHT}" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color.top}"/><stop offset="1" stop-color="${color.bottom}"/></linearGradient></defs><g class="mk-body" style="filter:${glowFilter}">${tipEl}${body}${numberEl}</g>${badgeEl}</svg>`;
 }

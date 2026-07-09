@@ -13,7 +13,7 @@ import { MAP_CONFIG, UI_LABELS } from "../constants";
 import { createMarkerDivIcon } from "../utils/markers/markerIcon";
 import { MARKER_GEOMETRY } from "../utils/markers/markerSvg";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
-import { colorForLocationType, ROTEIRO_MARKER_COLORS } from "../utils/markers/markerColors";
+import { colorForLocationType, ROTEIRO_MARKER_COLORS, ROTEIRO_ACCENT } from "../utils/markers/markerColors";
 import { scaleForZoom, MARKER_MAX_SCALE } from "../utils/markers/markerScale";
 import { computeMarkerModels, nextInteraction, collapseInteraction, type MarkerModel, type InteractionState } from "../utils/markers/markerModels";
 
@@ -38,13 +38,28 @@ const SELECTED_SCALE_FACTOR = 1.4;
 // Gaps are large enough to dominate Leaflet's latitude-based ordering.
 const Z_GROUP = 100000;
 const Z_SELECTED = 200000;
+/** Vehicle/anchor sits BELOW the address markers (RF-006.4.2): the tipless car
+    parks on the street and must never cover an address. */
+const Z_VEHICLE = 50000;
+/** Committed stops rise above the free circles and grow — they are the tap
+    target and the most important element of the roteiro map (RF-006.4.2).
+    Applied ONLY to external (roteiro) models; the Original is untouched. */
+const Z_EXTERNAL_STOP = 150000;
+const EXTERNAL_STOP_SCALE_FACTOR = 1.25;
 
-// The suggestion line's FADED state (fluxo §3/§6: "desbotada no rascunho"; the
-// "stronger after committing" state arrives with the stop slices, RF-006.4+).
-const SUGGESTION_LINE_STYLE = { dashArray: "6 8", weight: 3, color: "#6B7280", opacity: 0.55 } as const;
+// The suggestion line, in the mode's neon accent (RF-006.4.2 — the old gray
+// vanished on light tiles); still faded/dashed per fluxo §3/§6.
+const SUGGESTION_LINE_STYLE = { dashArray: "6 8", weight: 3, color: ROTEIRO_ACCENT, opacity: 0.55 } as const;
 
-/** The route start's icon (spec §3: "início = marcador verde próprio", destacado). */
-const START_ICON_PROPS = { shape: "circle", color: ROTEIRO_MARKER_COLORS.start, number: null, badge: null, selected: true } as const;
+/** Route START: slate DIAMOND, tip-anchored (decision 08/07 — shape tells it apart). */
+const START_ICON_PROPS = { shape: "diamond", color: ROTEIRO_MARKER_COLORS.vehicle, number: null, badge: null, selected: true, emphasis: true } as const;
+
+/** VEHICLE/anchor: slate circle with the Tabler CAR glyph, NO tip, centered
+    anchor — parks on the street without covering addresses (RF-006.4.2). */
+const VEHICLE_ICON_PROPS = { shape: "circle", color: ROTEIRO_MARKER_COLORS.vehicle, glyph: "car", number: null, badge: null, selected: true, emphasis: true, tip: false, anchor: "center" } as const;
+
+/** The draft's DASHED radius circle (tela 9, spec §3) — neon accent (RF-006.4.2). */
+const RADIUS_CIRCLE_STYLE = (meters: number) => ({ radius: meters, dashArray: "6 8", weight: 2, color: ROTEIRO_ACCENT, fillColor: ROTEIRO_ACCENT, fillOpacity: 0.06 });
 
 /* ============================================================================
    ROUTEMAP COMPONENT
@@ -84,10 +99,17 @@ interface Props {
   models?: MarkerModel[];
   /** Tap on the empty map, with its coordinate (Meu roteiro: set-start-by-tap — TASK-RF-006.3). */
   onMapTap?: (latlng: LatLng) => void;
-  /** Tap on an EXTERNAL model's marker (Meu roteiro: confirm-start / re-point suggestion). */
+  /** Tap on an EXTERNAL model's marker (Meu roteiro: select orphan / toggle candidate / re-point). */
   onModelTap?: (model: MarkerModel) => void;
-  /** Start marker + dashed suggestion line, drawn on their OWN layer (TASK-RF-006.3). */
-  roteiroOverlay?: { start: LatLng | null; suggestionPath: LatLng[] | null };
+  /** Roteiro decorations, drawn on their OWN layer (TASK-RF-006.3/.4): start
+      marker, dashed suggestion line, the draft's dashed radius circle (real
+      meters, centered on the seed) and its provisional anchor. */
+  roteiroOverlay?: {
+    start: LatLng | null;
+    suggestionPath: LatLng[] | null;
+    radiusCircle?: { center: LatLng; meters: number } | null;
+    anchor?: LatLng | null;
+  };
 }
 
 export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChange, bottomObstructionPx = 0, models, onMapTap, onModelTap, roteiroOverlay }) => {
@@ -106,12 +128,13 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
   const applyInteractionRef = useRef<(next: InteractionState) => void>(() => {});
   const onMapTapRef = useRef<((latlng: LatLng) => void) | undefined>(undefined);
   const onModelTapRef = useRef<((model: MarkerModel) => void) | undefined>(undefined);
+  /** Latest models for the fit effect, which reacts to boundsSignature only. */
+  const renderModelsRef = useRef<MarkerModel[]>([]);
   useEffect(() => {
     applyInteractionRef.current = onInteractionChange;
     onMapTapRef.current = onMapTap;
     onModelTapRef.current = onModelTap;
   });
-
   const stops = useMemo(() => groupRowsByStop(rows), [rows]);
   const internalModels = useMemo(() => computeMarkerModels(stops, expandedStopKey, selectedAddressKey), [stops, expandedStopKey, selectedAddressKey]);
   /** External models (Meu roteiro) win; otherwise the Original-mode computation. */
@@ -122,6 +145,22 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
   const startLat = roteiroOverlay?.start?.lat;
   const startLng = roteiroOverlay?.start?.lng;
   const suggestionPath = roteiroOverlay?.suggestionPath ?? null;
+  const radiusCircle = roteiroOverlay?.radiusCircle ?? null;
+  const anchorLat = roteiroOverlay?.anchor?.lat;
+  const anchorLng = roteiroOverlay?.anchor?.lng;
+  /** Bounds signature: refit ONLY when the framed set changes (markers appear/
+      disappear or the start moves) — never on visual-state churn like toggling
+      a draft candidate, which would destroy the user's zoom mid-draft (RF-006.4). */
+  const boundsSignature = useMemo(() => {
+    if (!isExternal) return "";
+    const keys = renderModels.map((model) => model.key).sort();
+    return `${keys.join("|")}#${startLat ?? ""},${startLng ?? ""}`;
+  }, [isExternal, renderModels, startLat, startLng]);
+
+  /** Kept fresh after every render, BEFORE the fit effect below runs. */
+  useEffect(() => {
+    renderModelsRef.current = renderModels;
+  });
 
   // 1) MAP INITIALIZATION (Leaflet Setup)
   useEffect(() => {
@@ -193,7 +232,9 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
     if (isExternal) {
       // The start joins the frame (GPS may land outside the points' envelope);
       // the suggestion line deliberately does NOT — re-pointing must not refit.
-      const coords = renderModels.map((model) => L.latLng(model.lat, model.lng));
+      // Models come from the ref: this effect reacts to boundsSignature ONLY,
+      // so toggling a draft candidate never re-frames the map (RF-006.4).
+      const coords = renderModelsRef.current.map((model) => L.latLng(model.lat, model.lng));
       if (startLat !== undefined && startLng !== undefined) coords.push(L.latLng(startLat, startLng));
       if (coords.length === 0) return;
       const bounds = L.latLngBounds(coords);
@@ -211,7 +252,7 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
       const bounds = L.latLngBounds(stops.map((stop) => L.latLng(stop.representative.lat, stop.representative.lng)));
       map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50 + bottomObstructionPx], maxZoom: MAP_CONFIG.ZOOM.DEFAULT });
     }
-  }, [stops, expandedStopKey, bottomObstructionPx, isExternal, renderModels, startLat, startLng]);
+  }, [stops, expandedStopKey, bottomObstructionPx, isExternal, boundsSignature, startLat, startLng]);
 
   // 3) MARKERS RENDERING — redraws when the data OR the interaction state changes.
   useEffect(() => {
@@ -247,16 +288,19 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
 
     // Squares and address circles share the zoom-based scale (same proportion); the
     // selected address is always enlarged for emphasis (alone or within a group).
+    // Committed roteiro stops grow (they aggregate addresses and are the tap
+    // target — RF-006.4.2); the Original's squares are untouched.
     const scaleFor = (model: MarkerModel): number => {
       const base = scaleForZoom(safeZoom());
-      if (model.kind !== "address") return base;
+      if (model.kind !== "address") return isExternal ? base * EXTERNAL_STOP_SCALE_FACTOR : base;
       return model.addressKey === selectedAddressKey ? base * SELECTED_SCALE_FACTOR : base;
     };
 
     // Stacking: addresses of the focused stop rise above other stops; the selected
-    // address rises above its neighbors.
+    // address rises above its neighbors; committed roteiro stops rise above the
+    // free circles (external mode only — RF-006.4.2).
     const zIndexFor = (model: MarkerModel): number => {
-      if (model.kind !== "address") return 0;
+      if (model.kind !== "address") return isExternal ? Z_EXTERNAL_STOP : 0;
       return model.addressKey === selectedAddressKey ? Z_SELECTED : Z_GROUP;
     };
 
@@ -315,8 +359,9 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
     };
   }, []);
 
-  // 5) ROTEIRO OVERLAY — start marker + dashed suggestion line, on their own
-  //    layer (the markers layer is cleared on every model redraw).
+  // 5) ROTEIRO OVERLAY — start marker, dashed suggestion line, the draft's
+  //    radius circle and its provisional anchor, on their own layer (the
+  //    markers layer is cleared on every model redraw).
   useEffect(() => {
     const map = mapInstanceRef.current;
     const overlayLayer = overlayLayerRef.current;
@@ -332,13 +377,24 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
       }
     };
 
-    let startMarker: L.Marker | null = null;
-    if (startLat !== undefined && startLng !== undefined) {
-      startMarker = L.marker([startLat, startLng], {
-        icon: createMarkerDivIcon({ ...START_ICON_PROPS, scale: scaleForZoom(safeZoom()) }),
-        zIndexOffset: Z_SELECTED,
+    /** Start (diamond, tip) and vehicle/anchor (car, tipless, centered) each keep
+        their OWN icon props so the zoom rescale rebuilds the right icon —
+        including the anchor mode (otherwise the car would "walk" on zoom). */
+    const overlayMarkers: { marker: L.Marker; iconProps: Parameters<typeof createMarkerDivIcon>[0] }[] = [];
+    const addOverlayMarker = (lat: number, lng: number, iconProps: Parameters<typeof createMarkerDivIcon>[0], zIndexOffset: number) => {
+      const marker = L.marker([lat, lng], {
+        icon: createMarkerDivIcon({ ...iconProps, scale: scaleForZoom(safeZoom()) }),
+        zIndexOffset,
       });
-      startMarker.addTo(overlayLayer);
+      marker.addTo(overlayLayer);
+      overlayMarkers.push({ marker, iconProps });
+    };
+    if (startLat !== undefined && startLng !== undefined) addOverlayMarker(startLat, startLng, START_ICON_PROPS, Z_SELECTED);
+    if (anchorLat !== undefined && anchorLng !== undefined) addOverlayMarker(anchorLat, anchorLng, VEHICLE_ICON_PROPS, Z_VEHICLE);
+
+    // Dashed radius circle (tela 9, spec §3): real meters, centered on the SEED.
+    if (radiusCircle) {
+      L.circle([radiusCircle.center.lat, radiusCircle.center.lng], RADIUS_CIRCLE_STYLE(radiusCircle.meters)).addTo(overlayLayer);
     }
 
     if (suggestionPath && suggestionPath.length >= 2) {
@@ -348,16 +404,16 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
       ).addTo(overlayLayer);
     }
 
-    if (!startMarker) return;
-    /** The start scales with zoom like every other marker. */
-    const rescaleStart = () => {
-      startMarker?.setIcon(createMarkerDivIcon({ ...START_ICON_PROPS, scale: scaleForZoom(safeZoom()) }));
+    if (overlayMarkers.length === 0) return;
+    /** Overlay markers scale with zoom like every other marker. */
+    const rescaleOverlay = () => {
+      overlayMarkers.forEach(({ marker, iconProps }) => marker.setIcon(createMarkerDivIcon({ ...iconProps, scale: scaleForZoom(safeZoom()) })));
     };
-    map.on("zoomend", rescaleStart);
+    map.on("zoomend", rescaleOverlay);
     return () => {
-      map.off("zoomend", rescaleStart);
+      map.off("zoomend", rescaleOverlay);
     };
-  }, [startLat, startLng, suggestionPath]);
+  }, [startLat, startLng, suggestionPath, radiusCircle, anchorLat, anchorLng]);
 
   // Fills the parent (focus screen layout); leaving the screen is the shell's
   // header back arrow / the page's Escape handler (TASK-RF-023.5).

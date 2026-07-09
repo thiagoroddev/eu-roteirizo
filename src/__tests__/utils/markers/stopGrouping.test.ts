@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { groupRowsByStop } from "../../../utils/markers/stopGrouping";
+import { groupRowsByStop, dominantType } from "../../../utils/markers/stopGrouping";
 import { COLUMN_NAMES, ICON_KEYS } from "../../../constants";
 import type { RowData } from "../../../types";
 
@@ -116,5 +116,15 @@ describe("groupRowsByStop", () => {
   it("drops a stop entirely when all its rows have invalid coordinates", () => {
     const rows = [row({ [COLUMN_NAMES.STOP]: 7, [COLUMN_NAMES.LATITUDE]: "x", [COLUMN_NAMES.LONGITUDE]: "y" })];
     expect(groupRowsByStop(rows)).toHaveLength(0);
+  });
+});
+
+describe("dominantType (exported since RF-006.4 — roteiro stop color)", () => {
+  it("commercial wins over residential; empty rows read indefinite", () => {
+    const home: RowData = { [COLUMN_NAMES.LOCATION_TYPE]: "Home", [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua A, 1" };
+    const office: RowData = { [COLUMN_NAMES.LOCATION_TYPE]: "Office", [COLUMN_NAMES.DESTINATION_ADDRESS]: "Av B, 2" };
+    expect(dominantType([home, office])).toBe(ICON_KEYS.OFFICE_CORRECTED);
+    expect(dominantType([home])).toBe(ICON_KEYS.HOME_CORRECTED);
+    expect(dominantType([])).toBe(ICON_KEYS.INDEFINITE);
   });
 });

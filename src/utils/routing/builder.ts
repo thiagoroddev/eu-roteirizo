@@ -58,6 +58,7 @@ export type RouteBuilderAction =
   | { type: "SET_START"; position: LatLng }
   | { type: "SET_NEXT_SUGGESTION"; pointId: string | null }
   | { type: "OPEN_STOP_DRAFT"; seedPointId: string; suggestedVehicleStop: LatLng }
+  | { type: "CREATE_STOP"; seedPointId: string; memberIds: string[]; vehicleStop: LatLng; radiusMeters: number }
   | { type: "REOPEN_STOP"; stopId: string }
   | { type: "SET_DRAFT_RADIUS"; radiusMeters: number }
   | { type: "TOGGLE_DRAFT_POINT"; pointId: string }
@@ -136,6 +137,24 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
         orderIsManual: false,
       };
       return { ...state, draft };
+    }
+
+    case "CREATE_STOP": {
+      /** Commit-on-create (RF-006.4.6): the seed + its radius members become a
+       *  firmed stop directly — no draft. Reverses §8 "candidates by choice":
+       *  what the radius showed enters as members; the user refines later via
+       *  REOPEN (radius + list ±). The walking order sweeps from the anchor. */
+      const seed = state.points.find((p) => p.id === action.seedPointId);
+      const assigned = idsAssignedElsewhere(state.stops, null);
+      if (!seed || assigned.has(seed.id)) return state;
+      const stopId = `stop_${seed.id}`;
+      if (state.stops.some((s) => s.id === stopId)) return state;
+      const byId = indexPointsById(state.points);
+      /** Seed first, then the radius members; de-duped and filtered to free, known points. */
+      const memberIds = [seed.id, ...action.memberIds].filter((id, i, arr) => arr.indexOf(id) === i && byId.has(id) && !assigned.has(id));
+      const pointIds = sweepWalkingOrder(action.vehicleStop, draftPoints(state, memberIds));
+      const committed: RouteStop = { id: stopId, order: 0, vehicleStop: action.vehicleStop, pointIds, radiusMeters: Math.max(0, action.radiusMeters) };
+      return { ...state, stops: normalizeOrders([...state.stops, committed]), nextSuggestionOverride: null };
     }
 
     case "REOPEN_STOP": {
@@ -276,6 +295,15 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
 
 /* ------------------------------- selectors ------------------------------- */
 
+/** Ids of the points inside the open draft's radius circle (around the SEED). */
+const idsWithinDraftRadius = (state: RouteBuilderState): Set<string> => {
+  const { draft } = state;
+  if (!draft) return new Set();
+  const seed = state.points.find((p) => p.id === draft.seedPointId);
+  if (!seed) return new Set();
+  return new Set(pointsWithinRadius(seed, state.points, draft.radiusMeters).map((p) => p.id));
+};
+
 /**
  * Candidate ids the radius suggests for the open draft (fluxo §8): unassigned
  * points within `radiusMeters` of the SEED address, not yet chosen. Empty
@@ -284,11 +312,25 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
 export const draftCandidateIds = (state: RouteBuilderState): string[] => {
   const { draft } = state;
   if (!draft) return [];
-  const seed = state.points.find((p) => p.id === draft.seedPointId);
-  if (!seed) return [];
+  const inRadius = idsWithinDraftRadius(state);
   const taken = idsAssignedElsewhere(state.stops, draft.stopId);
-  return pointsWithinRadius(seed, state.points, draft.radiusMeters)
-    .filter((p) => !taken.has(p.id) && !draft.pointIds.includes(p.id))
+  return state.points.filter((p) => inRadius.has(p.id) && !taken.has(p.id) && !draft.pointIds.includes(p.id)).map((p) => p.id);
+};
+
+/** How far a chosen point can sit from the anchor before the soft warning (RN-17). */
+export const FAR_POINT_RADIUS_FACTOR = 2;
+export const FAR_POINT_MIN_METERS = 150;
+
+/**
+ * Chosen draft points that sit suspiciously far from the anchor (RN-17): beyond
+ * max(2 × radius, 150 m). Feeds the SOFT warning — inclusion is never blocked.
+ */
+export const farChosenPointIds = (state: RouteBuilderState): string[] => {
+  const { draft } = state;
+  if (!draft) return [];
+  const threshold = Math.max(FAR_POINT_RADIUS_FACTOR * draft.radiusMeters, FAR_POINT_MIN_METERS);
+  return draftPoints(state, draft.pointIds)
+    .filter((p) => haversine(draft.vehicleStop, p) > threshold)
     .map((p) => p.id);
 };
 
@@ -302,10 +344,14 @@ export const suggestionOrigin = (state: RouteBuilderState): LatLng | null => sta
 /**
  * The point the next-stop suggestion should target (fluxo §4 passo 2): a valid
  * manual override wins; otherwise the nearest free point (haversine) from the
- * suggestion origin. Null before a start is chosen or when nothing is left.
+ * suggestion origin. While a draft is open the pool also excludes the points
+ * INSIDE its radius (fluxo §6: the dashed line points at the nearest address
+ * OUTSIDE the radius — those inside are the draft's candidates, not the next
+ * stop). Null before a start is chosen or when nothing is left.
  */
 export const suggestedNextPointId = (state: RouteBuilderState): string | null => {
-  const free = unassignedPoints(state.points, state.stops).filter((p) => !state.draft?.pointIds.includes(p.id));
+  const inRadius = idsWithinDraftRadius(state);
+  const free = unassignedPoints(state.points, state.stops).filter((p) => !state.draft?.pointIds.includes(p.id) && !inRadius.has(p.id));
   if (free.length === 0) return null;
 
   if (state.nextSuggestionOverride !== null && free.some((p) => p.id === state.nextSuggestionOverride)) {
