@@ -6,6 +6,7 @@ import { RouteMap } from "../components/RouteMap";
 import { Button } from "../components/ui/button";
 import { MapModeToggle, MODE_QUERY_PARAM, MODE_QUERY_ROTEIRO, type MapMode } from "../components/map/MapModeToggle";
 import { MapPanel, PANEL_COLLAPSED_PX, type PanelSnap } from "../components/map/panel/MapPanel";
+import { ORIGINAL_PANEL_SIZING, ROTEIRO_PANEL_SIZING } from "../components/map/panel/panelSizing";
 import { PanelModeBar } from "../components/map/panel/PanelModeBar";
 import { PanelSection } from "../components/map/panel/PanelSection";
 import { PanelTitle } from "../components/map/panel/PanelTitle";
@@ -781,6 +782,9 @@ function MapScreen({ rows }: { rows: RowData[] }) {
       <MapPanel
         snap={panelSnap}
         onSnapChange={handleSnapChange}
+        // Each mode fills the header differently, so each gets its own snap
+        // heights (⚙️ tune them in panelSizing.ts).
+        sizing={mode === "roteiro" ? ROTEIRO_PANEL_SIZING : ORIGINAL_PANEL_SIZING}
         header={
           mode === "roteiro" ? (
             roteiroContext === "drafting" && draft ? (

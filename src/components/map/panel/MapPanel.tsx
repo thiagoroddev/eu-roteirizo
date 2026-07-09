@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Drawer } from "vaul";
 import { UI_LABELS } from "../../../constants/uiLabels";
+import { ORIGINAL_PANEL_SIZING, type PanelSizing } from "./panelSizing";
 
 /**
  * MapPanel - the persistent bottom sheet of the map screen (TASK-RF-023.2,
@@ -41,12 +42,11 @@ const COLLAPSED_MIN_PX = 132;
 const COLLAPSED_MAX_FRACTION = 0.88;
 /** A few px of slack so sub-pixel rounding never clips the last row (RF-006.4.15). */
 const COLLAPSED_BUFFER_PX = 8;
-const HALF_FRACTION = 0.45;
-const FULL_FRACTION = 0.9;
+const FULL_FRACTION = 0.85;
 
-const snapFromValue = (value: string | number | null): PanelSnap => {
+const snapFromValue = (value: string | number | null, halfFraction: number): PanelSnap => {
   if (value === FULL_FRACTION) return "full";
-  if (value === HALF_FRACTION) return "half";
+  if (value === halfFraction) return "half";
   return "collapsed"; // px string (collapsed) or null (defensive)
 };
 
@@ -62,9 +62,12 @@ interface Props {
   /** Optional controlled snap; uncontrolled by default (drag doesn't re-render the page). */
   snap?: PanelSnap;
   onSnapChange?: (snap: PanelSnap) => void;
+  /** Heights of the collapsed/half snaps — one set per map mode (panelSizing.ts). */
+  sizing?: PanelSizing;
 }
 
-export const MapPanel = ({ header, children, footer, snap, onSnapChange }: Props) => {
+export const MapPanel = ({ header, children, footer, snap, onSnapChange, sizing = ORIGINAL_PANEL_SIZING }: Props) => {
+  const { collapsedAdjustPx, halfFraction } = sizing;
   const [internalSnap, setInternalSnap] = useState<PanelSnap>("collapsed");
   const effectiveSnap = snap ?? internalSnap;
 
@@ -80,20 +83,21 @@ export const MapPanel = ({ header, children, footer, snap, onSnapChange }: Props
       const height = el.getBoundingClientRect().height;
       if (height <= 0) return; // pre-layout: keep the fallback
       const max = window.innerHeight * COLLAPSED_MAX_FRACTION;
-      setCollapsedPx(Math.round(Math.min(Math.max(height + COLLAPSED_BUFFER_PX, COLLAPSED_MIN_PX), max)));
+      const fitted = height + COLLAPSED_BUFFER_PX + collapsedAdjustPx;
+      setCollapsedPx(Math.round(Math.min(Math.max(fitted, COLLAPSED_MIN_PX), max)));
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [collapsedAdjustPx]);
 
   const collapsedValue = `${collapsedPx}px`;
-  const snapPoints = useMemo(() => [collapsedValue, HALF_FRACTION, FULL_FRACTION], [collapsedValue]);
-  const snapValue: string | number = effectiveSnap === "full" ? FULL_FRACTION : effectiveSnap === "half" ? HALF_FRACTION : collapsedValue;
+  const snapPoints = useMemo(() => [collapsedValue, halfFraction, FULL_FRACTION], [collapsedValue, halfFraction]);
+  const snapValue: string | number = effectiveSnap === "full" ? FULL_FRACTION : effectiveSnap === "half" ? halfFraction : collapsedValue;
 
   const handleSnapValue = (value: string | number | null) => {
-    const next = snapFromValue(value);
+    const next = snapFromValue(value, halfFraction);
     if (snap === undefined) setInternalSnap(next);
     onSnapChange?.(next);
   };

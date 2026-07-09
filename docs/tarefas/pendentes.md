@@ -3,6 +3,8 @@
 > Backlog priorizado. Cada tarefa entra como **uma única linha** (urgência Normal) ou **bloco em lista** (urgência Imediata). Sem detalhes de implementação — o plano nasce só quando a tarefa vira "Em Andamento".
 >
 > Ordenação: por **prioridade combinada** (Valor + Urgência), maior no topo. Em empate, menor esforço primeiro. Não ordenar por data.
+>
+> Histórico das concluídas: [`concluidas/0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md).
 
 ---
 
@@ -10,211 +12,106 @@
 
 > Tarefas urgentes que carregam contexto extra. Bloco em lista, no topo.
 >
-> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). **Ordem sugerida (rev. 07/07/26):** fases 1 e 2 ✅ (RF-011 + RF-022 + RF-023) → **RF-006 (.1→.4, Meu roteiro/construção) → RF-008 (antecipada, decisão 07/07 — auto-save antes dos smokes longos) → RF-006 (.5→.7) → RF-007 → RF-009 (.1→.4, execução) → RF-012 → RF-013**. (RF-003/004/005/020/021/022/023 ✅; RF-014 absorvida pela RF-022; **RF-010 absorvida pela RF-006.2**.) Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
+> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). **Fila atual:** **RF-008 (antecipada) → RF-006.5 → .6 → .7 → RF-007 → RF-009 (.1→.4) → RF-012 → RF-013**. Concluídos: RF-003/004/005/011/020/021/022/023 e RF-006.1 → .4.16 (ver índice). RF-014 absorvida pela RF-022; RF-010 absorvida pela RF-006.2. Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
 >
 > ⚠️ **Decisões transversais (valem para o épico todo):**
 > - **Estado:** `useReducer` por feature (conforme draft §6). Zustand só se a complexidade exigir — e **não instalar sem aprovação** (anti-padrão do núcleo §5).
-> - **Dependências novas precisam de aprovação explícita** antes de instalar. `idb` e `fake-indexeddb` já instaladas (RF-005.3/RF-022.1). ~~`@turf/turf`~~ **descartada** (decisão 07/07: ponto-em-raio = `haversine(center, p) <= r`, já existente).
+> - **Dependências novas precisam de aprovação explícita** antes de instalar. `idb`, `fake-indexeddb` e `vaul` já instaladas. ~~`@turf/turf`~~ **descartada** (decisão 07/07: ponto-em-raio = `haversine(center, p) <= r`, já existente).
 > - **Sem `any`** (núcleo §5); texto de UI sempre em `UI_LABELS` (ADR-001); arquivos novos em `src/utils/routing/` (lógica pura) e `src/services/` (IO/persistência), seguindo a convenção `utils/` do projeto.
 > - **Gate de cada tarefa:** `npx tsc --noEmit` + `npm run test` verdes antes de concluir (rotular APROVADO/FALHOU/NÃO EXECUTADO).
 
 ---
 
-> ✅ **TASK-RF-004 concluída** — ver `concluidas/2026-06-22--23h35--TASK-RF-004.md`.
-
-<!-- TASK-RF-003 movida para em-andamento.md (em execução, 25/06/26) -->
-
-> ✅ **TASK-BG-005 concluída** (25/06) — `parseCoordinate` locale-aware (vírgula/ponto/escalado, qualquer precisão) — ver `concluidas/2026-06-25--15h41--TASK-BG-005.md`.
->
-> ✅ **TASK-RF-015, TASK-RF-017, TASK-RF-018 e TASK-REF-007 concluídas** (25/06, lote da rota única) — ver `concluidas/2026-06-25--14h09--*`.
-
-> ✅ **TASK-RF-005 (motor de roteamento) CONCLUÍDA** (25/06) — todas as 5 subtarefas. Módulo em `src/utils/routing/` (`geo`/`graph`/`aStar`/`minHeap`/`streets`/`osm`/`match`) + `src/services/graphCache.ts`: grafo direcionado (mão única = aresta ausente), dados OSM/Overpass com cache offline (IndexedDB via `idb`), A* com heap próprio, nomes de rua e **map matching em aresta**. Critério geral atendido (bbox + 2 pontos → polilinha + distância respeitando `oneway`, com cache/perf). Ver `concluidas/2026-06-25--{17h09…18h15}--TASK-RF-005.{1..5}.md`. **Próximo épico: RF-006 (UI de construção), que consome o motor.**
-
----
-
-## ✅ TASK-RF-020 - Marcadores SVG no visualizador Original — CONCLUÍDA (26/06)
-
-> Épico encerrado. Modo Original completo conforme ADR-008 (marcadores SVG, 1 por parada, escala por zoom, redesenho, interações). Registros em `concluidas/2026-06-26--*--TASK-RF-020.*.md`:
->
-> - **.1** Componente de marcador SVG parametrizável — ✅ `…12h09…`
-> - **.2** Integrar no `RouteMap` (agrupar por Stop) — ✅ `…12h46…`
-> - **.4** Ajuste visual (escala por zoom + badge reposicionado) — ✅ `…14h40…`
-> - **.5** Redesenho (sempre quadrado colapsado + badge dentro + rótulo `parada-seq`) + docs — ✅ `…15h43…`
-> - **.3** Interações: expandir/colapsar, seleção, popup do endereço — ✅ `…16h12…`
->
-> **Próximo épico sugerido:** RF-006 (UI de construção da rota — roteirização), que consome o motor RF-005.
-
----
-
-> ✅ **TASK-RF-021 concluída** (05/07) — modelo migrado para a parada do veículo (`anchorPointId` → `vehicleStop: LatLng`) — ver `concluidas/2026-07-05--03h47--TASK-RF-021.md`. **RF-006 destravado.**
-
----
-
-> ✅ **TASK-RF-011 concluída** (05/07) — app shell com BrowserRouter (HOME/Rotas, `FocusShell` sem nav, `_redirects` p/ Cloudflare Pages; ADR-003 atualizada) — ver `concluidas/2026-07-05--04h47--TASK-RF-011.md`. **RF-022 destravada.**
-
----
-
-## ✅ TASK-RF-022 - Telas de média fidelidade — fase 1: navegação + modo Original (visualização) [XG] — ÉPICO CONCLUÍDO (05/07/26)
-
-- **Status:** Concluído (todas as subtarefas .1–.6 ✅)
-- **Modo:** Strict
-- **Valor:** Crítico
-- **Urgência:** IMEDIATA
-- **Esforço-H/IA:** XG/XG
-- **Data-hora origem:** 05/07/26 04:06
-- **Dependências:** TASK-RF-011 (shell), TASK-RF-002 (isSingleRoute); RF-020 ✅ (marcadores SVG do Original)
-- **REQ/ADR/DT:** RF-20 (parte Original), RF-43, RF-44, RF-46, RN-21, RN-23; ADR-003, ADR-008; `fluxo-modo-original.md` §5/§6; `fluxo-roteirizacao.md` §11/§13/§15; `prototipos/telas-media-fidelidade/` (telas 1–5 + README)
-- **Observações:** XG — executar pelas subtarefas, uma por vez. Implementa as telas dos protótipos de média fidelidade **apenas com o modo Original (visualização)**; o lado "Meu roteiro" (edição/rascunho — RF-006), a execução (RF-009) e a persistência de Roteiros (RF-008) vêm depois **reaproveitando a estrutura criada aqui**. **Contrato de reuso (lei do épico):** painel inferior **único** para os dois modos (prop `readOnly` + slots de ação); toggle com lado desabilitável; Sumário com seção "Info Meu Roteiro" condicional; cards de Rotas com estado sem/com roteiro. ⚠️ **Fontes:** os `.md` decidem, as imagens ilustram (README dos protótipos). **`docs/prompt-prototipacao-ui.md` está DESATUALIZADO** (24/06 — âncora-endereço, paleta por parada, "3 botões fixos" no Sumário): **não usar como spec**; valem `fluxo-modo-original.md` + `fluxo-roteirizacao.md` (decisões 26/06). Absorve a antiga TASK-RF-014.
-
-**Objetivo:** o usuário navega **HOME → Rotas → Sumário → mapa Original** ponta a ponta, com romaneios salvos no aparelho — sem regressão do visualizador atual — e cada componente pronto (por contrato de props) para ganhar o modo editável depois.
-
-### ✅ TASK-RF-022.1 - Serviço de romaneios salvos (IndexedDB) + detecção de duplicado — CONCLUÍDA (05/07)
-> `src/services/manifestStorage.ts` (DB `danfo-manifests`, bytes brutos + meta, dedup por SHA-256/RN-23) + `src/utils/hash.ts` + `src/types/manifest.ts`. Decisão do plano fino: **bytes brutos reprocessáveis** (não `ProcessedResult`). API p/ as próximas: `saveManifest(file, processed) → saved|duplicate|invalid|error` · `listManifests()` · `getManifest(id)` (bytes → `new File` → `processExcelFile`) · `deleteManifest(id)`. Ver `concluidas/2026-07-05--18h08--TASK-RF-022.1.md`.
-
-### ✅ TASK-RF-022.2 - Tela HOME (enviar) com instruções em spoiler — CONCLUÍDA (05/07)
-> Spoiler `<details>` nativo com blocos multi-rota + rota única (ExampleTable dentro); botão "Importar roteiro (.json)" stub desabilitado (liga na RF-013); upload salva via `saveManifest` e o hook expõe `manifestSave` (avisos salvo/duplicado/falha — o **redirect** do duplicado p/ aba Rotas fica na **.3**). Ver `concluidas/2026-07-05--19h20--TASK-RF-022.2.md`.
-
-### ✅ TASK-RF-022.3 - Aba Rotas: lista de salvos (cards tipados + chips por rota/AT) — CONCLUÍDA (05/07)
-> Cards tipados (`ManifestCard` + `RouteChip` com contrato `hasRoteiro?` p/ RN-21), reabrir via deep link **`/?romaneio={id}&rota={nome}`** (`loadManifest` no hook — a .4 troca o destino p/ o Sumário de foco), apagar com confirmação (Dialog), busca por rota/AT sobre as metas, **RN-23 completa** (duplicado → `/rotas?sel=` com card destacado). **RF-46 ✅**. Ver `concluidas/2026-07-05--19h42--TASK-RF-022.3.md`.
-
-### ✅ TASK-RF-022.4 - Sumário como tela de foco — CONCLUÍDA (05/07)
-> `/sumario?romaneio&rota` sob `FocusShell` (+ **voltar no header** — RF-38 completa); botões RF-43 ("Ver Original", "Criar Roteiro" stub via `extraActions`, tabelas); `PlannedRouteInfo` tipada pronta p/ RF-007/008; **pós-upload navega** (single → Sumário; multi → `/rotas?sel=`) — "HOME é só enviar" completo. Mapa segue modal (vira tela na .5). Ver `concluidas/2026-07-05--19h58--TASK-RF-022.4.md`.
-
-### ✅ TASK-RF-022.5 - Tela do mapa (foco) + toggle `Original | Meu roteiro` — CONCLUÍDA (05/07)
-> `/mapa?romaneio&rota` no `FocusShell`; `MapModeToggle` segmentado (contrato `roteiroEnabled?` p/ RF-010; "Meu roteiro" desabilitado); `RouteMap.embedded` (sem portal e **sem botão de fechar** — o voltar do header cumpre; regra: fechar só quando não há voltar); "Ver Original" do Sumário navega. RF-20 → 🟡. Ver `concluidas/2026-07-05--20h18--TASK-RF-022.5.md`.
-
-### ✅ TASK-RF-022.6 - Painel inferior do endereço compartilhado — CONCLUÍDA (05/07)
-> `AddressSheet` (§6) substitui o popup: read-only no Original (X é o único botão) + **slot `actions`** pronto p/ RF-006/009; `findAddressByKey` defensivo; Escape fecha o painel antes do mapa; trocar endereço na parada não colapsa. Mocks de popup removidos dos testes = trava de regressão. Ver `concluidas/2026-07-05--21h05--TASK-RF-022.6.md`.
-
-> 🏁 **ÉPICO TASK-RF-022 CONCLUÍDO (05/07/26) — FASE 1 DA UI ENCERRADA.** Fluxo da spec ponta a ponta: **HOME** (enviar + spoiler + salvar/dedup) → **Rotas** (cards/chips + busca + apagar) → **Sumário** (foco, botões RF-43, Info Meu Roteiro pronta) → **Mapa** (foco, toggle `Original | Meu roteiro`, `AddressSheet` §6). Suíte 431/431. Contratos prontos para: RF-006 (slot `actions`, `roteiroEnabled`, botão adaptativo), RF-008 (`hasRoteiro` nos chips, `PlannedRouteInfo`), RF-009 (painel), RF-010 (toggle), RF-013 (Importar JSON, card Roteiro Exportado). **Próximo épico: TASK-RF-023 (painel dinâmico do mapa — fase Original), depois TASK-RF-006 (Meu roteiro).**
-
----
-
-## ✅ TASK-REF-012 - Tema Neon Flux (dark) como padrão — CONCLUÍDA (05/07)
-> App abre em **dark Neon Flux** (verde `#00FF9D` → azul `#00D1FF`; superfícies `#0A0C10`/`#161B22`); claro no toggle; **personalizar = editar só `src/styles/theme.css`** (accent2 tokenizado; `bg-brand-gradient` pronto p/ CTAs). ADR-006 revisada. Pendência estética anotada: radius 0.5rem do neonflux (hoje 1rem/pill). **Validação visual pendente pelo humano** (`npm run dev`). Ver `concluidas/2026-07-05--22h41--TASK-REF-012.md`.
-
-<!-- Bloco original preservado abaixo para referência do escopo:
+## TASK-CHORE-004 - Smoke manual acumulado do Meu roteiro (RF-006.4.13 → .4.16) + calibrações
 
 - **Status:** Pendente
 - **Modo:** Standard
 - **Valor:** Importante
 - **Urgência:** IMEDIATA
-- **Esforço-H/IA:** M/M
-- **Data-hora origem:** 05/07/26 22:05
-- **Dependências:** - (executar **antes da TASK-RF-023.2**, para o painel já nascer com o tema)
-- **REQ/ADR/DT:** ADR-006 (revisar com nota — supersede parcial da identidade "Cyanide" claro-padrão); `prototipos/telas-media-fidelidade/neonflux.md` (fonte das cores); `tema-tailwind.md`
-- **Observações:** **Decisão do humano (05/07/26):** usar **já** as cores do `neonflux.md` (**dark-native**, gradiente **verde `#00FF9D` → ciano/azul claro `#00D1FF`**, superfícies slate/navy) como **tema padrão** — *supersede* a nota "tema claro é o padrão" do README dos protótipos (o claro continua disponível no toggle). **Cores são provisórias por design**: o critério central é a **personalização fácil depois** — todo o chrome via **tokens CSS variables** (um lugar só para trocar a paleta), nada de cor hardcoded em componente (lei da ADR-004/módulo 13). **NÃO tocar** na paleta funcional do mapa (verde res / azul com / cinza indef / badge amarelo — ADR-008, locked) nem no marcador da âncora (slate + anel ciano, fluxo §3).
+- **Esforço-H/IA:** P/-
+- **Data-hora origem:** 09/07/26 17:00
+- **Dependências:** TASK-RF-006.4.16 ✅
+- **REQ/ADR/DT:** ADR-008, ADR-009; `fluxo-roteirizacao.md` §3/§4
+- **Observações:** As quatro últimas fatias entregaram com suíte verde (627/627) mas **sem validação visual do humano** — só ele consegue julgar destaque, contraste e toque no device. Enquanto o smoke não roda, a confiança no visual dessas fatias é presumida, não verificada. Tarefa **do humano** (IA não tem esforço aqui). Se algum item reprovar, abrir TASK-BG própria.
 
-**Objetivo:** app abre em dark Neon Flux por padrão; claro/escuro alternáveis (`ThemeToggle` mantido); trocar a paleta futura = editar variáveis num único arquivo.
+**Objetivo:** validar no navegador/device o comportamento visual das fatias .4.13 → .4.16 e calibrar os knobs que ficaram anotados no código.
 
-**Subtarefas:**
-- Mapear as cores do `neonflux.md` para os tokens shadcn existentes (`--primary`, `--background`, `--card`, etc.) nos dois temas (dark = padrão Neon Flux; light = variante clara coerente).
-- **Default dark**: `useTheme` passa a iniciar em dark (hoje: automático por sistema); toggle continua ciclando.
-- Varredura de cores hardcoded fora de tokens nos componentes novos da fase 1 (shell, cards, chips, painel) — corrigir para tokens.
-- Atualizar ADR-006 (nota de revisão: Neon Flux dark padrão, decisão 05/07) e `tema-tailwind.md`.
+**Checklist de smoke:**
+- **.4.13** — linha "Endereço selecionado" destacada por padrão (roteiro); quadrado da parada que o painel mostra com anel+brilho nos **dois** modos (inclusive na seleção inicial e acompanhando o stepper); conferir contraste no tema dark.
+- **.4.14** — parada selecionada maior + anel + brilho + na frente (não some em cluster denso) nos dois modos; ponto inicial (losango) plano, mesmo tamanho, atrás; **calibrar `SELECTED_SCALE_FACTOR`** em cluster denso.
+- **.4.15** — expandir a parada firmada destaca o 1º endereço (âncora); botões do painel não cortam (se cortarem, subir **`COLLAPSED_MAX_FRACTION`** no `MapPanel.tsx`).
+- **.4.16** — criar parada → 2 cliques (desagrupa) → tocar **qualquer** endereço migra o destaque no mapa e o painel mostra esse endereço (nº + complemento, sem "âncora"); tocar no mapa vazio regrupa e volta à âncora.
+- **Pendências antigas de calibração:** janela de 220ms do duplo-clique; zoom do foco (`maxZoom: MAX`) em parada de 1 endereço; tons neon no device; centro ótico do ícone de carro; tracejado do candidato em zoom baixo.
 
-**Critérios de aceite:** app abre em Neon Flux dark; toggle claro/escuro funciona; **trocar a paleta = editar 1 arquivo de tokens** (provar trocando uma cor e vendo refletir); paleta funcional do mapa intocada; suíte verde.
+**Critérios de aceite:** cada item do checklist aprovado pelo humano, ou reprovado com TASK-BG aberta.
 **Dependências novas:** nenhuma.
--->
 
 ---
 
-## ✅ TASK-RF-023 - Painel dinâmico do mapa (MapPanel) — fase Original [G] — ÉPICO CONCLUÍDO (07/07/26)
+## TASK-RF-008 - Persistência da rota planejada (IndexedDB) — **PRÓXIMA DA FILA**
 
-- **Status:** Concluído (todas as subtarefas .1–.5 ✅; smokes do humano aprovados 06–07/07)
-- **Modo:** Standard (épico com subtarefas; segue ADR-004/008 e os fluxos — sem decisão arquitetural nova)
+- **Status:** Pendente
+- **Modo:** Standard
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
-- **Esforço-H/IA:** G/G
-- **Data-hora origem:** 05/07/26 21:46
-- **Dependências:** TASK-RF-022 ✅ (AddressSheet/MapPage/toggle); TASK-REF-012 (tema Neon Flux — antes da .2, p/ o painel nascer com o tema; componentes do painel **só via tokens**, zero cor hardcoded)
-- **REQ/ADR/DT:** RF-12, RF-27 (drill-down), RF-28 (estrutura do card de pacotes); ADR-004 (shadcn), ADR-008; `fluxo-modo-original.md` §5/§6 (**a atualizar na .1**); `prototipos/telas-media-fidelidade/` telas 5–9 + README
-- **Observações:** **Origem: feedback do humano 05/07** — o `AddressSheet` (022.6) cobre a informação da §6, mas o protótipo define um **painel inferior persistente e composto**, distante do card atual. **Diretriz do humano:** painel **sempre visível por padrão**, colapsado mostrando a parte superior (nº da parada + endereço); dinâmico e extensível por **slots**. **Fase Original primeiro** (só dados da planilha, SEM numeração nova — usar Stop/Sequence); o Meu roteiro (visualização/edição/rascunho/execução) preenche os slots depois (RF-006/009), sem reestruturar. Anatomia comum das telas 5–9: header (alça + modo/progresso + steppers ‹ › de parada + título/métricas) · corpo (ações contextuais [slot] + banner [slot] + lista de endereços com expansão até pacotes) · footer CTA [slot]. Árvore proposta: `MapPanel > PanelHeader (PanelModeBar + StopStepper + PanelTitle/MetricsRow) + PanelBody (slots + StopItemList > StopItem > PackageRow) + footer`, em `src/components/map/panel/`. ✅ **Decisões fechadas pelo humano (05/07/26):** (a) **`vaul` APROVADO** (Drawer do shadcn — gesto de arrastar + snap points + `modal=false`/fundo interativo + `dismissible=false`; dependência nova **já aprovada**, instalar na .2); (b) **nunca existe "nenhuma parada selecionada"**: o mapa abre com a **menor parada** já selecionada e o painel sempre mostra a **última selecionada** — clicar fora colapsa os marcadores expandidos, mas o painel **mantém** a parada (a .1 ajusta o `fluxo-modo-original.md` §5/§8, que hoje diz "limpa a seleção").
+- **Esforço-H/IA:** M/M
+- **Data-hora origem:** 22/06/26 22:45 (**antecipada em 07/07/26**, decisão do humano: entra logo após a RF-006.4, quando já existe parada firmada — os smokes das fatias seguintes não perdem o roteiro ao sair do mapa)
+- **Dependências:** TASK-RF-004 ✅, TASK-RF-006.4 ✅
+- **REQ/ADR/DT:** RF-33 (salvar livre/auto-save), RF-35, RN-21; `fluxo-roteirizacao.md` §12
+- **Observações:** `idb` e `fake-indexeddb` já instalados. Seguir o padrão `manifestStorage` (resultado discriminado, DB versionado, leitura degrada / escrita reporta). O reducer da RF-006.1 já expõe `toPlannedRoute`/`HYDRATE` como ponte.
 
-**Objetivo:** o mapa Original ganha o painel inferior do protótipo (tela 5, versão read-only): persistente, expansível, navegável por paradas, com drill-down endereço → pacotes — estrutura pronta para os modos do Meu roteiro.
+**Objetivo:** salvar/carregar/listar `PlannedRoute` localmente, com **auto-save de rascunho** (RF-33 — salvar é livre, mesmo incompleto).
 
-### ✅ TASK-RF-023.1 - Doc de design + sincronizar a spec — CONCLUÍDA (05/07)
-> **`docs/design/arvore-componentes-mapa.md`** criado (árvore MapPanel, contratos TS, **matriz modo × slot** cobrindo as telas 5–9, estados/interações, lib × novo, recorte Original) + `fluxo-modo-original.md` §5/§6/§8 atualizados (painel persistente centrado na parada; menor parada; nunca vazio). **Aguarda revisão do humano antes da .2.** Ver `concluidas/2026-07-05--22h58--TASK-RF-023.1.md`.
+**Subtarefas:**
+- `src/services/routeStorage.ts`: CRUD de `PlannedRoute` em IndexedDB (criar, ler, listar, apagar; 1 roteiro por rota — RN-21).
+- Auto-save do estado do builder (debounce) + `HYDRATE` ao reabrir o mapa em modo roteiro (**carregar o roteiro atrelado ao entrar no modo** — item 4 do feedback de 08/07).
+- Acender `hasRoteiro` no `RouteChip` e o botão adaptativo do Sumário ("Criar Roteiro" → "Ver Meu Roteiro").
+- Testes com `fake-indexeddb`.
 
-### ✅ TASK-RF-023.2 - Fundação MapPanel — CONCLUÍDA (05/07)
-> `MapPanel` com **vaul@1.1.2** (snaps `96px/45%/90%`, não-modal, nunca fecha; sem Overlay; slots header/body/footer); **estado de interação lift-ado p/ a MapPage** (RouteMap controlado-com-fallback — **42/42 sem editar testes**); memória "nunca vazio" (abre na **menor parada**, derivação pura; clique fora não esvazia); corpo interino = AddressSheet `inline`. **Recorte:** seleção inicial veio da .5 p/ cá. ⚠️ **Smoke manual pendente** (gesto + pan/zoom c/ painel colapsado). Ver `concluidas/2026-07-05--23h42--TASK-RF-023.2.md`.
-
-### ✅ TASK-RF-023.3 - Header Original (modo bar + steppers + título/métricas) — CONCLUÍDA (06/07)
-> `PanelModeBar` ("Modo visualização" + StopStepper ‹ › **circular por Stop numérico**, sem-número no fim; `data-vaul-no-drag`) + `PanelTitle`/`MetricsRow` (chips endereços·pacotes). Sincronia mapa↔painel nos dois sentidos via o estado único da MapPage — **RouteMap intocado** (efeito 2b já foca a parada expandida). Derivações puras `adjacentStopKey`/`panelMetrics` em `panelModels`. Snap colapsado 96→132px (calibrar no smoke). Suíte 471 ✅. Ver `concluidas/2026-07-06--00h00--TASK-RF-023.3.md`.
-
-### ✅ TASK-RF-023.4 - StopItemList Original (endereços → pacotes) — CONCLUÍDA (07/07)
-> `buildPanelItems` puro (endereços por `minSequence`, identidade `i:j` do mapa preservada pós-sort) + `StopItem`/`StopItemList` (mini-marcador cor do tipo + nº Sequence; expandido = bairro/CEP/tipo + `PackageRow` Parada·Seq/SPX/badge de tipo + Maps — **absorve todo o conteúdo do AddressSheet**, testes migrados). Tap item ↔ marcador espelhado nos dois sentidos; `data-vaul-no-drag` nas linhas. Bairro/CEP mantidos no expandido (evita regressão de info). AddressSheet intocado até a .5. Suíte 482 ✅. Ver `concluidas/2026-07-07--12h27--TASK-RF-023.4.md`.
-
-### ✅ TASK-RF-023.5 - Integração + limpeza — CONCLUÍDA (07/07)
-> **Escape por snaps** na MapPage (full/half → collapsed → sai; seleção intacta; handler do RouteMap restrito ao modal legado) + **fitBounds com padding inferior** (`bottomObstructionPx` = `PANEL_COLLAPSED_PX` exportado do MapPanel) + variante `inline` do AddressSheet removida (aposentadoria total → **REF-011**, anotada) + **teste de integração MapPage+RouteMap real** (Leaflet espionado: clique de marcador → item expande; padding; Escape encadeado) + docs (RF-12 ✅ atualizado, RF-27/28 🟡 com a parte Original ✅). Seleção inicial (decisão b) já entregue na .2. Ver `concluidas/2026-07-07--12h51--TASK-RF-023.5.md`.
-
-### ✅ TASK-RF-023.7 - Painel em DUAS VISÕES: padrão × lista completa — CONCLUÍDA (07/07)
-> Redesign pós-.6 (duplicação header×lista): **visão padrão** = "Resumo da parada" (+ "Ver lista completa") + card do "Endereço selecionado" (tap → detalhe no próprio painel, snap meio; `StopItemDetail` extraído); **visão lista** = snap cheio rolável, "Ver no mapa" por card (trailing) volta selecionando. Escape/arrasto saem da lista; seleção do mapa abre o card. Suíte 490 ✅. Ver `concluidas/2026-07-07--15h35--TASK-RF-023.7.md`.
-
-**Critérios de aceite (RF-023):** tela 5 em read-only razoavelmente fiel (estrutura e informação; estética final é outra decisão — README dos protótipos); slots documentados para RF-006/009.
-**Dependências novas:** `vaul` (**aprovada pelo humano em 05/07/26** — instalar na .2).
-**Riscos:** gestos/scroll do painel × pan do mapa (mitigar: painel irmão do container Leaflet, padrão da 022.6); regressão das interações RF-020 (suíte de RouteMap vigia).
+**Critérios de aceite:** fechar e reabrir o mapa recupera o roteiro intacto (incl. rascunho); chip/botão refletem a existência do roteiro; testes verdes.
+**Dependências novas:** nenhuma.
+**Riscos:** versionamento do schema do IndexedDB (definir `version` + `upgrade`).
 
 ---
 
 ## TASK-RF-006 - UI de construção da rota (Meu roteiro) [XG, dividir]
 
-- **Status:** Pendente (**.1 ✅ · .2 ✅ · .3 ✅ · .4 ✅ · .4.1 ✅ · .4.2 ✅ 08/07** — próxima: **RF-008 antecipada**, depois .5)
+- **Status:** Pendente (**.1 → .4.16 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.5 · .6 · .7 · .8 · .9**, após a RF-008)
 - **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
 - **Esforço-H/IA:** XG/XG
 - **Data-hora origem:** 22/06/26 22:45 (**re-fatiada em 07/07/26** — o fatiamento de 22/06 antecedia âncora/vehicleStop, rascunho, "raio sugere candidatos", RF-33/salvar livre e os slots do MapPanel)
 - **Dependências:** TASK-RF-004 ✅, TASK-RF-005 ✅, TASK-RF-021 ✅ (vehicleStop), TASK-RF-022/023 ✅ (slots do painel, toggle, RouteMap controlado)
-- **REQ/ADR/DT:** RF-21..28, RF-32, RF-33, RF-40; `fluxo-roteirizacao.md` (spec vigente — §4 passos, §6 ordem a pé, §10 decisões, §10.10 painéis por contexto); `docs/design/arvore-componentes-mapa.md` (matriz modo×slot, telas 5–9)
-- **Observações:** XG — executar pelas subtarefas, uma por vez; plano fino nasce em cada uma. **Decisões de arquitetura do épico (aprovadas 07/07, registrar em ADR na .2):** (A) interop — `StopGroup` fica exclusivo do Original; Meu roteiro roda sobre `DeliveryPoint`/`RouteStop` com `roteiroModels.ts` próprio e `RouteMap` bifurcando a fonte de `MarkerModel[]` por `mode`; (B) grafo OSM lazy no enter do modo (`useRoadGraph`, fallback haversine/reta em tudo); (C) âncora sem grafo = coordenada do endereço, re-projeta sozinha enquanto `vehicleStopIsDefault`; paradas firmadas nunca se movem sozinhas.
+- **REQ/ADR/DT:** RF-21..28, RF-32, RF-33, RF-40; ADR-009; `fluxo-roteirizacao.md` (spec vigente — §4 passos, §6 ordem a pé, §10 decisões, §10.10 painéis por contexto); `docs/design/arvore-componentes-mapa.md` (matriz modo×slot, telas 5–9)
+- **Observações:** XG — executar pelas subtarefas, uma por vez; plano fino nasce em cada uma. **Decisões de arquitetura do épico (aprovadas 07/07, registradas na ADR-009):** (A) interop — `StopGroup` fica exclusivo do Original; Meu roteiro roda sobre `DeliveryPoint`/`RouteStop` com `roteiroModels.ts` próprio e `RouteMap` bifurcando a fonte de `MarkerModel[]` por `mode`; (B) grafo OSM lazy no enter do modo (`useRoadGraph`, fallback haversine/reta em tudo); (C) âncora sem grafo = coordenada do endereço, re-projeta sozinha enquanto `vehicleStopIsDefault` — **hoje inerte** (a .4.6 passou a firmar a parada no ato da criação: create-time snapping); paradas firmadas nunca se movem sozinhas.
 
 **Objetivo:** fluxo de construção da spec §4 ponta a ponta — início, sugestão, rascunho de parada com candidatos por raio, âncora móvel, firmar/editar, traçados — preenchendo os slots do MapPanel sem reestruturar.
 
-### ✅ TASK-RF-006.1 - Estado da construção (reducer puro + geometria de apoio) — CONCLUÍDA (07/07)
-> `routeBuilderReducer` (17 ações + seletores) + `walkOrder`/`vehicleStop`/`pointsWithinRadius` + casca `useRouteBuilder`; invariantes testadas (ponto em 1 parada só, order contíguo, round-trip `toPlannedRoute`↔`HYDRATE`). Suíte 485/485. Ver `concluidas/2026-07-07--20h40--TASK-RF-006.1.md`.
-
-### ✅ TASK-RF-006.2 - Entrar no modo (ABSORVEU RF-010) + pontos desbotados + HUD — CONCLUÍDA (08/07)
-> Toggle destravado; `?modo=roteiro` fonte do modo; pontos livres desbotados (`roteiroModels` + `models?` no RouteMap); HUD "Faltando: X · Y"; "Criar Roteiro" navega; `MapScreen` com key; **ADR-009**. Suíte 506/506. Ver `concluidas/2026-07-08--12h40--TASK-RF-006.2.md`.
-
-### ✅ TASK-RF-006.3 - Ponto inicial + grafo OSM + sugestão tracejada (passos 1–2) — CONCLUÍDA (08/07)
-> Início pelos 3 caminhos (GPS · toque ARMADO · endereço c/ confirmação — decisões 08/07) + marcador verde próprio; `useRoadGraph` lazy (status discreto + retry); tracejada desbotada re-apontável com distância a pé (`pedestrianGraph` + A* só no alvo; reta como fallback). RF-21/22/RN-20 ✅. Suíte 548/548. Ver `concluidas/2026-07-08--13h45--TASK-RF-006.3.md`.
-
-### ✅ TASK-RF-006.4 - Ponto órfão + rascunho da parada (telas 8–9) — CONCLUÍDA (08/07)
-> Tela 8 (etiqueta + Criar/Incorporar c/ select pré-selecionado) + tela 9 (círculo tracejado do raio ajustável, candidatos âmbar por ESCOLHA, aviso suave RN-17, footer Salvar/Cancelar) → firma P1, P2… como quadrados cor-por-tipo; fitBounds por assinatura; re-projeção da âncora (decisão C). RF-23/RN-17 ✅. Suíte 577/577. Ver `concluidas/2026-07-08--15h25--TASK-RF-006.4.md`.
-
-> ✅ **TASK-RF-006.4.1 - Consistência visual do Meu roteiro — CONCLUÍDA (08/07, feedback do smoke da .4)**
-> Cores por TIPO em paleta neon clara (spec §4 p.0 revisada); veículo único p/ início/âncora; tela 8 na língua do Original (`pointToStopItemData`); header "Roteiro incompleto — rascunho" + próximo passo; "a pé" nas distâncias; "Edição de parada" c/ CTAs sempre visíveis + estimativa. Suíte 583/583. Ver `concluidas/2026-07-08--17h40--TASK-RF-006.4.1.md`.
-
-> ✅ **TASK-RF-006.4.2 - Marcadores profissionais + parada selecionável + preview do raio — CONCLUÍDA (08/07, 2ª rodada)**
-> Losango do início; veículo = CARRO Tabler sem cone (âncora central, z abaixo dos endereços); tap na parada → painel do Original + Editar/Desfazer (antecipação parcial da .6); preview do círculo do raio no órfão; sem Sequence (ordinais "1º/2º" nos membros); parada 1.25× tocável; candidato tracejado; ciano; chips/pill/±. Suíte 598/598. Ver `concluidas/2026-07-08--19h20--TASK-RF-006.4.2.md`.
-
-> ⤵️ **TASK-RF-008 (persistência/auto-save) ANTECIPADA para cá** (decisão do humano 07/07): routeStorage + auto-save RF-33 + `hasRoteiro` no chip + botão adaptativo "Ver Meu Roteiro" + **carregar o roteiro atrelado ao entrar no modo** (item 4 do feedback 08/07) — os smokes das fatias seguintes não perdem o roteiro ao sair do mapa.
-
 ### TASK-RF-006.5 - Marcador da âncora + mover/tornar/resetar (passo 5)
-- **Esforço-H/IA:** M/G · **Dep:** 006.4
-- Marcador do veículo (slate + anel ciano, fluxo §3; glyph via paths SVG embutidos — decidir lá, sem dep nova); **arrastável** com re-projeção na rua (`nearestEdge`) e re-varredura da ordem a pé; painel da âncora (Mover/Resetar) + "Tornar âncora" no endereço; título "Parada N — Veículo (âncora)".
+- **Esforço-H/IA:** M/G · **Dep:** 006.4 ✅ (+ RF-008)
+- Gestos sobre o marcador de veículo já existente (carro Tabler, .4.2): **arrastável** com re-projeção na rua (`nearestEdge`) e re-varredura da ordem a pé; painel da âncora (Mover/Resetar) + "Tornar âncora" no endereço; título "Parada N — Veículo (âncora)".
 - **Aceite:** arrastar o veículo renumera a ordem a pé; tornar/resetar corretos.
 
 ### TASK-RF-006.6 - Parada firmada: visualização + edição no painel (telas 5–7)
-- **Esforço-H/IA:** G/G · **Dep:** 006.5 · *(dividir em .6a/.6b se estourar)*
+- **Esforço-H/IA:** G/G · **Dep:** 006.5 · *(dividir em .6a/.6b se estourar; parte já antecipada na .4.2/.4.9 — tap na parada → painel + Editar/Desfazer + edição desagrupada)*
 - Parada selecionada lista endereços por **ordinal** + item âncora; edição = `REOPEN_STOP` (reabre como rascunho): Remover/Adicionar/Tornar âncora/Inverter, drag (`itemLeading`), footer "Salvar alterações"; Desfazer parada; Incorporar órfão.
 - **Aceite:** editar uma parada pronta ponta a ponta pelos slots, sem reestruturar o painel.
 
 ### TASK-RF-006.7 - Traçado do percurso (veículo + a pé + km)
-- **Esforço-H/IA:** M/G · **Dep:** 006.4 (+ grafo da .3)
+- **Esforço-H/IA:** M/G · **Dep:** 006.4 ✅ (+ grafo da .3 ✅)
 - Linha contínua âncora→âncora pela rua real (A*, mão única; fallback reta sem grafo); laço tracejado a pé do circuito da parada selecionada; tracejado da próxima "mais forte" pós-conclusão; km acumulado no painel (tempo fino é RF-007).
 - **Aceite:** linha segue as ruas respeitando mão única; km coerente.
 
 ### TASK-RF-006.8 - Visão "Roteiro completo" no painel ocioso (pedido 08/07)
-- **Esforço-H/IA:** M/M · **Dep:** 006.4.3 (PanelSection/StopItemList) · *(criada a pedido do humano 08/07; execução adiada — "ainda tem muita coisa pra arrumar" nas rodadas do .4.x)*
+- **Esforço-H/IA:** M/M · **Dep:** 006.4.3 ✅ (PanelSection/StopItemList) · *(criada a pedido do humano 08/07; execução adiada — "ainda tem muita coisa pra arrumar" nas rodadas do .4.x)*
 - **Problema:** no Meu roteiro, quando **nenhum endereço/parada está selecionado** (ex.: logo após definir o início), o painel fica quase vazio ("Início definido" + redefinir) — estado que o Original nem tem (lá sempre há um endereço selecionado).
 - **Solução pedida:** tornar esse painel útil mostrando a **lista completa do roteiro em ordem** — mesma lógica e estrutura do "Ver lista completa" de uma parada, mas o "completão" de TODAS as paradas: Parada 1 (resumo) → endereços por ordinal → Parada 2 → … (reuso de `StopItemList`/`PanelSection`/`pointToStopItemData`; snap full rolável, como no Original).
 - **+ Botão "Ver roteiro completo"** no canto superior da **1ª seção** (header de estado) abrindo essa visão (padrão do "Ver lista completa"/slot actions).
 - **Aceite:** painel ocioso nunca fica "morto"; a visão lista todas as paradas na ordem com seus endereços ordinais; alternância abre/fecha como no Original (Ver/Esconder; Escape/arrasto saem).
 
 ### TASK-RF-006.9 - Geocoding mínimo do endereço da parada do veículo (âncora) (pedido 09/07)
-- **Esforço-H/IA:** M/M · **Dep:** 006.4.7 · *(criada a pedido do humano 09/07 — planejar a implementação; por ora o endereço da âncora é placeholder = o 1º endereço da parada)*
+- **Esforço-H/IA:** M/M · **Dep:** 006.4.7 ✅ · *(criada a pedido do humano 09/07 — planejar a implementação; por ora o endereço da âncora é placeholder = o 1º endereço da parada)*
 - **Problema:** a **parada do veículo (âncora)** é um ponto na RUA (LatLng), não um endereço da planilha. O painel do Meu roteiro passou a exibir a âncora (ícone de veículo + endereço, seção "Endereço selecionado — parada do veículo (âncora)" — RF-006.4.7), mas hoje mostra o endereço do **1º endereço da parada** como aproximação.
 - **Solução a planejar:** obter o endereço (rua + nº aproximado) da coordenada da âncora via **reverse-geocoding**, respeitando **RNF-03/RNF-13 (nenhuma API paga em produção)** — avaliar Nominatim/OSM com cache (idb) e rate-limit, ou derivar do grafo OSM já baixado (nome da via do segmento mais próximo — `nearestEdge`), que evita chamada externa. Sem PII em log (TASK-BG-002). Client-side.
 - **Aceite:** a âncora mostra a via real (ou "via + aprox.") em vez do 1º endereço; offline/fallback degrada para o placeholder atual; sem custo recorrente.
@@ -233,9 +130,9 @@
 - **Urgência:** IMEDIATA
 - **Esforço-H/IA:** M/M
 - **Data-hora origem:** 22/06/26 22:45
-- **Dependências:** TASK-RF-004, TASK-RF-006
+- **Dependências:** TASK-RF-004 ✅, TASK-RF-006
 - **REQ/ADR/DT:** draft §2/§6
-- **Observações:** Diferencial do produto (tempo realista a pé).
+- **Observações:** Diferencial do produto (tempo realista a pé). A estimativa grosseira do painel (`stopWalkEstimate`, RF-006.4.1) é o ponto de partida.
 
 **Objetivo:** estimar tempo por parada (entrega a pé) e deslocamento entre paradas (km/h configurável).
 
@@ -249,32 +146,6 @@
 
 ---
 
-## TASK-RF-008 - Persistência da rota planejada (IndexedDB) — **ANTECIPADA p/ depois da RF-006.4**
-
-- **Status:** Pendente
-- **Modo:** Standard
-- **Valor:** Crítico
-- **Urgência:** IMEDIATA
-- **Esforço-H/IA:** M/M
-- **Data-hora origem:** 22/06/26 22:45 (**antecipada em 07/07/26**, decisão do humano: entra logo após a RF-006.4, quando já existe parada firmada — os smokes das fatias seguintes não perdem o roteiro ao sair do mapa)
-- **Dependências:** TASK-RF-004 ✅, TASK-RF-006.4
-- **REQ/ADR/DT:** RF-33 (salvar livre/auto-save), RF-35, RN-21; `fluxo-roteirizacao.md` §12
-- **Observações:** `idb` e `fake-indexeddb` já instalados. Seguir o padrão `manifestStorage` (resultado discriminado, DB versionado, leitura degrada / escrita reporta). O reducer da RF-006.1 já expõe `toPlannedRoute`/`HYDRATE` como ponte.
-
-**Objetivo:** salvar/carregar/listar `PlannedRoute` localmente, com **auto-save de rascunho** (RF-33 — salvar é livre, mesmo incompleto).
-
-**Subtarefas:**
-- `src/services/routeStorage.ts`: CRUD de `PlannedRoute` em IndexedDB (criar, ler, listar, apagar; 1 roteiro por rota — RN-21).
-- Auto-save do estado do builder (debounce) + `HYDRATE` ao reabrir o mapa em modo roteiro.
-- Acender `hasRoteiro` no `RouteChip` e o botão adaptativo do Sumário ("Criar Roteiro" → "Ver Meu Roteiro").
-- Testes com `fake-indexeddb`.
-
-**Critérios de aceite:** fechar e reabrir o mapa recupera o roteiro intacto (incl. rascunho); chip/botão refletem a existência do roteiro; testes verdes.
-**Dependências novas:** nenhuma.
-**Riscos:** versionamento do schema do IndexedDB (definir `version` + `upgrade`).
-
----
-
 ## TASK-RF-009 - Modo execução da rota [XG, dividir]
 
 - **Status:** Pendente
@@ -283,7 +154,7 @@
 - **Urgência:** IMEDIATA
 - **Esforço-H/IA:** G/G
 - **Data-hora origem:** 22/06/26 22:45
-- **Dependências:** TASK-RF-004, TASK-RF-006, TASK-RF-008
+- **Dependências:** TASK-RF-004 ✅, TASK-RF-006, TASK-RF-008
 - **REQ/ADR/DT:** draft §8
 - **Observações:** Sem GPS em tempo real nem âncora ao vivo (decisão final 24/06). Execução manual e guiada. **Escopo ampliado (RF-37/47/48/49, RN-22):** pausar/retomar (resumível), concluir/desfazer entrega, avançar/retroceder (muda o foco), modo lista, e Roteiro **não editável** durante a execução. Refinar as subtarefas ao iniciar.
 
@@ -314,12 +185,6 @@
 
 ---
 
-> 🔀 **TASK-RF-010 ABSORVIDA pela TASK-RF-006.2** (07/07/26): o escopo remanescente ("ligar o lado Meu roteiro do toggle ao fluxo de construção", nota 05/07) é exatamente a entrada no modo da RF-006.2 — o toggle já nasceu na RF-022.5 e o multi-rota também é roteirizável (decisão 24/06), então não sobra ramificação própria de `isSingleRoute`. O número **010 não será reaproveitado** (núcleo §4.4).
-
----
-
-<!-- TASK-RF-011 movida para o topo das Imediatas em 05/07/26 (abre a fase 1 de UI; texto atualizado para as decisões de navegação de 26/06). -->
-
 ## TASK-RF-012 - Auto-roteirizar (agrupamento por raio)
 
 - **Status:** Pendente
@@ -328,7 +193,7 @@
 - **Urgência:** IMEDIATA
 - **Esforço-H/IA:** M/M
 - **Data-hora origem:** 22/06/26 23:50
-- **Dependências:** TASK-RF-004, TASK-RF-005 (distância), TASK-RF-006 (estado)
+- **Dependências:** TASK-RF-004 ✅, TASK-RF-005 ✅ (distância), TASK-RF-006 (estado)
 - **REQ/ADR/DT:** `fluxo-roteirizacao.md` §12
 - **Observações:** Reusa as funções do modo manual; gera rascunho editável (não final).
 
@@ -351,9 +216,9 @@
 - **Urgência:** IMEDIATA
 - **Esforço-H/IA:** M/M
 - **Data-hora origem:** 22/06/26 23:50
-- **Dependências:** TASK-RF-004, TASK-RF-008
+- **Dependências:** TASK-RF-004 ✅, TASK-RF-008
 - **REQ/ADR/DT:** `fluxo-roteirizacao.md` §13
-- **Observações:** Caso de uso central: passar a rota pronta para um **ajudante** ou trocar de aparelho (modelo é por dispositivo, sem nuvem).
+- **Observações:** Caso de uso central: passar a rota pronta para um **ajudante** ou trocar de aparelho (modelo é por dispositivo, sem nuvem). O botão "Importar roteiro (.json)" já existe como stub desabilitado na HOME (RF-022.2).
 
 **Objetivo:** exportar/importar um `PlannedRoute` completo (pontos + paradas + âncoras + config) como arquivo JSON.
 
@@ -366,7 +231,11 @@
 
 ---
 
-> 🔀 **TASK-RF-014 absorvida pela TASK-RF-022** (05/07/26): o escopo estava desatualizado (rev. 26/06 dos fluxos) e duplicava a fase 1 — Sumário lançador/adaptativo → **RF-022.4**; tela inicial/instruções em spoiler → **RF-022.2**; lista de salvos → **RF-022.3**; UI mínima no mapa → **RF-022.5**. O número **014 não será reaproveitado** (regra de numeração do núcleo §4.4).
+## Números aposentados (núcleo §4.4)
+
+> 🔀 **TASK-RF-010 absorvida pela TASK-RF-006.2** (07/07/26): o escopo remanescente ("ligar o lado Meu roteiro do toggle ao fluxo de construção") é exatamente a entrada no modo da RF-006.2. O número **010 não será reaproveitado**.
+>
+> 🔀 **TASK-RF-014 absorvida pela TASK-RF-022** (05/07/26): Sumário lançador → **RF-022.4**; tela inicial/instruções → **RF-022.2**; lista de salvos → **RF-022.3**; UI mínima no mapa → **RF-022.5**. O número **014 não será reaproveitado**.
 
 ---
 
@@ -389,14 +258,10 @@
 
 | TASK-ID | Título | Modo | Valor | Urgência | Esforço-H/IA | Dependências | REQ/ADR/DT | Status | Data origem |
 |---|---|:---:|:---:|:---:|:---:|---|---|:---:|---|
-<!-- TASK-RF-003 movida para "Imediatas" (priorizada em 24/06/26, a pedido do humano) -->
-
-<!-- ✅ TASK-CHORE-002 encerrada (05/07/26): suíte completa rodou verde em Windows nativo — 384/384 em 40 arquivos, ~13s (registrado em concluidas/2026-07-05--18h08--TASK-RF-022.1.md). O travamento era do sandbox antigo. -->
-<!-- ✅ TASK-CHORE-003 concluída (05/07) — ambiente blindado (.npmrc include=dev, test.env no Vitest, env do Claude Code, TLS reativado) — ver concluidas/2026-07-05--04h57--TASK-CHORE-003.md -->
-| TASK-DOC-003 | Sincronizar `contexto-projeto-ai.md`: deixa de ser "SPA de página única sem router" (ADR-003) | Standard | Importante | Normal | P/P | TASK-RF-011 | ADR-003 | [ ] | 22/06/26 23:50 |
-| TASK-TEST-002 | Testar o zoom do mapa e definir o limite mínimo ideal (detalhe de rua p/ roteirizar a pé); alinhar `MAP_CONFIG.ZOOM.MIN` com o bloqueio do tile worker (hoje z<14) | Standard | Importante | Normal | P/M | - | RNF-12, RNF-15 | [ ] | 24/06/26 14:50 |
-
-
+| TASK-DOC-003 | Sincronizar `contexto-projeto-ai.md`: deixa de ser "SPA de página única sem router" (ADR-003) | Standard | Importante | Normal | P/P | TASK-RF-011 ✅ | ADR-003 | `[ ]` | 22/06/26 23:50 |
+| TASK-TEST-002 | Testar o zoom do mapa e definir o limite mínimo ideal (detalhe de rua p/ roteirizar a pé); alinhar `MAP_CONFIG.ZOOM.MIN` com o bloqueio do tile worker (hoje z<14) | Standard | Importante | Normal | P/M | - | RNF-12, RNF-15 | `[ ]` | 24/06/26 14:50 |
+| TASK-DOC-005 | Decidir o destino do status "Carregando ruas…" (grafo OSM, origem RF-006.3): formalizar em requisito, trocar a apresentação ou manter como está | Light | Desejável | Normal | P/P | - | RF-22 | `[ ]` | 09/07/26 17:00 |
+| TASK-REF-014 | Ajustar o radius do tema para `0.5rem` conforme `neonflux.md` (hoje 1rem/pill) — pendência estética anotada na REF-012 | Light | Desejável | Normal | P/P | - | ADR-006 | `[ ]` | 09/07/26 17:00 |
 
 ---
 
