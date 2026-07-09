@@ -265,8 +265,9 @@ describe("RouteMap (controlled embedded map)", () => {
 
     rerender(<RouteMap rows={mockRowsWithCoordinates} interaction={{ expandedStopKey: "0", selectedAddressKey: "0:0" }} onInteractionChange={vi.fn()} />);
 
-    // Expanded-stop framing uses the tighter padding and MAX zoom.
-    expect(mapMethods.fitBounds).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ paddingTopLeft: [40, 40], maxZoom: 19 }));
+    // An EXPANDED stop shows its individual addresses, so it frames them at the
+    // map's max zoom (RF-006.4.20). Only a GROUPED focus stops short (see below).
+    expect(mapMethods.fitBounds).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ paddingTopLeft: [40, 40], maxZoom: MAP_CONFIG.ZOOM.MAX }));
   });
 
   // ==========================================================================
@@ -310,8 +311,9 @@ describe("RouteMap (controlled embedded map)", () => {
         { lat: -22.951, lng: -43.151 },
       ],
     });
-    // The last fit targets the focus at MAX zoom (close), not the whole-route DEFAULT.
-    expect(mapMethods.fitBounds).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ maxZoom: MAP_CONFIG.ZOOM.MAX }));
+    // The last fit targets the focus at FOCUS zoom (close, but not maxed out),
+    // not the whole-route DEFAULT (RF-006.4.19).
+    expect(mapMethods.fitBounds).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ maxZoom: MAP_CONFIG.ZOOM.MAX - 2 }));
   });
 
   it("does NOT bind marker click handlers for external models (no-op until RF-006.3/.4)", () => {

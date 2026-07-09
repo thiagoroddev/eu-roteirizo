@@ -88,8 +88,13 @@ export const RoteiroPointSection = ({
           it is about the ADDRESS (rev. 08/07). */}
       <PanelSection label={UI_LABELS.MAP_PANEL.SECTION_SELECTED}>
         <p className="px-4 pt-0.5 text-xs text-muted-foreground">{UI_LABELS.MAP_PANEL.ROTEIRO_NO_STOP_YET}</p>
-        {/* Highlighted by default — it IS the selected address (RF-006.4.13). */}
-        <StopItemRow item={item} onTap={onTapCard} highlighted expanded={expanded} neon />
+        {/* Highlighted by default — it IS the selected address (RF-006.4.13).
+            pb-2 like every other section's last block: without it the highlighted
+            row's `bg-accent` runs into the next section's `border-t`, and a
+            light divider over a light accent reads as no divider at all. */}
+        <div className="pb-2">
+          <StopItemRow item={item} onTap={onTapCard} highlighted expanded={expanded} neon />
+        </div>
       </PanelSection>
 
       {/* 3ª seção — Parada sugerida: how the stop would look if created now.

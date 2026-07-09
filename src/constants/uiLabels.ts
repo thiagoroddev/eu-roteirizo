@@ -204,7 +204,7 @@ export const UI_LABELS = {
     // Textos do detalhe do endereço, hoje renderizado pelo painel do mapa
     // (StopItemDetail — RF-023.4; o componente AddressSheet foi aposentado na REF-011).
     ADDRESS_SHEET: {
-      PACKAGES_HEADER: (count: number) => `Pacotes nesse endereço (${count})`,
+      PACKAGES_HEADER: (count: number) => `Informações do pacote (${count})`,
       COMPLEMENT: "Complemento:",
       NO_COMPLEMENT: "—",
       TYPE: "Tipo:",

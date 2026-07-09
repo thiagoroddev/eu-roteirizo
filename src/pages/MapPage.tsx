@@ -48,9 +48,19 @@ import { haversine } from "../utils/routing/geo";
 import { isWithinRioBounds } from "../utils/coordinates";
 import { formatMeters } from "../utils/formatters";
 import { UI_LABELS } from "../constants/uiLabels";
+import { MAP_CONFIG, FOCUS_MAX_ZOOM } from "../constants";
 
 /** The panel's two views (rev. 07/07 — TASK-RF-023.7). */
 type PanelView = "selected" | "list";
+
+/** Where the panel is, per mode (RF-006.4.18): height, view and card state. */
+interface ModePanelUi {
+  snap: PanelSnap;
+  view: PanelView;
+  cardExpanded: boolean;
+}
+
+const INITIAL_PANEL_UI: ModePanelUi = { snap: "collapsed", view: "selected", cardExpanded: false };
 
 const TYPE_LABELS = UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.TYPE_LABELS;
 
@@ -118,11 +128,6 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   const [interaction, setInteraction] = useState<InteractionState>(collapseInteraction());
   /** The panel's "last stop" memory — never cleared (nunca "nenhuma selecionada"). */
   const [panelStopKey, setPanelStopKey] = useState<string | null>(null);
-  /** Panel snap, controlled here so selections can raise it (design doc §5). */
-  const [panelSnap, setPanelSnap] = useState<PanelSnap>("collapsed");
-  const [panelView, setPanelView] = useState<PanelView>("selected");
-  /** Whether the selected-address card shows its detail (selected view's body). */
-  const [cardExpanded, setCardExpanded] = useState(false);
   /** Bumped so the list view re-scrolls to the selected item when it opens. */
   const [scrollSignal, setScrollSignal] = useState(0);
 
@@ -133,6 +138,30 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   const mode: MapMode = searchParams.get(MODE_QUERY_PARAM) === MODE_QUERY_ROTEIRO && roteiroAvailable ? "roteiro" : "original";
   const remaining = remainingCounts(builderState);
   const pointsById = useMemo(() => indexPointsById(points), [points]);
+
+  /**
+   * Panel UI kept PER MODE (RF-006.4.18). Each mode looks at a different thing —
+   * the Original at a stop of the manifest, Meu roteiro at a stop being built —
+   * so sharing one snap/view/card made a toggle destroy the other side's place.
+   * Toggling now only swaps which bucket is read; nothing is reset.
+   */
+  const [panelUi, setPanelUi] = useState<Record<MapMode, ModePanelUi>>(() => ({ original: { ...INITIAL_PANEL_UI }, roteiro: { ...INITIAL_PANEL_UI } }));
+  const { snap: panelSnap, view: panelView, cardExpanded } = panelUi[mode];
+  /** Writes land in the ACTIVE mode's bucket; the other one keeps its place. */
+  const updatePanelUi = useCallback(
+    (patch: Partial<ModePanelUi> | ((current: ModePanelUi) => Partial<ModePanelUi>)) =>
+      setPanelUi((previous) => {
+        const current = previous[mode];
+        return { ...previous, [mode]: { ...current, ...(typeof patch === "function" ? patch(current) : patch) } };
+      }),
+    [mode]
+  );
+  const setPanelSnap = useCallback(
+    (next: PanelSnap | ((current: PanelSnap) => PanelSnap)) => updatePanelUi((current) => ({ snap: typeof next === "function" ? next(current.snap) : next })),
+    [updatePanelUi]
+  );
+  const setPanelView = useCallback((view: PanelView) => updatePanelUi({ view }), [updatePanelUi]);
+  const setCardExpanded = useCallback((expanded: boolean) => updatePanelUi({ cardExpanded: expanded }), [updatePanelUi]);
 
   // ------- Orphan/stop selection + stop draft (TASK-RF-006.4/.4.2, telas 8–9) -------
   /** The tapped free point (tela 8) — ephemeral UI, never in the reducer. */
@@ -148,6 +177,18 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   /** The grouping radius of the "Parada sugerida" preview — adjustable BEFORE
       creating (RF-006.4.6). Ephemeral; resets to the default per selected orphan. */
   const [previewRadiusMeters, setPreviewRadiusMeters] = useState(builderState.config.autoRadiusMeters);
+  /** The address awaiting "Partir deste endereço" (RF-21). Lives up here with the
+      other selections because it IS one — it feeds the markers and the focus. */
+  const [pendingPointId, setPendingPointId] = useState<string | null>(null);
+
+  /**
+   * The address the user is looking at: awaiting start confirmation, or a freely
+   * selected orphan. Both wear the SAME chrome (solid ring + glow + raise) and
+   * get the same max-zoom focus — one selected address, one visual language
+   * (RF-006.4.21). Without this the point awaiting confirmation was drawn as any
+   * other free point, indistinguishable among its neighbours.
+   */
+  const selectedAddressId = pendingPointId ?? selectedPointId;
   const draft = builderState.draft;
   const farIds = farChosenPointIds(builderState);
   const selectedPoint = selectedPointId !== null ? (pointsById.get(selectedPointId) ?? null) : null;
@@ -174,14 +215,14 @@ function MapScreen({ rows }: { rows: RowData[] }) {
       computeRoteiroMarkerModels(points, builderState.stops, {
         draft,
         candidateIds,
-        selectedPointId,
+        selectedPointId: selectedAddressId,
         selectedStopId,
         expandedStopId: expandedRoteiroStopId,
         selectedMemberId: effectiveSelectedMemberId,
       }),
     // candidateIds is derived fresh each render; its CONTENT tracks draft/points.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [points, builderState.stops, draft, selectedPointId, selectedStopId, expandedRoteiroStopId, effectiveSelectedMemberId, candidateIds.join("|")]
+    [points, builderState.stops, draft, selectedAddressId, selectedStopId, expandedRoteiroStopId, effectiveSelectedMemberId, candidateIds.join("|")]
   );
 
   // Road graph — lazy on the roteiro enter (ADR-009 decision B); everything
@@ -190,8 +231,8 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   const pedGraph = useMemo(() => (graph ? pedestrianGraph(graph) : null), [graph]);
 
   // ------- Start-definition flow (RF-21) — ephemeral UI state, never in the reducer -------
+  // (`pendingPointId` lives with the other selections above — it drives markers/focus.)
   const [armedMapTap, setArmedMapTap] = useState(false);
-  const [pendingPointId, setPendingPointId] = useState<string | null>(null);
   const [gpsBusy, setGpsBusy] = useState(false);
   const [startNotice, setStartNotice] = useState<string | null>(null);
   const [redefining, setRedefining] = useState(false);
@@ -489,6 +530,31 @@ function MapScreen({ rows }: { rows: RowData[] }) {
       typed package chips, exactly like the Original (RF-006.4.3), plus the
       walking-estimate chip. */
   const stopPoints = selectedStop ? orderedStopPoints(selectedStop, pointsById) : [];
+
+  /** The member of an expanded stop the user tapped (RF-006.4.16) — an ADDRESS,
+      even though a stop is selected around it. */
+  const selectedMemberPoint = effectiveSelectedMemberId !== null ? (pointsById.get(effectiveSelectedMemberId) ?? null) : null;
+
+  /**
+   * What the roteiro map frames, and how close (RF-006.4.20/.4.21).
+   *
+   * Precedence by what is SELECTED, not by which state holds it: a single
+   * ADDRESS always wins — the one awaiting start confirmation, a free one, or a
+   * member of an expanded stop. A stop only frames when no address is chosen.
+   *
+   * ⚠️ `maxZoom` is a CEILING, not a target: `fitBounds` picks the zoom that
+   * makes the bounds fit and then clamps it. A single point has zero-sized
+   * bounds, so it always lands on the ceiling (ZOOM.MAX). Several addresses fit
+   * at whatever their spread allows — raising the ceiling for an expanded stop
+   * lets it go as close as its members permit, no closer.
+   */
+  const focusAddress = pendingPoint ?? selectedPoint ?? selectedMemberPoint;
+  const roteiroFocus: { bounds: LatLng[]; maxZoom: number } | null = focusAddress
+    ? { bounds: [{ lat: focusAddress.lat, lng: focusAddress.lng }], maxZoom: MAP_CONFIG.ZOOM.MAX }
+    : selectedStop && stopPoints.length > 0
+      ? { bounds: stopPoints.map((p) => ({ lat: p.lat, lng: p.lng })), maxZoom: expandedRoteiroStopId === selectedStop.id ? MAP_CONFIG.ZOOM.MAX : FOCUS_MAX_ZOOM }
+      : null;
+
   const stopEstimate = selectedStop && stopPoints.length > 0 ? stopWalkEstimate(selectedStop.vehicleStop, stopPoints, builderState.config) : null;
   const stopPlace = stopPlaceSummaryFromPoints(stopPoints);
   const stopMetrics: PanelMetric[] = [
@@ -587,25 +653,20 @@ function MapScreen({ rows }: { rows: RowData[] }) {
       applyInteraction(next);
       if (next.selectedAddressKey !== null) setPanelView("selected");
     },
-    [applyInteraction]
+    [applyInteraction, setPanelView]
   );
 
   /** Toggle handler: the URL carries the mode (replace — back leaves the map,
-      it doesn't "un-toggle"). Entering the roteiro collapses the Original's
-      expansion and the panel; `panelStopKey` survives, so switching back
-      restores the Original panel from memory. */
+      it doesn't "un-toggle").
+
+      Each mode KEEPS its place (RF-006.4.18): the Original's focused stop and
+      the roteiro's selected stop/point/expansion all survive the round trip, and
+      the panel reads a per-mode bucket. Only the transient start-flow UI (armed
+      map tap, GPS spinner, pending confirmation) is dropped — leaving the mode
+      is an implicit "cancel" of a gesture the user is halfway through. */
   const handleModeChange = (next: MapMode) => {
     if (next === mode) return;
     resetStartUi();
-    setSelectedPointId(null); // the draft survives on purpose (it lives in the reducer)
-    setSelectedStopId(null);
-    setExpandedRoteiroStopId(null);
-    if (next === "roteiro") {
-      setInteraction(collapseInteraction());
-      setPanelView("selected");
-      setCardExpanded(false);
-      setPanelSnap("collapsed");
-    }
     setSearchParams(
       (params) => {
         const nextParams = new URLSearchParams(params);
@@ -636,7 +697,7 @@ function MapScreen({ rows }: { rows: RowData[] }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [panelView, panelSnap, navigate, interaction, applyInteraction]);
+  }, [panelView, panelSnap, navigate, interaction, applyInteraction, setPanelSnap, setPanelView]);
 
   const stops = useMemo(() => groupRowsByStop(rows), [rows]);
 
@@ -761,8 +822,9 @@ function MapScreen({ rows }: { rows: RowData[] }) {
         models={mode === "roteiro" ? roteiroModels : undefined}
         // Original: the panel's current stop square gets the ring/glow (RF-006.4.13).
         highlightedStopKey={mode === "original" ? effectivePanelStopKey : undefined}
-        // When a firmed stop is focused/expanded, zoom CLOSE to it (RF-006.4.11).
-        focusBounds={mode === "roteiro" && selectedStop ? stopPoints.map((p) => ({ lat: p.lat, lng: p.lng })) : undefined}
+        // WHAT to frame and HOW CLOSE, by selection context (RF-006.4.20).
+        focusBounds={mode === "roteiro" && roteiroFocus ? roteiroFocus.bounds : undefined}
+        focusMaxZoom={mode === "roteiro" && roteiroFocus ? roteiroFocus.maxZoom : undefined}
         onMapTap={mode === "roteiro" ? handleMapTap : undefined}
         onModelTap={mode === "roteiro" ? handleModelTap : undefined}
         onModelExpand={mode === "roteiro" ? handleModelExpand : undefined}

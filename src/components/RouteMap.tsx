@@ -5,7 +5,7 @@ import "leaflet/dist/leaflet.css";
 // Tipos e Constantes
 import type { RowData } from "../types";
 import type { LatLng } from "../types/routing";
-import { MAP_CONFIG, UI_LABELS } from "../constants";
+import { MAP_CONFIG, FOCUS_MAX_ZOOM, UI_LABELS } from "../constants";
 
 // SVG markers (ADR-008): one marker per stop; click expands a stop into its address
 // circles, click an address selects it — the MapPage's persistent panel shows the
@@ -103,9 +103,14 @@ interface Props {
    * interaction; when absent, the Original-mode computation above applies.
    */
   models?: MarkerModel[];
-  /** Meu roteiro: coords to zoom CLOSE to when a stop is focused/expanded
+  /** Meu roteiro: coords to zoom CLOSE to when something is focused/selected
       (RF-006.4.11). Absent/empty → frame all models (whole route). */
   focusBounds?: LatLng[];
+  /** How close `focusBounds` may zoom (RF-006.4.20). The caller knows WHAT it is
+      focusing — an address or an ungrouped stop wants `ZOOM.MAX`, a grouped stop
+      wants context around it — so it also decides HOW close. Default: the
+      grouped-stop focus. */
+  focusMaxZoom?: number;
   /** Original: the panel's current stop (index string) — its SQUARE gets the
       ring/glow even without a click, so the map mirrors the panel (RF-006.4.13). */
   highlightedStopKey?: string | null;
@@ -135,6 +140,7 @@ export const RouteMap: React.FC<Props> = ({
   bottomObstructionPx = 0,
   models,
   focusBounds,
+  focusMaxZoom = FOCUS_MAX_ZOOM,
   highlightedStopKey,
   onMapTap,
   onModelTap,
@@ -267,22 +273,23 @@ export const RouteMap: React.FC<Props> = ({
     return () => clearTimeout(resizeTimeout);
   }, [stops, rows]);
 
-  // 2b) FOCUS — external models (Meu roteiro): frame them all; Original: fit the
-  //     expanded stop's addresses at MAX zoom (closest focus) or the whole route.
+  // 2b) FOCUS — how CLOSE depends on WHAT is focused (RF-006.4.20): an address or
+  //     an ungrouped stop goes to ZOOM.MAX; a grouped stop stops at FOCUS_MAX_ZOOM
+  //     so its neighbours stay in frame; nothing focused → whole route at DEFAULT.
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
     if (isExternal) {
-      // Meu roteiro: when a stop is focused/expanded, zoom CLOSE to it
-      // (RF-006.4.11 — `focusBounds`); otherwise frame all models. The start
-      // joins the whole-route frame (GPS may land outside); the suggestion line
-      // does NOT (re-pointing must not refit). Models come from the ref: this
-      // reacts to boundsSignature only, so a draft candidate toggle never refits.
+      // Meu roteiro: the caller passes both the frame and its zoom (`focusBounds`
+      // + `focusMaxZoom`); otherwise frame all models. The start joins the
+      // whole-route frame (GPS may land outside); the suggestion line does NOT
+      // (re-pointing must not refit). Models come from the ref: this reacts to
+      // boundsSignature only, so a draft candidate toggle never refits.
       const focus = focusBoundsRef.current;
       if (focus && focus.length > 0) {
         const bounds = L.latLngBounds(focus.map((p) => L.latLng(p.lat, p.lng)));
-        map.fitBounds(bounds, { paddingTopLeft: [40, 40], paddingBottomRight: [40, 40 + bottomObstructionPx], maxZoom: MAP_CONFIG.ZOOM.MAX });
+        map.fitBounds(bounds, { paddingTopLeft: [40, 40], paddingBottomRight: [40, 40 + bottomObstructionPx], maxZoom: focusMaxZoom });
         return;
       }
       const coords = renderModelsRef.current.map((model) => L.latLng(model.lat, model.lng));
@@ -297,7 +304,8 @@ export const RouteMap: React.FC<Props> = ({
 
     const expanded = expandedStopKey !== null ? stops[Number(expandedStopKey)] : undefined;
     /** Focused-but-collapsed stop (RF-006.4.10): center CLOSE on it, keep it
-        grouped — same zoom as expanding (RF-006.4.11: the focus was too far). */
+        grouped — but NOT as close as expanding (RF-006.4.20: the ungrouped
+        addresses want ZOOM.MAX; a grouped stop wants its neighbours in frame). */
     const focusedKey = expandedStopKey === null && selectedAddressKey !== null ? selectedAddressKey.split(":")[0] : null;
     const focused = focusedKey !== null ? stops[Number(focusedKey)] : undefined;
     if (expanded) {
@@ -305,12 +313,15 @@ export const RouteMap: React.FC<Props> = ({
       map.fitBounds(bounds, { paddingTopLeft: [40, 40], paddingBottomRight: [40, 40 + bottomObstructionPx], maxZoom: MAP_CONFIG.ZOOM.MAX });
     } else if (focused) {
       const bounds = L.latLngBounds(focused.addresses.map((addr) => L.latLng(addr.lat, addr.lng)));
-      map.fitBounds(bounds, { paddingTopLeft: [40, 40], paddingBottomRight: [40, 40 + bottomObstructionPx], maxZoom: MAP_CONFIG.ZOOM.MAX });
+      map.fitBounds(bounds, { paddingTopLeft: [40, 40], paddingBottomRight: [40, 40 + bottomObstructionPx], maxZoom: FOCUS_MAX_ZOOM });
     } else {
       const bounds = L.latLngBounds(stops.map((stop) => L.latLng(stop.representative.lat, stop.representative.lng)));
       map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50 + bottomObstructionPx], maxZoom: MAP_CONFIG.ZOOM.DEFAULT });
     }
-  }, [stops, expandedStopKey, selectedAddressKey, bottomObstructionPx, isExternal, boundsSignature, startLat, startLng]);
+    // `focusMaxZoom` IS a dependency: ungrouping a stop keeps the SAME
+    // focusBounds (its addresses) and only changes how close to zoom — without
+    // it the second click would never refit (RF-006.4.20).
+  }, [stops, expandedStopKey, selectedAddressKey, bottomObstructionPx, isExternal, boundsSignature, startLat, startLng, focusMaxZoom]);
 
   // 3) MARKERS RENDERING — redraws when the data OR the interaction state changes.
   useEffect(() => {

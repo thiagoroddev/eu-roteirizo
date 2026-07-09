@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
-import { UI_LABELS, COLUMN_NAMES } from "../../constants";
+import { UI_LABELS, COLUMN_NAMES, MAP_CONFIG, FOCUS_MAX_ZOOM } from "../../constants";
 import type { RowData } from "../../types";
 import type { LatLng } from "../../types/routing";
 import type { InteractionState, MarkerModel } from "../../utils/markers/markerModels";
@@ -114,6 +114,7 @@ vi.mock("../../components/RouteMap", () => ({
     onInteractionChange,
     models,
     focusBounds,
+    focusMaxZoom,
     highlightedStopKey,
     onMapTap,
     onModelTap,
@@ -124,6 +125,7 @@ vi.mock("../../components/RouteMap", () => ({
     onInteractionChange?: (next: InteractionState) => void;
     models?: MarkerModel[];
     focusBounds?: LatLng[];
+    focusMaxZoom?: number;
     highlightedStopKey?: string | null;
     onMapTap?: (latlng: LatLng) => void;
     onModelTap?: (model: MarkerModel) => void;
@@ -146,6 +148,7 @@ vi.mock("../../components/RouteMap", () => ({
       data-radius-circle={roteiroOverlay?.radiusCircle ? `${roteiroOverlay.radiusCircle.center.lat},${roteiroOverlay.radiusCircle.center.lng}@${roteiroOverlay.radiusCircle.meters}` : "none"}
       data-anchor={roteiroOverlay?.anchor ? `${roteiroOverlay.anchor.lat},${roteiroOverlay.anchor.lng}` : "none"}
       data-focus-bounds={String(focusBounds?.length ?? "none")}
+      data-focus-zoom={String(focusMaxZoom ?? "none")}
       data-highlighted-stop={String(highlightedStopKey ?? "none")}
       data-models-summary={models?.map((m) => `${m.kind}${m.iconProps.selected ? "*" : ""}`).join(",") ?? "none"}
       data-highlighted-model={models?.find((m) => m.iconProps.highlight)?.key ?? "none"}
@@ -317,7 +320,7 @@ describe("MapPage (focus screen)", () => {
 
     openListView();
 
-    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.9");
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.85");
     expect(screen.getByRole("list", { name: UI_LABELS.MAP_PANEL.ITEM.LIST_ARIA })).toBeInTheDocument();
     expect(addressRow(/Rua Mapa, 10/)).toBeInTheDocument();
     expect(addressRow(/Rua Beta, 20/)).toBeInTheDocument();
@@ -352,7 +355,7 @@ describe("MapPage (focus screen)", () => {
 
     fireEvent.click(addressRow(/Rua Mapa, 10/));
 
-    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.9");
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.85");
     expect(screen.getByText(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.PACKAGES_HEADER(3))).toBeInTheDocument();
   });
 
@@ -504,21 +507,38 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-model-count", "1");
   });
 
-  it("entering the roteiro collapses the map expansion; returning restores the Original panel from memory", () => {
+  // RF-006.4.18 (supersedes "entering the roteiro collapses the map expansion"):
+  // a toggle is a VIEW switch, not a reset. Each mode keeps exactly where it was.
+  it("keeps each mode's place across a round trip: the Original's expansion survives the roteiro", () => {
     uploaderState.routes = { "A-1": rowsStop1TwoAddresses };
     renderPage();
     fireEvent.click(screen.getByRole("button", { name: "stub-select-first-address" }));
     expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-expanded-stop", "0");
 
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.MY_ROTEIRO }));
-    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-expanded-stop", "null");
     expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-external-models", "true");
 
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.ORIGINAL }));
     expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-external-models", "false");
-    // The panel re-derives from its memory (panelStopKey survives the round trip).
+    // Back exactly where it was — the expansion was never thrown away.
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-expanded-stop", "0");
     expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`)).toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
+  });
+
+  // The panel's height/view/card live in PER-MODE buckets: raising one must not
+  // move the other. The Original goes full; the roteiro stays where IT was.
+  it("keeps the panel snap PER MODE across the toggle", () => {
+    uploaderState.routes = { "A-1": rowsStop1TwoAddresses };
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_FULL_LIST }));
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.85");
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.MY_ROTEIRO }));
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "224px");
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.ORIGINAL }));
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.85");
   });
 
   it("?modo=roteiro deep-links straight into the roteiro mode (URL is the source of truth)", () => {
@@ -607,10 +627,18 @@ describe("MapPage (focus screen)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
     expect(screen.getByText(START_LABELS.CONFIRM_POINT("Rua Mapa, 10"))).toBeInTheDocument();
+    // The address awaiting confirmation is framed at max zoom — it used to sit
+    // lost among every other marker of the route (RF-006.4.20) — AND wears the
+    // selected-address chrome, like any other selected address (RF-006.4.21).
+    const stub = screen.getByTestId("route-map-stub");
+    expect(stub.getAttribute("data-focus-bounds")).toBe("1");
+    expect(stub.getAttribute("data-focus-zoom")).toBe(String(MAP_CONFIG.ZOOM.MAX));
+    expect(stub.getAttribute("data-highlighted-model")).not.toBe("none");
+    expect(stub.getAttribute("data-models-summary")).toContain("address*");
 
     fireEvent.click(screen.getByRole("button", { name: START_LABELS.CONFIRM }));
     expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
-    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "-22.9,-43.2");
+    expect(stub).toHaveAttribute("data-overlay-start", "-22.9,-43.2");
   });
 
   it("with a start, tapping a point RE-POINTS the suggestion (dashed line follows; no text line in the point context)", () => {
@@ -949,6 +977,37 @@ describe("MapPage (focus screen)", () => {
     fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
     expect(stub.getAttribute("data-models-summary")).toContain("stop");
     expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
+  });
+
+  // RF-006.4.20: o quão PERTO depende do QUE está focado. Endereço e parada
+  // desagrupada vão ao zoom máximo; parada agrupada para antes (vizinhas no
+  // enquadramento); sem seleção, o RouteMap enquadra tudo (focusBounds ausente).
+  it("zoom do foco por CONTEXTO: endereço e desagrupado no máximo, parada agrupada 2 níveis antes", () => {
+    startRoteiroFlow();
+    const stub = screen.getByTestId("route-map-stub");
+
+    // Endereço livre selecionado (tela 8 / parada sugerida) → o ENDEREÇO, no máximo.
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    expect(stub.getAttribute("data-focus-bounds")).toBe("1");
+    expect(stub.getAttribute("data-focus-zoom")).toBe(String(MAP_CONFIG.ZOOM.MAX));
+
+    // Parada firmada e AGRUPADA (1 clique) → os 2 endereços, 2 níveis antes do máximo.
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    expect(stub.getAttribute("data-focus-bounds")).toBe("2");
+    expect(stub.getAttribute("data-focus-zoom")).toBe(String(FOCUS_MAX_ZOOM));
+
+    // DESAGRUPADA (2 cliques) → mesmo enquadramento, agora no zoom máximo.
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-dbltap" }));
+    expect(stub.getAttribute("data-focus-bounds")).toBe("2");
+    expect(stub.getAttribute("data-focus-zoom")).toBe(String(MAP_CONFIG.ZOOM.MAX));
+
+    // Tocar um MEMBRO da parada desagrupada é escolher um ENDEREÇO: enquadra ELE
+    // (1 ponto), não a parada inteira — senão o "endereço selecionado" ficava com
+    // o zoom da parada agrupada (RF-006.4.21).
+    fireEvent.click(screen.getByRole("button", { name: "stub-second-point-tap" }));
+    expect(stub.getAttribute("data-focus-bounds")).toBe("1");
+    expect(stub.getAttribute("data-focus-zoom")).toBe(String(MAP_CONFIG.ZOOM.MAX));
   });
 
   it("desagrupado: tocar qualquer membro seleciona-o — destaque no mapa e no painel (RF-006.4.16)", () => {

@@ -127,6 +127,19 @@ export const MAP_CONFIG = {
   KEEP_BUFFER: 2,
 } as const;
 
+/**
+ * How many levels BELOW `ZOOM.MAX` the automatic focus of a GROUPED stop lands
+ * (TASK-RF-006.4.19). At MAX the stop filled the screen and its neighbours fell
+ * outside — the user lost the context that makes the focus useful.
+ *
+ * Applies ONLY to that case. An address or an UNGROUPED stop still focuses at
+ * `ZOOM.MAX` (RF-006.4.20), and the manual `+` always reaches it.
+ * ⚙️ MANUAL KNOB: lower to 1 if the jump from the whole-route frame
+ * (`ZOOM.DEFAULT`) feels too subtle.
+ */
+export const FOCUS_ZOOM_OFFSET = 2;
+export const FOCUS_MAX_ZOOM = MAP_CONFIG.ZOOM.MAX - FOCUS_ZOOM_OFFSET;
+
 // ========================================
 // EXCEL COLUMN NAMES
 // ========================================

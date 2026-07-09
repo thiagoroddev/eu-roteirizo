@@ -1,3 +1,4 @@
+import { Undo2 } from "lucide-react";
 import { Button } from "../../ui/button";
 import { PanelSection } from "./PanelSection";
 import { PanelTitle, type PanelMetric } from "./PanelTitle";
@@ -11,9 +12,9 @@ const STOP = UI_LABELS.MAP_PANEL.ROTEIRO_STOP;
  * RoteiroStopSection - a committed stop, selected on the map (TASK-RF-006.4.2/
  * .4.3/.4.7 — partial .6, fluxo §9). Mirrors the Original header (via
  * PanelSection — the shared divider/label chrome):
- * - "Resumo da parada": title + typed chips, with "Ver lista completa" in the
- *   TOP-RIGHT (same spot as the Original) and the "Editar parada"/"Desfazer
- *   parada" actions CENTERED at the section's bottom (RF-006.4.7).
+ * - "Resumo da parada": title + typed chips, with ALL THREE actions on the
+ *   label's line (RF-006.4.17 — "Ver lista completa", "Editar parada" and an
+ *   icon-only "Desfazer parada"), so the collapsed panel stays short.
  * - "Endereço selecionado": the address selected in the expanded group — either
  *   a tapped MEMBER (its ordinal marker + real complement, RF-006.4.16) or, with
  *   none chosen, the stop's ANCHOR ("— parada do veículo (âncora)": vehicle glyph,
@@ -44,22 +45,28 @@ export const RoteiroStopSection = ({ stopOrder, neighborhoods, zipcodes, metrics
   <div>
     <PanelSection
       label={UI_LABELS.MAP_PANEL.SECTION_STOP}
+      /* All three actions ride the label's line (RF-006.4.17): every row removed
+         from the header shortens the collapsed panel. Compact sizing; "Desfazer"
+         drops to icon-only (its label is the accessible name) — "Editar" keeps
+         its text, being the one the user reaches for. */
+      /* No wrapper div: PanelSection already lays the slot out as `flex shrink-0
+         gap-2` — nesting one (and its margin) is what pushed these buttons off
+         the Original's flush-right px-4 edge. */
       actions={
-        <Button type="button" variant="outline" size="sm" data-vaul-no-drag onClick={onToggleList}>
-          {listOpen ? UI_LABELS.MAP_PANEL.HIDE_FULL_LIST : UI_LABELS.MAP_PANEL.VIEW_FULL_LIST}
-        </Button>
+        <>
+          <Button type="button" size="sm" className="h-7 px-2 text-xs" data-vaul-no-drag onClick={onEdit}>
+            {STOP.EDIT}
+          </Button>
+          <Button type="button" variant="outline" size="icon" className="h-7 w-7 shrink-0" data-vaul-no-drag onClick={onDissolve} title={STOP.DISSOLVE} aria-label={STOP.DISSOLVE}>
+            <Undo2 aria-hidden className="h-4 w-4" />
+          </Button>
+          <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" data-vaul-no-drag onClick={onToggleList}>
+            {listOpen ? UI_LABELS.MAP_PANEL.HIDE_FULL_LIST : UI_LABELS.MAP_PANEL.VIEW_FULL_LIST}
+          </Button>
+        </>
       }
     >
       <PanelTitle stopNumber={String(stopOrder)} neighborhoods={neighborhoods} zipcodes={zipcodes} metrics={metrics} />
-      {/* Actions centered at the section's bottom (RF-006.4.7). */}
-      <div className="flex justify-center gap-2 px-4 pb-2">
-        <Button type="button" size="sm" data-vaul-no-drag onClick={onEdit}>
-          {STOP.EDIT}
-        </Button>
-        <Button type="button" variant="outline" size="sm" data-vaul-no-drag onClick={onDissolve}>
-          {STOP.DISSOLVE}
-        </Button>
-      </div>
     </PanelSection>
 
     {/* The selected address lives in the SUMMARY view only; the full list IS the

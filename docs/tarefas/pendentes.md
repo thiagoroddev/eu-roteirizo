@@ -22,7 +22,7 @@
 
 ---
 
-## TASK-CHORE-004 - Smoke manual acumulado do Meu roteiro (RF-006.4.13 → .4.16) + calibrações
+## TASK-CHORE-004 - Smoke manual acumulado do Meu roteiro (RF-006.4.13 → .4.18) + calibrações
 
 - **Status:** Pendente
 - **Modo:** Standard
@@ -30,17 +30,20 @@
 - **Urgência:** IMEDIATA
 - **Esforço-H/IA:** P/-
 - **Data-hora origem:** 09/07/26 17:00
-- **Dependências:** TASK-RF-006.4.16 ✅
+- **Dependências:** TASK-RF-006.4.18 ✅
 - **REQ/ADR/DT:** ADR-008, ADR-009; `fluxo-roteirizacao.md` §3/§4
-- **Observações:** As quatro últimas fatias entregaram com suíte verde (627/627) mas **sem validação visual do humano** — só ele consegue julgar destaque, contraste e toque no device. Enquanto o smoke não roda, a confiança no visual dessas fatias é presumida, não verificada. Tarefa **do humano** (IA não tem esforço aqui). Se algum item reprovar, abrir TASK-BG própria.
+- **Observações:** As últimas fatias entregaram com suíte verde (631/631) mas **sem validação visual do humano** — só ele consegue julgar destaque, contraste, gesto e toque no device. Enquanto o smoke não roda, a confiança no visual dessas fatias é presumida, não verificada. Tarefa **do humano** (IA não tem esforço aqui). Se algum item reprovar, abrir TASK-BG própria. ⚠️ O "detalhe não crescia" da .4.17 foi corrigido por **diagnóstico de leitura, não observado rodando** — é o item mais importante desta lista.
 
-**Objetivo:** validar no navegador/device o comportamento visual das fatias .4.13 → .4.16 e calibrar os knobs que ficaram anotados no código.
+**Objetivo:** validar no navegador/device o comportamento visual das fatias .4.13 → .4.18 e calibrar os knobs que ficaram anotados no código.
 
 **Checklist de smoke:**
 - **.4.13** — linha "Endereço selecionado" destacada por padrão (roteiro); quadrado da parada que o painel mostra com anel+brilho nos **dois** modos (inclusive na seleção inicial e acompanhando o stepper); conferir contraste no tema dark.
 - **.4.14** — parada selecionada maior + anel + brilho + na frente (não some em cluster denso) nos dois modos; ponto inicial (losango) plano, mesmo tamanho, atrás; **calibrar `SELECTED_SCALE_FACTOR`** em cluster denso.
 - **.4.15** — expandir a parada firmada destaca o 1º endereço (âncora); botões do painel não cortam (se cortarem, subir **`COLLAPSED_MAX_FRACTION`** no `MapPanel.tsx`).
 - **.4.16** — criar parada → 2 cliques (desagrupa) → tocar **qualquer** endereço migra o destaque no mapa e o painel mostra esse endereço (nº + complemento, sem "âncora"); tocar no mapa vazio regrupa e volta à âncora.
+- **.4.17** — ⚠️ **o mais importante:** tocar o endereço selecionado no roteiro abre o detalhe **e o painel cresce** (era o bug reportado; a correção não foi observada rodando). Arrastar o painel e soltar em alturas arbitrárias: deve **parar onde soltou**, não saltar; depois disso, um clique volta a saltar para a altura nomeada. Os três botões cabem na linha de "Resumo da parada" em tela estreita. Calibrar `ROTEIRO_PANEL_SIZING` (`collapsedAdjustPx`/`halfFraction`) no device; se o painel ficar denso demais, `LADDER_STEP`.
+- **.4.18** — focar a parada 3 no Original → alternar para Meu roteiro (parada 1) → voltar ao Original (**continua na parada 3**) → voltar ao roteiro (**continua na parada 1**). Subir o painel no Original não deve mover o do roteiro. Botões do roteiro rentes à borda direita, alinhados com o "Ver lista completa" do Original.
+- **.4.19 + .4.20 + .4.21 (zoom/destaque, ver juntos)** — 1 clique na parada: vizinhas visíveis, sem encher a tela (zoom 17); **2 cliques**: desagrupa **e** vai ao máximo (19); **tocar um endereço da parada desagrupada**: aproxima ESSE endereço (não a parada); **confirmar início**: o endereço aparece aproximado **e destacado** (anel+brilho+maior); **endereço livre** estando numa parada: aproxima o endereço, **não** afasta; **mapa vazio sem seleção**: enquadra tudo. O `+` ainda chega a 19. ⚠️ **Regressão a vigiar:** alternar candidato durante o rascunho não pode mexer no zoom. ⚠️ Se o salto entre "rota toda" (16) e "foco de parada" (17) ficar imperceptível, baixar `FOCUS_ZOOM_OFFSET` de 2 para 1 em `constants/index.ts`.
 - **Pendências antigas de calibração:** janela de 220ms do duplo-clique; zoom do foco (`maxZoom: MAX`) em parada de 1 endereço; tons neon no device; centro ótico do ícone de carro; tracejado do candidato em zoom baixo.
 
 **Critérios de aceite:** cada item do checklist aprovado pelo humano, ou reprovado com TASK-BG aberta.
@@ -76,7 +79,7 @@
 
 ## TASK-RF-006 - UI de construção da rota (Meu roteiro) [XG, dividir]
 
-- **Status:** Pendente (**.1 → .4.16 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.5 · .6 · .7 · .8 · .9**, após a RF-008)
+- **Status:** Pendente (**.1 → .4.18 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.5 · .6 · .7 · .8 · .9**, após a RF-008)
 - **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
@@ -262,6 +265,7 @@
 | TASK-TEST-002 | Testar o zoom do mapa e definir o limite mínimo ideal (detalhe de rua p/ roteirizar a pé); alinhar `MAP_CONFIG.ZOOM.MIN` com o bloqueio do tile worker (hoje z<14) | Standard | Importante | Normal | P/M | - | RNF-12, RNF-15 | `[ ]` | 24/06/26 14:50 |
 | TASK-DOC-005 | Decidir o destino do status "Carregando ruas…" (grafo OSM, origem RF-006.3): formalizar em requisito, trocar a apresentação ou manter como está | Light | Desejável | Normal | P/P | - | RF-22 | `[ ]` | 09/07/26 17:00 |
 | TASK-REF-014 | Ajustar o radius do tema para `0.5rem` conforme `neonflux.md` (hoje 1rem/pill) — pendência estética anotada na REF-012 | Light | Desejável | Normal | P/P | - | ADR-006 | `[ ]` | 09/07/26 17:00 |
+| TASK-TEST-003 | Testar o zoom/enquadramento REAL do mapa (Leaflet espionado, como em `MapPage.integration.test.tsx`), não só as props passadas ao stub do RouteMap — dois defeitos de zoom (.4.19, .4.20) atravessaram a suíte verde porque nenhum teste observava o `fitBounds` resultante | Standard | Importante | Normal | P/M | - | RF-006.4.19/.4.20/.4.21 | `[ ]` | 09/07/26 20:35 |
 
 ---
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Drawer } from "vaul";
 import { UI_LABELS } from "../../../constants/uiLabels";
 import { ORIGINAL_PANEL_SIZING, type PanelSizing } from "./panelSizing";
@@ -44,10 +44,33 @@ const COLLAPSED_MAX_FRACTION = 0.88;
 const COLLAPSED_BUFFER_PX = 8;
 const FULL_FRACTION = 0.85;
 
-const snapFromValue = (value: string | number | null, halfFraction: number): PanelSnap => {
-  if (value === FULL_FRACTION) return "full";
-  if (value === halfFraction) return "half";
-  return "collapsed"; // px string (collapsed) or null (defensive)
+/**
+ * Granularity of the drag ladder (fraction of the viewport). vaul only ever
+ * rests ON a snap point — there is no free-form drag — so "any height the user
+ * wants" is approximated by a dense ladder: the panel settles within half a step
+ * (~1% of the screen) of wherever the finger let go. Clicks still jump straight
+ * to the named heights (collapsed/half/full), which is what makes them a
+ * shortcut instead of a cage. ⚙️ MANUAL KNOB: smaller = finer, more snap points.
+ */
+const LADDER_STEP = 0.02;
+
+/**
+ * The "half" command must clear the collapsed header by at least this much, or
+ * tapping a card would "open" a detail that stays below the fold — the panel
+ * would appear not to grow (RF-006.4.17). Only bites when the header is TALL
+ * (the roteiro's stacked sections); the Original's short header keeps its 0.45.
+ */
+const DETAIL_REVEAL_PX = 120;
+
+/** Ladder from just above the collapsed height up to full, always containing the
+    two named fractions so a command lands on an exact, testable value. */
+const buildLadder = (collapsedPx: number, viewportPx: number, halfValue: number): (string | number)[] => {
+  const collapsed = `${collapsedPx}px`;
+  if (viewportPx <= 0) return [collapsed, halfValue, FULL_FRACTION]; // no window (jsdom): the classic three
+  const floor = collapsedPx / viewportPx;
+  const steps = new Set<number>([halfValue, FULL_FRACTION]);
+  for (let f = LADDER_STEP; f < FULL_FRACTION; f += LADDER_STEP) steps.add(Math.round(f * 100) / 100);
+  return [collapsed, ...[...steps].filter((f) => f > floor && f <= FULL_FRACTION).sort((a, b) => a - b)];
 };
 
 interface Props {
@@ -68,18 +91,18 @@ interface Props {
 
 export const MapPanel = ({ header, children, footer, snap, onSnapChange, sizing = ORIGINAL_PANEL_SIZING }: Props) => {
   const { collapsedAdjustPx, halfFraction } = sizing;
-  const [internalSnap, setInternalSnap] = useState<PanelSnap>("collapsed");
-  const effectiveSnap = snap ?? internalSnap;
 
   /** The collapsed snap FITS the header content (RF-006.4.12): the panel shows
       exactly the active section — no cut buttons, no empty space. Measured live;
       without ResizeObserver (jsdom/tests) it falls back to the calibrated px. */
   const headerRef = useRef<HTMLDivElement>(null);
   const [collapsedPx, setCollapsedPx] = useState(PANEL_COLLAPSED_PX);
+  const [viewportPx, setViewportPx] = useState(() => (typeof window === "undefined" ? 0 : window.innerHeight));
   useEffect(() => {
     const el = headerRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
     const measure = () => {
+      setViewportPx(window.innerHeight);
       const height = el.getBoundingClientRect().height;
       if (height <= 0) return; // pre-layout: keep the fallback
       const max = window.innerHeight * COLLAPSED_MAX_FRACTION;
@@ -89,27 +112,62 @@ export const MapPanel = ({ header, children, footer, snap, onSnapChange, sizing 
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
-    return () => observer.disconnect();
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, [collapsedAdjustPx]);
 
   const collapsedValue = `${collapsedPx}px`;
-  const snapPoints = useMemo(() => [collapsedValue, halfFraction, FULL_FRACTION], [collapsedValue, halfFraction]);
-  const snapValue: string | number = effectiveSnap === "full" ? FULL_FRACTION : effectiveSnap === "half" ? halfFraction : collapsedValue;
+  /** "half" never lands below the collapsed header + a detail's worth of room. */
+  const halfValue = useMemo(() => {
+    if (viewportPx <= 0) return halfFraction;
+    const raw = Math.max(halfFraction, (collapsedPx + DETAIL_REVEAL_PX) / viewportPx);
+    return Math.min(Math.round(raw * 100) / 100, FULL_FRACTION);
+  }, [halfFraction, collapsedPx, viewportPx]);
+  const snapPoints = useMemo(() => buildLadder(collapsedPx, viewportPx, halfValue), [collapsedPx, viewportPx, halfValue]);
+
+  const valueOf = useCallback((label: PanelSnap) => (label === "full" ? FULL_FRACTION : label === "half" ? halfValue : collapsedValue), [halfValue, collapsedValue]);
+  const labelOf = useCallback((value: string | number): PanelSnap => {
+    if (value === FULL_FRACTION) return "full";
+    if (typeof value === "string") return "collapsed";
+    return "half"; // every intermediate rung of the ladder reads as "half"
+  }, []);
+
+  const [internalSnap, setInternalSnap] = useState<PanelSnap>("collapsed");
+  const currentLabel = snap ?? internalSnap;
+
+  /**
+   * The height the user DRAGGED to, remembered against the label it belongs to.
+   * A drag may settle on any rung of the ladder; deriving the height purely from
+   * the coarse label would yank the panel back to collapsed/half/full on the next
+   * render — the "engessado" feel. So while the label is unchanged the drag wins,
+   * and a click (which changes the label) jumps to the named height.
+   *
+   * While collapsed the value is re-read from `collapsedValue`, so an opening
+   * detail grows the header and the panel grows with it (fit-content).
+   */
+  const [drag, setDrag] = useState<{ label: PanelSnap; value: string | number } | null>(null);
+  const dragged = drag?.label === currentLabel ? drag.value : null;
+  const activeValue: string | number = dragged === null || typeof dragged === "string" ? (currentLabel === "collapsed" ? collapsedValue : valueOf(currentLabel)) : dragged;
 
   const handleSnapValue = (value: string | number | null) => {
-    const next = snapFromValue(value, halfFraction);
+    if (value === null) return;
+    const next = labelOf(value);
+    setDrag({ label: next, value }); // keep the exact rung the finger chose
     if (snap === undefined) setInternalSnap(next);
     onSnapChange?.(next);
   };
 
   return (
-    <Drawer.Root open modal={false} dismissible={false} snapPoints={snapPoints} activeSnapPoint={snapValue} setActiveSnapPoint={handleSnapValue} snapToSequentialPoint>
+    <Drawer.Root open modal={false} dismissible={false} snapPoints={snapPoints} activeSnapPoint={activeValue} setActiveSnapPoint={handleSnapValue}>
       <Drawer.Portal>
         {/* No Drawer.Overlay on purpose: non-modal persistent panel — the map stays interactive. */}
         {/* h-full WITHOUT a max-h cap: vaul computes snap offsets assuming the content
-            spans the viewport — capping it (e.g. max-h-[90%]) shifts EVERY snap down by
-            the capped amount (collapsed ends up cut). The "full" snap (0.9) already
-            limits how far up the panel goes. */}
+            spans the viewport — capping it (e.g. max-h-[85%]) shifts EVERY snap down by
+            the capped amount (collapsed ends up cut). FULL_FRACTION already limits how
+            far up the panel goes. */}
         <Drawer.Content aria-describedby={undefined} className="fixed inset-x-0 bottom-0 z-[1200] flex h-full flex-col rounded-t-2xl border-t border-input bg-background outline-none">
           <Drawer.Title className="sr-only">{UI_LABELS.MAP_PANEL.ARIA}</Drawer.Title>
           {/* Grabber + header = the collapsed-snap content, measured to fit it exactly. */}
@@ -117,9 +175,11 @@ export const MapPanel = ({ header, children, footer, snap, onSnapChange, sizing 
             <div aria-hidden className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-muted" />
             {header}
           </div>
-          {/* pb-[10dvh]: at the full snap (0.9) the content's bottom 10% sits below the
-              viewport — the padding keeps the last scrolled item reachable/visible. */}
-          <div className={effectiveSnap === "full" ? "flex-1 overflow-y-auto pb-[10dvh]" : "flex-1 overflow-hidden"}>{children}</div>
+          {/* Scrolls at ANY height above collapsed: the user may drag to an
+              in-between rung, and content taller than it must stay reachable.
+              pb-[15dvh]: at the full snap the content's bottom sits below the
+              viewport — the padding keeps the last scrolled item visible. */}
+          <div className={currentLabel === "collapsed" ? "flex-1 overflow-hidden" : "flex-1 overflow-y-auto pb-[15dvh]"}>{children}</div>
           {footer}
         </Drawer.Content>
       </Drawer.Portal>

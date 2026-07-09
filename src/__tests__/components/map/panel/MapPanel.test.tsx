@@ -86,7 +86,20 @@ describe("MapPanel", () => {
     expect(root).toHaveAttribute("data-open", "true");
     expect(root).toHaveAttribute("data-modal", "false");
     expect(root).toHaveAttribute("data-dismissible", "false");
-    expect(root).toHaveAttribute("data-snap-points", JSON.stringify(["224px", 0.45, 0.9]));
+  });
+
+  // The ladder is what lets a drag rest ~anywhere (RF-006.4.17): assert its
+  // SHAPE, not a literal array — the rungs move with the viewport.
+  it("offers a dense ladder of snap points, collapsed first, holding the named heights", () => {
+    renderPanel();
+
+    const snapPoints: (string | number)[] = JSON.parse(screen.getByTestId("vaul-root").getAttribute("data-snap-points") ?? "[]");
+    expect(snapPoints[0]).toBe("224px");
+    expect(snapPoints[snapPoints.length - 1]).toBe(0.85); // full
+    expect(snapPoints).toContain(0.45); // half
+    expect(snapPoints.length).toBeGreaterThan(10); // fine enough to feel free
+    const fractions = snapPoints.slice(1) as number[];
+    expect(fractions).toEqual([...fractions].sort((a, b) => a - b)); // vaul needs ascending
   });
 
   it("starts collapsed when uncontrolled", () => {
@@ -106,10 +119,47 @@ describe("MapPanel", () => {
     renderPanel({ onSnapChange });
 
     act(() => {
-      capturedSetSnap.current?.(0.9);
+      capturedSetSnap.current?.(0.85);
     });
 
     expect(onSnapChange).toHaveBeenCalledWith("full");
-    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.9");
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.85");
+  });
+
+  // The heart of RF-006.4.17: an in-between height survives the parent echoing
+  // its coarse label back. Without this the panel snapped to 0.45 and felt caged.
+  it("KEEPS an in-between drag height when the parent re-asserts the same label", () => {
+    const onSnapChange = vi.fn();
+    const { rerender } = renderPanel({ snap: "collapsed", onSnapChange });
+
+    act(() => {
+      capturedSetSnap.current?.(0.62); // a rung between half and full
+    });
+    expect(onSnapChange).toHaveBeenCalledWith("half");
+
+    rerender(
+      <MapPanel snap="half" onSnapChange={onSnapChange} header={<div>header</div>}>
+        <div>body</div>
+      </MapPanel>
+    );
+
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.62");
+  });
+
+  it("obeys a click that CHANGES the label, dropping the remembered drag height", () => {
+    const onSnapChange = vi.fn();
+    const { rerender } = renderPanel({ snap: "collapsed", onSnapChange });
+
+    act(() => {
+      capturedSetSnap.current?.(0.62);
+    });
+
+    rerender(
+      <MapPanel snap="full" onSnapChange={onSnapChange} header={<div>header</div>}>
+        <div>body</div>
+      </MapPanel>
+    );
+
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.85");
   });
 });
