@@ -73,6 +73,12 @@ export interface RoteiroModelOptions {
   selectedPointId?: string | null;
   /** The selected committed stop; its square gets the white ring (RF-006.4.2). */
   selectedStopId?: string | null;
+  /** A firmed stop to render UNGROUPED (RF-006.4.8): its addresses show as
+      individual circles numbered by visit order, instead of the one square. */
+  expandedStopId?: string | null;
+  /** The selected member of the expanded stop (RF-006.4.16) — it gets the
+      highlight; null falls back to the anchor (1st member). */
+  selectedMemberId?: string | null;
 }
 
 /** Committed-stop color: dominant type over ALL its points' rows, neon register. */
@@ -93,10 +99,48 @@ export const computeRoteiroMarkerModels = (points: DeliveryPoint[], stops: Route
   const candidateIds = new Set(opts.candidateIds ?? []);
   const models: MarkerModel[] = [];
 
+  /** The stop being EDITED (RF-006.4.9): its square is skipped and its members
+      render as draft circles (ungrouped), so editing never shows the group. */
+  const draftStopId = draft?.stopId ?? null;
+  /** Points committed to a stop OTHER than the one being edited — their squares
+      handle them; they must stay out of the circle loop below. */
+  const otherCommittedIds = new Set<string>();
+  for (const stop of stops) {
+    if (stop.id === draftStopId) continue;
+    for (const id of stop.pointIds) otherCommittedIds.add(id);
+  }
+
   // Committed stops: one SQUARE at the vehicle stop, numbered by order — the
   // stop's own numbering, OUTSIDE the ordinal rule (decision 08/07). Selected
-  // stop gets the white ring (RF-006.4.2). Expanding into addresses is .6.
+  // stop gets the white ring (RF-006.4.2). The EXPANDED stop (RF-006.4.8) and
+  // the stop being EDITED (RF-006.4.9) are drawn ungrouped instead.
   for (const stop of stops) {
+    if (stop.id === draftStopId) continue; // its members render as draft circles below
+    if (stop.id === opts.expandedStopId) {
+      orderedStopPoints(stop, pointsById).forEach((point, index) => {
+        // The SELECTED member is highlighted (RF-006.4.16); with none chosen the
+        // anchor (1st member = panel's "Endereço selecionado") is (RF-006.4.15).
+        const isHighlighted = opts.selectedMemberId ? point.id === opts.selectedMemberId : index === 0;
+        models.push({
+          key: point.id,
+          kind: "address",
+          lat: point.lat,
+          lng: point.lng,
+          stopIndex: NO_STOP_INDEX,
+          iconProps: {
+            shape: "circle",
+            color: roteiroColorForLocationType(pointDominantType(point)),
+            number: UI_LABELS.MAP_PANEL.ORDINAL(index + 1),
+            badge: point.packageCount > 1 ? { kind: "packages", count: point.packageCount } : null,
+            selected: true,
+            emphasis: isHighlighted,
+            highlight: isHighlighted,
+          },
+          tooltipHtml: buildPointTooltipHtml(point),
+        });
+      });
+      continue;
+    }
     const packageTotal = stop.pointIds.reduce((sum, id) => sum + (pointsById.get(id)?.packageCount ?? 0), 0);
     const representative = pointsById.get(stop.pointIds[0]);
     models.push({
@@ -110,7 +154,10 @@ export const computeRoteiroMarkerModels = (points: DeliveryPoint[], stops: Route
         color: stopColor(stop, pointsById),
         number: stop.order,
         badge: stop.pointIds.length > 1 ? { kind: "addresses", count: stop.pointIds.length } : packageTotal > 1 ? { kind: "packages", count: packageTotal } : null,
+        // The selected stop stands out (ring + glow + enlarge/raise — RF-006.4.14).
         selected: opts.selectedStopId === stop.id,
+        emphasis: opts.selectedStopId === stop.id,
+        highlight: opts.selectedStopId === stop.id,
       },
       tooltipHtml: representative ? buildPointTooltipHtml(representative) : undefined,
     });
@@ -119,7 +166,10 @@ export const computeRoteiroMarkerModels = (points: DeliveryPoint[], stops: Route
   // Free points: neon TYPE colors, EMPTY (no number — decision 08/07: free
   // addresses carry nothing; they earn the walking ORDINAL when they join a
   // stop). Draft members: ring + "1º/2º…"; candidates: DASHED ring + glow.
-  for (const point of unassignedPoints(points, stops)) {
+  // During an EDIT (RF-006.4.9) the source also includes the edited stop's own
+  // points (they're not in ANOTHER stop), so its members/candidates draw here.
+  const circleSource = draft ? points.filter((point) => !otherCommittedIds.has(point.id)) : unassignedPoints(points, stops);
+  for (const point of circleSource) {
     const memberIndex = draft?.pointIds.indexOf(point.id) ?? -1;
     const isMember = memberIndex >= 0;
     const isCandidate = !isMember && candidateIds.has(point.id);
@@ -137,7 +187,10 @@ export const computeRoteiroMarkerModels = (points: DeliveryPoint[], stops: Route
         badge: point.packageCount > 1 ? { kind: "packages", count: point.packageCount } : null,
         selected: isMember || isCandidate || isSelected,
         ringStyle: isCandidate ? "dashed" : "solid",
-        emphasis: isCandidate,
+        // Candidates glow; the SELECTED orphan glows AND is enlarged/raised so it
+        // stands out over the start and the rest (RF-006.4.14).
+        emphasis: isCandidate || isSelected,
+        highlight: isSelected,
       },
       tooltipHtml: buildPointTooltipHtml(point),
     });

@@ -15,7 +15,7 @@ import { MARKER_GEOMETRY } from "../utils/markers/markerSvg";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
 import { colorForLocationType, ROTEIRO_MARKER_COLORS, ROTEIRO_ACCENT } from "../utils/markers/markerColors";
 import { scaleForZoom, MARKER_MAX_SCALE } from "../utils/markers/markerScale";
-import { computeMarkerModels, nextInteraction, collapseInteraction, type MarkerModel, type InteractionState } from "../utils/markers/markerModels";
+import { computeMarkerModels, nextInteraction, expandInteraction, regroupInteraction, type MarkerModel, type InteractionState } from "../utils/markers/markerModels";
 
 /* ============================================================================
    GLOBAL CONFIGURATION (OUTSIDE COMPONENT)
@@ -47,12 +47,18 @@ const Z_VEHICLE = 50000;
 const Z_EXTERNAL_STOP = 150000;
 const EXTERNAL_STOP_SCALE_FACTOR = 1.25;
 
+/** Single vs double tap window (RF-006.4.8): the single-tap action waits this
+    long; a double-tap cancels it and expands instead. Tunable at smoke. */
+const DOUBLE_TAP_MS = 220;
+
 // The suggestion line, in the mode's neon accent (RF-006.4.2 — the old gray
 // vanished on light tiles); still faded/dashed per fluxo §3/§6.
 const SUGGESTION_LINE_STYLE = { dashArray: "6 8", weight: 3, color: ROTEIRO_ACCENT, opacity: 0.55 } as const;
 
-/** Route START: slate DIAMOND, tip-anchored (decision 08/07 — shape tells it apart). */
-const START_ICON_PROPS = { shape: "diamond", color: ROTEIRO_MARKER_COLORS.vehicle, number: null, badge: null, selected: true, emphasis: true } as const;
+/** Route START: slate DIAMOND, tip-anchored — the SHAPE tells it apart, so it
+    carries NO ring/glow and stays the same size as the others; the SELECTED
+    marker must stand out over it (RF-006.4.14). */
+const START_ICON_PROPS = { shape: "diamond", color: ROTEIRO_MARKER_COLORS.vehicle, number: null, badge: null, selected: false, emphasis: false } as const;
 
 /** VEHICLE/anchor: slate circle with the Tabler CAR glyph, NO tip, centered
     anchor — parks on the street without covering addresses (RF-006.4.2). */
@@ -97,10 +103,20 @@ interface Props {
    * interaction; when absent, the Original-mode computation above applies.
    */
   models?: MarkerModel[];
+  /** Meu roteiro: coords to zoom CLOSE to when a stop is focused/expanded
+      (RF-006.4.11). Absent/empty → frame all models (whole route). */
+  focusBounds?: LatLng[];
+  /** Original: the panel's current stop (index string) — its SQUARE gets the
+      ring/glow even without a click, so the map mirrors the panel (RF-006.4.13). */
+  highlightedStopKey?: string | null;
   /** Tap on the empty map, with its coordinate (Meu roteiro: set-start-by-tap — TASK-RF-006.3). */
   onMapTap?: (latlng: LatLng) => void;
   /** Tap on an EXTERNAL model's marker (Meu roteiro: select orphan / toggle candidate / re-point). */
   onModelTap?: (model: MarkerModel) => void;
+  /** DOUBLE-tap on an EXTERNAL model's marker (Meu roteiro: expand a firmed stop
+      into its addresses — RF-006.4.8). Single vs double is disambiguated by a
+      short timer, since markers are recreated on every interaction change. */
+  onModelExpand?: (model: MarkerModel) => void;
   /** Roteiro decorations, drawn on their OWN layer (TASK-RF-006.3/.4): start
       marker, dashed suggestion line, the draft's dashed radius circle (real
       meters, centered on the seed) and its provisional anchor. */
@@ -112,7 +128,19 @@ interface Props {
   };
 }
 
-export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChange, bottomObstructionPx = 0, models, onMapTap, onModelTap, roteiroOverlay }) => {
+export const RouteMap: React.FC<Props> = ({
+  rows,
+  interaction,
+  onInteractionChange,
+  bottomObstructionPx = 0,
+  models,
+  focusBounds,
+  highlightedStopKey,
+  onMapTap,
+  onModelTap,
+  onModelExpand,
+  roteiroOverlay,
+}) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
@@ -128,15 +156,25 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
   const applyInteractionRef = useRef<(next: InteractionState) => void>(() => {});
   const onMapTapRef = useRef<((latlng: LatLng) => void) | undefined>(undefined);
   const onModelTapRef = useRef<((model: MarkerModel) => void) | undefined>(undefined);
-  /** Latest models for the fit effect, which reacts to boundsSignature only. */
+  const onModelExpandRef = useRef<((model: MarkerModel) => void) | undefined>(undefined);
+  /** Pending single-tap timer (RF-006.4.8/.4.10): a double-tap clears it before
+      it fires, so the single-tap action doesn't run (nor recreate the markers). */
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  /** Latest interaction, for handlers registered once (empty-tap regroup keeps
+      the current focus — RF-006.4.10). */
+  const interactionRef = useRef<InteractionState>(interaction);
+  /** Latest models + focus bounds for the fit effect, which reacts to boundsSignature only. */
   const renderModelsRef = useRef<MarkerModel[]>([]);
+  const focusBoundsRef = useRef<LatLng[] | undefined>(focusBounds);
   useEffect(() => {
     applyInteractionRef.current = onInteractionChange;
     onMapTapRef.current = onMapTap;
     onModelTapRef.current = onModelTap;
+    onModelExpandRef.current = onModelExpand;
+    interactionRef.current = interaction;
   });
   const stops = useMemo(() => groupRowsByStop(rows), [rows]);
-  const internalModels = useMemo(() => computeMarkerModels(stops, expandedStopKey, selectedAddressKey), [stops, expandedStopKey, selectedAddressKey]);
+  const internalModels = useMemo(() => computeMarkerModels(stops, expandedStopKey, selectedAddressKey, highlightedStopKey), [stops, expandedStopKey, selectedAddressKey, highlightedStopKey]);
   /** External models (Meu roteiro) win; otherwise the Original-mode computation. */
   const isExternal = models !== undefined;
   const renderModels = models ?? internalModels;
@@ -151,15 +189,18 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
   /** Bounds signature: refit ONLY when the framed set changes (markers appear/
       disappear or the start moves) — never on visual-state churn like toggling
       a draft candidate, which would destroy the user's zoom mid-draft (RF-006.4). */
+  /** Focus signature: refit when the focused stop's frame changes (RF-006.4.11). */
+  const focusSignature = focusBounds && focusBounds.length > 0 ? focusBounds.map((p) => `${p.lat},${p.lng}`).join("|") : "";
   const boundsSignature = useMemo(() => {
     if (!isExternal) return "";
     const keys = renderModels.map((model) => model.key).sort();
-    return `${keys.join("|")}#${startLat ?? ""},${startLng ?? ""}`;
-  }, [isExternal, renderModels, startLat, startLng]);
+    return `${keys.join("|")}#${startLat ?? ""},${startLng ?? ""}#${focusSignature}`;
+  }, [isExternal, renderModels, startLat, startLng, focusSignature]);
 
   /** Kept fresh after every render, BEFORE the fit effect below runs. */
   useEffect(() => {
     renderModelsRef.current = renderModels;
+    focusBoundsRef.current = focusBounds;
   });
 
   // 1) MAP INITIALIZATION (Leaflet Setup)
@@ -175,6 +216,8 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
       maxZoom: MAP_CONFIG.ZOOM.MAX,
       minZoom: MAP_CONFIG.ZOOM.MIN,
       bounceAtZoomLimits: false,
+      // Off so a double-tap on a stop expands it instead of zooming (RF-006.4.8).
+      doubleClickZoom: false,
     });
 
     // Tile Layer (Map skin)
@@ -194,6 +237,7 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
     overlayLayerRef.current = overlayGroup;
 
     return () => {
+      clearTimeout(tapTimerRef.current); // drop any pending single-tap (RF-006.4.8)
       map.remove();
       mapInstanceRef.current = null;
       overlayLayerRef.current = null;
@@ -230,10 +274,17 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
     if (!map) return;
 
     if (isExternal) {
-      // The start joins the frame (GPS may land outside the points' envelope);
-      // the suggestion line deliberately does NOT — re-pointing must not refit.
-      // Models come from the ref: this effect reacts to boundsSignature ONLY,
-      // so toggling a draft candidate never re-frames the map (RF-006.4).
+      // Meu roteiro: when a stop is focused/expanded, zoom CLOSE to it
+      // (RF-006.4.11 — `focusBounds`); otherwise frame all models. The start
+      // joins the whole-route frame (GPS may land outside); the suggestion line
+      // does NOT (re-pointing must not refit). Models come from the ref: this
+      // reacts to boundsSignature only, so a draft candidate toggle never refits.
+      const focus = focusBoundsRef.current;
+      if (focus && focus.length > 0) {
+        const bounds = L.latLngBounds(focus.map((p) => L.latLng(p.lat, p.lng)));
+        map.fitBounds(bounds, { paddingTopLeft: [40, 40], paddingBottomRight: [40, 40 + bottomObstructionPx], maxZoom: MAP_CONFIG.ZOOM.MAX });
+        return;
+      }
       const coords = renderModelsRef.current.map((model) => L.latLng(model.lat, model.lng));
       if (startLat !== undefined && startLng !== undefined) coords.push(L.latLng(startLat, startLng));
       if (coords.length === 0) return;
@@ -245,14 +296,21 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
     if (stops.length === 0) return;
 
     const expanded = expandedStopKey !== null ? stops[Number(expandedStopKey)] : undefined;
+    /** Focused-but-collapsed stop (RF-006.4.10): center CLOSE on it, keep it
+        grouped — same zoom as expanding (RF-006.4.11: the focus was too far). */
+    const focusedKey = expandedStopKey === null && selectedAddressKey !== null ? selectedAddressKey.split(":")[0] : null;
+    const focused = focusedKey !== null ? stops[Number(focusedKey)] : undefined;
     if (expanded) {
       const bounds = L.latLngBounds(expanded.addresses.map((addr) => L.latLng(addr.lat, addr.lng)));
+      map.fitBounds(bounds, { paddingTopLeft: [40, 40], paddingBottomRight: [40, 40 + bottomObstructionPx], maxZoom: MAP_CONFIG.ZOOM.MAX });
+    } else if (focused) {
+      const bounds = L.latLngBounds(focused.addresses.map((addr) => L.latLng(addr.lat, addr.lng)));
       map.fitBounds(bounds, { paddingTopLeft: [40, 40], paddingBottomRight: [40, 40 + bottomObstructionPx], maxZoom: MAP_CONFIG.ZOOM.MAX });
     } else {
       const bounds = L.latLngBounds(stops.map((stop) => L.latLng(stop.representative.lat, stop.representative.lng)));
       map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50 + bottomObstructionPx], maxZoom: MAP_CONFIG.ZOOM.DEFAULT });
     }
-  }, [stops, expandedStopKey, bottomObstructionPx, isExternal, boundsSignature, startLat, startLng]);
+  }, [stops, expandedStopKey, selectedAddressKey, bottomObstructionPx, isExternal, boundsSignature, startLat, startLng]);
 
   // 3) MARKERS RENDERING — redraws when the data OR the interaction state changes.
   useEffect(() => {
@@ -286,22 +344,22 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
 
     const entries: { marker: L.Marker; model: MarkerModel }[] = [];
 
-    // Squares and address circles share the zoom-based scale (same proportion); the
-    // selected address is always enlarged for emphasis (alone or within a group).
-    // Committed roteiro stops grow (they aggregate addresses and are the tap
-    // target — RF-006.4.2); the Original's squares are untouched.
+    // Scale: committed roteiro stops grow (they aggregate addresses — RF-006.4.2);
+    // the STRONGLY-selected marker (`highlight`) is enlarged so it stands out over
+    // clusters (RF-006.4.14 — the ring alone vanished among neighbors).
     const scaleFor = (model: MarkerModel): number => {
       const base = scaleForZoom(safeZoom());
-      if (model.kind !== "address") return isExternal ? base * EXTERNAL_STOP_SCALE_FACTOR : base;
-      return model.addressKey === selectedAddressKey ? base * SELECTED_SCALE_FACTOR : base;
+      const stopFactor = isExternal && model.kind !== "address" ? EXTERNAL_STOP_SCALE_FACTOR : 1;
+      return model.iconProps.highlight ? base * stopFactor * SELECTED_SCALE_FACTOR : base * stopFactor;
     };
 
-    // Stacking: addresses of the focused stop rise above other stops; the selected
-    // address rises above its neighbors; committed roteiro stops rise above the
-    // free circles (external mode only — RF-006.4.2).
+    // Stacking: the highlighted marker rises above everything (Z_SELECTED — the
+    // panel's stop / selected address must never hide behind neighbors, RF-006.4.14);
+    // committed roteiro stops sit above the free circles (external mode).
     const zIndexFor = (model: MarkerModel): number => {
+      if (model.iconProps.highlight) return Z_SELECTED;
       if (model.kind !== "address") return isExternal ? Z_EXTERNAL_STOP : 0;
-      return model.addressKey === selectedAddressKey ? Z_SELECTED : Z_GROUP;
+      return Z_GROUP;
     };
 
     renderModels.forEach((model) => {
@@ -313,14 +371,29 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
       if (model.tooltipHtml) marker.bindTooltip(model.tooltipHtml, { direction: "top", offset: [0, TOOLTIP_OFFSET_Y] });
 
       if (!isExternal) {
+        // Original (RF-006.4.10): single click FOCUSES the stop (stays grouped),
+        // double click EXPANDS it into addresses. Deferred like the roteiro so
+        // the double-click's first tap doesn't recreate the markers mid-gesture.
         marker.on("click", () => {
-          applyInteractionRef.current(nextInteraction({ expandedStopKey, selectedAddressKey }, model, stops));
+          clearTimeout(tapTimerRef.current);
+          tapTimerRef.current = setTimeout(() => applyInteractionRef.current(nextInteraction(interactionRef.current, model, stops)), DOUBLE_TAP_MS);
+        });
+        marker.on("dblclick", () => {
+          clearTimeout(tapTimerRef.current);
+          applyInteractionRef.current(model.kind === "stop" ? expandInteraction(model.stopIndex, stops) : nextInteraction(interactionRef.current, model, stops));
         });
       } else if (hasModelTap) {
-        // External models (Meu roteiro): the tap goes to the builder screen —
-        // confirm-start / re-point suggestion (TASK-RF-006.3).
+        // External models (Meu roteiro): single tap selects (deferred so a
+        // double-tap can pre-empt it — RF-006.4.8); double tap expands a firmed
+        // stop into its addresses. The timer is needed because a tap recreates
+        // the markers, which would otherwise swallow the second tap.
         marker.on("click", () => {
-          onModelTapRef.current?.(model);
+          clearTimeout(tapTimerRef.current);
+          tapTimerRef.current = setTimeout(() => onModelTapRef.current?.(model), DOUBLE_TAP_MS);
+        });
+        marker.on("dblclick", () => {
+          clearTimeout(tapTimerRef.current);
+          onModelExpandRef.current?.(model);
         });
       }
 
@@ -349,7 +422,8 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
     const map = mapInstanceRef.current;
     if (!map) return;
     const onMapClick = (e?: L.LeafletMouseEvent) => {
-      applyInteractionRef.current(collapseInteraction());
+      // REGROUP but keep the focus (RF-006.4.10): the panel/selection never empties.
+      applyInteractionRef.current(regroupInteraction(interactionRef.current));
       // Defensive: unit tests invoke the handler without an event.
       if (e?.latlng) onMapTapRef.current?.({ lat: e.latlng.lat, lng: e.latlng.lng });
     };
@@ -389,7 +463,8 @@ export const RouteMap: React.FC<Props> = ({ rows, interaction, onInteractionChan
       marker.addTo(overlayLayer);
       overlayMarkers.push({ marker, iconProps });
     };
-    if (startLat !== undefined && startLng !== undefined) addOverlayMarker(startLat, startLng, START_ICON_PROPS, Z_SELECTED);
+    // Below Z_SELECTED so the selected stop/address sits ABOVE the start (RF-006.4.14).
+    if (startLat !== undefined && startLng !== undefined) addOverlayMarker(startLat, startLng, START_ICON_PROPS, Z_GROUP);
     if (anchorLat !== undefined && anchorLng !== undefined) addOverlayMarker(anchorLat, anchorLng, VEHICLE_ICON_PROPS, Z_VEHICLE);
 
     // Dashed radius circle (tela 9, spec §3): real meters, centered on the SEED.

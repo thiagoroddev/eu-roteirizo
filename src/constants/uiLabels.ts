@@ -89,6 +89,8 @@ export const UI_LABELS = {
     // Duas visões do painel (rev. 07/07 — TASK-RF-023.7)
     SECTION_STOP: "Resumo da parada",
     SECTION_SELECTED: "Endereço selecionado",
+    /** No Meu roteiro o "selecionado" da parada é a parada do veículo (RF-006.4.7). */
+    SECTION_SELECTED_ANCHOR: "Endereço selecionado — parada do veículo (âncora)",
     /** 3ª seção do painel do roteiro (RF-006.4.3): preview da parada a criar. */
     SECTION_SUGGESTED: "Parada sugerida",
     VIEW_FULL_LIST: "Ver lista completa",
@@ -150,7 +152,8 @@ export const UI_LABELS = {
     MODE_DRAFT: "Edição de parada",
     ROTEIRO_DRAFT: {
       TITLE: (n: number) => `Parada ${n} (rascunho)`,
-      TAP_HINT: "Tocar num endereço no mapa adiciona ou remove da parada.",
+      // O toque no mapa NÃO adiciona/remove mais (RF-006.4.9): raio + lista ±.
+      TAP_HINT: "Ajuste o raio ou use os botões +/− da lista para escolher os endereços.",
       ESTIMATE: (minutes: number, distance: string) => `~${minutes} min · ${distance} a pé`,
       /** Circuito irrisório (< 20 m): mostrar metros minaria a confiança. */
       ESTIMATE_TIME_ONLY: (minutes: number) => `~${minutes} min a pé`,

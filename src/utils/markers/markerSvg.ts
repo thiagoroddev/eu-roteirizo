@@ -59,6 +59,9 @@ export interface MarkerSvgProps {
   ringStyle?: "solid" | "dashed";
   /** Bright type-colored neon glow — the clicked address within a multi-address stop. */
   emphasis?: boolean;
+  /** The STRONGLY-selected marker (RF-006.4.14): RouteMap enlarges + raises it so
+      it stands out over neighbors/clusters. Purely a scale/z-index cue here. */
+  highlight?: boolean;
   /** Fine tip/cone at the bottom (default true). The street-anchored vehicle passes false. */
   tip?: boolean;
   /** Render scale applied to the intrinsic viewBox size. Defaults to 0.8. */

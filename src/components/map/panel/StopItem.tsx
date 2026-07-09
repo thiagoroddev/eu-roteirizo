@@ -1,8 +1,9 @@
 import { useEffect, useRef, type ReactNode } from "react";
+import { Car } from "lucide-react";
 import { Badge } from "../../ui/badge";
 import { cn } from "@/lib/utils";
 import { UI_LABELS } from "../../../constants/uiLabels";
-import { colorForLocationType, roteiroColorForLocationType } from "../../../utils/markers/markerColors";
+import { colorForLocationType, roteiroColorForLocationType, ROTEIRO_MARKER_COLORS } from "../../../utils/markers/markerColors";
 import type { StopItemData } from "../../../utils/markers/panelModels";
 
 const SHEET = UI_LABELS.ROUTE_MAP.ADDRESS_SHEET;
@@ -41,10 +42,14 @@ interface RowProps {
   /** Meu roteiro mode: the mini-marker uses the neon type palette, matching the
       map markers of that mode (RF-006.4.2). Default = Original palette. */
   neon?: boolean;
+  /** "vehicle": the mini-marker shows the car glyph (the stop anchor / parada do
+      veículo) instead of a number, in the route-infrastructure slate (RF-006.4.7). */
+  markerGlyph?: "vehicle";
 }
 
-export const StopItemRow = ({ item, onTap, leading, highlighted = false, expanded, neon = false }: RowProps) => {
-  const color = neon ? roteiroColorForLocationType(item.markerType) : colorForLocationType(item.markerType);
+export const StopItemRow = ({ item, onTap, leading, highlighted = false, expanded, neon = false, markerGlyph }: RowProps) => {
+  const typeColor = neon ? roteiroColorForLocationType(item.markerType) : colorForLocationType(item.markerType);
+  const color = markerGlyph === "vehicle" ? ROTEIRO_MARKER_COLORS.vehicle : typeColor;
 
   return (
     <button
@@ -59,9 +64,10 @@ export const StopItemRow = ({ item, onTap, leading, highlighted = false, expande
     >
       {leading}
       {/* Mini-marker: functional map palette (NOT theme tokens — locked with the
-          marker colors, REF-012), same type→color mapping as the map. */}
+          marker colors, REF-012), same type→color mapping as the map. The
+          vehicle glyph marks the stop's anchor (parada do veículo — RF-006.4.7). */}
       <span aria-hidden className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold" style={{ backgroundColor: color.bottom, color: color.numberInk ?? "#FFFFFF" }}>
-        {item.markerNumber}
+        {markerGlyph === "vehicle" ? <Car className="h-3.5 w-3.5" aria-hidden /> : item.markerNumber}
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium">{item.addressLine}</span>

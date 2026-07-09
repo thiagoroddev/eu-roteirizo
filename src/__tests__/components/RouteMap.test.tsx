@@ -11,7 +11,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import { RouteMap } from "../../components/RouteMap";
-import { COLUMN_NAMES, UI_LABELS } from "../../constants";
+import { COLUMN_NAMES, UI_LABELS, MAP_CONFIG } from "../../constants";
 import type { RowData } from "../../types";
 import type { InteractionState } from "../../utils/markers/markerModels";
 
@@ -218,13 +218,31 @@ describe("RouteMap (controlled embedded map)", () => {
   // CONTROLLED INTERACTION (TASK-RF-023.2 / REF-011)
   // ==========================================================================
 
-  it("marker click EMITS the transition (stop click → first address selected) without mutating on its own", () => {
+  it("single click FOCUSES a stop (grouped) selecting its first address — DEFERRED (RF-006.4.10)", () => {
     const onChange = vi.fn();
     renderRouteMap(mockRowsWithCoordinates, { onInteractionChange: onChange });
 
+    // The single click is deferred so a double-click can pre-empt it.
+    vi.useFakeTimers();
     clickFirstMarker();
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    vi.useRealTimers();
 
-    // Single-address stop auto-selects its first address — the PARENT decides what to do.
+    // Focus keeps the stop GROUPED (expandedStopKey null); the parent decides the rest.
+    expect(onChange).toHaveBeenCalledWith({ expandedStopKey: null, selectedAddressKey: "0:0" });
+  });
+
+  it("double click EXPANDS a stop into its addresses (RF-006.4.10)", () => {
+    const onChange = vi.fn();
+    renderRouteMap(mockRowsWithCoordinates, { onInteractionChange: onChange });
+
+    const dblcall = markerMethods.on.mock.calls.find(([event]) => event === "dblclick");
+    expect(dblcall).toBeDefined();
+    act(() => {
+      (dblcall![1] as () => void)();
+    });
     expect(onChange).toHaveBeenCalledWith({ expandedStopKey: "0", selectedAddressKey: "0:0" });
   });
 
@@ -284,6 +302,18 @@ describe("RouteMap (controlled embedded map)", () => {
     expect(L.marker).toHaveBeenCalledWith([-22.96, -43.16], expect.anything());
   });
 
+  it("focusBounds zooms CLOSE to the focused stop at MAX zoom (RF-006.4.11)", () => {
+    renderRouteMap(mockRowsWithCoordinates, {
+      models: externalModels,
+      focusBounds: [
+        { lat: -22.95, lng: -43.15 },
+        { lat: -22.951, lng: -43.151 },
+      ],
+    });
+    // The last fit targets the focus at MAX zoom (close), not the whole-route DEFAULT.
+    expect(mapMethods.fitBounds).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ maxZoom: MAP_CONFIG.ZOOM.MAX }));
+  });
+
   it("does NOT bind marker click handlers for external models (no-op until RF-006.3/.4)", () => {
     renderRouteMap(mockRowsWithCoordinates, { models: externalModels });
 
@@ -341,10 +371,26 @@ describe("RouteMap (controlled embedded map)", () => {
 
     const clicks = markerMethods.on.mock.calls.filter(([event]) => event === "click");
     expect(clicks).toHaveLength(2);
+    // The single tap is DEFERRED (RF-006.4.8) so a double-tap can pre-empt it.
+    vi.useFakeTimers();
     act(() => {
       (clicks[0][1] as () => void)();
+      vi.advanceTimersByTime(300);
     });
+    vi.useRealTimers();
     expect(onModelTap).toHaveBeenCalledWith(externalModels[0]);
+  });
+
+  it("double-tapping an EXTERNAL marker fires onModelExpand immediately (RF-006.4.8)", () => {
+    const onModelExpand = vi.fn();
+    renderRouteMap(mockRowsWithCoordinates, { models: externalModels, onModelTap: vi.fn(), onModelExpand });
+
+    const dblclicks = markerMethods.on.mock.calls.filter(([event]) => event === "dblclick");
+    expect(dblclicks).toHaveLength(2);
+    act(() => {
+      (dblclicks[0][1] as () => void)();
+    });
+    expect(onModelExpand).toHaveBeenCalledWith(externalModels[0]);
   });
 
   it("draws the start marker and the dashed suggestion line on the overlay layer", () => {

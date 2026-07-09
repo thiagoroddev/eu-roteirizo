@@ -113,15 +113,21 @@ vi.mock("../../components/RouteMap", () => ({
     interaction,
     onInteractionChange,
     models,
+    focusBounds,
+    highlightedStopKey,
     onMapTap,
     onModelTap,
+    onModelExpand,
     roteiroOverlay,
   }: {
     interaction?: InteractionState;
     onInteractionChange?: (next: InteractionState) => void;
     models?: MarkerModel[];
+    focusBounds?: LatLng[];
+    highlightedStopKey?: string | null;
     onMapTap?: (latlng: LatLng) => void;
     onModelTap?: (model: MarkerModel) => void;
+    onModelExpand?: (model: MarkerModel) => void;
     roteiroOverlay?: { start: LatLng | null; suggestionPath: LatLng[] | null; radiusCircle?: { center: LatLng; meters: number } | null; anchor?: LatLng | null };
   }) => (
     <div
@@ -139,13 +145,19 @@ vi.mock("../../components/RouteMap", () => ({
       }
       data-radius-circle={roteiroOverlay?.radiusCircle ? `${roteiroOverlay.radiusCircle.center.lat},${roteiroOverlay.radiusCircle.center.lng}@${roteiroOverlay.radiusCircle.meters}` : "none"}
       data-anchor={roteiroOverlay?.anchor ? `${roteiroOverlay.anchor.lat},${roteiroOverlay.anchor.lng}` : "none"}
+      data-focus-bounds={String(focusBounds?.length ?? "none")}
+      data-highlighted-stop={String(highlightedStopKey ?? "none")}
       data-models-summary={models?.map((m) => `${m.kind}${m.iconProps.selected ? "*" : ""}`).join(",") ?? "none"}
+      data-highlighted-model={models?.find((m) => m.iconProps.highlight)?.key ?? "none"}
     >
       <button type="button" onClick={() => onMapTap?.({ lat: -22.95, lng: -43.19 })}>
         stub-map-tap
       </button>
       <button type="button" onClick={() => models?.[0] && onModelTap?.(models[0])}>
         stub-first-point-tap
+      </button>
+      <button type="button" onClick={() => models?.[0] && onModelExpand?.(models[0])}>
+        stub-first-point-dbltap
       </button>
       <button type="button" onClick={() => models?.[1] && onModelTap?.(models[1])}>
         stub-second-point-tap
@@ -262,12 +274,28 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.45");
     expect(addressRow(/Rua Mapa, 10/)).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.PACKAGES_HEADER(1))).toBeInTheDocument();
-    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-expanded-stop", "0");
+    // The card tap shows the detail but does NOT expand the map (RF-006.4.10): stays grouped.
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-expanded-stop", "null");
 
     // Second tap collapses just the detail (panel stays where it is).
     fireEvent.click(addressRow(/Rua Mapa, 10/));
     expect(addressRow(/Rua Mapa, 10/)).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByText(UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.PACKAGES_HEADER(1))).not.toBeInTheDocument();
+  });
+
+  it("Original: 'Ver lista completa' abre a lista SEM expandir o mapa — evento distinto do duplo-clique (RF-006.4.11)", () => {
+    renderPage();
+    const stub = screen.getByTestId("route-map-stub");
+    expect(stub).toHaveAttribute("data-expanded-stop", "null");
+
+    // A lista completa esconde o mapa (painel cheio); ela NÃO desagrupa os
+    // marcadores — o desagrupar do mapa é o duplo-clique, evento distinto.
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_FULL_LIST }));
+    expect(stub).toHaveAttribute("data-expanded-stop", "null");
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.HIDE_FULL_LIST }));
+    expect(stub).toHaveAttribute("data-expanded-stop", "null");
+    expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`)).toBeInTheDocument();
   });
 
   it("the card follows the SELECTION on the map — panel untouched (rev. 07/07: no auto-raise, no auto-detail)", () => {
@@ -385,8 +413,20 @@ describe("MapPage (focus screen)", () => {
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.NEXT_STOP }));
 
     expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 10`)).toBeInTheDocument();
-    // The controlled RouteMap receives the expansion — the map focuses the stop.
-    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-expanded-stop", "0");
+    // The stepper FOCUSES the stop, GROUPED (RF-006.4.10 — no auto-expand): the
+    // map stays grouped (expandedStopKey null) but the panel follows the stop.
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-expanded-stop", "null");
+  });
+
+  it("Original: o quadrado da parada do painel é destacado no mapa e acompanha o stepper (RF-006.4.13)", () => {
+    // index 0 = stop 10, index 1 = stop 2. O painel abre na MENOR (stop 2 = índice 1).
+    uploaderState.routes = { "A-1": rowsStops10e2 };
+    renderPage();
+    const stub = screen.getByTestId("route-map-stub");
+    expect(stub.getAttribute("data-highlighted-stop")).toBe("1");
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.NEXT_STOP })); // → stop 10 (índice 0)
+    expect(stub.getAttribute("data-highlighted-stop")).toBe("0");
   });
 
   it("stepper ‹ is circular (from the smallest stop it wraps to the largest)", () => {
@@ -839,10 +879,13 @@ describe("MapPage (focus screen)", () => {
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
     expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
     expect(screen.getByText(new RegExp(`^${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`))).toBeInTheDocument();
-    // Chips include the walking estimate; the first address carries the ordinal.
+    // Chips include the walking estimate.
     expect(screen.getByText(/~\d+ min/)).toBeInTheDocument();
     expect(screen.getByText("2 endereços")).toBeInTheDocument();
-    expect(screen.getByText("1º")).toBeInTheDocument();
+    // "Endereço selecionado" agora é a parada do veículo (âncora), com o glifo
+    // do veículo no lugar do "1º" (RF-006.4.7).
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument();
+    expect(screen.queryByText("1º")).not.toBeInTheDocument();
 
     // Editar → back to the edit draft: the body is the Original's full-list
     // structure now (rev. 08/07 3ª rodada) — members carry the walking ordinal
@@ -861,20 +904,113 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(3, 3))).toBeInTheDocument();
   });
 
-  it("o círculo do preview cresce com o stepper e clampa no máximo (RF-006.4.6)", () => {
+  it("'Ver lista completa' na parada firmada mostra os endereços por ordinal; 'Esconder lista' volta ao resumo (RF-006.4.7)", () => {
+    startRoteiroFlow();
+    // Criar P1 (comita p1 + p2), depois focar a parada.
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+
+    // Resumo: mostra a âncora (parada do veículo), sem lista.
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument();
+
+    // Ver lista completa → os 2 endereços da parada por ordinal (a âncora some);
+    // é EVENTO DISTINTO do duplo-clique: abre a lista no painel (esconde o mapa),
+    // não expande os marcadores (RF-006.4.11).
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_FULL_LIST }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ORDINAL(1))).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ORDINAL(2))).toBeInTheDocument();
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).not.toBeInTheDocument();
+    expect(screen.getByTestId("route-map-stub").getAttribute("data-models-summary")).toContain("stop"); // mapa segue agrupado
+
+    // Esconder lista → volta ao resumo (âncora de novo).
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.HIDE_FULL_LIST }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument();
+  });
+
+  it("2 cliques no quadrado → desagrupa SÓ o mapa (painel fica no resumo); clicar fora regrupa mantendo foco (RF-006.4.11)", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    const stub = screen.getByTestId("route-map-stub");
+    // Focada e AGRUPADA: um quadrado selecionado + o órfão p3.
+    expect(stub.getAttribute("data-models-summary")).toBe("stop*,address");
+
+    // Focar a parada passa suas coords como focusBounds → zoom PERTO (RF-006.4.11).
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    expect(stub.getAttribute("data-focus-bounds")).toBe("2"); // p1 + p2 da parada
+
+    // Duplo-clique → desagrupa no MAPA; o painel FICA no resumo (não abre a lista).
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-dbltap" }));
+    expect(stub.getAttribute("data-models-summary")).toBe("address*,address*,address");
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument(); // resumo, não lista
+
+    // Clicar fora (mapa vazio) → reagrupa MANTENDO o foco (parada segue selecionada).
+    fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
+    expect(stub.getAttribute("data-models-summary")).toContain("stop");
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
+  });
+
+  it("desagrupado: tocar qualquer membro seleciona-o — destaque no mapa e no painel (RF-006.4.16)", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" })); // focar a parada
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-dbltap" })); // desagrupa no mapa
+    const stub = screen.getByTestId("route-map-stub");
+
+    // Sem membro escolhido: o painel mostra a ÂNCORA e o mapa destaca o 1º membro.
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument();
+    const anchorHighlighted = stub.getAttribute("data-highlighted-model");
+    expect(anchorHighlighted).not.toBe("none");
+
+    // Tocar o 2º membro → seleciona-o: o destaque do mapa migra e o painel troca
+    // para 'Endereço selecionado' (sem o sufixo da âncora).
+    fireEvent.click(screen.getByRole("button", { name: "stub-second-point-tap" }));
+    const memberHighlighted = stub.getAttribute("data-highlighted-model");
+    expect(memberHighlighted).not.toBe("none");
+    expect(memberHighlighted).not.toBe(anchorHighlighted);
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).not.toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).toBeInTheDocument();
+
+    // Clicar fora regrupa e volta para a âncora (RF-006.4.16).
+    fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-dbltap" }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument();
+  });
+
+  it("Editar desagrupa a parada no mapa (membros como círculos) e o toque no mapa não faz toggle (RF-006.4.9)", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" })); // focar a parada
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.EDIT }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.MODE_DRAFT)).toBeInTheDocument();
+
+    // Desagrupado: SEM quadrado da parada; membros como círculos + o órfão p3.
+    const stub = screen.getByTestId("route-map-stub");
+    expect(stub.getAttribute("data-models-summary")).toBe("address*,address*,address");
+
+    // Toque no mapa durante a edição NÃO adiciona/remove (RF-006.4.9): remaining fixo.
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" })); // toca um membro → no-op
+    fireEvent.click(screen.getByRole("button", { name: "stub-third-point-tap" })); // toca o órfão → no-op
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+  });
+
+  it("o círculo do preview segue o stepper de raio (RF-006.4.6)", () => {
     startRoteiroFlow();
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" })); // p1, raio 30
     const stub = screen.getByTestId("route-map-stub");
     expect(stub).toHaveAttribute("data-radius-circle", "-22.9,-43.2@30");
+    expect(screen.getByText("2 endereços")).toBeInTheDocument(); // p1 + p2 (p3 longe demais)
 
+    // O círculo acompanha o stepper (o clamp no máximo é coberto por RoteiroDraftSection.test).
     fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.RADIUS_INCREASE }));
     expect(stub).toHaveAttribute("data-radius-circle", "-22.9,-43.2@40");
-
-    // Sobe até o máximo (200 m) e clampa; p3 (~556 m) segue fora do alcance.
-    for (let i = 0; i < 20; i += 1) fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.RADIUS_INCREASE }));
-    expect(screen.getByText(DRAFT_LABELS.RADIUS_VALUE(200))).toBeInTheDocument();
-    expect(stub).toHaveAttribute("data-radius-circle", "-22.9,-43.2@200");
-    expect(screen.getByText("2 endereços")).toBeInTheDocument(); // p1 + p2 (p3 longe demais)
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.RADIUS_DECREASE }));
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.RADIUS_DECREASE }));
+    expect(stub).toHaveAttribute("data-radius-circle", "-22.9,-43.2@20");
   });
 
   it("shows the error state when the manifest cannot be reopened", () => {

@@ -145,9 +145,21 @@ describe("computeRoteiroMarkerModels — draft/stop context (TASK-RF-006.4)", ()
     expect(models.find((m) => m.key === "pt_a")!.iconProps.selected).toBe(true);
   });
 
-  it("the selected committed stop gets the ring (RF-006.4.2)", () => {
+  it("the selected committed stop gets the ring AND the highlight (enlarge/raise — RF-006.4.2/.4.14)", () => {
     const models = computeRoteiroMarkerModels([a], [stop("stop_1", ["pt_a"])], { selectedStopId: "stop_1" });
     expect(models[0].iconProps.selected).toBe(true);
+    expect(models[0].iconProps.highlight).toBe(true);
+    expect(models[0].iconProps.emphasis).toBe(true);
+  });
+
+  it("the selected orphan is HIGHLIGHTED; a candidate glows but is NOT highlighted (RF-006.4.14)", () => {
+    const models = computeRoteiroMarkerModels([a, b, c], [], { candidateIds: ["pt_c"], selectedPointId: "pt_a" });
+    const orphan = models.find((m) => m.key === "pt_a")!;
+    expect(orphan.iconProps.highlight).toBe(true);
+    expect(orphan.iconProps.emphasis).toBe(true);
+    const candidate = models.find((m) => m.key === "pt_c")!;
+    expect(candidate.iconProps.emphasis).toBe(true); // glow (radius cue)
+    expect(candidate.iconProps.highlight).toBeFalsy(); // but no size boost
   });
 
   it("the selected orphan gets the ring (only while no draft is open)", () => {
@@ -162,6 +174,55 @@ describe("computeRoteiroMarkerModels — draft/stop context (TASK-RF-006.4)", ()
     const models = computeRoteiroMarkerModels([a, b], [stop("stop_1", ["pt_a"])]);
     expect(models.map((m) => m.key)).toEqual(["stop_1", "pt_b"]);
     expect(models[1].iconProps).toMatchObject({ shape: "circle", color: ROTEIRO_TYPE_COLORS.indefinite, number: null });
+  });
+
+  it("editing a firmed stop (REOPEN draft) ungroups it — members as circles, no square (RF-006.4.9)", () => {
+    const committed = stop("stop_pt_a", ["pt_a", "pt_b"]);
+    const models = computeRoteiroMarkerModels([a, b, c], [committed], { draft: draftOn("pt_a", ["pt_a", "pt_b"]), candidateIds: ["pt_c"] });
+
+    // The edited stop's square is gone; its members render as ordinal circles.
+    expect(models.find((m) => m.key === "stop_pt_a")).toBeUndefined();
+    const memberA = models.find((m) => m.key === "pt_a")!;
+    const memberB = models.find((m) => m.key === "pt_b")!;
+    expect(memberA.kind).toBe("address");
+    expect(memberA.iconProps.number).toBe(UI_LABELS.MAP_PANEL.ORDINAL(1));
+    expect(memberB.iconProps.number).toBe(UI_LABELS.MAP_PANEL.ORDINAL(2));
+    // A radius candidate (not a member) shows dashed.
+    expect(models.find((m) => m.key === "pt_c")!.iconProps.ringStyle).toBe("dashed");
+  });
+
+  it("expandedStopId renders that stop's members as numbered circles instead of the square (RF-006.4.8)", () => {
+    const grouped = computeRoteiroMarkerModels([a, b, c], [stop("stop_1", ["pt_a", "pt_b"]), stop("stop_2", ["pt_c"], 2)]);
+    // Agrupado: dois quadrados (stop_1, stop_2), sem os membros.
+    expect(grouped.map((m) => m.kind)).toEqual(["stop", "stop"]);
+
+    const expanded = computeRoteiroMarkerModels([a, b, c], [stop("stop_1", ["pt_a", "pt_b"]), stop("stop_2", ["pt_c"], 2)], { expandedStopId: "stop_1" });
+    // stop_1 vira círculos numerados dos membros; stop_2 segue quadrado.
+    const stop1Members = expanded.filter((m) => m.key === "pt_a" || m.key === "pt_b");
+    expect(stop1Members).toHaveLength(2);
+    expect(stop1Members.every((m) => m.kind === "address")).toBe(true);
+    expect(stop1Members.map((m) => m.iconProps.number).sort()).toEqual([UI_LABELS.MAP_PANEL.ORDINAL(1), UI_LABELS.MAP_PANEL.ORDINAL(2)]);
+    expect(expanded.find((m) => m.key === "stop_1")).toBeUndefined(); // sem o quadrado da parada expandida
+    expect(expanded.find((m) => m.key === "stop_2")?.kind).toBe("stop"); // a outra segue agrupada
+    // The anchor (1st member) stays HIGHLIGHTED with the group expanded (RF-006.4.15).
+    const anchor = expanded.find((m) => m.iconProps.number === UI_LABELS.MAP_PANEL.ORDINAL(1))!;
+    expect(anchor.iconProps.highlight).toBe(true);
+    const secondMember = expanded.find((m) => m.iconProps.number === UI_LABELS.MAP_PANEL.ORDINAL(2))!;
+    expect(secondMember.iconProps.highlight).toBeFalsy();
+  });
+
+  it("selectedMemberId highlights that member instead of the anchor (RF-006.4.16)", () => {
+    const expanded = computeRoteiroMarkerModels([a, b, c], [stop("stop_1", ["pt_a", "pt_b"]), stop("stop_2", ["pt_c"], 2)], {
+      expandedStopId: "stop_1",
+      selectedMemberId: "pt_b",
+    });
+    // O membro tocado (pt_b) é o destacado; a âncora (pt_a) deixa de ser.
+    const first = expanded.find((m) => m.key === "pt_a")!;
+    const second = expanded.find((m) => m.key === "pt_b")!;
+    expect(second.iconProps.highlight).toBe(true);
+    expect(second.iconProps.emphasis).toBe(true);
+    expect(first.iconProps.highlight).toBeFalsy();
+    expect(first.iconProps.emphasis).toBeFalsy();
   });
 });
 

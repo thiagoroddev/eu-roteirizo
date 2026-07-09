@@ -7,7 +7,18 @@
 
 import { describe, it, expect } from "vitest";
 import { groupRowsByStop } from "../../../utils/markers/stopGrouping";
-import { computeMarkerModels, nextInteraction, collapseInteraction, findAddressByKey, firstAddressKey, extractComplement, locationTypeLabel } from "../../../utils/markers/markerModels";
+import {
+  computeMarkerModels,
+  nextInteraction,
+  focusInteraction,
+  expandInteraction,
+  regroupInteraction,
+  collapseInteraction,
+  findAddressByKey,
+  firstAddressKey,
+  extractComplement,
+  locationTypeLabel,
+} from "../../../utils/markers/markerModels";
 import { COLUMN_NAMES, ICON_KEYS } from "../../../constants";
 import type { RowData } from "../../../types";
 
@@ -112,27 +123,67 @@ describe("computeMarkerModels", () => {
   });
 });
 
-describe("nextInteraction", () => {
+describe("nextInteraction (single click — RF-006.4.10)", () => {
   const collapsed = { expandedStopKey: null, selectedAddressKey: null };
 
-  it("expands a multi-address stop selecting its FIRST address (lowest Sequence — rev. 07/07)", () => {
+  it("single click FOCUSES a stop (stays GROUPED) selecting its first address", () => {
     const stopModel = computeMarkerModels(stops, null, null)[0];
-    // Stop 18: seq 49 lives at address index 0.
-    expect(nextInteraction(collapsed, stopModel, stops)).toEqual({ expandedStopKey: "0", selectedAddressKey: "0:0" });
+    // Stop 18: seq 49 lives at address index 0. Grouped → expandedStopKey stays null.
+    expect(nextInteraction(collapsed, stopModel, stops)).toEqual({ expandedStopKey: null, selectedAddressKey: "0:0" });
   });
 
-  it("auto-selects the single address when expanding a single-address stop", () => {
+  it("focus of a single-address stop still selects its only address, grouped", () => {
     const stopModel = computeMarkerModels(stops, null, null)[1]; // stop 7
-    expect(nextInteraction(collapsed, stopModel, stops)).toEqual({ expandedStopKey: "1", selectedAddressKey: "1:0" });
+    expect(nextInteraction(collapsed, stopModel, stops)).toEqual({ expandedStopKey: null, selectedAddressKey: "1:0" });
   });
 
-  it("selects an address while keeping the stop expanded", () => {
+  it("clicking an address selects it while keeping the stop expanded", () => {
     const addressModel = computeMarkerModels(stops, "0", null).filter((m) => m.kind === "address")[2];
     expect(nextInteraction({ expandedStopKey: "0", selectedAddressKey: null }, addressModel, stops)).toEqual({ expandedStopKey: "0", selectedAddressKey: "0:2" });
   });
+});
 
-  it("collapse clears both expansion and selection", () => {
+describe("focus / expand / regroup transitions (RF-006.4.10)", () => {
+  it("focusInteraction keeps the stop grouped (expandedStopKey null) with its first address", () => {
+    expect(focusInteraction(0, stops)).toEqual({ expandedStopKey: null, selectedAddressKey: "0:0" });
+  });
+
+  it("expandInteraction ungroups the stop into its addresses", () => {
+    expect(expandInteraction(0, stops)).toEqual({ expandedStopKey: "0", selectedAddressKey: "0:0" });
+  });
+
+  it("regroupInteraction collapses the expansion but KEEPS the focus", () => {
+    expect(regroupInteraction({ expandedStopKey: "0", selectedAddressKey: "0:2" })).toEqual({ expandedStopKey: null, selectedAddressKey: "0:2" });
+  });
+
+  it("collapseInteraction is the full reset (both null) — used on mode change", () => {
     expect(collapseInteraction()).toEqual({ expandedStopKey: null, selectedAddressKey: null });
+  });
+
+  it("the FOCUSED-but-collapsed stop's square gets the emphasis", () => {
+    const models = computeMarkerModels(stops, null, "0:0");
+    const square = models.find((m) => m.key === "0")!;
+    expect(square.kind).toBe("stop");
+    expect(square.iconProps.selected).toBe(true);
+    // A different stop's square stays unemphasized.
+    expect(models.find((m) => m.key === "1")!.iconProps.selected).toBe(false);
+  });
+
+  it("highlightedStopKey emphasizes + HIGHLIGHTS the panel's stop square even without a click (RF-006.4.13/.4.14)", () => {
+    // No selection at all, but the panel points at stop index 1 → its square rings + enlarges.
+    const models = computeMarkerModels(stops, null, null, "1");
+    const square = models.find((m) => m.key === "1")!;
+    expect(square.iconProps.selected).toBe(true);
+    expect(square.iconProps.highlight).toBe(true); // RouteMap enlarges + raises it
+    const other = models.find((m) => m.key === "0")!;
+    expect(other.iconProps.selected).toBe(false);
+    expect(other.iconProps.highlight).toBeFalsy();
+  });
+
+  it("the SELECTED expanded address is highlighted; its siblings are not (RF-006.4.14)", () => {
+    const models = computeMarkerModels(stops, "0", "0:1").filter((m) => m.kind === "address");
+    expect(models.find((m) => m.addressKey === "0:1")!.iconProps.highlight).toBe(true);
+    expect(models.find((m) => m.addressKey === "0:0")!.iconProps.highlight).toBeFalsy();
   });
 });
 

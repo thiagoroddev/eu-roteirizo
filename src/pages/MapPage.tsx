@@ -23,7 +23,7 @@ import { useRoadGraph } from "../hooks/useRoadGraph";
 import type { RowData } from "../types";
 import type { LatLng } from "../types/routing";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
-import { collapseInteraction, firstAddressKey, type InteractionState, type MarkerModel } from "../utils/markers/markerModels";
+import { collapseInteraction, focusInteraction, regroupInteraction, type InteractionState, type MarkerModel } from "../utils/markers/markerModels";
 import { adjacentStopKey, buildPanelItems, panelMetrics, smallestStopKey, stopPlaceSummary, type PanelMetrics } from "../utils/markers/panelModels";
 import {
   computeRoteiroMarkerModels,
@@ -138,6 +138,12 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
   /** The tapped committed stop (RF-006.4.2) — ephemeral UI too. */
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
+  /** The firmed stop shown UNGROUPED on the map (RF-006.4.8): double-tap the
+      square or "Ver lista completa" sets it; regrouping clears it. */
+  const [expandedRoteiroStopId, setExpandedRoteiroStopId] = useState<string | null>(null);
+  /** The selected member of the expanded stop (RF-006.4.16) — tapping a member
+      picks it; null = the anchor (1st). Cleared with the expansion. */
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   /** The grouping radius of the "Parada sugerida" preview — adjustable BEFORE
       creating (RF-006.4.6). Ephemeral; resets to the default per selected orphan. */
   const [previewRadiusMeters, setPreviewRadiusMeters] = useState(builderState.config.autoRadiusMeters);
@@ -146,6 +152,9 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   const selectedPoint = selectedPointId !== null ? (pointsById.get(selectedPointId) ?? null) : null;
   /** Defensive: a dissolved/reopened stop drops the selection to the next context. */
   const selectedStop = selectedStopId !== null ? (builderState.stops.find((s) => s.id === selectedStopId) ?? null) : null;
+  /** The selected member, guarded to the selected stop (RF-006.4.16 — a stale id
+      from another stop is ignored; null falls back to the anchor). */
+  const effectiveSelectedMemberId = selectedStop && selectedMemberId !== null && selectedStop.pointIds.includes(selectedMemberId) ? selectedMemberId : null;
 
   /** Radius PREVIEW (U6): selecting an orphan already shows the circle and its
       candidates BEFORE creating — pure derivation, the reducer stays untouched. */
@@ -160,10 +169,18 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   const candidateIds = draft ? draftCandidateIds(builderState) : previewCandidateIds;
 
   const roteiroModels = useMemo(
-    () => computeRoteiroMarkerModels(points, builderState.stops, { draft, candidateIds, selectedPointId, selectedStopId }),
+    () =>
+      computeRoteiroMarkerModels(points, builderState.stops, {
+        draft,
+        candidateIds,
+        selectedPointId,
+        selectedStopId,
+        expandedStopId: expandedRoteiroStopId,
+        selectedMemberId: effectiveSelectedMemberId,
+      }),
     // candidateIds is derived fresh each render; its CONTENT tracks draft/points.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [points, builderState.stops, draft, selectedPointId, selectedStopId, candidateIds.join("|")]
+    [points, builderState.stops, draft, selectedPointId, selectedStopId, expandedRoteiroStopId, effectiveSelectedMemberId, candidateIds.join("|")]
   );
 
   // Road graph — lazy on the roteiro enter (ADR-009 decision B); everything
@@ -233,8 +250,47 @@ function MapScreen({ rows }: { rows: RowData[] }) {
       defineStart(latlng);
       return;
     }
+    // Tapping the empty map REGROUPS an ungrouped stop, keeping it focused
+    // (RF-006.4.11); only when nothing is ungrouped does it deselect.
+    if (expandedRoteiroStopId !== null) {
+      setExpandedRoteiroStopId(null);
+      setSelectedMemberId(null); // regroup returns to the anchor as the selected address (RF-006.4.16)
+      return;
+    }
     setSelectedPointId(null);
     setSelectedStopId(null);
+    setSelectedMemberId(null);
+    setPanelView("selected");
+  };
+
+  /** Double-tap a firmed stop → ungroup it on the MAP ONLY, focused (RF-006.4.11):
+      the panel STAYS on the summary (the full list would hide the map — they are
+      distinct events). Regroup by tapping the empty map. */
+  const handleExpandRoteiroStop = (stopId: string) => {
+    setSelectedStopId(stopId);
+    setSelectedPointId(null);
+    setExpandedRoteiroStopId(stopId);
+    setSelectedMemberId(null); // a fresh expand starts on the anchor (RF-006.4.16)
+  };
+  const handleModelExpand = (model: MarkerModel) => {
+    if (model.kind !== "stop" || draft) return; // only firmed squares expand
+    handleExpandRoteiroStop(model.key);
+  };
+
+  /** "Ver lista completa" (roteiro): open the panel's full list — a DISTINCT
+      event from the map ungroup; the list hides the map (RF-006.4.11). */
+  const handleShowRoteiroList = () => {
+    setPanelView("list");
+    setPanelSnap("full");
+    setScrollSignal((count) => count + 1);
+  };
+  /** "Esconder lista" (roteiro): back to the summary and REGROUP the map. Lands
+      on the collapsed-fit snap (RF-006.4.15) — it shows the whole summary, no
+      cut and no empty gap. */
+  const handleHideRoteiroList = () => {
+    setExpandedRoteiroStopId(null);
+    setPanelView("selected");
+    setPanelSnap("collapsed");
   };
 
   /** Tap on a marker, by context (RF-006.4): during a draft it toggles the
@@ -245,19 +301,30 @@ function MapScreen({ rows }: { rows: RowData[] }) {
       the edit slice (.6). */
   const handleModelTap = (model: MarkerModel) => {
     if (model.kind === "stop") {
-      // Committed stop tapped (RF-006.4.2): open its Original-style panel.
-      // During the edit draft, squares stay inert (the taps mean membership).
+      // Committed stop tapped (RF-006.4.2): single tap FOCUSES it, grouped —
+      // regrouping any other expanded stop (double-tap expands, RF-006.4.8).
+      // During an edit the map is inert to taps (membership = radius + list, RF-006.4.9).
       if (draft) return;
       setSelectedStopId(model.key);
       setSelectedPointId(null);
+      setExpandedRoteiroStopId(null);
+      setSelectedMemberId(null); // a focused (grouped) stop shows the anchor (RF-006.4.16)
       setCardExpanded(false);
-      setPanelSnap((current) => (current === "collapsed" ? "half" : current));
+      setPanelView("selected"); // a fresh stop opens on its summary, not the list
+      // No auto-raise: the collapsed snap now FITS the summary (RF-006.4.12).
       return;
     }
-    if (draft) {
-      dispatch({ type: "TOGGLE_DRAFT_POINT", pointId: model.key });
+    // An address of the EXPANDED stop is a MEMBER: tapping it SELECTS it (RF-006.4.16)
+    // — highlighted on the map, shown in the panel — never re-points/toggles.
+    const expandedStop = expandedRoteiroStopId !== null ? builderState.stops.find((s) => s.id === expandedRoteiroStopId) : null;
+    if (expandedStop && expandedStop.pointIds.includes(model.key)) {
+      setSelectedMemberId(model.key);
+      setCardExpanded(false);
       return;
     }
+    // During an EDIT the map no longer toggles membership (Q2 09/07 — RF-006.4.9):
+    // members change only via the radius + the panel list ±. Map tap is inert.
+    if (draft) return;
     if (!hasStart || redefining) {
       setPendingPointId(model.key);
       setArmedMapTap(false);
@@ -266,9 +333,10 @@ function MapScreen({ rows }: { rows: RowData[] }) {
     }
     setSelectedPointId(model.key);
     setSelectedStopId(null);
+    setExpandedRoteiroStopId(null);
     setPreviewRadiusMeters(builderState.config.autoRadiusMeters); // each orphan starts at the default radius
     setCardExpanded(false);
-    setPanelSnap((current) => (current === "collapsed" ? "half" : current));
+    // No auto-raise: the collapsed snap now FITS the summary (RF-006.4.12).
     dispatch({ type: "SET_NEXT_SUGGESTION", pointId: model.key });
   };
 
@@ -288,8 +356,10 @@ function MapScreen({ rows }: { rows: RowData[] }) {
     });
     setSelectedPointId(null);
     setSelectedStopId(stopId); // focus the freshly firmed, grouped stop
+    setExpandedRoteiroStopId(null);
     setCardExpanded(false);
-    setPanelSnap((current) => (current === "collapsed" ? "half" : current));
+    setPanelView("selected");
+    // No auto-raise: the collapsed snap now FITS the summary (RF-006.4.12).
   };
 
   /** Committed-stop actions (RF-006.4.2 — fluxo §9; REOPEN/DISSOLVE were ready). */
@@ -297,13 +367,17 @@ function MapScreen({ rows }: { rows: RowData[] }) {
     if (!selectedStop) return;
     dispatch({ type: "REOPEN_STOP", stopId: selectedStop.id });
     setSelectedStopId(null);
+    setExpandedRoteiroStopId(null);
     setCardExpanded(false);
+    setPanelView("selected");
   };
   const handleDissolveStop = () => {
     if (!selectedStop) return;
     dispatch({ type: "DISSOLVE_STOP", stopId: selectedStop.id });
     setSelectedStopId(null);
+    setExpandedRoteiroStopId(null);
     setCardExpanded(false);
+    setPanelView("selected");
   };
 
   /** Tela 8: join an existing stop (fluxo §9; ADD re-sweeps that stop's order). */
@@ -421,7 +495,18 @@ function MapScreen({ rows }: { rows: RowData[] }) {
     ...typedPackageChips(packagesByTypeFromPoints(stopPoints)),
     ...(stopEstimate ? [{ label: walkEstimateLabel(stopEstimate) }] : []),
   ];
-  const stopFirstItem = stopPoints[0] ? pointToStopItemData(stopPoints[0], { ordinal: 1 }) : null;
+  /** The stop's ANCHOR row (RF-006.4.7): vehicle glyph + address WITHOUT
+      complement. The address is a PLACEHOLDER (the first stop address) until the
+      vehicle-stop geocoding lands (TASK-RF-006.9, in pendentes). */
+  const stopAnchorItem = stopPoints[0] ? { ...pointToStopItemData(stopPoints[0]), complement: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.NO_COMPLEMENT } : null;
+  /** The stop's full address list ("Ver lista completa" — RF-006.4.7), ordinals in visit order. */
+  const stopListItems = stopPoints.map((point, index) => pointToStopItemData(point, { ordinal: index + 1 }));
+  /** "Endereço selecionado" of a firmed stop (RF-006.4.16): the tapped member
+      (ordinal marker, real address) when one is selected in the expanded group,
+      else the anchor (vehicle glyph, no complement). */
+  const selectedMemberIndex = effectiveSelectedMemberId ? stopPoints.findIndex((p) => p.id === effectiveSelectedMemberId) : -1;
+  const stopSelectedIsAnchor = selectedMemberIndex < 0;
+  const stopSelectedItem = stopSelectedIsAnchor ? stopAnchorItem : pointToStopItemData(stopPoints[selectedMemberIndex], { ordinal: selectedMemberIndex + 1 });
 
   // ------- Suggested-stop preview (3ª seção do painel — RF-006.4.3/.4.4) -------
   /** How the stop WOULD look if created now: the summary aggregates the seed
@@ -467,7 +552,7 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   /** Tela 8 card tap: same sizing rule as the Original's selected-address card. */
   const handleRoteiroCardTap = () => {
     // The ACTIVE context decides which card the tap expands (RF-006.4.2).
-    const activeItem = roteiroContext === "stop-selected" ? stopFirstItem : selectedPointItem;
+    const activeItem = roteiroContext === "stop-selected" ? stopSelectedItem : selectedPointItem;
     if (!activeItem) return;
     if (cardExpanded) {
       setCardExpanded(false);
@@ -482,11 +567,14 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   const graphStatus =
     graphLoadStatus === "loading" ? { text: UI_LABELS.ROUTING.LOADING_STREETS } : graphLoadStatus === "error" ? { text: graphError ?? UI_LABELS.ROUTING.NETWORK_ERROR, onRetry: retryGraph } : null;
 
-  /** Shared transition: updates the markers and the panel's stop memory. */
+  /** Shared transition: updates the markers and the panel's stop memory. The
+      panel follows the FOCUSED or expanded stop (RF-006.4.10 — a single click
+      now focuses without expanding, so the memory tracks selectedAddressKey's
+      stop). A full collapse (both null) keeps the last stop — memory only moves. */
   const applyInteraction = useCallback((next: InteractionState) => {
     setInteraction(next);
-    // Collapsing (null) keeps the panel on the last stop — memory only moves forward.
-    if (next.expandedStopKey !== null) setPanelStopKey(next.expandedStopKey);
+    const stopKey = next.expandedStopKey ?? (next.selectedAddressKey !== null ? next.selectedAddressKey.split(":")[0] : null);
+    if (stopKey !== null) setPanelStopKey(stopKey);
   }, []);
 
   /** MAP-originated transitions only (marker/empty-map clicks). Selecting on
@@ -510,6 +598,7 @@ function MapScreen({ rows }: { rows: RowData[] }) {
     resetStartUi();
     setSelectedPointId(null); // the draft survives on purpose (it lives in the reducer)
     setSelectedStopId(null);
+    setExpandedRoteiroStopId(null);
     if (next === "roteiro") {
       setInteraction(collapseInteraction());
       setPanelView("selected");
@@ -534,7 +623,9 @@ function MapScreen({ rows }: { rows: RowData[] }) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (panelView === "list") {
+        applyInteraction(regroupInteraction(interaction)); // Original: regroup, keep focus (RF-006.4.10)
         setPanelView("selected");
+        setExpandedRoteiroStopId(null); // roteiro: regroup too (RF-006.4.8)
         setPanelSnap("half");
       } else if (panelSnap !== "collapsed") {
         setPanelSnap("collapsed");
@@ -544,7 +635,7 @@ function MapScreen({ rows }: { rows: RowData[] }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [panelView, panelSnap, navigate]);
+  }, [panelView, panelSnap, navigate, interaction, applyInteraction]);
 
   const stops = useMemo(() => groupRowsByStop(rows), [rows]);
 
@@ -563,12 +654,12 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   // nothing is selected — the card is never empty.
   const selectedItem = panelItems.find((item) => item.addressKey === interaction.selectedAddressKey) ?? panelItems[0] ?? null;
 
-  /** StopStepper: expands + focuses the target on the map, selecting its FIRST
-      address (lowest Sequence — rev. 07/07, same rule as clicking the stop). */
+  /** StopStepper: FOCUSES the target on the map, GROUPED (RF-006.4.10 — single
+      click doesn't expand anymore), selecting its first address for the panel. */
   const handleStepStop = (direction: 1 | -1) => {
     const nextKey = adjacentStopKey(stops, effectivePanelStopKey, direction);
     if (nextKey === null) return;
-    applyInteraction({ expandedStopKey: nextKey, selectedAddressKey: firstAddressKey(stops, Number(nextKey)) });
+    applyInteraction(focusInteraction(Number(nextKey), stops));
   };
 
   /** Selected-address card tap: toggles its detail in the panel itself; opening
@@ -580,22 +671,27 @@ function MapScreen({ rows }: { rows: RowData[] }) {
       setCardExpanded(false);
       return;
     }
-    applyInteraction({ expandedStopKey: effectivePanelStopKey, selectedAddressKey: selectedItem.addressKey });
+    // Tapping the card shows its detail; it does NOT expand the map (RF-006.4.10)
+    // — the map only ungroups via double-click / "Ver lista completa".
+    applyInteraction({ expandedStopKey: interaction.expandedStopKey, selectedAddressKey: selectedItem.addressKey });
     setCardExpanded(true);
     const target: PanelSnap = selectedItem.packageCount > 2 ? "full" : "half";
     setPanelSnap((current) => (current === "full" ? "full" : target));
   };
 
-  /** "Ver lista completa": the list view lives at the FULL snap (the only one
-      whose body scrolls) and opens scrolled to the selected item. */
+  /** "Ver lista completa" (Original): opens the panel's full list — a DISTINCT
+      event from the map ungroup (double-click); the list hides the map, so it
+      does NOT expand the markers (RF-006.4.11). */
   const handleShowList = () => {
     setPanelView("list");
     setPanelSnap("full");
     setScrollSignal((count) => count + 1);
   };
 
-  /** "Esconder lista": back to the selected view at half (map visible again). */
+  /** "Esconder lista": back to the selected view at half, REGROUPING the map
+      while keeping the focus (RF-006.4.10/.4.11). */
   const handleHideList = () => {
+    applyInteraction(regroupInteraction(interaction));
     setPanelView("selected");
     setPanelSnap("half");
   };
@@ -613,7 +709,11 @@ function MapScreen({ rows }: { rows: RowData[] }) {
       selected view — the list is useless below full (rev. 07/07). */
   const handleSnapChange = (next: PanelSnap) => {
     setPanelSnap(next);
-    if (next !== "full") setPanelView((view) => (view === "list" ? "selected" : view));
+    if (next !== "full" && panelView === "list") {
+      applyInteraction(regroupInteraction(interaction)); // Original: regroup on leaving the list (RF-006.4.10)
+      setPanelView("selected");
+      setExpandedRoteiroStopId(null); // roteiro: regroup too (RF-006.4.8)
+    }
   };
 
   /** Original-mode panel header (TWO views — rev. 07/07). Sections render
@@ -658,8 +758,13 @@ function MapScreen({ rows }: { rows: RowData[] }) {
         onInteractionChange={handleMapInteraction}
         bottomObstructionPx={PANEL_COLLAPSED_PX}
         models={mode === "roteiro" ? roteiroModels : undefined}
+        // Original: the panel's current stop square gets the ring/glow (RF-006.4.13).
+        highlightedStopKey={mode === "original" ? effectivePanelStopKey : undefined}
+        // When a firmed stop is focused/expanded, zoom CLOSE to it (RF-006.4.11).
+        focusBounds={mode === "roteiro" && selectedStop ? stopPoints.map((p) => ({ lat: p.lat, lng: p.lng })) : undefined}
         onMapTap={mode === "roteiro" ? handleMapTap : undefined}
         onModelTap={mode === "roteiro" ? handleModelTap : undefined}
+        onModelExpand={mode === "roteiro" ? handleModelExpand : undefined}
         roteiroOverlay={mode === "roteiro" ? roteiroOverlay : undefined}
       />
 
@@ -697,11 +802,14 @@ function MapScreen({ rows }: { rows: RowData[] }) {
                   neighborhoods={stopPlace.neighborhoods}
                   zipcodes={stopPlace.zipcodes}
                   metrics={stopMetrics}
-                  item={stopFirstItem}
+                  selectedItem={stopSelectedItem}
+                  isAnchor={stopSelectedIsAnchor}
                   expanded={cardExpanded}
                   onTapCard={handleRoteiroCardTap}
                   onEdit={handleEditStop}
                   onDissolve={handleDissolveStop}
+                  listOpen={panelView === "list"}
+                  onToggleList={panelView === "list" ? handleHideRoteiroList : handleShowRoteiroList}
                 />
               </div>
             ) : roteiroContext === "point-selected" && selectedPointItem ? (
@@ -766,8 +874,13 @@ function MapScreen({ rows }: { rows: RowData[] }) {
               onTogglePoint={(pointId) => dispatch({ type: "TOGGLE_DRAFT_POINT", pointId })}
               farWarning={farIds.length > 0}
             />
-          ) : roteiroContext === "stop-selected" && cardExpanded && stopFirstItem ? (
-            <StopItemDetail item={stopFirstItem} />
+          ) : roteiroContext === "stop-selected" && panelView === "list" ? (
+            // "Ver lista completa" (RF-006.4.7): the stop's addresses by visit
+            // order, neon palette, expandable — panel-side only for now (the map
+            // ungroup arrives with the interaction fatia .4.8).
+            <StopItemList items={stopListItems} selectedKey={null} scrollSignal={scrollSignal} neon />
+          ) : roteiroContext === "stop-selected" && cardExpanded && stopSelectedItem ? (
+            <StopItemDetail item={stopSelectedItem} />
           ) : roteiroContext === "point-selected" && cardExpanded && selectedPointItem ? (
             <StopItemDetail item={selectedPointItem} />
           ) : null

@@ -115,8 +115,12 @@ export const buildStopTooltipHtml = (stop: StopGroup): string => {
  * @param expandedStopKey - Key (stop index) of the expanded stop, or null.
  * @param selectedAddressKey - Key of the selected address, or null.
  */
-export const computeMarkerModels = (stops: StopGroup[], expandedStopKey: string | null, selectedAddressKey: string | null): MarkerModel[] => {
+export const computeMarkerModels = (stops: StopGroup[], expandedStopKey: string | null, selectedAddressKey: string | null, highlightedStopKey?: string | null): MarkerModel[] => {
   const models: MarkerModel[] = [];
+  /** The stop whose SQUARE gets the ring/glow (RF-006.4.10/.4.13): the panel's
+      current stop if given, else the focused-but-collapsed one. */
+  const focusedKey = expandedStopKey === null && selectedAddressKey !== null ? selectedAddressKey.split(":")[0] : null;
+  const highlightedKey = highlightedStopKey ?? focusedKey;
 
   stops.forEach((stop, i) => {
     const stopKey = String(i);
@@ -139,10 +143,11 @@ export const computeMarkerModels = (stops: StopGroup[], expandedStopKey: string 
             number: stop.hasStop ? stop.stop : null,
             badge: address.rows.length > 1 ? { kind: "packages", count: address.rows.length } : null,
             // All addresses of the focused stop get the thick white border; the selected
-            // one is always emphasized (bright neon glow + enlarged by RouteMap) — even
-            // when it's the only address — to keep one consistent "selected" look.
+            // one is emphasized (glow) AND highlighted (enlarged + raised by RouteMap —
+            // RF-006.4.14) so it stands out among its siblings.
             selected: true,
             emphasis: isSelected,
+            highlight: isSelected,
           },
         });
       });
@@ -162,6 +167,11 @@ export const computeMarkerModels = (stops: StopGroup[], expandedStopKey: string 
         color: colorForLocationType(stop.type),
         number: stop.hasStop ? stop.stop : null,
         badge: multi ? { kind: "addresses", count: stop.addresses.length } : { kind: "packages", count: rep.rows.length },
+        // The panel's/focused stop gets the ring + glow + the enlarge/raise
+        // (RF-006.4.10/.4.13/.4.14) so it never hides in a cluster.
+        selected: stopKey === highlightedKey,
+        emphasis: stopKey === highlightedKey,
+        highlight: stopKey === highlightedKey,
       },
       tooltipHtml: buildStopTooltipHtml(stop),
     });
@@ -186,16 +196,42 @@ export const firstAddressKey = (stops: StopGroup[], stopIndex: number): string |
 };
 
 /**
- * Computes the next interaction state from a marker click.
- * Clicking a stop expands it AND selects its first address (lowest Sequence —
- * rev. 07/07); clicking an address selects it (keeping the stop expanded).
+ * FOCUS a stop (RF-006.4.10): keep it GROUPED (expandedStopKey null) but select
+ * its first address so the panel shows the summary and the map centers on it.
+ */
+export const focusInteraction = (stopIndex: number, stops: StopGroup[]): InteractionState => ({ expandedStopKey: null, selectedAddressKey: firstAddressKey(stops, stopIndex) });
+
+/**
+ * EXPAND a stop (RF-006.4.10): ungroup it into its addresses (double-click or
+ * "Ver lista completa"), selecting the first one.
+ */
+export const expandInteraction = (stopIndex: number, stops: StopGroup[]): InteractionState => ({ expandedStopKey: String(stopIndex), selectedAddressKey: firstAddressKey(stops, stopIndex) });
+
+/**
+ * Next interaction from a SINGLE click (RF-006.4.10): clicking a stop FOCUSES it
+ * (stays grouped — double-click expands); clicking an address selects it,
+ * keeping whatever expansion is active.
  */
 export const nextInteraction = (current: InteractionState, clicked: MarkerModel, stops: StopGroup[]): InteractionState => {
   if (clicked.kind === "address") {
     return { expandedStopKey: current.expandedStopKey, selectedAddressKey: clicked.addressKey ?? null };
   }
-  return { expandedStopKey: String(clicked.stopIndex), selectedAddressKey: firstAddressKey(stops, clicked.stopIndex) };
+  return focusInteraction(clicked.stopIndex, stops);
 };
 
-/** Click on the empty map → collapse and clear selection. */
+/**
+ * Click on the empty map (RF-006.4.10): REGROUP — collapse any expansion but
+ * KEEP the focus on the current stop (the panel/selection never empties).
+ */
+export const regroupInteraction = (current: InteractionState): InteractionState => ({ expandedStopKey: null, selectedAddressKey: current.selectedAddressKey });
+
+/** Full reset (both null) — used when leaving the mode, not on an empty tap. */
 export const collapseInteraction = (): InteractionState => ({ expandedStopKey: null, selectedAddressKey: null });
+
+/** The stop currently FOCUSED but collapsed (RF-006.4.10): its square gets the
+    emphasis. Derived from `selectedAddressKey` while nothing is expanded. */
+export const focusedStopIndex = (interaction: InteractionState): number | null => {
+  if (interaction.expandedStopKey !== null || interaction.selectedAddressKey === null) return null;
+  const index = Number(interaction.selectedAddressKey.split(":")[0]);
+  return Number.isFinite(index) ? index : null;
+};

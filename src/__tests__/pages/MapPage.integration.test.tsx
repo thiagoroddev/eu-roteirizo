@@ -114,9 +114,13 @@ const renderPage = () =>
 const clickLastMarker = () => {
   const clicks = markerMethods.on.mock.calls.filter(([event]) => event === "click");
   expect(clicks.length).toBeGreaterThan(0);
+  // The single tap is DEFERRED (RF-006.4.10) so a double-tap can pre-empt it.
+  vi.useFakeTimers();
   act(() => {
     (clicks[clicks.length - 1][1] as () => void)();
+    vi.advanceTimersByTime(300);
   });
+  vi.useRealTimers();
 };
 
 /** The selected-address card of the default view (unique — TWO-VIEWS design, .7). */
@@ -147,12 +151,12 @@ describe("MapPage + real RouteMap (integration)", () => {
     renderPage();
     expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", `${PANEL_COLLAPSED_PX}px`);
 
-    // Stop click auto-selects its first address (rev. 07/07) — panel untouched.
+    // Stop click FOCUSES it (grouped — RF-006.4.10), selecting its first address; panel untouched.
     clickLastMarker();
     expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", `${PANEL_COLLAPSED_PX}px`);
     expect(addressCard(/Rua Integração, 1/)).toHaveAttribute("aria-expanded", "false");
-    // Expanded stop refit uses the tighter padding, still clearing the panel.
-    expect(mapMethods.fitBounds).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ paddingBottomRight: [40, 40 + PANEL_COLLAPSED_PX] }));
+    // Focus refit centers the stop at DEFAULT padding, still clearing the panel.
+    expect(mapMethods.fitBounds).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ paddingBottomRight: [50, 50 + PANEL_COLLAPSED_PX] }));
 
     // Only the PANEL tap raises it and shows the drill-down.
     fireEvent.click(addressCard(/Rua Integração, 1/));
