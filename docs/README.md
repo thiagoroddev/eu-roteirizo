@@ -72,7 +72,18 @@ npm test
 
 # Preview da build
 npm run preview
+
+# Deploy de TESTES (Cloudflare Pages) — smoke no celular
+npm run deploy:test
 ```
+
+### Testar no celular (TASK-CHORE-005)
+
+`npm run deploy:test` builda e publica em **https://pre-rota-teste.pages.dev** — URL fixa,
+HTTPS (GPS/PWA funcionam), com `X-Robots-Tag: noindex` (`public/_headers`). É ambiente de
+**testes**, não o lançamento: a URL não é divulgada. Após o deploy, recarregue a página
+**2×** no celular (o service worker `autoUpdate` instala a versão nova na 1ª carga e a
+ativa na 2ª). Requer `npx wrangler login` uma única vez por máquina.
 
 ## React Compiler
 

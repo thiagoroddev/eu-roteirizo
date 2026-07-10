@@ -1,0 +1,6 @@
+# Ambiente de TESTES (TASK-CHORE-005 — decisão 10/07: "só pra testes").
+# O deploy no Cloudflare Pages existe para os smokes no aparelho; a URL não é
+# divulgada e não deve ser indexada. REMOVER este arquivo quando (e se) o
+# projeto ganhar um deploy de produção de verdade — essa será outra decisão.
+/*
+  X-Robots-Tag: noindex
