@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 
 import { RouteSummary } from "../components/RouteSummary";
@@ -8,7 +8,11 @@ import { PlannedRouteInfo } from "../components/summary/PlannedRouteInfo";
 import { Button } from "../components/ui/button";
 import { MODE_QUERY_PARAM, MODE_QUERY_ROTEIRO } from "../components/map/MapModeToggle";
 import { useManifestFromUrl } from "../hooks/useManifestFromUrl";
+import { getRoteiro } from "../services/routeStorage";
+import { buildDeliveryPoints } from "../utils/routing/points";
+import { plannedRouteTotals } from "../utils/routing/estimates";
 import { getVehicleType } from "../utils/formatters";
+import type { PlannedRoute } from "../types/routing";
 import { COLUMN_NAMES } from "../constants";
 import { UI_LABELS } from "../constants/uiLabels";
 
@@ -31,6 +35,27 @@ function SummaryPage() {
 
   const [showTable, setShowTable] = useState(false);
   const [showSimpleTable, setShowSimpleTable] = useState(false);
+
+  /** The saved roteiro of THIS route (RF-008) — adapts the button and feeds
+      the "Info Meu Roteiro" section. Null while loading or none saved. */
+  const [savedRoteiro, setSavedRoteiro] = useState<PlannedRoute | null>(null);
+  useEffect(() => {
+    if (!manifestId || !routeName) return;
+    let cancelled = false;
+    void getRoteiro(manifestId, routeName).then((route) => {
+      if (!cancelled) setSavedRoteiro(route);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [manifestId, routeName]);
+
+  /** Coarse totals (straight-line vehicle legs + walk circuits) — RF-006.7/007
+      refine them; the section's shape stays. */
+  const roteiroInfo = useMemo(() => {
+    if (!savedRoteiro || savedRoteiro.stops.length === 0) return null;
+    return plannedRouteTotals(savedRoteiro, buildDeliveryPoints(currentRows));
+  }, [savedRoteiro, currentRows]);
 
   // A malformed URL has nothing to show — go back to the saved list.
   if (!manifestId || !routeName) return <Navigate to="/rotas" replace />;
@@ -68,13 +93,13 @@ function SummaryPage() {
                 title={mapAvailable ? undefined : UI_LABELS.ROUTE_SUMMARY.NO_COORDINATES}
                 onClick={() => navigate(`/mapa?romaneio=${encodeURIComponent(manifestId)}&rota=${encodeURIComponent(routeName)}&${MODE_QUERY_PARAM}=${MODE_QUERY_ROTEIRO}`)}
               >
-                {UI_LABELS.ROUTE_SUMMARY.CREATE_ROTEIRO}
+                {savedRoteiro ? UI_LABELS.ROUTE_SUMMARY.VIEW_ROTEIRO : UI_LABELS.ROUTE_SUMMARY.CREATE_ROTEIRO}
               </Button>
             }
           />
 
-          {/* "Info Meu Roteiro" (RF-43): appears once a Roteiro exists — TASK-RF-007/008 feed it. */}
-          <PlannedRouteInfo info={null} />
+          {/* "Info Meu Roteiro" (RF-43/RF-008): totals of the SAVED roteiro. */}
+          <PlannedRouteInfo info={roteiroInfo} />
 
           {showTable && <RouteTable selectedRoute={routeName} rows={currentRows} onClose={() => setShowTable(false)} />}
           {showSimpleTable && <RouteSimpleTable rows={currentRows} selectedRoute={routeName} onClose={() => setShowSimpleTable(false)} />}

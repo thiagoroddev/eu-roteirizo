@@ -24,7 +24,7 @@ export interface StopOption {
  *
  * - **Endereço selecionado**: the "no stop yet" notice + the Original's own
  *   StopItemRow (tap → StopItemDetail in the panel body, wired by the MapScreen).
- * - **Parada sugerida** (3ª/4ª rodadas 08/07): the summary of the stop AS IT
+ * - **Prévia de parada** (3ª/4ª rodadas 08/07; renomeada 10/07): the summary of the stop AS IT
  *   WOULD BE if created — the normal stop summary (PanelTitle + typed chips +
  *   walking estimate) over the seed + radius candidates. The label row carries
  *   the VEHICLE distance from the last stop (or the start) to the suggested
@@ -87,7 +87,9 @@ export const RoteiroPointSection = ({
       {/* 2ª seção — Endereço selecionado. The "no stop yet" notice lives HERE —
           it is about the ADDRESS (rev. 08/07). */}
       <PanelSection label={UI_LABELS.MAP_PANEL.SECTION_SELECTED}>
-        <p className="px-4 pt-0.5 text-xs text-muted-foreground">{UI_LABELS.MAP_PANEL.ROTEIRO_NO_STOP_YET}</p>
+        {/* No local pt: the label's breathing room is PanelSection's pb-1 now
+            (REF-016) — per-component compensations are exactly what drifted. */}
+        <p className="px-4 text-xs text-muted-foreground">{UI_LABELS.MAP_PANEL.ROTEIRO_NO_STOP_YET}</p>
         {/* Highlighted by default — it IS the selected address (RF-006.4.13).
             pb-2 like every other section's last block: without it the highlighted
             row's `bg-accent` runs into the next section's `border-t`, and a
@@ -97,7 +99,8 @@ export const RoteiroPointSection = ({
         </div>
       </PanelSection>
 
-      {/* 3ª seção — Parada sugerida: how the stop would look if created now.
+      {/* 3ª seção — "Prévia de parada" (renomeada 10/07; era "Parada sugerida",
+          que prometia escolha do app): how the stop would look if created now.
           Label row = vehicle distance (car icon qualifies) + "Criar parada"
           on the right (rev. 08/07 4ª rodada). */}
       <PanelSection

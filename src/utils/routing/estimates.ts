@@ -8,7 +8,7 @@
  * vehicle legs, totals) is RF-007. Pure: no Leaflet/DOM/React.
  */
 
-import type { DeliveryPoint, LatLng, RoutingConfig } from "../../types/routing";
+import type { DeliveryPoint, LatLng, PlannedRoute, RoutingConfig } from "../../types/routing";
 import { haversine } from "./geo";
 
 export interface StopWalkEstimate {
@@ -41,4 +41,58 @@ export const stopWalkEstimate = (vehicleStop: LatLng, orderedPoints: DeliveryPoi
   const walkMinutes = (meters / 1000 / config.walkingSpeedKmh) * 60;
   const minutes = Math.ceil(walkMinutes + packages * config.walkingMinutesPerDelivery);
   return { meters, minutes };
+};
+
+/** Totals of a saved roteiro, for the Sumário's "Info Meu Roteiro" (RF-008). */
+export interface PlannedRouteTotals {
+  vehicleStops: number;
+  walkPoints: number;
+  distanceVehicleKm: number;
+  distanceWalkKm: number;
+  distanceTotalKm: number;
+  timeVehicleMin: number;
+  timeWalkMin: number;
+  timeTotalMin: number;
+}
+
+/**
+ * Coarse totals of a persisted PlannedRoute (RF-008): vehicle legs are
+ * straight-line (start → anchor → anchor…, haversine) at `vehicleSpeedKmh`;
+ * walking is the per-stop circuit of `stopWalkEstimate`. The street-graph
+ * vehicle path (RF-006.7) and the configurable estimates (RF-007) refine this
+ * later without changing the shape. Pure — points the spreadsheet no longer
+ * has are simply skipped (mirrors the reducer's defensive HYDRATE).
+ */
+export const plannedRouteTotals = (route: PlannedRoute, points: DeliveryPoint[]): PlannedRouteTotals => {
+  const byId = new Map(points.map((p) => [p.id, p]));
+
+  let walkMeters = 0;
+  let walkMinutes = 0;
+  let walkPoints = 0;
+  for (const stop of route.stops) {
+    const stopPoints = stop.pointIds.map((id) => byId.get(id)).filter((p): p is DeliveryPoint => p !== undefined);
+    walkPoints += stopPoints.length;
+    const estimate = stopWalkEstimate(stop.vehicleStop, stopPoints, route.config);
+    walkMeters += estimate.meters;
+    walkMinutes += estimate.minutes;
+  }
+
+  let vehicleMeters = 0;
+  let cursor: LatLng | null = route.startPoint;
+  for (const stop of route.stops) {
+    if (cursor) vehicleMeters += haversine(cursor, stop.vehicleStop);
+    cursor = stop.vehicleStop;
+  }
+  const timeVehicleMin = (vehicleMeters / 1000 / route.config.vehicleSpeedKmh) * 60;
+
+  return {
+    vehicleStops: route.stops.length,
+    walkPoints,
+    distanceVehicleKm: vehicleMeters / 1000,
+    distanceWalkKm: walkMeters / 1000,
+    distanceTotalKm: (vehicleMeters + walkMeters) / 1000,
+    timeVehicleMin,
+    timeWalkMin: walkMinutes,
+    timeTotalMin: timeVehicleMin + walkMinutes,
+  };
 };

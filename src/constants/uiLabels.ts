@@ -92,7 +92,10 @@ export const UI_LABELS = {
     /** No Meu roteiro o "selecionado" da parada é a parada do veículo (RF-006.4.7). */
     SECTION_SELECTED_ANCHOR: "Endereço selecionado — parada do veículo (âncora)",
     /** 3ª seção do painel do roteiro (RF-006.4.3): preview da parada a criar. */
-    SECTION_SUGGESTED: "Parada sugerida",
+    // "Prévia", não "sugerida" (feedback 10/07): a seção mostra a parada COMO
+    // FICARIA a partir do endereço que o usuário tocou — qualquer endereço
+    // tocado vira a prévia; "sugerida" prometia uma escolha do app.
+    SECTION_SUGGESTED: "Prévia de parada",
     VIEW_FULL_LIST: "Ver lista completa",
     HIDE_FULL_LIST: "Esconder lista",
     VIEW_ON_MAP: "Ver no mapa",
@@ -273,6 +276,8 @@ export const UI_LABELS = {
     // Botão adaptativo (RF-43): "Criar Roteiro" abre o mapa em Meu roteiro (TASK-RF-006.2);
     // vira "Ver Meu Roteiro" quando a rota já tiver roteiro salvo (RF-008).
     CREATE_ROTEIRO: "Criar Roteiro",
+    // RF-008: com roteiro salvo, o mesmo botão passa a REABRIR em vez de criar.
+    VIEW_ROTEIRO: "Ver Meu Roteiro",
     SIMPLE_TABLE: "Tabela Simplificada",
     ORIGINAL_TABLE: "Tabela Original",
   },

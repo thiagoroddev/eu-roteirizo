@@ -14,8 +14,8 @@
 |---|---|---|
 | 1 | ~~**TASK-RF-006.4.23**~~ — adicionar endereço na edição | ✅ **CONCLUÍDA (10/07)** — ver índice. Smoke pendente no aparelho. |
 | 2 | ~~**TASK-REF-015**~~ — lentidão do mapa | ✅ **CONCLUÍDA (10/07), smoke APROVADO** ("melhorou, mais suave"). Passo (e) engavetado a menos que a lentidão volte em romaneios maiores. |
-| 3 | **TASK-REF-016** — espaçamento do painel | Tem causa-raiz identificada (`PanelSection` sem respiro entre rótulo e conteúdo; `PanelTitle` sem `pt`). Duas linhas resolvem a maioria. Fazer **antes** da RF-006.8, que cria seções novas — senão elas nascem tortas. |
-| 4 | **TASK-RF-008** — persistência/auto-save | Hoje **todo smoke exige reconstruir o roteiro do zero**. Elimina esse imposto e destrava `hasRoteiro` no chip + botão adaptativo do Sumário. |
+| 3 | ~~**TASK-REF-016**~~ — espaçamento do painel | ✅ **CONCLUÍDA (10/07)** — respiro canônico no `PanelSection` (pb-1 + shrink-0), card do raio compacto, compensações locais removidas. Smoke pendente (já publicada na URL de testes). |
+| 4 | ~~**TASK-RF-008**~~ — persistência/auto-save | ✅ **CONCLUÍDA (10/07)** — roteiro sobrevive a sair/fechar/alternar; chip acende; Sumário adapta + totais; cascata no apagar. RF-33/35/RN-21 ✅. Smoke pendente (publicada). |
 | 5 | **TASK-TEST-003** — zoom real do Leaflet | Dois defeitos de zoom atravessaram a suíte verde porque os testes provam a *prop passada*, não o mapa movido. Fazer **antes** da RF-006.8, que mexe na altura do painel → `bottomObstructionPx` → `fitBounds`. |
 | 6 | **TASK-RF-006.8** — painel de visão geral | Encolhe o painel colapsado e fixa o contrato do cabeçalho/`PanelView` **antes** que a `.5` e a `.6` preencham os slots. |
 | 7 | **TASK-RF-006.5** → **.6** → **.7** | Sequência do épico. A `.6` depende da `.5`. Ao fim da `.7`, um retoque pluga distância/tempo totais nos cards da `.8` (por isso ficaram fora do escopo dela). |
@@ -33,7 +33,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 > Tarefas urgentes que carregam contexto extra. Bloco em lista, no topo.
 >
-> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). **Fila:** ver a tabela **"Ordem de execução recomendada"** no topo deste arquivo (rev. 10/07, pós-smoke). Resumo: `REF-016 → RF-008 → TEST-003 → RF-006.8 → RF-006.5 → .6 → .7 → RF-007 → RF-009 → RF-012 → RF-013`. Concluídos: RF-003/004/005/011/020/021/022/023 e RF-006.1 → .4.27 (ver índice). RF-014 absorvida pela RF-022; RF-010 absorvida pela RF-006.2. Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
+> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). **Fila:** ver a tabela **"Ordem de execução recomendada"** no topo deste arquivo (rev. 10/07, pós-smoke). Resumo: `TEST-003 → RF-006.8 → RF-006.5 → .6 → .7 → RF-007 → RF-009 → RF-012 → RF-013`. Concluídos: RF-003/004/005/011/020/021/022/023 e RF-006.1 → .4.27 (ver índice). RF-014 absorvida pela RF-022; RF-010 absorvida pela RF-006.2. Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
 >
 > ⚠️ **Decisões transversais (valem para o épico todo):**
 > - **Estado:** `useReducer` por feature (conforme draft §6). Zustand só se a complexidade exigir — e **não instalar sem aprovação** (anti-padrão do núcleo §5).
@@ -50,29 +50,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 ---
 
-## TASK-RF-008 - Persistência da rota planejada (IndexedDB) — **4ª da fila** (era a próxima; os 3 achados do smoke passaram na frente)
-
-- **Status:** Pendente
-- **Modo:** Standard
-- **Valor:** Crítico
-- **Urgência:** IMEDIATA
-- **Esforço-H/IA:** M/M
-- **Data-hora origem:** 22/06/26 22:45 (**antecipada em 07/07/26**, decisão do humano: entra logo após a RF-006.4, quando já existe parada firmada — os smokes das fatias seguintes não perdem o roteiro ao sair do mapa)
-- **Dependências:** TASK-RF-004 ✅, TASK-RF-006.4 ✅
-- **REQ/ADR/DT:** RF-33 (salvar livre/auto-save), RF-35, RN-21; `fluxo-roteirizacao.md` §12
-- **Observações:** `idb` e `fake-indexeddb` já instalados. Seguir o padrão `manifestStorage` (resultado discriminado, DB versionado, leitura degrada / escrita reporta). O reducer da RF-006.1 já expõe `toPlannedRoute`/`HYDRATE` como ponte.
-
-**Objetivo:** salvar/carregar/listar `PlannedRoute` localmente, com **auto-save de rascunho** (RF-33 — salvar é livre, mesmo incompleto).
-
-**Subtarefas:**
-- `src/services/routeStorage.ts`: CRUD de `PlannedRoute` em IndexedDB (criar, ler, listar, apagar; 1 roteiro por rota — RN-21).
-- Auto-save do estado do builder (debounce) + `HYDRATE` ao reabrir o mapa em modo roteiro (**carregar o roteiro atrelado ao entrar no modo** — item 4 do feedback de 08/07).
-- Acender `hasRoteiro` no `RouteChip` e o botão adaptativo do Sumário ("Criar Roteiro" → "Ver Meu Roteiro").
-- Testes com `fake-indexeddb`.
-
-**Critérios de aceite:** fechar e reabrir o mapa recupera o roteiro intacto (incl. rascunho); chip/botão refletem a existência do roteiro; testes verdes.
-**Dependências novas:** nenhuma.
-**Riscos:** versionamento do schema do IndexedDB (definir `version` + `upgrade`).
+<!-- TASK-RF-008 movida para em-andamento.md em 10/07/26 (plano aprovado). -->
 
 ---
 
@@ -295,7 +273,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 | TASK-DOC-005 | Decidir o destino do status "Carregando ruas…" (grafo OSM, origem RF-006.3): formalizar em requisito, trocar a apresentação ou manter como está | Light | Desejável | Normal | P/P | - | RF-22 | `[ ]` | 09/07/26 17:00 |
 | TASK-REF-014 | Ajustar o radius do tema para `0.5rem` conforme `neonflux.md` (hoje 1rem/pill) — pendência estética anotada na REF-012 | Light | Desejável | Normal | P/P | - | ADR-006 | `[ ]` | 09/07/26 17:00 |
 | TASK-TEST-003 | Testar o zoom/enquadramento REAL do mapa (Leaflet espionado, como em `MapPage.integration.test.tsx`), não só as props passadas ao stub do RouteMap — dois defeitos de zoom (.4.19, .4.20) atravessaram a suíte verde porque nenhum teste observava o `fitBounds` resultante | Standard | Importante | Normal | P/M | - | RF-006.4.19/.4.20/.4.21 | `[ ]` | 09/07/26 20:35 |
-| TASK-REF-016 | **Varredura ampla de espaçamento do painel** (achado nº 4 do smoke; escopo "ampla" escolhido pelo humano). **Causa-raiz achada:** `PanelSection` não põe respiro nenhum entre o rótulo e os `children`, e `PanelTitle` não tem `pt` — daí "label encostando no card" em TODA seção. Concretos: `PanelSection.tsx:34` (+`pb-1`), `PanelTitle.tsx:40` (+`pt-1`), `RoteiroPointSection.tsx:89` (`pt-0.5`→`pt-1`), botões sem `pb` em `RoteiroDraftSection.tsx:85` e `RoteiroStartSection.tsx:41`, **card do raio com `p-3` + botões `h-9`** (`RoteiroDraftSection.tsx:132`/`:31` → `px-3 py-2` + `h-8`), `+` normalizar os estados vazios divergentes | Standard | Importante | Normal | M/M | - | ADR-004, CHORE-004 | `[ ]` | 10/07/26 09:15 |
+| TASK-REF-017 | **Redesenhar o card "Info Meu Roteiro" do Sumário** (feedback 10/07: "espero que seja rascunho e não final" — É rascunho: a lista `rótulo: valor` veio do placeholder da fase 1/RF-022.4, a RF-008 só a alimentou). Virar cards-estatística no padrão do design system (alinhar com o "Roteiro em Construção" da **RF-006.8** — compartilhar os componentes de stat), hierarquia visual (totais em destaque, parciais como chips) e zeros tratados (hoje "Distância (veículo): 0 km" com 1 parada parece bug). Fazer junto ou logo após a RF-006.8 | Standard | Importante | Normal | P/M | RF-008 ✅ | RF-43; ADR-004 | `[ ]` | 10/07/26 21:00 |
 
 ---
 

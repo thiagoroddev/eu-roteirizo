@@ -42,7 +42,9 @@ export const StopItemList = ({ items, selectedKey, itemLeading, itemActions, ite
     });
 
   if (items.length === 0) {
-    return <p className="px-4 text-sm text-muted-foreground">{UI_LABELS.MAP_PANEL.ITEM.NO_ITEMS}</p>;
+    // Canonical empty-state chrome (REF-016): px-4 py-2 text-xs — the same as
+    // the draft's EMPTY_HINT; this one had no vertical padding and a larger font.
+    return <p className="px-4 py-2 text-xs text-muted-foreground">{UI_LABELS.MAP_PANEL.ITEM.NO_ITEMS}</p>;
   }
 
   return (

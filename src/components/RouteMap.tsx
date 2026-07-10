@@ -41,6 +41,10 @@ const Z_SELECTED = 200000;
 /** Vehicle/anchor sits BELOW the address markers (RF-006.4.2): the tipless car
     parks on the street and must never cover an address. */
 const Z_VEHICLE = 50000;
+/** The route START outranks everything except the SELECTED marker (feedback
+    10/07, supersedes the .4.27 "below the addresses": buried under a cluster,
+    the start was impossible to find — it's the route's one fixed landmark). */
+const Z_START = 180000;
 /** Committed stops rise above the free circles and grow — they are the tap
     target and the most important element of the roteiro map (RF-006.4.2).
     Applied ONLY to external (roteiro) models; the Original is untouched. */
@@ -489,9 +493,10 @@ export const RouteMap: React.FC<Props> = ({
       marker.addTo(overlayLayer);
       overlayMarkers.push({ marker, iconProps, lastScale: creationScale });
     };
-    // Like the anchor, the start car parks BELOW the address markers (Z_VEHICLE)
-    // — it must never cover the pin of the address it was set from (RF-006.4.27).
-    if (startLat !== undefined && startLng !== undefined) addOverlayMarker(startLat, startLng, START_ICON_PROPS, Z_VEHICLE);
+    // The start is the route's one fixed landmark: it rises above stops and
+    // addresses and loses ONLY to the selected marker (Z_START — feedback 10/07).
+    // The anchor keeps parking below (it belongs to its stop's addresses).
+    if (startLat !== undefined && startLng !== undefined) addOverlayMarker(startLat, startLng, START_ICON_PROPS, Z_START);
     if (anchorLat !== undefined && anchorLng !== undefined) addOverlayMarker(anchorLat, anchorLng, VEHICLE_ICON_PROPS, Z_VEHICLE);
 
     // Dashed radius circle (tela 9, spec §3): real meters, centered on the SEED.

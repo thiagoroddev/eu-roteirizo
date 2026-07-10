@@ -1,11 +1,32 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { UI_LABELS, COLUMN_NAMES, MAP_CONFIG, FOCUS_MAX_ZOOM, ADDRESS_MAX_ZOOM } from "../../constants";
 import type { RowData } from "../../types";
-import type { LatLng } from "../../types/routing";
+import { DEFAULT_ROUTING_CONFIG, type LatLng, type PlannedRoute } from "../../types/routing";
 import type { InteractionState, MarkerModel } from "../../utils/markers/markerModels";
+
+// routeStorage (RF-008) is mocked so the tests CONTROL what is persisted:
+// `saved` feeds the mount-time hydration; `saveCalls` records the auto-saves.
+const { routeStorageState } = vi.hoisted(() => ({
+  routeStorageState: {
+    saved: null as PlannedRoute | null,
+    saveCalls: [] as PlannedRoute[],
+    deleteCalls: 0,
+  },
+}));
+vi.mock("../../services/routeStorage", () => ({
+  getRoteiro: vi.fn(() => Promise.resolve(routeStorageState.saved)),
+  saveRoteiro: vi.fn((_manifestId: string, _routeName: string, route: PlannedRoute) => {
+    routeStorageState.saveCalls.push(route);
+    return Promise.resolve({ status: "saved" as const });
+  }),
+  deleteRoteiro: vi.fn(() => {
+    routeStorageState.deleteCalls += 1;
+    return Promise.resolve();
+  }),
+}));
 
 // vaul cannot run in jsdom — passthrough mock (gesture is validated on device).
 // The extra button simulates a DRAG SETTLE (vaul calling setActiveSnapPoint).
@@ -212,6 +233,9 @@ describe("MapPage (focus screen)", () => {
     roadGraphState.status = "ready";
     roadGraphState.error = null;
     roadGraphState.graph = null;
+    routeStorageState.saved = null;
+    routeStorageState.saveCalls = [];
+    routeStorageState.deleteCalls = 0;
   });
 
   it("loads the manifest from the URL and renders the CONTROLLED map", () => {
@@ -736,6 +760,46 @@ describe("MapPage (focus screen)", () => {
     fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
     expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
   };
+
+  // ------- Persistência (TASK-RF-008) -------
+
+  it("hidrata o roteiro salvo ao montar — a parada firmada volta sem nenhum gesto", async () => {
+    uploaderState.routes = { "A-1": rowsThreePoints };
+    routeStorageState.saved = {
+      id: "route_saved",
+      startPoint: { lat: -22.9, lng: -43.2 },
+      stops: [{ id: "stop_1", order: 1, vehicleStop: { lat: -22.9, lng: -43.2 }, pointIds: ["pt_-22.90000,-43.20000", "pt_-22.90015,-43.20000"], radiusMeters: 30 }],
+      config: DEFAULT_ROUTING_CONFIG,
+      createdAt: "2026-07-10T10:00:00.000Z",
+    };
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+
+    // A parada volta como quadrado no mapa e o início como definido.
+    await waitFor(() => expect(screen.getByTestId("route-map-stub").getAttribute("data-models-summary")).toContain("stop"));
+    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+  });
+
+  it("auto-save: firma da parada persiste (debounce); a EDIÇÃO aberta pausa o save (o snapshot pré-edição fica)", async () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+
+    // O debounce (800ms) consolida a firma: o último save carrega a parada.
+    await waitFor(() => expect(routeStorageState.saveCalls.some((r) => r.stops.length === 1)).toBe(true), { timeout: 2500 });
+    const savesBeforeEdit = routeStorageState.saveCalls.length;
+
+    // Editar abre o draft (REOPEN tira a parada de `stops`): auto-save PAUSADO —
+    // um snapshot agora gravaria o roteiro SEM a parada aberta.
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.EDIT }));
+    await new Promise((resolve) => setTimeout(resolve, 1100)); // > debounce
+    expect(routeStorageState.saveCalls.length).toBe(savesBeforeEdit);
+    expect(routeStorageState.saveCalls.every((r) => r.stops.length === 1 || r.stops.length === 0)).toBe(true);
+
+    // Salvar fecha o draft → o save volta, de novo com a parada inteira.
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.SAVE }));
+    await waitFor(() => expect(routeStorageState.saveCalls.length).toBeGreaterThan(savesBeforeEdit), { timeout: 2500 });
+    expect(routeStorageState.saveCalls[routeStorageState.saveCalls.length - 1].stops).toHaveLength(1);
+  });
 
   it("tela 8: selected-address card with the no-stop notice + radius PREVIEW before creating; empty-map tap deselects", () => {
     startRoteiroFlow();

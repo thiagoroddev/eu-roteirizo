@@ -28,13 +28,25 @@ interface Props {
 }
 
 export const PanelSection = ({ label, meta, actions, divider = true, children }: Props) => {
-  const labelEl = <p className="text-xs font-medium text-muted-foreground">{label}</p>;
+  // shrink-0: the label never wraps to two lines — on a narrow screen the META
+  // (which already truncates) is what gives way, not "Parada sugerida" (REF-016).
+  const labelEl = <p className="shrink-0 text-xs font-medium text-muted-foreground">{label}</p>;
   return (
     <div className={cn(divider && "border-t border-input")}>
-      <div className={cn("flex items-center justify-between gap-2 px-4", divider && "pt-2")}>
+      {/* pb-1: THE canonical breathing room between a section's label and its
+          content, for every section of both modes (REF-016 — the label used to
+          sit flush against whatever came below). Lives here, in the shared
+          chrome, so no component needs its own compensating pt-*. */}
+      <div className={cn("flex items-center justify-between gap-2 px-4 pb-1", divider && "pt-2")}>
         {meta ? (
           <div className="flex min-w-0 items-center gap-2">
             {labelEl}
+            {/* Separator between the label and its inline meta (feedback 10/07:
+                "Prévia de parada Distância até aqui" read as one run-on line).
+                The middot is the panel's own separator language (chips/estimates). */}
+            <span aria-hidden className="shrink-0 text-xs text-muted-foreground/50">
+              ·
+            </span>
             {meta}
           </div>
         ) : (

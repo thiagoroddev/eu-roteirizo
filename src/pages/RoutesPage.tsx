@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Input } from "../components/ui/input";
 import { ManifestCard } from "../components/manifests/ManifestCard";
 import { deleteManifest, listManifests } from "../services/manifestStorage";
+import { deleteManifestRoteiros, listRoteiroKeys } from "../services/routeStorage";
 import { UI_LABELS } from "../constants/uiLabels";
 import type { ManifestMeta, ManifestRouteMeta } from "../types/manifest";
 
@@ -20,11 +21,15 @@ function RoutesPage() {
 
   const [manifests, setManifests] = useState<ManifestMeta[] | null>(null); // null = still loading
   const [filter, setFilter] = useState("");
+  /** Which routes have a saved roteiro (RF-008) — lights the chips (RN-21). */
+  const [roteiroKeys, setRoteiroKeys] = useState<Map<string, Set<string>>>(new Map());
 
   useEffect(() => {
     let cancelled = false;
-    void listManifests().then((metas) => {
-      if (!cancelled) setManifests(metas);
+    void Promise.all([listManifests(), listRoteiroKeys()]).then(([metas, keys]) => {
+      if (cancelled) return;
+      setManifests(metas);
+      setRoteiroKeys(keys);
     });
     return () => {
       cancelled = true;
@@ -45,7 +50,10 @@ function RoutesPage() {
 
   const removeManifest = async (manifest: ManifestMeta) => {
     await deleteManifest(manifest.id);
+    // Cascade (RF-008): the manifest's roteiros go with it — no invisible orphans.
+    await deleteManifestRoteiros(manifest.id);
     setManifests(await listManifests());
+    setRoteiroKeys(await listRoteiroKeys());
   };
 
   return (
@@ -59,7 +67,15 @@ function RoutesPage() {
 
       <div className="space-y-3">
         {visible.map((manifest) => (
-          <ManifestCard key={manifest.id} manifest={manifest} selected={manifest.id === selectedId} filter={filter} onOpenRoute={openRoute} onDelete={(m) => void removeManifest(m)} />
+          <ManifestCard
+            key={manifest.id}
+            manifest={manifest}
+            selected={manifest.id === selectedId}
+            filter={filter}
+            roteiroRoutes={roteiroKeys.get(manifest.id)}
+            onOpenRoute={openRoute}
+            onDelete={(m) => void removeManifest(m)}
+          />
         ))}
       </div>
     </div>

@@ -29,7 +29,7 @@ export const RadiusStepper = ({ radiusMeters, onRadiusChange }: { radiusMeters: 
         variant="outline"
         size="icon"
         data-vaul-no-drag
-        className="h-9 w-9"
+        className="h-8 w-8"
         aria-label={DRAFT.RADIUS_DECREASE}
         disabled={radiusMeters <= RADIUS_MIN}
         onClick={() => onRadiusChange(Math.max(RADIUS_MIN, radiusMeters - RADIUS_STEP))}
@@ -42,7 +42,7 @@ export const RadiusStepper = ({ radiusMeters, onRadiusChange }: { radiusMeters: 
         variant="outline"
         size="icon"
         data-vaul-no-drag
-        className="h-9 w-9"
+        className="h-8 w-8"
         aria-label={DRAFT.RADIUS_INCREASE}
         disabled={radiusMeters >= RADIUS_MAX}
         onClick={() => onRadiusChange(Math.min(RADIUS_MAX, radiusMeters + RADIUS_STEP))}
@@ -98,17 +98,21 @@ export const RoteiroDraftHeader = ({ stopNumber, metrics, addresses, radiusMeter
         </Button>
       </div>
     </div>
-    <div className="px-4">
+    {/* pt-0.5 + the row's own mt-1.5 ≈ the panel's 8px rhythm below the CTAs
+        (REF-016 — the Save/Cancel borders sat almost on the chips). */}
+    <div className="px-4 pt-0.5">
       <PanelMetricsRow metrics={metrics} />
     </div>
     {/* No global "Faltando" here (RF-006.4.25): the edit is about ONE stop; the
         roteiro-wide HUD returns with the summary when the edit closes. */}
     {/* Map taps SELECT during the edit — hint only on the FIRST steps (rev. 08/07). */}
     {addresses <= 1 && <p className="px-4 pt-0.5 text-xs italic text-muted-foreground">{DRAFT.TAP_HINT}</p>}
-    {/* Grouping-radius CARD (rev. 08/07 3ª rodada): stepper + candidates line. */}
-    <div className="mx-4 mt-2 rounded-lg border border-input p-3">
+    {/* Grouping-radius CARD (rev. 08/07 3ª rodada): stepper + candidates line.
+        px-3 py-2 (not p-3): the card follows the panel's 8px rhythm — its old
+        12px padding was the "muito espaço interno" of the smoke (REF-016). */}
+    <div className="mx-4 mt-2 rounded-lg border border-input px-3 py-2">
       <RadiusStepper radiusMeters={radiusMeters} onRadiusChange={onRadiusChange} />
-      <p className="pt-2 text-xs font-medium text-muted-foreground">{DRAFT.BANNER_CANDIDATES(candidateCount)}</p>
+      <p className="pt-1.5 text-xs font-medium text-muted-foreground">{DRAFT.BANNER_CANDIDATES(candidateCount)}</p>
       {farWarning && <p className="pt-1 text-xs font-medium text-destructive">{DRAFT.FAR_WARNING}</p>}
     </div>
     <div className="pb-2" />

@@ -14,6 +14,8 @@ interface Props {
   selected?: boolean;
   /** The page's search term — filters the CHIPS inside the card (TASK-REF-013). */
   filter?: string;
+  /** Route names of this manifest with a saved roteiro (RF-008) — lights the chips (RN-21). */
+  roteiroRoutes?: Set<string>;
   onOpenRoute: (manifest: ManifestMeta, route: ManifestRouteMeta) => void;
   onDelete: (manifest: ManifestMeta) => void;
 }
@@ -40,7 +42,7 @@ const COLLAPSE_THRESHOLD = 6;
  * expanded, the chips scroll inside a capped area. While the page filter is
  * active the matching chips show automatically ("X de N rotas").
  */
-export const ManifestCard = ({ manifest, selected = false, filter = "", onOpenRoute, onDelete }: Props) => {
+export const ManifestCard = ({ manifest, selected = false, filter = "", roteiroRoutes, onOpenRoute, onDelete }: Props) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const importedAt = new Date(manifest.importedAt).toLocaleDateString("pt-BR");
@@ -78,7 +80,7 @@ export const ManifestCard = ({ manifest, selected = false, filter = "", onOpenRo
       {showChips && (
         <div className="mt-3 flex max-h-64 flex-wrap gap-2 overflow-y-auto">
           {matchingRoutes.map((route) => (
-            <RouteChip key={route.name} route={route} onOpen={(r) => onOpenRoute(manifest, r)} />
+            <RouteChip key={route.name} route={route} hasRoteiro={roteiroRoutes?.has(route.name) ?? false} onOpen={(r) => onOpenRoute(manifest, r)} />
           ))}
         </div>
       )}

@@ -19,6 +19,11 @@ describe("PanelSection", () => {
     expect(screen.getByText("corpo")).toBeInTheDocument();
     expect(container.firstElementChild?.className).toContain("border-t");
     expect(screen.getByText("Endereço selecionado").parentElement?.className).toContain("pt-2");
+    // REF-016: the label row carries THE canonical breathing room before the
+    // section's content — no component adds its own compensating pt-*.
+    expect(screen.getByText("Endereço selecionado").parentElement?.className).toContain("pb-1");
+    // The label itself never wraps; the meta is what truncates on narrow screens.
+    expect(screen.getByText("Endereço selecionado").className).toContain("shrink-0");
   });
 
   it("divider=false drops the border and the top padding (first section under the mode bar)", () => {

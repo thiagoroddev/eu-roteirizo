@@ -9,11 +9,20 @@ vi.mock("../../services/manifestStorage", () => ({
   deleteManifest: vi.fn().mockResolvedValue(undefined),
 }));
 
+// routeStorage (RF-008): quais rotas têm roteiro salvo (acende os chips) + cascata.
+vi.mock("../../services/routeStorage", () => ({
+  listRoteiroKeys: vi.fn(),
+  deleteManifestRoteiros: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { listManifests, deleteManifest } from "../../services/manifestStorage";
+import { listRoteiroKeys, deleteManifestRoteiros } from "../../services/routeStorage";
 import RoutesPage from "../../pages/RoutesPage";
 
 const mockList = listManifests as Mock;
 const mockDelete = deleteManifest as Mock;
+const mockRoteiroKeys = listRoteiroKeys as Mock;
+const mockCascade = deleteManifestRoteiros as Mock;
 
 const single: ManifestMeta = {
   id: "id-single",
@@ -69,6 +78,20 @@ describe("RoutesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockList.mockResolvedValue([multi, single]);
+    mockRoteiroKeys.mockResolvedValue(new Map());
+    mockCascade.mockResolvedValue(undefined);
+  });
+
+  // RF-008: o chip da rota COM roteiro salvo acende (CircleCheck em text-primary);
+  // as demais seguem no tracejado neutro.
+  it("acende o chip das rotas com roteiro salvo (RN-21)", async () => {
+    mockRoteiroKeys.mockResolvedValue(new Map([["id-multi", new Set(["A-1"])]]));
+    renderPage();
+
+    const lit = await screen.findByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("A-1") });
+    await waitFor(() => expect(lit.querySelector("svg")?.classList.contains("text-primary")).toBe(true));
+    const unlit = screen.getByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("B-2") });
+    expect(unlit.querySelector("svg")?.classList.contains("text-primary")).toBe(false);
   });
 
   it("lists saved manifests as typed cards with their route chips", async () => {
@@ -172,6 +195,8 @@ describe("RoutesPage", () => {
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.ROUTES_PAGE.DELETE_CONFIRM }));
 
     await waitFor(() => expect(mockDelete).toHaveBeenCalledWith("id-single"));
+    // Cascata (RF-008): os roteiros do romaneio vão junto — sem órfãos invisíveis.
+    await waitFor(() => expect(mockCascade).toHaveBeenCalledWith("id-single"));
     await waitFor(() => expect(screen.queryByText("minha-rota.xlsx")).not.toBeInTheDocument());
   });
 

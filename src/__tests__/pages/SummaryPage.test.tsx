@@ -32,6 +32,14 @@ vi.mock("../../hooks/useRouteUploader", () => ({
   useRouteUploader: () => uploaderState,
 }));
 
+// routeStorage (RF-008): controlado pelo teste — adapta o botão e alimenta o Info.
+const { routeStorageState } = vi.hoisted(() => ({
+  routeStorageState: { saved: null as unknown },
+}));
+vi.mock("../../services/routeStorage", () => ({
+  getRoteiro: vi.fn(() => Promise.resolve(routeStorageState.saved)),
+}));
+
 import SummaryPage from "../../pages/SummaryPage";
 
 /** The /mapa stub also exposes the search string, so navigation params are assertable. */
@@ -100,6 +108,24 @@ describe("SummaryPage (focus screen)", () => {
     renderPage();
 
     expect(screen.queryByText(UI_LABELS.ROTEIRO_INFO.TITLE)).not.toBeInTheDocument();
+  });
+
+  // RF-008: com roteiro salvo, o botão adapta e o Info mostra os totais do salvo.
+  it("com roteiro salvo: botão vira 'Ver Meu Roteiro' e o 'Info Meu Roteiro' aparece", async () => {
+    routeStorageState.saved = {
+      id: "route_saved",
+      startPoint: { lat: -22.9, lng: -43.1 },
+      stops: [{ id: "s1", order: 1, vehicleStop: { lat: -22.9, lng: -43.1 }, pointIds: ["pt_-22.90000,-43.10000"], radiusMeters: 30 }],
+      config: { walkingSpeedKmh: 5, walkingMinutesPerDelivery: 1.5, vehicleSpeedKmh: 25 },
+      createdAt: "2026-07-10T10:00:00.000Z",
+    };
+    renderPage();
+
+    expect(await screen.findByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.VIEW_ROTEIRO })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.CREATE_ROTEIRO })).not.toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.ROTEIRO_INFO.TITLE)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.ROTEIRO_INFO.VEHICLE_STOPS)).toBeInTheDocument();
+    routeStorageState.saved = null;
   });
 
   it("shows the error state when the manifest cannot be reopened", () => {

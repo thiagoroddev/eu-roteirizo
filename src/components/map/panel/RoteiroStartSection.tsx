@@ -38,7 +38,9 @@ export const RoteiroStartSection = ({ phase, notice, pendingAddress, suggestionL
       <>
         <p className="text-xs font-medium text-muted-foreground">{START.SECTION}</p>
         <p className="pt-0.5 text-xs text-muted-foreground">{UI_LABELS.MAP_PANEL.ROTEIRO_HINT_START}</p>
-        <div className="flex gap-2 pt-2">
+        {/* pb-1: with the notice's pt-1 below this makes the panel's 8px rhythm —
+            the buttons' borders no longer sit on the text (REF-016). */}
+        <div className="flex gap-2 pb-1 pt-2">
           <Button type="button" size="sm" data-vaul-no-drag onClick={onUseGps}>
             {START.USE_GPS}
           </Button>
@@ -63,7 +65,7 @@ export const RoteiroStartSection = ({ phase, notice, pendingAddress, suggestionL
     {phase === "confirm-point" && (
       <>
         <p className="text-sm font-medium">{START.CONFIRM_POINT(pendingAddress ?? UI_LABELS.COMMON.NO_DATA)}</p>
-        <div className="flex gap-2 pt-2">
+        <div className="flex gap-2 pb-1 pt-2">
           <Button type="button" size="sm" data-vaul-no-drag onClick={onConfirmPoint}>
             {START.CONFIRM}
           </Button>

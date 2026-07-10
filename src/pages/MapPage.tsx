@@ -36,7 +36,18 @@ import {
   orderedStopPoints,
 } from "../utils/markers/roteiroModels";
 import { buildDeliveryPoints } from "../utils/routing/points";
-import { remainingCounts, suggestedNextPointId, suggestionOrigin, draftCandidateIds, farChosenPointIds, isComplete, FAR_POINT_RADIUS_FACTOR, FAR_POINT_MIN_METERS } from "../utils/routing/builder";
+import {
+  remainingCounts,
+  suggestedNextPointId,
+  suggestionOrigin,
+  draftCandidateIds,
+  farChosenPointIds,
+  isComplete,
+  toPlannedRoute,
+  FAR_POINT_RADIUS_FACTOR,
+  FAR_POINT_MIN_METERS,
+} from "../utils/routing/builder";
+import { getRoteiro, saveRoteiro, deleteRoteiro } from "../services/routeStorage";
 import { stopWalkEstimate } from "../utils/routing/estimates";
 import { assignedPointIds, pointsWithinRadius } from "../utils/routing/selectors";
 import { indexPointsById, nearestStopTo } from "../utils/routing/selectors";
@@ -61,6 +72,10 @@ interface ModePanelUi {
 }
 
 const INITIAL_PANEL_UI: ModePanelUi = { snap: "collapsed", view: "selected", cardExpanded: false };
+
+/** Auto-save debounce (RF-008): long enough to coalesce a burst of edits,
+    short enough that closing the tab right after a change rarely loses it. */
+const AUTOSAVE_DEBOUNCE_MS = 800;
 
 const TYPE_LABELS = UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.TYPE_LABELS;
 
@@ -98,7 +113,7 @@ function MapPage() {
 
       {error && <div className="m-4 rounded-md border border-destructive bg-destructive/10 p-3 text-center font-semibold text-destructive">{error}</div>}
 
-      {!loading && !error && routes && <MapScreen key={`${manifestId}:${routeName}`} rows={currentRows} />}
+      {!loading && !error && routes && <MapScreen key={`${manifestId}:${routeName}`} rows={currentRows} manifestId={manifestId} routeName={routeName} />}
     </div>
   );
 }
@@ -120,7 +135,7 @@ function MapPage() {
  *   feeds RouteMap with external models (faded free points) and the panel with
  *   the remaining-work HUD. Falls back to Original when nothing is plottable.
  */
-function MapScreen({ rows }: { rows: RowData[] }) {
+function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestId: string; routeName: string }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -138,6 +153,48 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   const mode: MapMode = searchParams.get(MODE_QUERY_PARAM) === MODE_QUERY_ROTEIRO && roteiroAvailable ? "roteiro" : "original";
   const remaining = remainingCounts(builderState);
   const pointsById = useMemo(() => indexPointsById(points), [points]);
+
+  // ------- Roteiro persistence (TASK-RF-008): hydrate on mount + auto-save -------
+  /**
+   * Auto-save only starts AFTER the load resolves (found or not): the very
+   * first render holds an empty builder, and letting the save effect see it
+   * before hydration would DELETE the stored roteiro it was about to load.
+   */
+  const [persistReady, setPersistReady] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    void getRoteiro(manifestId, routeName).then((route) => {
+      if (cancelled) return;
+      // Regardless of the current mode — entering by the Original and toggling
+      // later must find the roteiro too (item 4 do feedback 08/07).
+      if (route) dispatch({ type: "HYDRATE", route });
+      setPersistReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // Screen-scoped: MapScreen is keyed by manifest:rota, so this runs once.
+  }, [manifestId, routeName, dispatch]);
+
+  /** RF-33: saving is free — every meaningful change persists, debounced.
+      PAUSED while an edit draft is open: REOPEN_STOP moves the stop out of
+      `stops`, so a mid-edit snapshot would save the roteiro WITHOUT the stop
+      being edited; the pre-edit snapshot stays until Save/Cancel closes it.
+      An emptied builder deletes the record, so the chip/button turn off too. */
+  useEffect(() => {
+    if (!persistReady || builderState.draft !== null) return;
+    const meaningful = builderState.startPoint !== null || builderState.stops.length > 0;
+    const timer = setTimeout(() => {
+      if (meaningful) {
+        void saveRoteiro(manifestId, routeName, toPlannedRoute(builderState)).then((result) => {
+          if (result.status === "error" && import.meta.env.DEV) console.warn(`routeStorage: auto-save falhou — ${result.reason}`);
+        });
+      } else {
+        void deleteRoteiro(manifestId, routeName);
+      }
+    }, AUTOSAVE_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [persistReady, builderState, manifestId, routeName]);
 
   /**
    * Panel UI kept PER MODE (RF-006.4.18). Each mode looks at a different thing —
