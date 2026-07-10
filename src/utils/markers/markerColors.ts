@@ -36,9 +36,16 @@ export const ROTEIRO_TYPE_COLORS: Record<"commercial" | "residential" | "indefin
   indefinite: { top: "#E8ECF2", bottom: "#B4BAC4", glow: "rgba(160,170,190,.35)", numberInk: "#2A2F38" },
 };
 
-/** The route-infrastructure slate (start diamond + vehicle/anchor car) — cyan neon glow. */
-export const ROTEIRO_MARKER_COLORS: Record<"vehicle", MarkerColor> = {
+/**
+ * Route-infrastructure markers (both drawn as the tipless CAR circle parked on
+ * the street): `vehicle` is the stop anchor in slate; `start` is the route
+ * START in strong BLUE (RF-006.4.27 — same icon as the anchor, the COLOR tells
+ * them apart; supersedes the .4.2 diamond, which overlapped the address pin
+ * when the start was set by address). Blue ≠ the commercial circles' light cyan.
+ */
+export const ROTEIRO_MARKER_COLORS: Record<"vehicle" | "start", MarkerColor> = {
   vehicle: { top: "#64748B", bottom: "#334155", glow: "rgba(0,209,255,.45)" },
+  start: { top: "#3B82F6", bottom: "#1D4ED8", glow: "rgba(59,130,246,.55)" },
 };
 
 /** The mode's neon accent — suggestion line + radius circle (RF-006.4.2). */

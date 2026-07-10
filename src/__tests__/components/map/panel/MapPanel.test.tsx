@@ -5,7 +5,7 @@
  * setActiveSnapPoint. Real gesture behavior is validated manually on device.
  */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, act } from "@testing-library/react";
+import { render, screen, act, fireEvent } from "@testing-library/react";
 import type { ReactNode } from "react";
 
 const { capturedSetSnap } = vi.hoisted(() => ({
@@ -161,5 +161,47 @@ describe("MapPanel", () => {
     );
 
     expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.85");
+  });
+
+  // RF-006.4.26: vaul's release moves ONE rung per flick — ~2% of the screen on
+  // the dense ladder, which read as "snapping back". A fast release overrides
+  // the pick with the next NAMED height in the gesture's direction.
+  it("a fast upward FLICK jumps to the next NAMED height, ignoring vaul's one-rung pick", () => {
+    const onSnapChange = vi.fn();
+    renderPanel({ onSnapChange }); // uncontrolled, starts collapsed
+
+    // Fast upward gesture (clientY shrinking): the synchronous events land well
+    // inside the sampling window, and the speed far exceeds the flick threshold.
+    fireEvent.pointerDown(document.body, { clientY: 600 });
+    fireEvent.pointerMove(document.body, { clientY: 560 });
+    fireEvent.pointerMove(document.body, { clientY: 520 });
+    fireEvent.pointerUp(document.body, { clientY: 520 });
+    act(() => {
+      capturedSetSnap.current?.(0.3); // vaul's one-rung pick near the origin — overridden
+    });
+
+    expect(onSnapChange).toHaveBeenCalledWith("half");
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.45");
+  });
+
+  it("a fast downward FLICK steps down to the previous NAMED height", () => {
+    const onSnapChange = vi.fn();
+    const { rerender } = renderPanel({ snap: "full", onSnapChange });
+
+    fireEvent.pointerDown(document.body, { clientY: 200 });
+    fireEvent.pointerMove(document.body, { clientY: 260 });
+    fireEvent.pointerUp(document.body, { clientY: 260 });
+    act(() => {
+      capturedSetSnap.current?.(0.8);
+    });
+
+    expect(onSnapChange).toHaveBeenCalledWith("half");
+    rerender(
+      <MapPanel snap="half" onSnapChange={onSnapChange} header={<div>header</div>}>
+        <div>body</div>
+      </MapPanel>
+    );
+    // The flick landed on the NAMED half — not on vaul's 0.8 rung.
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.45");
   });
 });

@@ -62,6 +62,25 @@ const LADDER_STEP = 0.02;
  */
 const DETAIL_REVEAL_PX = 120;
 
+/**
+ * FLICK detection (RF-006.4.26). vaul's release handler treats a fast drag as
+ * "move ONE snap point from where it started" — sensible with 3 snaps, but on
+ * the dense ladder one rung is ~2% of the screen, so a flick looked like the
+ * panel "snapping back" and only slow drags worked. We measure the gesture's
+ * vertical speed ourselves and, on a fast release, override vaul's one-rung
+ * pick with the next NAMED height (collapsed/half/full) in the flick's
+ * direction — flicks step between the named heights, slow drags still rest on
+ * any rung.
+ *
+ * ⚙️ MANUAL KNOBS: `FLICK_VELOCITY_PX_MS` is the px/ms that counts as a flick
+ * (vaul's own threshold is 0.4); the windows keep a drag that STOPS before
+ * releasing from flicking, and expire stale gestures.
+ */
+const FLICK_VELOCITY_PX_MS = 0.5;
+const FLICK_SAMPLE_WINDOW_MS = 100;
+const FLICK_FRESHNESS_MS = 150;
+const SNAP_ORDER: PanelSnap[] = ["collapsed", "half", "full"];
+
 /** Ladder from just above the collapsed height up to full, always containing the
     two named fractions so a command lands on an exact, testable value. */
 const buildLadder = (collapsedPx: number, viewportPx: number, halfValue: number): (string | number)[] => {
@@ -152,8 +171,57 @@ export const MapPanel = ({ header, children, footer, snap, onSnapChange, sizing 
   const dragged = drag?.label === currentLabel ? drag.value : null;
   const activeValue: string | number = dragged === null || typeof dragged === "string" ? (currentLabel === "collapsed" ? collapsedValue : valueOf(currentLabel)) : dragged;
 
+  /** The last release's vertical speed (px/ms; positive = upward), sampled on
+      window CAPTURE listeners so it is written before vaul's own pointerup
+      handler asks for the snap. Only the samples of the gesture's final
+      FLICK_SAMPLE_WINDOW_MS count — a drag that stops, then releases, has ~0
+      recent speed and must NOT flick. */
+  const flickRef = useRef<{ velocityPxMs: number; at: number } | null>(null);
+  useEffect(() => {
+    let samples: { y: number; t: number }[] = [];
+    const onDown = (event: PointerEvent) => {
+      samples = [{ y: event.clientY, t: performance.now() }];
+    };
+    const onMove = (event: PointerEvent) => {
+      if (samples.length === 0) return;
+      samples.push({ y: event.clientY, t: performance.now() });
+      if (samples.length > 8) samples.shift();
+    };
+    const onUp = () => {
+      const now = performance.now();
+      const recent = samples.filter((s) => now - s.t <= FLICK_SAMPLE_WINDOW_MS);
+      if (recent.length >= 2) {
+        const first = recent[0];
+        const last = recent[recent.length - 1];
+        flickRef.current = { velocityPxMs: (first.y - last.y) / Math.max(last.t - first.t, 1), at: now };
+      }
+      samples = [];
+    };
+    window.addEventListener("pointerdown", onDown, true);
+    window.addEventListener("pointermove", onMove, true);
+    window.addEventListener("pointerup", onUp, true);
+    return () => {
+      window.removeEventListener("pointerdown", onDown, true);
+      window.removeEventListener("pointermove", onMove, true);
+      window.removeEventListener("pointerup", onUp, true);
+    };
+  }, []);
+
   const handleSnapValue = (value: string | number | null) => {
     if (value === null) return;
+    // A FLICK overrides vaul's one-rung pick: step to the next NAMED height in
+    // the gesture's direction (RF-006.4.26). React batches this with the
+    // parent's echo, so no intermediate height ever renders.
+    const flick = flickRef.current;
+    if (flick !== null && performance.now() - flick.at < FLICK_FRESHNESS_MS && Math.abs(flick.velocityPxMs) >= FLICK_VELOCITY_PX_MS) {
+      flickRef.current = null;
+      const index = SNAP_ORDER.indexOf(currentLabel);
+      const next = SNAP_ORDER[Math.min(Math.max(index + (flick.velocityPxMs > 0 ? 1 : -1), 0), SNAP_ORDER.length - 1)];
+      setDrag(null); // a named jump — forget the free-drag rung
+      if (snap === undefined) setInternalSnap(next);
+      onSnapChange?.(next);
+      return;
+    }
     const next = labelOf(value);
     setDrag({ label: next, value }); // keep the exact rung the finger chose
     if (snap === undefined) setInternalSnap(next);

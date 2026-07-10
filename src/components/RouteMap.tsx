@@ -55,10 +55,12 @@ const DOUBLE_TAP_MS = 220;
 // vanished on light tiles); still faded/dashed per fluxo §3/§6.
 const SUGGESTION_LINE_STYLE = { dashArray: "6 8", weight: 3, color: ROTEIRO_ACCENT, opacity: 0.55 } as const;
 
-/** Route START: slate DIAMOND, tip-anchored — the SHAPE tells it apart, so it
-    carries NO ring/glow and stays the same size as the others; the SELECTED
-    marker must stand out over it (RF-006.4.14). */
-const START_ICON_PROPS = { shape: "diamond", color: ROTEIRO_MARKER_COLORS.vehicle, number: null, badge: null, selected: false, emphasis: false } as const;
+/** Route START: the same tipless CAR circle as the anchor, parked on the street,
+    in strong BLUE — the COLOR tells start and anchor apart (RF-006.4.27;
+    supersedes the .4.2 diamond, which sat over the address pin when the start
+    was set by address). Center anchor + low z, like the anchor: never covers
+    an address marker. */
+const START_ICON_PROPS = { shape: "circle", color: ROTEIRO_MARKER_COLORS.start, glyph: "car", number: null, badge: null, selected: true, emphasis: true, tip: false, anchor: "center" } as const;
 
 /** VEHICLE/anchor: slate circle with the Tabler CAR glyph, NO tip, centered
     anchor — parks on the street without covering addresses (RF-006.4.2). */
@@ -462,9 +464,9 @@ export const RouteMap: React.FC<Props> = ({
       }
     };
 
-    /** Start (diamond, tip) and vehicle/anchor (car, tipless, centered) each keep
-        their OWN icon props so the zoom rescale rebuilds the right icon —
-        including the anchor mode (otherwise the car would "walk" on zoom). */
+    /** Start (blue car) and vehicle/anchor (slate car) each keep their OWN icon
+        props so the zoom rescale rebuilds the right icon — including the anchor
+        mode (otherwise the car would "walk" on zoom). */
     const overlayMarkers: { marker: L.Marker; iconProps: Parameters<typeof createMarkerDivIcon>[0] }[] = [];
     const addOverlayMarker = (lat: number, lng: number, iconProps: Parameters<typeof createMarkerDivIcon>[0], zIndexOffset: number) => {
       const marker = L.marker([lat, lng], {
@@ -474,8 +476,9 @@ export const RouteMap: React.FC<Props> = ({
       marker.addTo(overlayLayer);
       overlayMarkers.push({ marker, iconProps });
     };
-    // Below Z_SELECTED so the selected stop/address sits ABOVE the start (RF-006.4.14).
-    if (startLat !== undefined && startLng !== undefined) addOverlayMarker(startLat, startLng, START_ICON_PROPS, Z_GROUP);
+    // Like the anchor, the start car parks BELOW the address markers (Z_VEHICLE)
+    // — it must never cover the pin of the address it was set from (RF-006.4.27).
+    if (startLat !== undefined && startLng !== undefined) addOverlayMarker(startLat, startLng, START_ICON_PROPS, Z_VEHICLE);
     if (anchorLat !== undefined && anchorLng !== undefined) addOverlayMarker(anchorLat, anchorLng, VEHICLE_ICON_PROPS, Z_VEHICLE);
 
     // Dashed radius circle (tela 9, spec §3): real meters, centered on the SEED.

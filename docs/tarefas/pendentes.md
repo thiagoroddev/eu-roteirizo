@@ -37,7 +37,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 > Tarefas urgentes que carregam contexto extra. Bloco em lista, no topo.
 >
-> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). **Fila:** ver a tabela **"Ordem de execução recomendada"** no topo deste arquivo (rev. 10/07, pós-smoke). Resumo: `REF-015 → REF-016 → RF-008 → TEST-003 → RF-006.8 → RF-006.5 → .6 → .7 → RF-007 → RF-009 → RF-012 → RF-013`. Concluídos: RF-003/004/005/011/020/021/022/023 e RF-006.1 → .4.25 (ver índice). RF-014 absorvida pela RF-022; RF-010 absorvida pela RF-006.2. Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
+> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). **Fila:** ver a tabela **"Ordem de execução recomendada"** no topo deste arquivo (rev. 10/07, pós-smoke). Resumo: `REF-015 → REF-016 → RF-008 → TEST-003 → RF-006.8 → RF-006.5 → .6 → .7 → RF-007 → RF-009 → RF-012 → RF-013`. Concluídos: RF-003/004/005/011/020/021/022/023 e RF-006.1 → .4.27 (ver índice). RF-014 absorvida pela RF-022; RF-010 absorvida pela RF-006.2. Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
 >
 > ⚠️ **Decisões transversais (valem para o épico todo):**
 > - **Estado:** `useReducer` por feature (conforme draft §6). Zustand só se a complexidade exigir — e **não instalar sem aprovação** (anti-padrão do núcleo §5).
@@ -112,7 +112,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 ## TASK-RF-006 - UI de construção da rota (Meu roteiro) [XG, dividir]
 
-- **Status:** Pendente (**.1 → .4.25 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.5 · .6 · .7 · .8 · .9**)
+- **Status:** Pendente (**.1 → .4.27 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.5 · .6 · .7 · .8 · .9**)
 - **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
