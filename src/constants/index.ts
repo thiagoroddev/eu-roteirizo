@@ -128,17 +128,25 @@ export const MAP_CONFIG = {
 } as const;
 
 /**
- * How many levels BELOW `ZOOM.MAX` the automatic focus of a GROUPED stop lands
- * (TASK-RF-006.4.19). At MAX the stop filled the screen and its neighbours fell
- * outside — the user lost the context that makes the focus useful.
+ * Automatic-focus zooms, as offsets BELOW `ZOOM.MAX` (RF-006.4.19/.4.20/.4.22).
+ * The manual `+` always reaches `ZOOM.MAX`; these only cap the `fitBounds`.
  *
- * Applies ONLY to that case. An address or an UNGROUPED stop still focuses at
- * `ZOOM.MAX` (RF-006.4.20), and the manual `+` always reaches it.
- * ⚙️ MANUAL KNOB: lower to 1 if the jump from the whole-route frame
- * (`ZOOM.DEFAULT`) feels too subtle.
+ * Calibrated on device (smoke 10/07):
+ * - **grouped stop** (`FOCUS_MAX_ZOOM`): 2 levels below. At MAX the stop filled
+ *   the screen and its neighbours fell outside — the user lost the context that
+ *   makes the focus useful.
+ * - **single address** (`ADDRESS_MAX_ZOOM`): 1 level below. MAX was "exagero" on
+ *   a phone; one level back still frames the building and keeps the street.
+ * - an **ungrouped stop** keeps `ZOOM.MAX`: it shows several addresses at once,
+ *   and `fitBounds` only reaches the ceiling when they're very close together.
+ *
+ * ⚙️ MANUAL KNOBS: raise/lower the offsets. Remember `maxZoom` is a CEILING, not
+ * a target — for spread bounds the fit decides, and the offset never bites.
  */
 export const FOCUS_ZOOM_OFFSET = 2;
 export const FOCUS_MAX_ZOOM = MAP_CONFIG.ZOOM.MAX - FOCUS_ZOOM_OFFSET;
+export const ADDRESS_ZOOM_OFFSET = 1;
+export const ADDRESS_MAX_ZOOM = MAP_CONFIG.ZOOM.MAX - ADDRESS_ZOOM_OFFSET;
 
 // ========================================
 // EXCEL COLUMN NAMES

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
-import { UI_LABELS, COLUMN_NAMES, MAP_CONFIG, FOCUS_MAX_ZOOM } from "../../constants";
+import { UI_LABELS, COLUMN_NAMES, MAP_CONFIG, FOCUS_MAX_ZOOM, ADDRESS_MAX_ZOOM } from "../../constants";
 import type { RowData } from "../../types";
 import type { LatLng } from "../../types/routing";
 import type { InteractionState, MarkerModel } from "../../utils/markers/markerModels";
@@ -627,12 +627,12 @@ describe("MapPage (focus screen)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
     expect(screen.getByText(START_LABELS.CONFIRM_POINT("Rua Mapa, 10"))).toBeInTheDocument();
-    // The address awaiting confirmation is framed at max zoom — it used to sit
-    // lost among every other marker of the route (RF-006.4.20) — AND wears the
+    // The address awaiting confirmation is framed close — it used to sit lost
+    // among every other marker of the route (RF-006.4.20) — AND wears the
     // selected-address chrome, like any other selected address (RF-006.4.21).
     const stub = screen.getByTestId("route-map-stub");
     expect(stub.getAttribute("data-focus-bounds")).toBe("1");
-    expect(stub.getAttribute("data-focus-zoom")).toBe(String(MAP_CONFIG.ZOOM.MAX));
+    expect(stub.getAttribute("data-focus-zoom")).toBe(String(ADDRESS_MAX_ZOOM));
     expect(stub.getAttribute("data-highlighted-model")).not.toBe("none");
     expect(stub.getAttribute("data-models-summary")).toContain("address*");
 
@@ -982,14 +982,16 @@ describe("MapPage (focus screen)", () => {
   // RF-006.4.20: o quão PERTO depende do QUE está focado. Endereço e parada
   // desagrupada vão ao zoom máximo; parada agrupada para antes (vizinhas no
   // enquadramento); sem seleção, o RouteMap enquadra tudo (focusBounds ausente).
-  it("zoom do foco por CONTEXTO: endereço e desagrupado no máximo, parada agrupada 2 níveis antes", () => {
+  // Três tetos distintos (calibrados no smoke 10/07): endereço = MAX-1, parada
+  // desagrupada = MAX, parada agrupada = MAX-2.
+  it("zoom do foco por CONTEXTO: endereço 1 nível antes do máximo, desagrupado no máximo, parada agrupada 2 antes", () => {
     startRoteiroFlow();
     const stub = screen.getByTestId("route-map-stub");
 
-    // Endereço livre selecionado (tela 8 / parada sugerida) → o ENDEREÇO, no máximo.
+    // Endereço livre selecionado (tela 8 / parada sugerida) → o ENDEREÇO.
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
     expect(stub.getAttribute("data-focus-bounds")).toBe("1");
-    expect(stub.getAttribute("data-focus-zoom")).toBe(String(MAP_CONFIG.ZOOM.MAX));
+    expect(stub.getAttribute("data-focus-zoom")).toBe(String(ADDRESS_MAX_ZOOM));
 
     // Parada firmada e AGRUPADA (1 clique) → os 2 endereços, 2 níveis antes do máximo.
     fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
@@ -1007,7 +1009,7 @@ describe("MapPage (focus screen)", () => {
     // o zoom da parada agrupada (RF-006.4.21).
     fireEvent.click(screen.getByRole("button", { name: "stub-second-point-tap" }));
     expect(stub.getAttribute("data-focus-bounds")).toBe("1");
-    expect(stub.getAttribute("data-focus-zoom")).toBe(String(MAP_CONFIG.ZOOM.MAX));
+    expect(stub.getAttribute("data-focus-zoom")).toBe(String(ADDRESS_MAX_ZOOM));
   });
 
   it("desagrupado: tocar qualquer membro seleciona-o — destaque no mapa e no painel (RF-006.4.16)", () => {

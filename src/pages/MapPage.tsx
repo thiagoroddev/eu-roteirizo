@@ -48,7 +48,7 @@ import { haversine } from "../utils/routing/geo";
 import { isWithinRioBounds } from "../utils/coordinates";
 import { formatMeters } from "../utils/formatters";
 import { UI_LABELS } from "../constants/uiLabels";
-import { MAP_CONFIG, FOCUS_MAX_ZOOM } from "../constants";
+import { MAP_CONFIG, FOCUS_MAX_ZOOM, ADDRESS_MAX_ZOOM } from "../constants";
 
 /** The panel's two views (rev. 07/07 — TASK-RF-023.7). */
 type PanelView = "selected" | "list";
@@ -544,13 +544,14 @@ function MapScreen({ rows }: { rows: RowData[] }) {
    *
    * ⚠️ `maxZoom` is a CEILING, not a target: `fitBounds` picks the zoom that
    * makes the bounds fit and then clamps it. A single point has zero-sized
-   * bounds, so it always lands on the ceiling (ZOOM.MAX). Several addresses fit
-   * at whatever their spread allows — raising the ceiling for an expanded stop
-   * lets it go as close as its members permit, no closer.
+   * bounds, so it always lands on the ceiling (`ADDRESS_MAX_ZOOM` — one level
+   * below the max: the full max was too tight on a phone, smoke 10/07). Several
+   * addresses fit at whatever their spread allows — raising the ceiling for an
+   * expanded stop lets it go as close as its members permit, no closer.
    */
   const focusAddress = pendingPoint ?? selectedPoint ?? selectedMemberPoint;
   const roteiroFocus: { bounds: LatLng[]; maxZoom: number } | null = focusAddress
-    ? { bounds: [{ lat: focusAddress.lat, lng: focusAddress.lng }], maxZoom: MAP_CONFIG.ZOOM.MAX }
+    ? { bounds: [{ lat: focusAddress.lat, lng: focusAddress.lng }], maxZoom: ADDRESS_MAX_ZOOM }
     : selectedStop && stopPoints.length > 0
       ? { bounds: stopPoints.map((p) => ({ lat: p.lat, lng: p.lng })), maxZoom: expandedRoteiroStopId === selectedStop.id ? MAP_CONFIG.ZOOM.MAX : FOCUS_MAX_ZOOM }
       : null;
