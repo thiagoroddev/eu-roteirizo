@@ -48,3 +48,26 @@ describe("createMarkerDivIcon — center anchor (RF-006.4.2)", () => {
     expect(icon.options.iconAnchor).toEqual([MARKER_GEOMETRY.CX, MARKER_GEOMETRY.CY_MID]);
   });
 });
+
+// REF-015d: the map recreates every marker on each interaction — the cache is
+// what keeps that from rebuilding N SVG strings. Identity for equal props;
+// difference for ANY prop that reaches the SVG or the anchor.
+describe("createMarkerDivIcon — icon cache (REF-015d)", () => {
+  it("returns the SAME instance for identical props", () => {
+    const a = createMarkerDivIcon({ shape: "circle", color: COM, number: 7, selected: true, scale: 0.5 });
+    const b = createMarkerDivIcon({ shape: "circle", color: COM, number: 7, selected: true, scale: 0.5 });
+    expect(a).toBe(b);
+  });
+
+  it("returns DIFFERENT instances when any visual prop differs", () => {
+    const base = createMarkerDivIcon({ shape: "circle", color: COM, number: 7, scale: 0.5 });
+    expect(createMarkerDivIcon({ shape: "circle", color: COM, number: 8, scale: 0.5 })).not.toBe(base); // number
+    expect(createMarkerDivIcon({ shape: "circle", color: COM, number: 7, scale: 0.6 })).not.toBe(base); // scale
+    expect(createMarkerDivIcon({ shape: "circle", color: COM, number: 7, scale: 0.5, selected: true })).not.toBe(base); // ring
+    expect(createMarkerDivIcon({ shape: "circle", color: COM, number: 7, scale: 0.5, emphasis: true })).not.toBe(base); // glow
+    expect(createMarkerDivIcon({ shape: "circle", color: COM, number: 7, scale: 0.5, ringStyle: "dashed", selected: true })).not.toBe(base); // candidate ring
+    expect(createMarkerDivIcon({ shape: "circle", color: COM, number: 7, scale: 0.5, badge: { kind: "packages", count: 3 } })).not.toBe(base); // badge
+    expect(createMarkerDivIcon({ shape: "circle", color: COM, number: 7, scale: 0.5, tip: false, anchor: "center" })).not.toBe(base); // anchor/tip
+    expect(createMarkerDivIcon({ shape: "circle", color: { ...COM, top: "#000000" }, number: 7, scale: 0.5 })).not.toBe(base); // color
+  });
+});

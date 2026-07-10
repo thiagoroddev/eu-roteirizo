@@ -6,6 +6,7 @@
 
 ---
 
+
 _Nenhuma tarefa em andamento._
 
 O histórico das tarefas concluídas vive em [`concluidas/`](./concluidas/) (uma linha por tarefa em [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md)). O backlog do que falta vive em [`pendentes.md`](./pendentes.md).

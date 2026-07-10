@@ -141,10 +141,12 @@ export function buildMarkerSvg(props: MarkerSvgProps): string {
   // draft CANDIDATE (RF-006.4.2). Unselected = a hairline border.
   const stroke = selected ? `stroke="#ffffff" stroke-width="4"${ringStyle === "dashed" ? ` stroke-dasharray="10 7"` : ""}` : `stroke="rgba(255,255,255,.4)" stroke-width="1.5"`;
 
-  // Glow (inline, self-contained): the emphasized address gets a bright type-colored neon
-  // around the white border (light blue for commercial, light green for residential —
-  // color.top); everything else keeps the subtle base glow.
-  const glowFilter = emphasis ? `drop-shadow(0 0 12px ${color.top}) drop-shadow(0 0 6px ${color.top})` : `drop-shadow(0 0 7px ${color.glow}) drop-shadow(0 1px 1px rgba(0,0,0,.18))`;
+  // Glow ONLY on emphasis (TASK-REF-015b, decision 10/07): `drop-shadow` re-
+  // rasterizes on every frame of a mobile pinch/pan, and with one marker per
+  // address the base glow on EVERY marker was the map's main per-frame cost.
+  // Plain markers keep the gradient + border; the emphasized one gets the
+  // bright type-colored neon — now MORE legible by contrast.
+  const glowStyle = emphasis ? ` style="filter:drop-shadow(0 0 12px ${color.top}) drop-shadow(0 0 6px ${color.top})"` : "";
 
   const tipPath = `M${G.CX - 7},${BODY_BOTTOM - 6} L${G.CX},${BODY_BOTTOM + 30} L${G.CX + 7},${BODY_BOTTOM - 6} Z`;
 
@@ -184,5 +186,5 @@ export function buildMarkerSvg(props: MarkerSvgProps): string {
   // vehicle (RF-006.4.2) omits it — its icon must not cover the address marker.
   const tipEl = tip ? `<path d="${tipPath}" fill="url(#${id})"/>` : "";
 
-  return `<svg class="route-marker" width="${w}" height="${h}" viewBox="0 0 ${G.WIDTH} ${G.HEIGHT}" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color.top}"/><stop offset="1" stop-color="${color.bottom}"/></linearGradient></defs><g class="mk-body" style="filter:${glowFilter}">${tipEl}${body}${numberEl}</g>${badgeEl}</svg>`;
+  return `<svg class="route-marker" width="${w}" height="${h}" viewBox="0 0 ${G.WIDTH} ${G.HEIGHT}" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color.top}"/><stop offset="1" stop-color="${color.bottom}"/></linearGradient></defs><g class="mk-body"${glowStyle}>${tipEl}${body}${numberEl}</g>${badgeEl}</svg>`;
 }

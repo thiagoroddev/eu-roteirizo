@@ -87,10 +87,14 @@ describe("buildMarkerSvg", () => {
     expect(sel).toContain('stroke="#ffffff" stroke-width="4"');
   });
 
-  it("applies a thin stroke when not selected", () => {
+  // REF-015b (decisão 10/07 — supersede o glow base da REF-012): o marcador
+  // comum NÃO leva filtro nenhum — `drop-shadow` em todo marcador era o maior
+  // custo por frame da pinça/pan no celular. Glow é exclusivo do `emphasis`.
+  it("applies a thin stroke and NO filter when not selected/emphasized", () => {
     const base = buildMarkerSvg({ shape: "circle", color: COM, number: 1 });
     expect(base).toContain('stroke-width="1.5"');
-    expect(base).toContain("0 0 7px"); // base glow
+    expect(base).not.toContain("drop-shadow");
+    expect(base).not.toContain("filter:");
   });
 
   it("uses a bright type-colored neon glow when emphasized, keeping the white border — RF-020.3", () => {

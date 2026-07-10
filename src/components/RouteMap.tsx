@@ -226,6 +226,10 @@ export const RouteMap: React.FC<Props> = ({
       bounceAtZoomLimits: false,
       // Off so a double-tap on a stop expands it instead of zooming (RF-006.4.8).
       doubleClickZoom: false,
+      // Vectors (grouping dots, radius circle, suggestion line) render on ONE
+      // canvas instead of N SVG nodes — cheaper per frame on mobile pinch/pan
+      // (TASK-REF-015a). divIcons are unaffected (they are DOM, not paths).
+      preferCanvas: true,
     });
 
     // Tile Layer (Map skin)
@@ -355,7 +359,7 @@ export const RouteMap: React.FC<Props> = ({
       }
     };
 
-    const entries: { marker: L.Marker; model: MarkerModel }[] = [];
+    const entries: { marker: L.Marker; model: MarkerModel; lastScale: number }[] = [];
 
     // Scale: committed roteiro stops grow (they aggregate addresses — RF-006.4.2);
     // the STRONGLY-selected marker (`highlight`) is enlarged so it stands out over
@@ -376,8 +380,9 @@ export const RouteMap: React.FC<Props> = ({
     };
 
     renderModels.forEach((model) => {
+      const creationScale = scaleFor(model);
       const marker = L.marker([model.lat, model.lng], {
-        icon: createMarkerDivIcon({ ...model.iconProps, scale: scaleFor(model) }),
+        icon: createMarkerDivIcon({ ...model.iconProps, scale: creationScale }),
         zIndexOffset: zIndexFor(model),
       });
 
@@ -411,16 +416,23 @@ export const RouteMap: React.FC<Props> = ({
       }
 
       marker.addTo(markersLayer);
-      entries.push({ marker, model });
+      entries.push({ marker, model, lastScale: creationScale });
     });
 
     // Address detail is no longer a Leaflet popup: the selected address feeds
     // the AddressSheet rendered below (TASK-RF-022.6, fluxo-modo-original §6).
 
-    // Squares grow with zoom; address circles keep their fixed scale. Rebuilding the
-    // icon re-derives the anchor so the tip stays on the point.
+    // Markers rescale with zoom; rebuilding the icon re-derives the anchor so
+    // the tip stays on the point. SKIP when the scale didn't move (REF-015c):
+    // a pinch that settles on the SAME zoom level used to rebuild N SVG strings
+    // for nothing — the "hiccup" at the end of the gesture.
     const applyScaleForZoom = () => {
-      entries.forEach(({ marker, model }) => marker.setIcon(createMarkerDivIcon({ ...model.iconProps, scale: scaleFor(model) })));
+      entries.forEach((entry) => {
+        const nextScale = scaleFor(entry.model);
+        if (nextScale === entry.lastScale) return;
+        entry.lastScale = nextScale;
+        entry.marker.setIcon(createMarkerDivIcon({ ...entry.model.iconProps, scale: nextScale }));
+      });
     };
     map.on("zoomend", applyScaleForZoom);
 
@@ -467,14 +479,15 @@ export const RouteMap: React.FC<Props> = ({
     /** Start (blue car) and vehicle/anchor (slate car) each keep their OWN icon
         props so the zoom rescale rebuilds the right icon — including the anchor
         mode (otherwise the car would "walk" on zoom). */
-    const overlayMarkers: { marker: L.Marker; iconProps: Parameters<typeof createMarkerDivIcon>[0] }[] = [];
+    const overlayMarkers: { marker: L.Marker; iconProps: Parameters<typeof createMarkerDivIcon>[0]; lastScale: number }[] = [];
     const addOverlayMarker = (lat: number, lng: number, iconProps: Parameters<typeof createMarkerDivIcon>[0], zIndexOffset: number) => {
+      const creationScale = scaleForZoom(safeZoom());
       const marker = L.marker([lat, lng], {
-        icon: createMarkerDivIcon({ ...iconProps, scale: scaleForZoom(safeZoom()) }),
+        icon: createMarkerDivIcon({ ...iconProps, scale: creationScale }),
         zIndexOffset,
       });
       marker.addTo(overlayLayer);
-      overlayMarkers.push({ marker, iconProps });
+      overlayMarkers.push({ marker, iconProps, lastScale: creationScale });
     };
     // Like the anchor, the start car parks BELOW the address markers (Z_VEHICLE)
     // — it must never cover the pin of the address it was set from (RF-006.4.27).
@@ -494,9 +507,15 @@ export const RouteMap: React.FC<Props> = ({
     }
 
     if (overlayMarkers.length === 0) return;
-    /** Overlay markers scale with zoom like every other marker. */
+    /** Overlay markers scale with zoom like every other marker — with the same
+        skip-when-unchanged as the main layer (REF-015c). */
     const rescaleOverlay = () => {
-      overlayMarkers.forEach(({ marker, iconProps }) => marker.setIcon(createMarkerDivIcon({ ...iconProps, scale: scaleForZoom(safeZoom()) })));
+      const nextScale = scaleForZoom(safeZoom());
+      overlayMarkers.forEach((entry) => {
+        if (nextScale === entry.lastScale) return;
+        entry.lastScale = nextScale;
+        entry.marker.setIcon(createMarkerDivIcon({ ...entry.iconProps, scale: nextScale }));
+      });
     };
     map.on("zoomend", rescaleOverlay);
     return () => {

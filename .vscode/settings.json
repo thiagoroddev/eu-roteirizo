@@ -1,5 +1,6 @@
 {
   "commentTranslate.source": "Google",
   "commentTranslate.multiLineMerge": false,
-  "commentTranslate.targetLanguage": "pt"
+  "commentTranslate.targetLanguage": "pt",
+  "js/ts.experimental.useTsgo": false
 }

@@ -13,7 +13,7 @@
 | # | Tarefa | Por que agora |
 |---|---|---|
 | 1 | ~~**TASK-RF-006.4.23**~~ — adicionar endereço na edição | ✅ **CONCLUÍDA (10/07)** — ver índice. Smoke pendente no aparelho. |
-| 2 | **TASK-REF-015** — lentidão do mapa | Afeta **todo uso**, os dois modos, a cada gesto. ⚠️ **Precisa de uma decisão sua antes** (ver abaixo). Os passos (a), (c) e (d) podem sair sem decisão nenhuma. |
+| 2 | ~~**TASK-REF-015**~~ — lentidão do mapa | ✅ **CONCLUÍDA (10/07), smoke APROVADO** ("melhorou, mais suave"). Passo (e) engavetado a menos que a lentidão volte em romaneios maiores. |
 | 3 | **TASK-REF-016** — espaçamento do painel | Tem causa-raiz identificada (`PanelSection` sem respiro entre rótulo e conteúdo; `PanelTitle` sem `pt`). Duas linhas resolvem a maioria. Fazer **antes** da RF-006.8, que cria seções novas — senão elas nascem tortas. |
 | 4 | **TASK-RF-008** — persistência/auto-save | Hoje **todo smoke exige reconstruir o roteiro do zero**. Elimina esse imposto e destrava `hasRoteiro` no chip + botão adaptativo do Sumário. |
 | 5 | **TASK-TEST-003** — zoom real do Leaflet | Dois defeitos de zoom atravessaram a suíte verde porque os testes provam a *prop passada*, não o mapa movido. Fazer **antes** da RF-006.8, que mexe na altura do painel → `bottomObstructionPx` → `fitBounds`. |
@@ -22,10 +22,6 @@
 | 8 | **TASK-RF-007** → **RF-009** → **RF-012** → **RF-013** | Sem mudança em relação ao registrado. |
 
 **Backlog sem urgência, encaixar em intervalos:** `TASK-DOC-003` (o `contexto-projeto-ai.md` ainda diz "SPA sem router", falso desde a RF-011 — barato), `TASK-RF-006.9` (geocoding da âncora; placeholder aceitável), `TASK-DOC-005`, `TASK-REF-014`, `TASK-TEST-002`.
-
-### ⛔ Decisão pendente do humano (trava a REF-015 passo b)
-
-O maior ganho de performance é **remover o `drop-shadow` dos marcadores comuns**, mantendo o glow só nos destacados. Hoje **todo** marcador leva dois filtros (`markerSvg.ts:147`, ramo `else`), e são ~1 por endereço no modo roteiro. Isso **muda a identidade visual** do mapa. Os passos (a) `preferCanvas`, (c) pular o re-icon no `zoomend` e (d) cache do `createMarkerDivIcon` **não** mexem no visual e podem ser feitos sem decisão.
 
 ### 🔁 Onde eu posso estar errado
 
@@ -50,37 +46,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 <!-- TASK-RF-006.4.23 movida para em-andamento.md em 10/07/26 (plano aprovado). -->
 
 ---
-
-## TASK-REF-015 - Lentidão geral do mapa: pinça e pan re-rasterizam N marcadores com `drop-shadow`
-
-- **Status:** Pendente
-- **Modo:** Standard
-- **Valor:** Importante
-- **Urgência:** IMEDIATA
-- **Esforço-H/IA:** P/M
-- **Data-hora origem:** 10/07/26 09:15
-- **Dependências:** -
-- **REQ/ADR/DT:** RNF-12; ADR-008 (paleta/forma dos marcadores — **locked**, mexer no glow exige aval); achado nº 2 da **TASK-CHORE-004**
-- **Observações:** Relato do humano (smoke 10/07): _"A lentidão é geral: zoom com dois dedos e translado automático entre paradas. Só é rápido o zoom automático de aproximar/distanciar."_
-
-**Diagnóstico (investigação 10/07 — a hipótese inicial estava errada).** Não é a animação do `fitBounds`. O sintoma **é a assinatura do problema**: o zoom animado do Leaflet escala o pane inteiro como uma camada composta (barato → "zoom automático é rápido"), enquanto **pinça** e **pan** movem o mapa quadro a quadro, re-rasterizando cada marcador. Três agravantes, em ordem de peso:
-
-1. **Todo marcador leva dois `filter: drop-shadow(...)`** — não só o destacado (`markerSvg.ts:147`: o ramo `else` também aplica glow). `drop-shadow` é caríssimo em GPU móvel e não compõe sob transform contínuo.
-2. **1 divIcon por endereço no modo roteiro** (`roteiroModels.ts:172`), sem clustering. Dezenas a centenas de nós SVG.
-3. **Sem `preferCanvas`** (`RouteMap.tsx:219`): os vetores (dots de agrupamento, círculo do raio, polilinha) repintam em SVG. `maxBoundsViscosity: 1.0` (`:221`) ainda clampa cada `move`.
-
-**Objetivo:** pinça e pan fluidos no aparelho, sem perder a identidade dos marcadores.
-
-**Ordem de ataque (barato → caro; medir entre cada passo):**
-- **(a) `preferCanvas: true`** no `L.map` — trivial, risco baixo, ajuda só os vetores.
-- **(b) Glow só onde significa algo:** aplicar `drop-shadow` apenas em `emphasis`/`highlight`; o marcador comum fica sem filtro (ou com uma borda/`box-shadow` barata). **Maior alavanca.** ⚠️ Muda o visual → precisa do aval do humano (ADR-008 é locked na paleta/forma; o glow base não está na ADR, mas é decisão estética da REF-012).
-- **(c) `zoomend` re-icona TODOS os marcadores** (`RouteMap.tsx:420-423`) reconstruindo N strings SVG; e `scaleForZoom` satura em [0.4, 0.6], então em boa parte da faixa a escala **nem muda**. Pular o rebuild quando a escala não mudou.
-- **(d) Cache do `createMarkerDivIcon`** por `iconProps+scale` (`markerIcon.ts:32`; hoje toda chamada remonta a string SVG).
-- **(e)** Se ainda insuficiente: canvas/clustering para os pontos livres (**caro e arriscado** — muda interação e visual).
-
-**Critérios de aceite:** medição antes/depois (DevTools remoto ou contagem de frames) mostrando ganho em pinça e pan com um romaneio real (~80 endereços); nenhuma mudança visual além da acordada em (b); suíte verde.
-**Dependências novas:** nenhuma.
-**Riscos:** (b) altera identidade visual — **não executar sem decisão explícita**. Os marcadores do mapa têm paleta funcional travada (ADR-008).
+<!-- TASK-REF-015 movida para em-andamento.md em 10/07/26 (plano aprovado; glow so nos destacados). -->
 
 ---
 
