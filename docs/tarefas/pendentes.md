@@ -8,11 +8,36 @@
 
 ---
 
+## 🎯 Ordem de execução recomendada (rev. 10/07/26, pós-smoke no aparelho)
+
+| # | Tarefa | Por que agora |
+|---|---|---|
+| 1 | ~~**TASK-RF-006.4.23**~~ — adicionar endereço na edição | ✅ **CONCLUÍDA (10/07)** — ver índice. Smoke pendente no aparelho. |
+| 2 | **TASK-REF-015** — lentidão do mapa | Afeta **todo uso**, os dois modos, a cada gesto. ⚠️ **Precisa de uma decisão sua antes** (ver abaixo). Os passos (a), (c) e (d) podem sair sem decisão nenhuma. |
+| 3 | **TASK-REF-016** — espaçamento do painel | Tem causa-raiz identificada (`PanelSection` sem respiro entre rótulo e conteúdo; `PanelTitle` sem `pt`). Duas linhas resolvem a maioria. Fazer **antes** da RF-006.8, que cria seções novas — senão elas nascem tortas. |
+| 4 | **TASK-RF-008** — persistência/auto-save | Hoje **todo smoke exige reconstruir o roteiro do zero**. Elimina esse imposto e destrava `hasRoteiro` no chip + botão adaptativo do Sumário. |
+| 5 | **TASK-TEST-003** — zoom real do Leaflet | Dois defeitos de zoom atravessaram a suíte verde porque os testes provam a *prop passada*, não o mapa movido. Fazer **antes** da RF-006.8, que mexe na altura do painel → `bottomObstructionPx` → `fitBounds`. |
+| 6 | **TASK-RF-006.8** — painel de visão geral | Encolhe o painel colapsado e fixa o contrato do cabeçalho/`PanelView` **antes** que a `.5` e a `.6` preencham os slots. |
+| 7 | **TASK-RF-006.5** → **.6** → **.7** | Sequência do épico. A `.6` depende da `.5`. Ao fim da `.7`, um retoque pluga distância/tempo totais nos cards da `.8` (por isso ficaram fora do escopo dela). |
+| 8 | **TASK-RF-007** → **RF-009** → **RF-012** → **RF-013** | Sem mudança em relação ao registrado. |
+
+**Backlog sem urgência, encaixar em intervalos:** `TASK-DOC-003` (o `contexto-projeto-ai.md` ainda diz "SPA sem router", falso desde a RF-011 — barato), `TASK-RF-006.9` (geocoding da âncora; placeholder aceitável), `TASK-DOC-005`, `TASK-REF-014`, `TASK-TEST-002`.
+
+### ⛔ Decisão pendente do humano (trava a REF-015 passo b)
+
+O maior ganho de performance é **remover o `drop-shadow` dos marcadores comuns**, mantendo o glow só nos destacados. Hoje **todo** marcador leva dois filtros (`markerSvg.ts:147`, ramo `else`), e são ~1 por endereço no modo roteiro. Isso **muda a identidade visual** do mapa. Os passos (a) `preferCanvas`, (c) pular o re-icon no `zoomend` e (d) cache do `createMarkerDivIcon` **não** mexem no visual e podem ser feitos sem decisão.
+
+### 🔁 Onde eu posso estar errado
+
+Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6` mudar o `PanelSection` de forma inesperada, parte da `.8` seria refeita. Julgo o risco baixo (a `.8` reusa `PanelTitle` e `StopItemList`, estabilizados na `.4.3`), mas a ordem conservadora seria `.5 → .6 → .7 → .8` — ao custo de conviver com o painel colapsado alto por mais três tarefas.
+
+---
+
 ## Imediatas
 
 > Tarefas urgentes que carregam contexto extra. Bloco em lista, no topo.
 >
-> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). **Fila atual (rev. 10/07, pós-smoke):** **RF-006.4.23 (bloqueia a edição) → RF-008 (antecipada) → TEST-003 → RF-006.8 → RF-006.5 → .6 → .7 → RF-007 → RF-009 (.1→.4) → RF-012 → RF-013**. Concluídos: RF-003/004/005/011/020/021/022/023 e RF-006.1 → .4.22 (ver índice). RF-014 absorvida pela RF-022; RF-010 absorvida pela RF-006.2. Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
+> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). **Fila:** ver a tabela **"Ordem de execução recomendada"** no topo deste arquivo (rev. 10/07, pós-smoke). Resumo: `REF-015 → REF-016 → RF-008 → TEST-003 → RF-006.8 → RF-006.5 → .6 → .7 → RF-007 → RF-009 → RF-012 → RF-013`. Concluídos: RF-003/004/005/011/020/021/022/023 e RF-006.1 → .4.25 (ver índice). RF-014 absorvida pela RF-022; RF-010 absorvida pela RF-006.2. Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
 >
 > ⚠️ **Decisões transversais (valem para o épico todo):**
 > - **Estado:** `useReducer` por feature (conforme draft §6). Zustand só se a complexidade exigir — e **não instalar sem aprovação** (anti-padrão do núcleo §5).
@@ -22,37 +47,7 @@
 
 ---
 
-## TASK-RF-006.4.23 - Editar parada: selecionar endereço livre + "Adicionar a esta parada"
-
-- **Status:** Pendente
-- **Modo:** Standard
-- **Valor:** Crítico
-- **Urgência:** IMEDIATA
-- **Esforço-H/IA:** P/M
-- **Data-hora origem:** 10/07/26 09:15
-- **Dependências:** RF-006.4.9 ✅ (é a decisão dela que este achado corrige), RF-006.4.21 ✅ (`selectedAddressId`)
-- **REQ/ADR/DT:** RF-23, RN-17; `fluxo-roteirizacao.md` §4 p.5; achado nº 1 da **TASK-CHORE-004** (smoke 10/07)
-- **Observações:** ⚠️ **Bloqueia a edição de verdade.** Com a parada **já criada**, ao clicar "Editar parada" o toque no mapa é **inerte** (decisão Q2 da `.4.9`, 09/07: "membros mudam só por raio + lista ±") e só abre o tooltip. Com "Nenhum candidato no raio", **não existe caminho nenhum** para incluir um endereço distante específico — o usuário teria que inflar o raio e puxar terceiros junto. Antecipa parte da **RF-006.6** ("Remover/Adicionar" na edição).
-- ⚠️ **ESCOPO ESTRITO — só a EDIÇÃO (`draft !== null`).** O humano confirmou (10/07) que o fluxo de **criação** (sugestão + inclusão só pelo raio) está **correto** e não deve mudar. Não tocar em `previewCandidateIds`, no `SET_NEXT_SUGGESTION`, nem no ramo `point-selected`.
-
-**Objetivo:** acrescentar um endereço específico à parada em edição, sem que um toque acidental altere o roteiro.
-
-**Solução aprovada pelo humano (10/07):** tocar um endereço livre durante a edição o **SELECIONA** (anel + brilho + elevação — a cromagem que já existe); o painel mostra "Endereço selecionado" com a ação **"Adicionar a esta parada"**. Nada muda no roteiro até o clique explícito. O espírito da Q2 é preservado: o **toque** não edita; o **botão** edita.
-
-**O que a investigação (10/07) já esclareceu — o caminho é curto:**
-- **`SET_NEXT_SUGGESTION` já está guardado.** O `if (draft) return;` (`MapPage.tsx:369`) executa **antes** do dispatch (`:382`). O pedido "não disparar na edição" **já está satisfeito**; nada a fazer ali. Essa linha 369 é justamente o dead-end do toque.
-- **A ação de domínio já existe:** `TOGGLE_DRAFT_POINT` (`builder.ts:182`) adiciona/remove um ponto do draft, **revarre a ordem a pé** (`resweepDraft`) e **não move a âncora**. É a mesma ação que o `±` da lista usa.
-- **Adicionar fora do raio já é suportado:** o ponto vira membro (não candidato) e `farChosenPointIds` (`builder.ts:328`) aciona sozinho o aviso suave RN-17. Nada de novo no reducer.
-
-**Subtarefas:**
-- `MapPage`: estado efêmero `draftSelectedPointId` + novo ramo em `handleModelTap` **antes** do `if (draft) return;` (`:369`): se `draft` e o modelo é `address` livre não-membro → seleciona (não edita). Foco vai ao endereço (`ADDRESS_MAX_ZOOM`).
-- `RoteiroDraftBody`: nova `PanelSection` "Endereço selecionado" logo após o card do raio, reusando `StopItemRow` (padrão do `RoteiroPointSection`), com CTA que despacha `onTogglePoint(id)`. Remover segue pelo `−` da lista.
-- **Suprimir o tooltip do marcador durante o rascunho** (`RouteMap.tsx:382` binda em todos, sem condição de modo) — no celular é ruído: aparece o balão e nada acontece.
-- Rótulo `ADD_TO_STOP` em `UI_LABELS.MAP_PANEL.ROTEIRO_DRAFT`.
-
-**Critérios de aceite:** com raio 30m e "Nenhum candidato no raio", tocar um endereço distante o seleciona e o botão o adiciona (com o aviso RN-17 aparecendo sozinho, se longe); tocar **sem** clicar no botão não muda a parada; o `−` da lista continua removendo; sem tooltip no rascunho; **o fluxo de criação segue idêntico**; gates verdes.
-**Dependências novas:** nenhuma.
-**Riscos:** o novo ramo fica logo acima de um `return` que hoje engole tudo — cuidado para não vazar o toque para o ramo de criação (`:370-382`), que dispara `SET_NEXT_SUGGESTION`.
+<!-- TASK-RF-006.4.23 movida para em-andamento.md em 10/07/26 (plano aprovado). -->
 
 ---
 
@@ -89,7 +84,7 @@
 
 ---
 
-## TASK-RF-008 - Persistência da rota planejada (IndexedDB) — **PRÓXIMA DA FILA**
+## TASK-RF-008 - Persistência da rota planejada (IndexedDB) — **4ª da fila** (era a próxima; os 3 achados do smoke passaram na frente)
 
 - **Status:** Pendente
 - **Modo:** Standard
@@ -117,7 +112,7 @@
 
 ## TASK-RF-006 - UI de construção da rota (Meu roteiro) [XG, dividir]
 
-- **Status:** Pendente (**.1 → .4.22 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.4.23 (urgente) · .5 · .6 · .7 · .8 · .9**)
+- **Status:** Pendente (**.1 → .4.25 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.5 · .6 · .7 · .8 · .9**)
 - **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA

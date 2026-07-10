@@ -172,6 +172,8 @@ export const UI_LABELS = {
       EMPTY_HINT: "Escolha ao menos um endereço para salvar a parada.",
       SAVE: "Salvar parada",
       CANCEL: "Cancelar",
+      // Tocar um endereço livre durante a edição SELECIONA; este CTA é o que edita (RF-006.4.23).
+      ADD_TO_STOP: "Adicionar a esta parada",
     },
     // Lista de endereços da parada (StopItemList — TASK-RF-023.4, RF-27/28)
     ITEM: {

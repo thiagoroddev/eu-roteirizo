@@ -170,6 +170,24 @@ describe("computeRoteiroMarkerModels — draft/stop context (TASK-RF-006.4)", ()
     expect(drafting.find((m) => m.key === "pt_b")!.iconProps.selected).toBeFalsy();
   });
 
+  // RF-006.4.23: during the edit the tap SELECTS (its own channel), the CTA edits.
+  it("draftSelectedPointId highlights the tapped free point DURING the draft (RF-006.4.23)", () => {
+    const models = computeRoteiroMarkerModels([a, b, c], [], { draft: draftOn("pt_a", ["pt_a"]), draftSelectedPointId: "pt_c" });
+    const picked = models.find((m) => m.key === "pt_c")!;
+    expect(picked.iconProps).toMatchObject({ selected: true, emphasis: true, highlight: true, ringStyle: "solid" });
+    // A member never doubles as the draft pick (the − removes; the pick adds).
+    const memberAsPick = computeRoteiroMarkerModels([a, b], [], { draft: draftOn("pt_a", ["pt_a"]), draftSelectedPointId: "pt_a" });
+    expect(memberAsPick.find((m) => m.key === "pt_a")!.iconProps.highlight).toBeFalsy();
+  });
+
+  it("circles carry NO tooltip while drafting — the tap selects, the panel informs (RF-006.4.23)", () => {
+    const idle = computeRoteiroMarkerModels([a, b], []);
+    expect(idle.every((m) => m.tooltipHtml)).toBe(true);
+
+    const drafting = computeRoteiroMarkerModels([a, b, c], [], { draft: draftOn("pt_a", ["pt_a"]), candidateIds: ["pt_b"] });
+    expect(drafting.filter((m) => m.kind === "address").every((m) => m.tooltipHtml === undefined)).toBe(true);
+  });
+
   it("without opts renders plain type-colored circles + stop squares", () => {
     const models = computeRoteiroMarkerModels([a, b], [stop("stop_1", ["pt_a"])]);
     expect(models.map((m) => m.key)).toEqual(["stop_1", "pt_b"]);

@@ -13,7 +13,7 @@ import { PanelTitle } from "../components/map/panel/PanelTitle";
 import { RoteiroPanelHeader } from "../components/map/panel/RoteiroPanelHeader";
 import { RoteiroStartSection, type StartPhase } from "../components/map/panel/RoteiroStartSection";
 import { RoteiroPointSection, type StopOption } from "../components/map/panel/RoteiroPointSection";
-import { RoteiroDraftHeader, RoteiroDraftBody } from "../components/map/panel/RoteiroDraftSection";
+import { RoteiroDraftHeader, RoteiroDraftBody, RoteiroDraftPick } from "../components/map/panel/RoteiroDraftSection";
 import { RoteiroStopSection } from "../components/map/panel/RoteiroStopSection";
 import type { PanelMetric } from "../components/map/panel/PanelTitle";
 import { StopItemList } from "../components/map/panel/StopItemList";
@@ -22,7 +22,7 @@ import { useManifestFromUrl } from "../hooks/useManifestFromUrl";
 import { useRouteBuilder } from "../hooks/useRouteBuilder";
 import { useRoadGraph } from "../hooks/useRoadGraph";
 import type { RowData } from "../types";
-import type { LatLng } from "../types/routing";
+import type { DeliveryPoint, LatLng } from "../types/routing";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
 import { collapseInteraction, focusInteraction, regroupInteraction, type InteractionState, type MarkerModel } from "../utils/markers/markerModels";
 import { adjacentStopKey, buildPanelItems, panelMetrics, smallestStopKey, stopPlaceSummary, type PanelMetrics } from "../utils/markers/panelModels";
@@ -180,6 +180,11 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   /** The address awaiting "Partir deste endereço" (RF-21). Lives up here with the
       other selections because it IS one — it feeds the markers and the focus. */
   const [pendingPointId, setPendingPointId] = useState<string | null>(null);
+  /** The free point tapped DURING the edit draft (RF-006.4.23) — tapping only
+      selects; the panel's "Adicionar a esta parada" is what edits (Q2 of .4.9
+      preserved). Kept after adding on purpose: clearing would drop the focus
+      to null and refit the whole route mid-draft (the old RF-006.4 zoom bug). */
+  const [draftSelectedPointId, setDraftSelectedPointId] = useState<string | null>(null);
 
   /**
    * The address the user is looking at: awaiting start confirmation, or a freely
@@ -192,6 +197,10 @@ function MapScreen({ rows }: { rows: RowData[] }) {
   const draft = builderState.draft;
   const farIds = farChosenPointIds(builderState);
   const selectedPoint = selectedPointId !== null ? (pointsById.get(selectedPointId) ?? null) : null;
+  const draftSelectedPoint = draft && draftSelectedPointId !== null ? (pointsById.get(draftSelectedPointId) ?? null) : null;
+  /** Already a member? The "add" section hides itself (it happens right after
+      "Adicionar", which keeps the selection for focus stability). */
+  const draftSelectedIsMember = draftSelectedPoint !== null && (draft?.pointIds.includes(draftSelectedPoint.id) ?? false);
   /** Defensive: a dissolved/reopened stop drops the selection to the next context. */
   const selectedStop = selectedStopId !== null ? (builderState.stops.find((s) => s.id === selectedStopId) ?? null) : null;
   /** The selected member, guarded to the selected stop (RF-006.4.16 — a stale id
@@ -219,10 +228,11 @@ function MapScreen({ rows }: { rows: RowData[] }) {
         selectedStopId,
         expandedStopId: expandedRoteiroStopId,
         selectedMemberId: effectiveSelectedMemberId,
+        draftSelectedPointId,
       }),
     // candidateIds is derived fresh each render; its CONTENT tracks draft/points.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [points, builderState.stops, draft, selectedAddressId, selectedStopId, expandedRoteiroStopId, effectiveSelectedMemberId, candidateIds.join("|")]
+    [points, builderState.stops, draft, selectedAddressId, selectedStopId, expandedRoteiroStopId, effectiveSelectedMemberId, draftSelectedPointId, candidateIds.join("|")]
   );
 
   // Road graph — lazy on the roteiro enter (ADR-009 decision B); everything
@@ -364,9 +374,16 @@ function MapScreen({ rows }: { rows: RowData[] }) {
       setCardExpanded(false);
       return;
     }
-    // During an EDIT the map no longer toggles membership (Q2 09/07 — RF-006.4.9):
-    // members change only via the radius + the panel list ±. Map tap is inert.
-    if (draft) return;
+    // During an EDIT the map never toggles membership (Q2 09/07 — RF-006.4.9).
+    // But tapping a FREE point now SELECTS it (RF-006.4.23): the panel offers
+    // "Adicionar a esta parada" — the tap looks, the button edits. Members of
+    // the draft stay inert (removal is the list's −). ⚠️ This early return also
+    // shields the creation branch below (SET_NEXT_SUGGESTION must never fire
+    // while drafting).
+    if (draft) {
+      if (!draft.pointIds.includes(model.key)) setDraftSelectedPointId(model.key);
+      return;
+    }
     if (!hasStart || redefining) {
       setPendingPointId(model.key);
       setArmedMapTap(false);
@@ -410,6 +427,7 @@ function MapScreen({ rows }: { rows: RowData[] }) {
     dispatch({ type: "REOPEN_STOP", stopId: selectedStop.id });
     setSelectedStopId(null);
     setExpandedRoteiroStopId(null);
+    setDraftSelectedPointId(null); // a fresh edit starts with nothing picked (RF-006.4.23)
     setCardExpanded(false);
     setPanelView("selected");
   };
@@ -429,8 +447,31 @@ function MapScreen({ rows }: { rows: RowData[] }) {
     setSelectedPointId(null);
   };
 
-  const handleSaveStop = () => dispatch({ type: "COMMIT_STOP" });
-  const handleCancelDraft = () => dispatch({ type: "CANCEL_DRAFT" });
+  /** Leaving the edit SELECTS the stop back (RF-006.4.24): the panel returns to
+      its summary and the focus stays on its frame — dropping to "nothing
+      selected" would refit the whole route, a zoom jump on the way out. Same
+      continuity handleCreateStop already gives a freshly firmed stop. */
+  const handleSaveStop = () => {
+    const stopId = draft?.stopId ?? null;
+    dispatch({ type: "COMMIT_STOP" });
+    setDraftSelectedPointId(null); // the draft is gone; so is its pick (RF-006.4.23)
+    if (stopId !== null) setSelectedStopId(stopId);
+  };
+  const handleCancelDraft = () => {
+    const stopId = draft?.stopId ?? null;
+    dispatch({ type: "CANCEL_DRAFT" });
+    setDraftSelectedPointId(null);
+    if (stopId !== null) setSelectedStopId(stopId);
+  };
+  /** "Adicionar a esta parada" (RF-006.4.23): the ONLY map-originated way into a
+      draft — same TOGGLE the list's ± uses (re-sweeps the walk order, anchor
+      intact; RN-17 warns by itself if far). The selection is kept: the point is
+      now a member, the section hides, and the focus stays put (no mid-draft
+      refit to the whole route). */
+  const handleAddSelectedToDraft = () => {
+    if (!draftSelectedPoint || draftSelectedIsMember) return;
+    dispatch({ type: "TOGGLE_DRAFT_POINT", pointId: draftSelectedPoint.id });
+  };
 
   // ADR-009 decision C: while the draft's anchor is still the DEFAULT
   // suggestion, re-project it onto the street as soon as the graph arrives.
@@ -549,12 +590,31 @@ function MapScreen({ rows }: { rows: RowData[] }) {
    * addresses fit at whatever their spread allows — raising the ceiling for an
    * expanded stop lets it go as close as its members permit, no closer.
    */
-  const focusAddress = pendingPoint ?? selectedPoint ?? selectedMemberPoint;
+  /**
+   * The frame of the stop being EDITED, frozen at entry (RF-006.4.24). Entering
+   * the edit used to drop the focus to null → whole-route refit ("zoom fica
+   * distante"). This keeps the stop framed at the SAME zoom as selecting it —
+   * and since REOPEN copies the stop's pointIds, the coords (and therefore the
+   * focus signature) are identical, so entering the edit doesn't even refit.
+   * FROZEN on purpose: re-deriving from the live membership would refit on
+   * every ± toggle (the old mid-draft zoom-jump bug, RF-006.4).
+   */
+  const draftFrame = useMemo(
+    () => (draft ? draft.pointIds.map((id) => pointsById.get(id)).filter((p): p is DeliveryPoint => p !== undefined) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- frozen per draft (keyed by stopId), never by membership
+    [draft?.stopId, pointsById]
+  );
+
+  // The draft-time pick joins the chain (RF-006.4.23): kept after "Adicionar",
+  // so the focus never drops to null (→ whole-route refit) mid-draft.
+  const focusAddress = pendingPoint ?? selectedPoint ?? selectedMemberPoint ?? draftSelectedPoint;
   const roteiroFocus: { bounds: LatLng[]; maxZoom: number } | null = focusAddress
     ? { bounds: [{ lat: focusAddress.lat, lng: focusAddress.lng }], maxZoom: ADDRESS_MAX_ZOOM }
-    : selectedStop && stopPoints.length > 0
-      ? { bounds: stopPoints.map((p) => ({ lat: p.lat, lng: p.lng })), maxZoom: expandedRoteiroStopId === selectedStop.id ? MAP_CONFIG.ZOOM.MAX : FOCUS_MAX_ZOOM }
-      : null;
+    : draft && draftFrame && draftFrame.length > 0
+      ? { bounds: draftFrame.map((p) => ({ lat: p.lat, lng: p.lng })), maxZoom: FOCUS_MAX_ZOOM }
+      : selectedStop && stopPoints.length > 0
+        ? { bounds: stopPoints.map((p) => ({ lat: p.lat, lng: p.lng })), maxZoom: expandedRoteiroStopId === selectedStop.id ? MAP_CONFIG.ZOOM.MAX : FOCUS_MAX_ZOOM }
+        : null;
 
   const stopEstimate = selectedStop && stopPoints.length > 0 ? stopWalkEstimate(selectedStop.vehicleStop, stopPoints, builderState.config) : null;
   const stopPlace = stopPlaceSummaryFromPoints(stopPoints);
@@ -851,16 +911,24 @@ function MapScreen({ rows }: { rows: RowData[] }) {
         header={
           mode === "roteiro" ? (
             roteiroContext === "drafting" && draft ? (
-              <RoteiroDraftHeader
-                stopNumber={builderState.stops.length + 1}
-                metrics={draftMetrics}
-                addresses={chosenPoints.length}
-                remainingAddresses={remaining.addresses}
-                remainingPackages={remaining.packages}
-                canSave={draft.pointIds.length > 0}
-                onSave={handleSaveStop}
-                onCancel={handleCancelDraft}
-              />
+              <div>
+                <RoteiroDraftHeader
+                  stopNumber={builderState.stops.length + 1}
+                  metrics={draftMetrics}
+                  addresses={chosenPoints.length}
+                  radiusMeters={draft.radiusMeters}
+                  onRadiusChange={(meters) => dispatch({ type: "SET_DRAFT_RADIUS", radiusMeters: meters })}
+                  candidateCount={candidatePoints.length}
+                  farWarning={farIds.length > 0}
+                  canSave={draft.pointIds.length > 0}
+                  onSave={handleSaveStop}
+                  onCancel={handleCancelDraft}
+                />
+                {/* Map-tapped pick lives in the HEADER (RF-006.4.24): the collapsed
+                    snap fits the header, so picking grows the panel until it shows —
+                    in the body it sat below the fold, invisible. */}
+                {draftSelectedPoint && !draftSelectedIsMember && <RoteiroDraftPick item={pointToStopItemData(draftSelectedPoint)} onAdd={handleAddSelectedToDraft} />}
+              </div>
             ) : roteiroContext === "stop-selected" && selectedStop ? (
               <div>
                 <RoteiroPanelHeader remainingAddresses={remaining.addresses} remainingPackages={remaining.packages} modeLabel={roteiroModeLabel} graphStatus={graphStatus} />
@@ -932,15 +1000,7 @@ function MapScreen({ rows }: { rows: RowData[] }) {
       >
         {mode === "roteiro" ? (
           roteiroContext === "drafting" && draft ? (
-            <RoteiroDraftBody
-              candidateCount={candidatePoints.length}
-              radiusMeters={draft.radiusMeters}
-              onRadiusChange={(meters) => dispatch({ type: "SET_DRAFT_RADIUS", radiusMeters: meters })}
-              chosen={chosenItems}
-              candidates={candidateItems}
-              onTogglePoint={(pointId) => dispatch({ type: "TOGGLE_DRAFT_POINT", pointId })}
-              farWarning={farIds.length > 0}
-            />
+            <RoteiroDraftBody chosen={chosenItems} candidates={candidateItems} onTogglePoint={(pointId) => dispatch({ type: "TOGGLE_DRAFT_POINT", pointId })} />
           ) : roteiroContext === "stop-selected" && panelView === "list" ? (
             // "Ver lista completa" (RF-006.4.7): the stop's addresses by visit
             // order, neon palette, expandable — panel-side only for now (the map

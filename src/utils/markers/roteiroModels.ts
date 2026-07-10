@@ -79,6 +79,10 @@ export interface RoteiroModelOptions {
   /** The selected member of the expanded stop (RF-006.4.16) — it gets the
       highlight; null falls back to the anchor (1st member). */
   selectedMemberId?: string | null;
+  /** The free point selected DURING the edit draft (RF-006.4.23): tapping only
+      selects — the panel's "Adicionar a esta parada" is what edits. Separate
+      from `selectedPointId`, whose chrome is suppressed while drafting. */
+  draftSelectedPointId?: string | null;
 }
 
 /** Committed-stop color: dominant type over ALL its points' rows, neon register. */
@@ -173,7 +177,9 @@ export const computeRoteiroMarkerModels = (points: DeliveryPoint[], stops: Route
     const memberIndex = draft?.pointIds.indexOf(point.id) ?? -1;
     const isMember = memberIndex >= 0;
     const isCandidate = !isMember && candidateIds.has(point.id);
-    const isSelected = !draft && opts.selectedPointId === point.id;
+    // Two selection channels that never coexist: the free orphan (tela 8, no
+    // draft) and the draft-time pick awaiting "Adicionar" (RF-006.4.23).
+    const isSelected = draft ? !isMember && opts.draftSelectedPointId === point.id : opts.selectedPointId === point.id;
     models.push({
       key: point.id,
       kind: "address",
@@ -192,7 +198,10 @@ export const computeRoteiroMarkerModels = (points: DeliveryPoint[], stops: Route
         emphasis: isCandidate || isSelected,
         highlight: isSelected,
       },
-      tooltipHtml: buildPointTooltipHtml(point),
+      // No tooltip while drafting (RF-006.4.23): on touch it was the only thing
+      // a tap produced — a balloon over a map that "did nothing". The tap now
+      // selects, and the panel is where the address's info lives.
+      tooltipHtml: draft ? undefined : buildPointTooltipHtml(point),
     });
   }
 

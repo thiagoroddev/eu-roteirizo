@@ -20,31 +20,34 @@ const listItem = (addressKey: string, addressLine: string, markerNumber = "", pa
 });
 
 const bodyProps = {
-  candidateCount: 2,
-  radiusMeters: 30,
-  onRadiusChange: vi.fn(),
   chosen: [listItem("pt_a", "Rua Mapa, 10", UI_LABELS.MAP_PANEL.ORDINAL(1))],
   candidates: [listItem("pt_b", "Rua Beta, 20", "", 3)],
   onTogglePoint: vi.fn(),
-  farWarning: false,
 };
 
 const headerHandlers = () => ({ onSave: vi.fn(), onCancel: vi.fn() });
 
+/** Radius-card props moved into the HEADER (RF-006.4.25 — fixed first section). */
+const headerRadius = { radiusMeters: 30, onRadiusChange: vi.fn(), candidateCount: 2, farWarning: false };
+
 const headerMetrics = [{ label: UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(3) }, { label: UI_LABELS.MAP_PANEL.METRIC_PACKAGES(5) }, { label: DRAFT.ESTIMATE(12, "850 m") }];
 
 describe("RoteiroDraftSection (tela 9 — TASK-RF-006.4/.4.1/.4.2/.4.3)", () => {
-  it("header: edit-mode label, stop number, metric CHIPS with the walking estimate, remaining HUD and ALWAYS-VISIBLE CTAs", () => {
+  it("header: edit-mode label, stop number, metric CHIPS, the FIXED radius card and ALWAYS-VISIBLE CTAs — no global remaining (RF-006.4.25)", () => {
     const handlers = headerHandlers();
-    render(<RoteiroDraftHeader stopNumber={2} metrics={headerMetrics} addresses={3} remainingAddresses={7} remainingPackages={9} canSave {...handlers} />);
+    render(<RoteiroDraftHeader stopNumber={2} metrics={headerMetrics} addresses={3} {...headerRadius} canSave {...handlers} />);
 
     expect(screen.getByText(UI_LABELS.MAP_PANEL.MODE_DRAFT)).toBeInTheDocument();
     expect(screen.getByText(DRAFT.TITLE(2))).toBeInTheDocument();
     // Metrics are Badge CHIPS now (same language as the Original's PanelTitle).
     expect(screen.getByText(UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(3))).toBeInTheDocument();
     expect(screen.getByText(DRAFT.ESTIMATE(12, "850 m"))).toBeInTheDocument();
-    // The GLOBAL remaining stays visible during the edit (RF-006.4.2).
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(7, 9))).toBeInTheDocument();
+    // The radius card is part of the first section now — fixed, the map-tapped
+    // pick can no longer push it around (RF-006.4.25).
+    expect(screen.getByText(DRAFT.RADIUS_LABEL)).toBeInTheDocument();
+    expect(screen.getByText(DRAFT.BANNER_CANDIDATES(2))).toBeInTheDocument();
+    // The edit is about ONE stop: no roteiro-wide "Faltando" here (RF-006.4.25).
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(7, 9))).not.toBeInTheDocument();
     // ≥2 addresses → the tap hint retired (first steps only).
     expect(screen.queryByText(DRAFT.TAP_HINT)).not.toBeInTheDocument();
 
@@ -56,19 +59,15 @@ describe("RoteiroDraftSection (tela 9 — TASK-RF-006.4/.4.1/.4.2/.4.3)", () => 
 
   it("header: save disabled when the draft is empty; tap hint shows on the FIRST steps (≤1 address)", () => {
     const handlers = headerHandlers();
-    render(<RoteiroDraftHeader stopNumber={1} metrics={[]} addresses={1} remainingAddresses={1} remainingPackages={1} canSave={false} {...handlers} />);
+    render(<RoteiroDraftHeader stopNumber={1} metrics={[]} addresses={1} {...headerRadius} canSave={false} {...handlers} />);
 
     expect(screen.getByRole("button", { name: DRAFT.SAVE })).toBeDisabled();
     expect(screen.getByText(DRAFT.TAP_HINT)).toBeInTheDocument();
   });
 
-  it("body: radius CARD with the candidates line + full-list structure with ± icon toggles (rev. 08/07 3ª rodada)", () => {
+  it("body: full-list structure with ± icon toggles (rev. 08/07 3ª rodada)", () => {
     const onTogglePoint = vi.fn();
     render(<RoteiroDraftBody {...bodyProps} onTogglePoint={onTogglePoint} />);
-
-    // The candidates line lives inside the radius card.
-    expect(screen.getByText(DRAFT.BANNER_CANDIDATES(2))).toBeInTheDocument();
-    expect(screen.getByText(DRAFT.RADIUS_LABEL)).toBeInTheDocument();
 
     // Rows are the Original's own expandable cards ("Ver lista completa"
     // structure) — package detail visible, ordinal in the member's mini-marker.
@@ -84,25 +83,29 @@ describe("RoteiroDraftSection (tela 9 — TASK-RF-006.4/.4.1/.4.2/.4.3)", () => 
     expect(onTogglePoint).toHaveBeenNthCalledWith(2, "pt_b");
   });
 
-  it("radius stepper steps by 10 m and disables at the bounds", () => {
+  it("radius stepper (in the header) steps by 10 m and disables at the bounds", () => {
     const onRadiusChange = vi.fn();
-    const { rerender } = render(<RoteiroDraftBody {...bodyProps} onRadiusChange={onRadiusChange} />);
+    const handlers = headerHandlers();
+    const headerProps = { stopNumber: 1, metrics: [], addresses: 2, candidateCount: 0, farWarning: false, canSave: true, ...handlers };
+    const { rerender } = render(<RoteiroDraftHeader {...headerProps} radiusMeters={30} onRadiusChange={onRadiusChange} />);
 
     fireEvent.click(screen.getByRole("button", { name: DRAFT.RADIUS_INCREASE }));
     expect(onRadiusChange).toHaveBeenCalledWith(40);
     fireEvent.click(screen.getByRole("button", { name: DRAFT.RADIUS_DECREASE }));
     expect(onRadiusChange).toHaveBeenCalledWith(20);
 
-    rerender(<RoteiroDraftBody {...bodyProps} radiusMeters={RADIUS_MIN} onRadiusChange={onRadiusChange} />);
+    rerender(<RoteiroDraftHeader {...headerProps} radiusMeters={RADIUS_MIN} onRadiusChange={onRadiusChange} />);
     expect(screen.getByRole("button", { name: DRAFT.RADIUS_DECREASE })).toBeDisabled();
-    rerender(<RoteiroDraftBody {...bodyProps} radiusMeters={RADIUS_MAX} onRadiusChange={onRadiusChange} />);
+    rerender(<RoteiroDraftHeader {...headerProps} radiusMeters={RADIUS_MAX} onRadiusChange={onRadiusChange} />);
     expect(screen.getByRole("button", { name: DRAFT.RADIUS_INCREASE })).toBeDisabled();
   });
 
-  it("shows the soft far warning and the empty hint", () => {
-    render(<RoteiroDraftBody {...bodyProps} farWarning chosen={[]} />);
-
+  it("shows the soft far warning (header) and the empty hint (body)", () => {
+    const handlers = headerHandlers();
+    render(<RoteiroDraftHeader stopNumber={1} metrics={[]} addresses={2} {...headerRadius} farWarning canSave {...handlers} />);
     expect(screen.getByText(DRAFT.FAR_WARNING)).toBeInTheDocument();
+
+    render(<RoteiroDraftBody {...bodyProps} chosen={[]} />);
     expect(screen.getByText(DRAFT.EMPTY_HINT)).toBeInTheDocument();
   });
 });

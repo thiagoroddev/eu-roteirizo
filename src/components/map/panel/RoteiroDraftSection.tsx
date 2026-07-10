@@ -4,6 +4,7 @@ import { PanelModeBar } from "./PanelModeBar";
 import { PanelSection } from "./PanelSection";
 import { PanelMetricsRow, type PanelMetric } from "./PanelTitle";
 import { StopItemList } from "./StopItemList";
+import { StopItemRow } from "./StopItem";
 import type { StopItemData } from "../../../utils/markers/panelModels";
 import { UI_LABELS } from "../../../constants/uiLabels";
 
@@ -71,15 +72,19 @@ interface HeaderProps {
   metrics: PanelMetric[];
   /** Chosen-address count — the tap hint shows only while ≤ 1 (first steps). */
   addresses: number;
-  /** The global remaining HUD stays visible during the edit (RF-006.4.2). */
-  remainingAddresses: number;
-  remainingPackages: number;
+  /** Radius card, FIXED in this first section (RF-006.4.25): it used to live in
+      the body, so the map-tapped pick slotting into the header pushed it around. */
+  radiusMeters: number;
+  onRadiusChange: (meters: number) => void;
+  candidateCount: number;
+  /** RN-17: some chosen point sits far from the anchor — orient, never block. */
+  farWarning: boolean;
   canSave: boolean;
   onSave: () => void;
   onCancel: () => void;
 }
 
-export const RoteiroDraftHeader = ({ stopNumber, metrics, addresses, remainingAddresses, remainingPackages, canSave, onSave, onCancel }: HeaderProps) => (
+export const RoteiroDraftHeader = ({ stopNumber, metrics, addresses, radiusMeters, onRadiusChange, candidateCount, farWarning, canSave, onSave, onCancel }: HeaderProps) => (
   <div className="pt-1">
     <PanelModeBar modeLabel={UI_LABELS.MAP_PANEL.MODE_DRAFT} />
     <div className="flex items-center justify-between gap-2 px-4">
@@ -96,24 +101,46 @@ export const RoteiroDraftHeader = ({ stopNumber, metrics, addresses, remainingAd
     <div className="px-4">
       <PanelMetricsRow metrics={metrics} />
     </div>
-    <p className="px-4 pt-1 text-xs text-muted-foreground">{UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(remainingAddresses, remainingPackages)}</p>
-    {/* Map taps toggle membership — say it on the FIRST steps only (rev. 08/07). */}
+    {/* No global "Faltando" here (RF-006.4.25): the edit is about ONE stop; the
+        roteiro-wide HUD returns with the summary when the edit closes. */}
+    {/* Map taps SELECT during the edit — hint only on the FIRST steps (rev. 08/07). */}
     {addresses <= 1 && <p className="px-4 pt-0.5 text-xs italic text-muted-foreground">{DRAFT.TAP_HINT}</p>}
+    {/* Grouping-radius CARD (rev. 08/07 3ª rodada): stepper + candidates line. */}
+    <div className="mx-4 mt-2 rounded-lg border border-input p-3">
+      <RadiusStepper radiusMeters={radiusMeters} onRadiusChange={onRadiusChange} />
+      <p className="pt-2 text-xs font-medium text-muted-foreground">{DRAFT.BANNER_CANDIDATES(candidateCount)}</p>
+      {farWarning && <p className="pt-1 text-xs font-medium text-destructive">{DRAFT.FAR_WARNING}</p>}
+    </div>
     <div className="pb-2" />
   </div>
 );
 
+/**
+ * RoteiroDraftPick - the free point tapped on the MAP during the edit
+ * (RF-006.4.23/.4.24). Rendered in the panel HEADER (beside the other draft
+ * chrome), NOT in the body: the collapsed snap fits the header, so picking an
+ * address grows the panel until it shows — like every other selected-address
+ * section. The tap looks; this CTA is what edits.
+ */
+export const RoteiroDraftPick = ({ item, onAdd }: { item: StopItemData; onAdd?: () => void }) => (
+  <PanelSection
+    label={UI_LABELS.MAP_PANEL.SECTION_SELECTED}
+    actions={
+      <Button type="button" size="sm" className="h-7 px-2 text-xs" data-vaul-no-drag onClick={onAdd}>
+        {DRAFT.ADD_TO_STOP}
+      </Button>
+    }
+  >
+    <StopItemRow item={item} onTap={() => {}} highlighted neon />
+  </PanelSection>
+);
+
 interface BodyProps {
-  candidateCount: number;
-  radiusMeters: number;
-  onRadiusChange: (meters: number) => void;
   /** Members/candidates in the Original list vocabulary (pointToStopItemData);
       `addressKey` is the point id — the toggle target. */
   chosen: StopItemData[];
   candidates: StopItemData[];
   onTogglePoint: (pointId: string) => void;
-  /** RN-17: some chosen point sits far from the anchor — orient, never block. */
-  farWarning: boolean;
 }
 
 /** Trailing add/remove action of a list row (map taps toggle the same way). */
@@ -126,15 +153,8 @@ const toggleAction = (item: StopItemData, icon: "add" | "remove", onTogglePoint:
   );
 };
 
-export const RoteiroDraftBody = ({ candidateCount, radiusMeters, onRadiusChange, chosen, candidates, onTogglePoint, farWarning }: BodyProps) => (
+export const RoteiroDraftBody = ({ chosen, candidates, onTogglePoint }: BodyProps) => (
   <div className="pb-2">
-    {/* Grouping-radius CARD (rev. 08/07 3ª rodada): stepper + candidates line. */}
-    <div className="mx-4 mb-2 rounded-lg border border-input p-3">
-      <RadiusStepper radiusMeters={radiusMeters} onRadiusChange={onRadiusChange} />
-      <p className="pt-2 text-xs font-medium text-muted-foreground">{DRAFT.BANNER_CANDIDATES(candidateCount)}</p>
-      {farWarning && <p className="pt-1 text-xs font-medium text-destructive">{DRAFT.FAR_WARNING}</p>}
-    </div>
-
     <PanelSection label={DRAFT.SECTION_CHOSEN}>
       {chosen.length === 0 ? (
         <p className="px-4 py-2 text-xs text-muted-foreground">{DRAFT.EMPTY_HINT}</p>

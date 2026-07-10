@@ -1052,11 +1052,56 @@ describe("MapPage (focus screen)", () => {
     const stub = screen.getByTestId("route-map-stub");
     expect(stub.getAttribute("data-models-summary")).toBe("address*,address*,address");
 
-    // Toque no mapa durante a edição NÃO adiciona/remove (RF-006.4.9): remaining fixo.
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+    // Toque no mapa durante a edição NÃO adiciona/remove (RF-006.4.9): a lista
+    // de escolhidos não muda (o "Faltando" saiu da edição — RF-006.4.25).
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" })); // toca um membro → no-op
-    fireEvent.click(screen.getByRole("button", { name: "stub-third-point-tap" })); // toca o órfão → no-op
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "stub-third-point-tap" })); // toca o órfão → SELECIONA (não edita — RF-006.4.23)
+    expect(screen.queryByRole("button", { name: DRAFT_LABELS.REMOVE_POINT("Rua Gama, 30") })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: DRAFT_LABELS.REMOVE_POINT("Rua Mapa, 10") })).toBeInTheDocument();
+  });
+
+  // RF-006.4.23 (achado nº 1 do smoke): o toque OLHA, o botão EDITA. Era o único
+  // beco sem saída da edição — sem candidato no raio, nada adicionava um endereço.
+  it("edição: tocar endereço livre seleciona (foco+painel) e 'Adicionar a esta parada' o inclui (RF-006.4.23)", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP })); // P1 = p1+p2
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" })); // foca a parada
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.EDIT }));
+    const stub = screen.getByTestId("route-map-stub");
+
+    // Entrar na edição MANTÉM o quadro da parada no zoom de parada (RF-006.4.24)
+    // — antes o foco caía para null e o mapa reenquadrava a rota inteira.
+    expect(stub.getAttribute("data-focus-bounds")).toBe("2");
+    expect(stub.getAttribute("data-focus-zoom")).toBe(String(FOCUS_MAX_ZOOM));
+
+    // Toca o órfão p3 (a ~555m — fora do raio de 30m): SELECIONA, sem editar.
+    fireEvent.click(screen.getByRole("button", { name: "stub-third-point-tap" }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).toBeInTheDocument();
+    expect(screen.getByText("Rua Gama, 30")).toBeInTheDocument();
+    // Intocado: p3 selecionado mas NÃO membro (o − dele não existe na lista).
+    expect(screen.queryByRole("button", { name: DRAFT_LABELS.REMOVE_POINT("Rua Gama, 30") })).not.toBeInTheDocument();
+    // Cromagem + foco de endereço no ponto tocado (marcador destacado, zoom de endereço).
+    expect(stub.getAttribute("data-highlighted-model")).not.toBe("none");
+    expect(stub.getAttribute("data-focus-bounds")).toBe("1");
+    expect(stub.getAttribute("data-focus-zoom")).toBe(String(ADDRESS_MAX_ZOOM));
+
+    // O CTA edita: p3 vira membro (3º da ordem a pé), o RN-17 avisa (longe da
+    // âncora) e a seção some. O "Faltando" do HUD só cai no COMMIT — durante o
+    // REOPEN a parada antiga segue em `stops` e o draft é uma cópia.
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.ADD_TO_STOP }));
+    expect(screen.getByRole("button", { name: DRAFT_LABELS.REMOVE_POINT("Rua Gama, 30") })).toBeInTheDocument(); // na lista de escolhidos
+    expect(screen.getByText(DRAFT_LABELS.FAR_WARNING)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: DRAFT_LABELS.ADD_TO_STOP })).not.toBeInTheDocument();
+    // A seleção é MANTIDA para o foco não cair para a rota inteira no meio da edição.
+    expect(stub.getAttribute("data-focus-bounds")).toBe("1");
+
+    // Salvar consolida: o HUD zera E a parada volta selecionada (RF-006.4.24) —
+    // painel no resumo, foco no quadro dela (agora 3 membros), sem zoom-out.
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.SAVE }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(0, 0))).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
+    expect(stub.getAttribute("data-focus-bounds")).toBe("3");
   });
 
   it("o círculo do preview segue o stepper de raio (RF-006.4.6)", () => {
