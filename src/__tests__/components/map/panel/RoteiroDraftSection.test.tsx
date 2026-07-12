@@ -46,8 +46,10 @@ describe("RoteiroDraftSection (tela 9 — TASK-RF-006.4/.4.1/.4.2/.4.3)", () => 
     // pick can no longer push it around (RF-006.4.25).
     expect(screen.getByText(DRAFT.RADIUS_LABEL)).toBeInTheDocument();
     expect(screen.getByText(DRAFT.BANNER_CANDIDATES(2))).toBeInTheDocument();
-    // The edit is about ONE stop: no roteiro-wide "Faltando" here (RF-006.4.25).
-    expect(screen.queryByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(7, 9))).not.toBeInTheDocument();
+    // The edit is about ONE stop: no roteiro-wide HUD here (RF-006.4.25) —
+    // since RF-006.8 that means no progress bar/overview toggle either.
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.VIEW_DETAILS)).not.toBeInTheDocument();
     // ≥2 addresses → the tap hint retired (first steps only).
     expect(screen.queryByText(DRAFT.TAP_HINT)).not.toBeInTheDocument();
 

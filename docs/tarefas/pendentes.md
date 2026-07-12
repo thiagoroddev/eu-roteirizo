@@ -17,7 +17,7 @@
 | 3 | ~~**TASK-REF-016**~~ — espaçamento do painel | ✅ **CONCLUÍDA (10/07)** — respiro canônico no `PanelSection` (pb-1 + shrink-0), card do raio compacto, compensações locais removidas. Smoke pendente (já publicada na URL de testes). |
 | 4 | ~~**TASK-RF-008**~~ — persistência/auto-save | ✅ **CONCLUÍDA (10/07)** — roteiro sobrevive a sair/fechar/alternar; chip acende; Sumário adapta + totais; cascata no apagar. RF-33/35/RN-21 ✅. Smoke pendente (publicada). |
 | 5 | ~~**TASK-TEST-003**~~ — zoom real do Leaflet | ✅ **CONCLUÍDA (10/07)** — o `MapPage.integration.test` virou o contrato de zoom real (8 cenários, 660/660); defeitos .4.19/.4.20 reintroduzidos por mutação derrubam a rede. A RF-006.8 pode mexer no painel com rede armada. |
-| 6 | **TASK-RF-006.8** — painel de visão geral | Encolhe o painel colapsado e fixa o contrato do cabeçalho/`PanelView` **antes** que a `.5` e a `.6` preencham os slots. |
+| 6 | ~~**TASK-RF-006.8**~~ — painel de visão geral | ✅ **CONCLUÍDA (12/07)** — painel ocioso = visão geral (progresso + confirmadas + sugestão em sequência com CTA); cabeçalho conciso em todos os contextos (painel colapsado mais baixo); `PanelView` "overview". 670/670; **smoke pendente** (publicada). Desbloqueia a **REF-017** (compartilha o `RouteProgressCard`). |
 | 7 | **TASK-RF-006.5** → **.6** → **.7** | Sequência do épico. A `.6` depende da `.5`. Ao fim da `.7`, um retoque pluga distância/tempo totais nos cards da `.8` (por isso ficaram fora do escopo dela). |
 | 8 | **TASK-RF-007** → **RF-009** → **RF-012** → **RF-013** | Sem mudança em relação ao registrado. |
 
@@ -33,7 +33,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 > Tarefas urgentes que carregam contexto extra. Bloco em lista, no topo.
 >
-> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). **Fila:** ver a tabela **"Ordem de execução recomendada"** no topo deste arquivo (rev. 10/07, pós-smoke). Resumo: `RF-006.8 → RF-006.5 → .6 → .7 → RF-007 → RF-009 → RF-012 → RF-013`. Concluídos: RF-003/004/005/011/020/021/022/023 e RF-006.1 → .4.27 (ver índice). RF-014 absorvida pela RF-022; RF-010 absorvida pela RF-006.2. Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
+> **Épico: Roteirizador a pé (Nível B).** Implementação completa da visão em [`docs/rascunhos/draft-roteirizador-a-pe.md`](../rascunhos/draft-roteirizador-a-pe.md), decisão de roteamento em [`ADR-002`](../arquitetura/ADR/ADR-002.md). **Fila:** ver a tabela **"Ordem de execução recomendada"** no topo deste arquivo (rev. 10/07, pós-smoke). Resumo: `RF-006.5 → .6 → .7 → RF-007 → RF-009 → RF-012 → RF-013`. Concluídos: RF-003/004/005/011/020/021/022/023 e RF-006.1 → .4.27 (ver índice). RF-014 absorvida pela RF-022; RF-010 absorvida pela RF-006.2. Cada tarefa só vira "Em Andamento" uma por vez (núcleo §3); o plano fino nasce ali.
 >
 > ⚠️ **Decisões transversais (valem para o épico todo):**
 > - **Estado:** `useReducer` por feature (conforme draft §6). Zustand só se a complexidade exigir — e **não instalar sem aprovação** (anti-padrão do núcleo §5).
@@ -56,7 +56,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 ## TASK-RF-006 - UI de construção da rota (Meu roteiro) [XG, dividir]
 
-- **Status:** Pendente (**.1 → .4.27 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.5 · .6 · .7 · .8 · .9**)
+- **Status:** Pendente (**.1 → .4.27 e .8 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.5 · .6 · .7 · .9 · .10**)
 - **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
@@ -83,49 +83,24 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 - Linha contínua âncora→âncora pela rua real (A*, mão única; fallback reta sem grafo); laço tracejado a pé do circuito da parada selecionada; tracejado da próxima "mais forte" pós-conclusão; km acumulado no painel (tempo fino é RF-007).
 - **Aceite:** linha segue as ruas respeitando mão única; km coerente.
 
-### TASK-RF-006.8 - Painel de visão geral do roteiro (estado ocioso) + cabeçalho conciso [G]
-- **Esforço-H/IA:** G/G · **Dep:** 006.4.3 ✅ (PanelSection/StopItemList/PanelTitle), 006.4.18 ✅ (bucket `ModePanelUi` por modo)
-- *(criada 08/07 como "lista completa no painel ocioso"; **reescrita 09/07** com escopo ampliado a pedido do humano, com print de referência. Mesmo assunto, mesmo número — o núcleo §4.4 proíbe reaproveitar número **aposentado**, não expandir tarefa pendente.)*
-
-- **Problema:** no Meu roteiro, quando **nada está selecionado** (logo após definir o início, ou ao tocar o mapa vazio), o painel mostra só "Início definido" + "Redefinir" e o **corpo é `null`** (`MapPage`, ramo `start-flow`). Estado morto que o Original nem tem (lá sempre há um endereço selecionado). Em contrapartida, nos **demais** estados o cabeçalho gasta duas linhas com o HUD "Faltando: X endereços · Y pacotes", engordando o painel colapsado.
-
-- **Solução:** o painel ocioso vira **o painel de estudo do roteiro** (progresso + o que já existe + o que vem a seguir); os outros estados ganham um cabeçalho **conciso**.
-
-**Decisões fechadas com o humano (09/07):**
-- **`%` = endereços** atribuídos / total (a unidade em que o roteiro é construído). Os cards mostram endereços **e** pacotes; só a **barra** escolhe uma base.
-- **Sugestão = só a PRÓXIMA parada**, numerada `stops.length + 1` (encadear a 2ª seria chute: ela muda quando o usuário ajusta raio/âncora da 1ª). ⚠️ No print a numeração reinicia em 1 — está **errado**, deve continuar a sequência.
-- **A linha concisa SUBSTITUI o HUD "Faltando"**, que migra para os cards da visão detalhada.
-- **Barra de progresso em CSS puro** com tokens (`bg-brand-gradient`, da REF-012). **Sem dependência nova** (`@radix-ui/react-progress` avaliado e descartado).
-
-**1. Cabeçalho conciso (todos os contextos do roteiro):** `RoteiroPanelHeader` deixa de imprimir `ROTEIRO_REMAINING`; passa a mostrar rótulo do modo + `%` + barra fina + botão **"Ver detalhes"** (slot `actions`, padrão do "Ver lista completa"). A barra vai no `PanelModeBar`, onde o contrato **já está desenhado**: `PanelModeBarProps.progress?: number // 0..1 🔮` (`docs/design/arvore-componentes-mapa.md` §3) — preencher o slot, não inventá-lo.
-
-**2. Visão geral (corpo do painel ocioso e via "Ver detalhes")** — três `PanelSection`:
-- **"Roteiro em Construção"**: card maior com dois cards-estatística quadrados (Endereços `29/76`, Pacotes `34/110`) + barra + `%`. Usa `Card`/`CardContent` (já existem).
-- **"Paradas confirmadas"**: uma linha por parada firmada reusando **`PanelTitle`** (nº + bairro (CEP) + chips tipados + estimativa a pé). Tap expande para os endereços via **`StopItemList`** com ordinais (`pointToStopItemData(point, { ordinal })`). Trailing "Ver no mapa" seleciona a parada (`setSelectedStopId`).
-- **"Sugestão de próxima parada"**: mesmo card de resumo, numerado `stops.length + 1`, com a distância **de veículo** até lá e o CTA "Criar parada".
-- ⚠️ **Nada de card novo para endereço.** O print é referência de **estrutura**, não de componentes: a lista de endereços já existe e está validada no Original.
-
-**3. Navegação:** `PanelView` ganha `"overview"` (hoje `"selected" | "list"`), guardado no bucket por modo. Contexto ocioso abre nele por padrão; "Ver detalhes" entra de qualquer contexto; Escape/arrasto saem, como no `"list"`.
-
-**Arquivos — novos:** `components/ui/progress.tsx` (`role="progressbar"` + `aria-valuenow/min/max`); `map/panel/RouteProgressCard.tsx`; `map/panel/RoteiroOverviewSection.tsx`.
-**Modificados:** `MapPage.tsx` (view `overview` + `handleShowOverview`/`handleHideOverview`, espelho dos handlers da lista); `RoteiroPanelHeader.tsx` + `PanelModeBar.tsx`; `constants/uiLabels.ts` (`SECTION_OVERVIEW`/`SECTION_CONFIRMED_STOPS`/`SECTION_NEXT_STOP`, par `VIEW_DETAILS`/`HIDE_DETAILS`, `PROGRESS_*` como função pluralizada; distância **sempre qualificada** — regra do arquivo); `docs/design/arvore-componentes-mapa.md` (a matriz modo × slot ganha o contexto **ocioso**, que não existe em nenhuma das telas 1–9).
-
-**Lógica pura (com teste próprio):**
-- `routeProgress(state)` → `{ addressesDone, addressesTotal, packagesDone, packagesTotal, ratio }` — composição de `totalPoints`/`totalPackages` menos `remainingCounts(state)`. Não existe seletor de "concluídos"; é subtração.
-- `nextStopSuggestion(state, graph)` → semente/âncora/pontos/ordem. **O molde já existe** em `MapPage` (`suggestedAnchor`/`suggestedPoints`), hoje amarrado a `selectedPoint`: basta parametrizar pelo ponto de `suggestedNextPointId(state)`. Todas as funções envolvidas (`suggestVehicleStop`, `pointsWithinRadius`, `sweepWalkingOrder`, `stopWalkEstimate`, `stopPlaceSummaryFromPoints`, `packagesByTypeFromPoints`) já são puras e **não** dependem de haver órfão selecionado.
-
-**Fora de escopo (deliberado):**
-- **Distância e tempo TOTAIS do roteiro** no card de progresso: dependem do traçado (**RF-006.7**) e das estimativas configuráveis (**RF-007**). O HUD do `fluxo-roteirizacao.md` §7 os prevê; entram quando aquelas existirem — mostrar agora seria número inventado.
-- **Estética Neon Flux do print** (glow/glassmorphism/mono): a tarefa entrega estrutura + tokens. `neonflux.md` §163 só orienta o *fill* da barra; o resto é REF-012/**REF-014**.
-- **Reordenar/remover paradas pela visão geral** — é a **RF-006.6**.
-
-- **Aceite:** painel ocioso nunca fica "morto" (progresso + paradas confirmadas + próxima sugerida numerada em sequência); cabeçalho conciso nos demais estados **e o painel colapsado fica MAIS BAIXO que antes**; "Ver detalhes" abre/fecha como o "Ver lista completa" (Escape/arrasto saem); `routeProgress` e `nextStopSuggestion` cobertos por teste (0 paradas → 0%; tudo atribuído → 100% e sugestão `null`; sem pontos → não divide por zero); barra expõe `role="progressbar"`; gates `tsc`/`eslint`/`vitest`/`build` rotulados.
+<!-- TASK-RF-006.8 movida para em-andamento.md em 12/07/26 (plano aprovado — "ok prossiga"). -->
 
 ### TASK-RF-006.9 - Geocoding mínimo do endereço da parada do veículo (âncora) (pedido 09/07)
 - **Esforço-H/IA:** M/M · **Dep:** 006.4.7 ✅ · *(criada a pedido do humano 09/07 — planejar a implementação; por ora o endereço da âncora é placeholder = o 1º endereço da parada)*
 - **Problema:** a **parada do veículo (âncora)** é um ponto na RUA (LatLng), não um endereço da planilha. O painel do Meu roteiro passou a exibir a âncora (ícone de veículo + endereço, seção "Endereço selecionado — parada do veículo (âncora)" — RF-006.4.7), mas hoje mostra o endereço do **1º endereço da parada** como aproximação.
 - **Solução a planejar:** obter o endereço (rua + nº aproximado) da coordenada da âncora via **reverse-geocoding**, respeitando **RNF-03/RNF-13 (nenhuma API paga em produção)** — avaliar Nominatim/OSM com cache (idb) e rate-limit, ou derivar do grafo OSM já baixado (nome da via do segmento mais próximo — `nearestEdge`), que evita chamada externa. Sem PII em log (TASK-BG-002). Client-side.
 - **Aceite:** a âncora mostra a via real (ou "via + aprox.") em vez do 1º endereço; offline/fallback degrada para o placeholder atual; sem custo recorrente.
+
+### TASK-RF-006.10 - Distância/tempo por perna na lista de endereços (conector vertical) (pedido 10/07)
+- **Esforço-H/IA:** M/M · **Dep:** 006.4 ✅ (lista/`StopItemData`) · **REQ:** RF-30, RF-31; `fluxo-roteirizacao.md` §6 "por-perna" · *(criada a pedido do humano 10/07, prints do smoke M-32)*
+- **Problema:** a lista de endereços do Meu roteiro mostra ordinal/endereço/pacotes, mas não o **custo de cada perna** — a informação que decide "vale andar ou criar outra parada?" (fluxo §6: "cada endereço mostra tempo + metros do ponto anterior até ele, com ícone de pedestre"; RF-30 está 🟡 justamente com "falta a distância nas pernas/paradas").
+- **Solução (decisão do humano 10/07): conector vertical entre as linhas** — no gutter esquerdo, entre os mini-markers dos ordinais: linha/seta ↓ + rótulo (tempo · metros, ícone a pé). A perna desenhada como LIGAÇÃO entre os dois endereços, não como atributo solto.
+  - **Perna 0 = veículo (âncora) → 1º endereço.** Se o 1º endereço coincide com a posição da âncora → indicar **"Parada do veículo"** em vez de "0 m".
+  - **Cálculo pelas RUAS** (requisito, NÃO linha reta): `suggestionPath(pedGraph, from, to)` por perna — o A* pedestre por par **já existe** (`src/utils/routing/suggestion.ts`, RF-006.3); fallback reta **sempre rotulado** "(linha reta)" enquanto o grafo não carrega (padrão do "Distância até aqui"). Tempo derivado da config de caminhada (refina com **RF-007**).
+  - **Dados:** `StopItemData` ganha campo opcional de perna (`panelModels.ts` — hoje não existe nada de distância ali); preenchido em `MapPage`/`pointToStopItemData` a partir de `selectedStop.vehicleStop` + ordem de `stop.pointIds`; render no `StopItemList`/`StopItem`.
+- **Riscos p/ o plano fino:** gutter tem ~28px e texto vertical é difícil no mobile — a execução pode refinar a forma (ex.: linha vertical + rótulo horizontal pequeno ao lado) **mantendo o conceito de conector entre linhas**; a **RF-006.6** usará o leading das linhas p/ drag na edição (no modo edição o conector pode se esconder); a11y: a informação não pode depender só do desenho (texto acessível na linha).
+- **Encaixe sugerido:** junto ou logo após a **RF-006.6** (mexe na mesma lista — antes disso o conector seria retrabalhado).
+- **Aceite:** cada endereço da lista mostra a perna desde o anterior; o 1º desde o veículo (caso âncora = 1º → "Parada do veículo"); pelas ruas quando há grafo, reta rotulada sem grafo; sem custo perceptível de render (memo por parada); smoke no aparelho valida a legibilidade do conector.
 
 **Critérios de aceite (RF-006):** fluxo da spec §4 ponta a ponta; painéis por contexto do §10.10; slots preenchidos sem reestruturar o MapPanel; Original sem regressão. ~~Validação de completude p/ salvar~~ **não existe** (RF-33: salvar é livre; completude = `isComplete`, gate só do "Iniciar rota"/RF-009).
 **Dependências novas:** nenhuma (~~`@turf/turf`~~ descartada 07/07 — haversine cobre ponto-em-raio).

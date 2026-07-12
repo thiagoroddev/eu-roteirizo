@@ -77,7 +77,8 @@ interface MapPanelProps {
 // PanelHeader (composição)
 interface PanelModeBarProps {
   modeLabel: string;            // UI_LABELS — "Modo visualização" (Original)
-  progress?: number;            // 0..1 🔮 (edição/rascunho/execução)
+  progress?: number;            // 0..1 ✅ RF-006.8 — % + barra fina (base: endereços)
+  actions?: ReactNode;          // ✅ RF-006.8 — slot direito ("Ver detalhes")
   onPrevStop: () => void;       // StopStepper — circular pela ordem de Stop
   onNextStop: () => void;
 }
@@ -118,17 +119,19 @@ interface StopItemListProps {
 
 ## 4. Matriz modo × preenchimento (tela a tela)
 
-| Elemento | **Original — visualização** (agora, tela 5 read-only) | Meu roteiro — visualização (tela 5) 🔮 | Meu roteiro — edição (telas 6/7) 🔮 | Rascunho (tela 9) 🔮 | Execução (§14) 🔮 |
-|---|---|---|---|---|---|
-| ModeBar | "Modo visualização", sem progresso | idem + progresso | "Modo edição" + progresso | "Modo rascunho" | progresso da rota |
-| Título | `Parada {Stop}` + endereço representante | `Parada N — Veículo (âncora)` | `Parada N — 2º endereço` | `Parada N — Veículo` | próxima entrega |
-| Métricas | `N endereços · N pacotes` | + `~min e m a pé` | idem | `1 endereço · 1 pacote…` | `X/Y` + previsão |
-| actions | — (vazio) | `Editar Parada · Iniciar rota` | `Remover/Adicionar/Tornar âncora/Inverter` ou `Mover/Resetar âncora` | `Salvar parada · Editar âncora/raio` | `Abrir GPS · Concluir` |
-| banner | — | — | — | "raio engloba N candidatos" | — |
-| Itens: número | **Sequence planilha** | ordinal 1º/2º + item âncora | idem + drag | idem | ordem do roteiro |
-| Itens: meta | badge pacotes | + tempo/metros por perna | idem | idem | distância até |
-| footer | — | — | `Salvar alterações` | `Salvar alterações` | `Concluir entrega` |
-| Ponto livre (tela 8) | n/a (Original não tem órfão) | título "Ponto livre" + `Criar parada · Incorporar` | ← | ← | n/a |
+| Elemento | **Original — visualização** (agora, tela 5 read-only) | **Meu roteiro — OCIOSO (visão geral) ✅ RF-006.8** | Meu roteiro — visualização (tela 5) 🔮 | Meu roteiro — edição (telas 6/7) 🔮 | Rascunho (tela 9) 🔮 | Execução (§14) 🔮 |
+|---|---|---|---|---|---|---|
+| ModeBar | "Modo visualização", sem progresso | rótulo do estado + `%` + barra fina + "Ver detalhes" | idem + progresso | "Modo edição" + progresso | "Modo rascunho" | progresso da rota |
+| Título | `Parada {Stop}` + endereço representante | — (o corpo assume: card "Roteiro em construção") | `Parada N — Veículo (âncora)` | `Parada N — 2º endereço` | `Parada N — Veículo` | próxima entrega |
+| Métricas | `N endereços · N pacotes` | stat-cards `Endereços x/y` · `Pacotes x/y` + barra + `%` | + `~min e m a pé` | idem | `1 endereço · 1 pacote…` | `X/Y` + previsão |
+| actions | — (vazio) | "Criar parada" (sugestão) · "Ver no mapa" por parada | `Editar Parada · Iniciar rota` | `Remover/Adicionar/Tornar âncora/Inverter` ou `Mover/Resetar âncora` | `Salvar parada · Editar âncora/raio` | `Abrir GPS · Concluir` |
+| banner | — | — | — | — | "raio engloba N candidatos" | — |
+| Itens: número | **Sequence planilha** | PanelTitle por parada confirmada; drill-down com ordinais | ordinal 1º/2º + item âncora | idem + drag | idem | ordem do roteiro |
+| Itens: meta | badge pacotes | chips + estimativa a pé; sugestão com distância de veículo | + tempo/metros por perna | idem | idem | distância até |
+| footer | — | — | — | `Salvar alterações` | `Salvar alterações` | `Concluir entrega` |
+| Ponto livre (tela 8) | n/a (Original não tem órfão) | n/a (nada selecionado por definição) | título "Ponto livre" + `Criar parada · Incorporar` | ← | ← | n/a |
+
+> **Contexto ocioso (RF-006.8):** não existe em nenhuma das telas 1–9 do fluxo — é o estado "nada selecionado" do Meu roteiro (pós-início ou toque no mapa vazio). O corpo do painel vira a **visão geral** (progresso + paradas confirmadas + sugestão de próxima parada numerada em sequência), também acessível de qualquer contexto pelo "Ver detalhes" do cabeçalho (Escape/arrasto saem, como na lista completa).
 
 ---
 

@@ -1,16 +1,22 @@
+import type { ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "../../ui/button";
+import { Progress } from "../../ui/progress";
 import { UI_LABELS } from "../../../constants/uiLabels";
 
 /**
  * PanelModeBar - top row of the MapPanel header (design doc §2/§3): the current
- * mode label plus the StopStepper (only when stepping makes sense — the Meu
- * roteiro mode has no stops yet in .2, so the handlers are optional and the
- * stepper is hidden without both). The design doc's `progress` (0..1) is
- * DELIBERATELY deferred: the edit-mode slices (.4+) define the real HUD.
+ * mode label plus, per mode, the StopStepper (Original) or the construction
+ * progress + an action slot (Meu roteiro — TASK-RF-006.8 filled the doc's
+ * `progress` contract: percent + a thin brand-gradient bar under the row).
  */
 interface Props {
   modeLabel: string;
+  /** 0..1 — the roteiro's construction progress (base: addresses). Renders the
+      percent beside the label and the thin bar under the row (design §3). */
+  progress?: number;
+  /** Right-side slot (the roteiro's "Ver detalhes" toggle — RF-006.8). */
+  actions?: ReactNode;
   /** StopStepper ‹ › — circular over the Stop order (design doc §5). Hidden unless both handlers exist. */
   onPrevStop?: () => void;
   onNextStop?: () => void;
@@ -31,9 +37,16 @@ const StopStepper = ({ onPrevStop, onNextStop }: { onPrevStop: () => void; onNex
   </div>
 );
 
-export const PanelModeBar = ({ modeLabel, onPrevStop, onNextStop }: Props) => (
-  <div className="flex min-h-10 items-center justify-between px-4">
-    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{modeLabel}</span>
-    {onPrevStop && onNextStop && <StopStepper onPrevStop={onPrevStop} onNextStop={onNextStop} />}
+export const PanelModeBar = ({ modeLabel, progress, actions, onPrevStop, onNextStop }: Props) => (
+  <div>
+    <div className="flex min-h-10 items-center justify-between gap-2 px-4">
+      <span className="min-w-0 truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">{modeLabel}</span>
+      <div className="flex shrink-0 items-center gap-2">
+        {progress !== undefined && <span className="text-xs font-semibold tabular-nums">{UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.PERCENT(progress)}</span>}
+        {actions}
+        {onPrevStop && onNextStop && <StopStepper onPrevStop={onPrevStop} onNextStop={onNextStop} />}
+      </div>
+    </div>
+    {progress !== undefined && <Progress value={progress} label={UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.PROGRESS_ARIA} className="mx-4 mb-1 h-1" />}
   </div>
 );

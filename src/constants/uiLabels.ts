@@ -105,8 +105,25 @@ export const UI_LABELS = {
     METRIC_TYPED_PACKAGES: (typeLabel: string, count: number) => `${typeLabel}: ${count === 1 ? "1 pacote" : `${count} pacotes`}`,
     // HUD do modo Meu roteiro (RF-32 parcial — TASK-RF-006.2/.4.1): estado do rascunho.
     MODE_ROTEIRO_DRAFT: "Roteiro incompleto — rascunho",
-    ROTEIRO_REMAINING: (addresses: number, packages: number) => `Faltando: ${addresses === 1 ? "1 endereço" : `${addresses} endereços`} · ${packages === 1 ? "1 pacote" : `${packages} pacotes`}`,
     ROTEIRO_HINT_START: "A construção começa definindo o ponto inicial da rota.",
+    // Visão geral do roteiro (painel ocioso + "Ver detalhes" — TASK-RF-006.8).
+    // O antigo HUD "Faltando: X · Y" migrou para os stat-cards (como feito/total).
+    ROTEIRO_OVERVIEW: {
+      SECTION_PROGRESS: "Roteiro em construção",
+      SECTION_CONFIRMED: "Paradas confirmadas",
+      SECTION_NEXT: "Sugestão de próxima parada",
+      VIEW_DETAILS: "Ver detalhes",
+      HIDE_DETAILS: "Esconder detalhes",
+      STAT_ADDRESSES: "Endereços",
+      STAT_PACKAGES: "Pacotes",
+      /** "29/76" — atribuídos/total. */
+      STAT_COUNT: (done: number, total: number) => `${done}/${total}`,
+      /** A barra escolhe UMA base: endereços (decisão 09/07). */
+      PERCENT: (ratio: number) => `${Math.round(ratio * 100)}%`,
+      PROGRESS_ARIA: "Progresso do roteiro (endereços atribuídos)",
+      NO_STOPS: "Nenhuma parada confirmada ainda.",
+      STOP_ARIA: (order: number) => `Parada ${order} — ver endereços`,
+    },
     // Linha de estado do rascunho: sempre diz O QUE FAZER agora (feedback 08/07).
     ROTEIRO_STATE_BUILDING: "Toque num endereço no mapa para criar uma parada.",
     ROTEIRO_STATE_COMPLETE: "Todos os endereços atribuídos.",

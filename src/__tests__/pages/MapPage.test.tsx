@@ -223,6 +223,7 @@ const addressRow = (name: RegExp) => screen.getByRole("button", { name });
 const openListView = () => fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_FULL_LIST }));
 
 const START_LABELS = UI_LABELS.MAP_PANEL.ROTEIRO_START;
+const OVERVIEW_LABELS = UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW;
 
 describe("MapPage (focus screen)", () => {
   beforeEach(() => {
@@ -514,13 +515,18 @@ describe("MapPage (focus screen)", () => {
   // Modo Meu roteiro (TASK-RF-006.2 — absorve RF-010, ADR-009)
   // ==========================================================================
 
-  it("switching to 'Meu roteiro' shows the remaining-work HUD and feeds the map external models", () => {
+  it("switching to 'Meu roteiro' shows the concise progress header and feeds the map external models", () => {
     renderPage();
 
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.MY_ROTEIRO }));
 
-    // HUD over rowsA1: 1 address, 1 package, nothing committed yet.
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+    // Concise header (RF-006.8): percent + bar — the old two-line "Faltando"
+    // HUD is gone; the counts live in the overview's stat cards (0/1 twice:
+    // addresses and packages), visible because the idle body IS the overview.
+    expect(screen.queryByText(/^Faltando:/)).not.toBeInTheDocument();
+    expect(screen.getAllByText(OVERVIEW_LABELS.PERCENT(0)).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("progressbar").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(OVERVIEW_LABELS.STAT_COUNT(0, 1))).toHaveLength(2);
     expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_HINT_START)).toBeInTheDocument();
     // No Original sections, no stop steppers (there are no stops to step).
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).not.toBeInTheDocument();
@@ -569,7 +575,7 @@ describe("MapPage (focus screen)", () => {
     renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
 
     expect(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.MY_ROTEIRO })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+    expect(screen.getAllByText(OVERVIEW_LABELS.PERCENT(0)).length).toBeGreaterThan(0);
   });
 
   it("the toggle writes the mode to the URL preserving romaneio/rota (replace)", () => {
@@ -859,8 +865,8 @@ describe("MapPage (focus screen)", () => {
     const stub = screen.getByTestId("route-map-stub");
     // The stop is a grouped, SELECTED square on the map (p1 + p2 from the radius).
     expect(stub.getAttribute("data-models-summary")).toContain("stop*");
-    // Only p3 remains free; the preview circle is gone.
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+    // Only p3 remains free (2 of 3 committed → 67%); the preview circle is gone.
+    expect(screen.getByText(OVERVIEW_LABELS.PERCENT(2 / 3))).toBeInTheDocument();
     expect(stub).toHaveAttribute("data-radius-circle", "none");
   });
 
@@ -877,8 +883,8 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByText(new RegExp(`^${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`))).toBeInTheDocument();
     expect(screen.getByText("2 endereços")).toBeInTheDocument();
     expect(screen.getByText(/~\d+ min/)).toBeInTheDocument();
-    // Only p3 stays free (p1 + p2 committed).
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+    // Only p3 stays free (p1 + p2 committed → 67%).
+    expect(screen.getByText(OVERVIEW_LABELS.PERCENT(2 / 3))).toBeInTheDocument();
   });
 
   it("o stepper de raio no preview redimensiona o círculo e a contagem; criar respeita o raio (RF-006.4.6)", () => {
@@ -895,9 +901,9 @@ describe("MapPage (focus screen)", () => {
     expect(stub).toHaveAttribute("data-radius-circle", "-22.9,-43.2@10");
     expect(screen.getByText("1 endereço")).toBeInTheDocument(); // só a semente
 
-    // Criar com o raio reduzido → parada só com p1; p2 e p3 seguem livres.
+    // Criar com o raio reduzido → parada só com p1; p2 e p3 seguem livres (33%).
     fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(2, 2))).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.PERCENT(1 / 3))).toBeInTheDocument();
   });
 
   it("criar P1 e depois P2 firmam direto (épico acceptance: criar P1, P2… e ver firmar)", () => {
@@ -908,14 +914,14 @@ describe("MapPage (focus screen)", () => {
 
     const stub = screen.getByTestId("route-map-stub");
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.MODE_DRAFT)).not.toBeInTheDocument();
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.PERCENT(2 / 3))).toBeInTheDocument();
     expect(stub.getAttribute("data-models-summary")).toContain("stop");
 
     // P2 sobre o ponto restante (models = [stop, p3] → segundo botão).
     fireEvent.click(screen.getByRole("button", { name: "stub-second-point-tap" }));
     fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
 
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(0, 0))).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.PERCENT(1))).toBeInTheDocument();
     // Duas paradas firmadas e agrupadas (a última fica selecionada).
     expect(stub.getAttribute("data-models-summary")).toBe("stop,stop*");
   });
@@ -934,10 +940,10 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByText(DRAFT_LABELS.EMPTY_HINT)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: DRAFT_LABELS.SAVE })).toBeDisabled();
 
-    // Cancel descarta o draft; a parada firmada (p1 + p2) permanece intacta.
+    // Cancel descarta o draft; a parada firmada (p1 + p2) permanece intacta (67%).
     fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.CANCEL }));
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.MODE_DRAFT)).not.toBeInTheDocument();
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(1, 1))).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.PERCENT(2 / 3))).toBeInTheDocument();
   });
 
   it("incorporates an orphan into the nearest stop (on-demand select, nearest pre-set)", () => {
@@ -957,8 +963,9 @@ describe("MapPage (focus screen)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CONFIRM }));
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.ROTEIRO_NO_STOP_YET)).not.toBeInTheDocument();
-    // p3 entrou na parada → nada livre.
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(0, 0))).toBeInTheDocument();
+    // p3 entrou na parada → nada livre (100% no header E no card da visão geral,
+    // que é o corpo do contexto ocioso — RF-006.8).
+    expect(screen.getAllByText(OVERVIEW_LABELS.PERCENT(1)).length).toBeGreaterThan(0);
   });
 
   it("tapping a committed stop opens its Original-style panel; Editar reopens the draft; Desfazer frees (RF-006.4.2)", () => {
@@ -989,11 +996,63 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByRole("button", { name: DRAFT_LABELS.REMOVE_POINT("Rua Mapa, 10") })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.SAVE }));
 
-    // Desfazer → the addresses go back to free and the HUD rises (§9).
+    // Desfazer → the addresses go back to free and the progress drops to 0%
+    // (header + overview card — the idle body is the overview, RF-006.8).
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.DISSOLVE }));
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).not.toBeInTheDocument();
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(3, 3))).toBeInTheDocument();
+    expect(screen.getAllByText(OVERVIEW_LABELS.PERCENT(0)).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(OVERVIEW_LABELS.STAT_COUNT(0, 3))).toHaveLength(2);
+  });
+
+  // ==========================================================================
+  // Visão geral do roteiro (TASK-RF-006.8) — o painel de estudo
+  // ==========================================================================
+
+  it("ocioso NUNCA é morto (RF-006.8): progresso + paradas + sugestão numerada 1; o CTA comita a sugerida", () => {
+    startRoteiroFlow(); // início definido, nada selecionado → contexto ocioso
+
+    // Corpo = visão geral: card de progresso (0/3 nos dois stats), estado vazio
+    // de paradas e a sugestão da PRIMEIRA parada (numerada 1).
+    expect(screen.getByText(OVERVIEW_LABELS.SECTION_PROGRESS)).toBeInTheDocument();
+    expect(screen.getAllByText(OVERVIEW_LABELS.STAT_COUNT(0, 3))).toHaveLength(2);
+    expect(screen.getByText(OVERVIEW_LABELS.NO_STOPS)).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.SECTION_NEXT)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`^${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`))).toBeInTheDocument();
+    // Distância de VEÍCULO até a âncora sugerida, qualificada (reta sem grafo).
+    expect(screen.getByText(/Distância até aqui: .+ \(linha reta\)/)).toBeInTheDocument();
+
+    // O CTA comita a sugerida na hora — o mesmo commit da tela 8 (seed p3, o
+    // ponto livre mais próximo do início) — e foca a parada firmada.
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.PERCENT(1 / 3))).toBeInTheDocument();
+    expect(screen.getByTestId("route-map-stub").getAttribute("data-models-summary")).toContain("stop*");
+  });
+
+  it("'Ver detalhes' abre a visão geral de qualquer contexto; sugestão em SEQUÊNCIA; 'Ver no mapa' volta à parada (RF-006.8)", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP })); // P1 = p1+p2, selecionada
+
+    fireEvent.click(screen.getByRole("button", { name: OVERVIEW_LABELS.VIEW_DETAILS }));
+    // Painel a full; a parada confirmada listada; a PRÓXIMA numerada 2 —
+    // continua a sequência (no print de referência reiniciava em 1: errado).
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.85");
+    expect(screen.getByRole("button", { name: OVERVIEW_LABELS.STOP_ARIA(1) })).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`^${UI_LABELS.MAP_PANEL.STOP_PREFIX} 2`))).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: OVERVIEW_LABELS.HIDE_DETAILS })).toBeInTheDocument();
+
+    // Expandir a parada confirmada → os endereços por ordinal (o MESMO
+    // StopItemList do Original — nada de card novo).
+    fireEvent.click(screen.getByRole("button", { name: OVERVIEW_LABELS.STOP_ARIA(1) }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ORDINAL(1))).toBeInTheDocument();
+
+    // "Ver no mapa" seleciona a parada e devolve o painel ao resumo colapsado.
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_ON_MAP }));
+    expect(screen.queryByText(OVERVIEW_LABELS.SECTION_PROGRESS)).not.toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
+    expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "224px");
   });
 
   it("'Ver lista completa' na parada firmada mostra os endereços por ordinal; 'Esconder lista' volta ao resumo (RF-006.4.7)", () => {
@@ -1160,10 +1219,10 @@ describe("MapPage (focus screen)", () => {
     // A seleção é MANTIDA para o foco não cair para a rota inteira no meio da edição.
     expect(stub.getAttribute("data-focus-bounds")).toBe("1");
 
-    // Salvar consolida: o HUD zera E a parada volta selecionada (RF-006.4.24) —
-    // painel no resumo, foco no quadro dela (agora 3 membros), sem zoom-out.
+    // Salvar consolida: o progresso vai a 100% E a parada volta selecionada
+    // (RF-006.4.24) — painel no resumo, foco no quadro dela (3 membros).
     fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.SAVE }));
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_REMAINING(0, 0))).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.PERCENT(1))).toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
     expect(stub.getAttribute("data-focus-bounds")).toBe("3");
   });
