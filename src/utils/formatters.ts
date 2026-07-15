@@ -376,6 +376,21 @@ export function formatMeters(meters: number): string {
   return `${(meters / 1000).toFixed(1).replace(".", ",")} km`;
 }
 
+/** Formats an estimated duration in minutes: "~45 min" below an hour,
+ * "~2 h 05 min" above (zero-padded rest; exact hours drop the minutes).
+ * Used by the overview's totals (TASK-RF-006.11).
+ *
+ * @param {number} minutes - The duration in minutes (fractions rounded).
+ * @returns {string} Formatted duration string.
+ */
+export function formatDurationMin(minutes: number): string {
+  const rounded = Math.round(minutes);
+  if (rounded < 60) return `~${rounded} min`;
+  const hours = Math.floor(rounded / 60);
+  const rest = rounded % 60;
+  return rest === 0 ? `~${hours} h` : `~${hours} h ${String(rest).padStart(2, "0")} min`;
+}
+
 /** * Converts text to Title Case
  *
  * @param {string} text - The text to convert

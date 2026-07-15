@@ -96,7 +96,7 @@ export const UI_LABELS = {
     // FICARIA a partir do endereço que o usuário tocou — qualquer endereço
     // tocado vira a prévia; "sugerida" prometia uma escolha do app.
     SECTION_SUGGESTED: "Prévia de parada",
-    VIEW_FULL_LIST: "Ver lista completa",
+    VIEW_FULL_LIST: "Ver parada", // rev. 15/07 (era "Ver lista completa")
     HIDE_FULL_LIST: "Esconder lista",
     VIEW_ON_MAP: "Ver no mapa",
     METRIC_ADDRESSES: (count: number) => (count === 1 ? "1 endereço" : `${count} endereços`),
@@ -111,7 +111,9 @@ export const UI_LABELS = {
     ROTEIRO_OVERVIEW: {
       SECTION_PROGRESS: "Roteiro em construção",
       SECTION_CONFIRMED: "Paradas confirmadas",
-      SECTION_NEXT: "Sugestão de próxima parada",
+      // "Próxima parada sugerida" (renomeada 15/07): a sugestão é do ALGORITMO
+      // (não escolha do usuário) e o card a distingue de parada confirmada.
+      SECTION_NEXT: "Próxima parada sugerida",
       VIEW_DETAILS: "Ver detalhes",
       HIDE_DETAILS: "Esconder detalhes",
       STAT_ADDRESSES: "Endereços",
@@ -123,6 +125,17 @@ export const UI_LABELS = {
       PROGRESS_ARIA: "Progresso do roteiro (endereços atribuídos)",
       NO_STOPS: "Nenhuma parada confirmada ainda.",
       STOP_ARIA: (order: number) => `Parada ${order} — ver endereços`,
+      // Subseção "Detalhes" do card (RF-006.11): somatórias correntes.
+      SECTION_DETAILS: "Detalhes",
+      TOTAL_TIME: "Tempo total",
+      TOTAL_DISTANCE: "Distância total",
+      WALK_DISTANCE: "Distância a pé",
+      /** Qualificação honesta: RF-006.7 traz o traçado; RF-007, a config. */
+      TOTALS_NOTE: "Estimativas — veículo em linha reta.",
+      // Início como "parada 0" (RF-006.11): só nos detalhes + seleção no mapa.
+      SECTION_START: "Ponto inicial da rota",
+      /** Ícone que marca o endereço que É o início (fluxo "Partir deste endereço"). */
+      START_BADGE_ARIA: "Ponto inicial da rota",
     },
     // Linha de estado do rascunho: sempre diz O QUE FAZER agora (feedback 08/07).
     ROTEIRO_STATE_BUILDING: "Toque num endereço no mapa para criar uma parada.",
@@ -155,8 +168,9 @@ export const UI_LABELS = {
     // Ponto livre selecionado (tela 8 — TASK-RF-006.4/.4.1, fluxo §9).
     ROTEIRO_POINT: {
       CREATE_STOP: "Criar parada",
-      // O select de destino só aparece ao clicar no botão (rev. 08/07 3ª rodada).
+      // O destino é escolhido num POPUP aberto pelo botão (rev. 15/07 — era select inline).
       INCORPORATE_OTHER: "Incorporar em outra parada",
+      INCORPORATE_HINT: "Escolha a parada que receberá este endereço.",
       CONFIRM: "Confirmar",
       CANCEL: "Cancelar",
       TARGET_STOP_ARIA: "Parada de destino",

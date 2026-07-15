@@ -128,6 +128,9 @@ interface Props {
       into its addresses — RF-006.4.8). Single vs double is disambiguated by a
       short timer, since markers are recreated on every interaction change. */
   onModelExpand?: (model: MarkerModel) => void;
+  /** Tap on the START marker (Meu roteiro — RF-006.11): the start is selectable,
+      showing "parada 0" + the redefine action in the panel. */
+  onStartTap?: () => void;
   /** Roteiro decorations, drawn on their OWN layer (TASK-RF-006.3/.4): start
       marker, dashed suggestion line, the draft's dashed radius circle (real
       meters, centered on the seed) and its provisional anchor. */
@@ -151,6 +154,7 @@ export const RouteMap: React.FC<Props> = ({
   onMapTap,
   onModelTap,
   onModelExpand,
+  onStartTap,
   roteiroOverlay,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -169,6 +173,7 @@ export const RouteMap: React.FC<Props> = ({
   const onMapTapRef = useRef<((latlng: LatLng) => void) | undefined>(undefined);
   const onModelTapRef = useRef<((model: MarkerModel) => void) | undefined>(undefined);
   const onModelExpandRef = useRef<((model: MarkerModel) => void) | undefined>(undefined);
+  const onStartTapRef = useRef<(() => void) | undefined>(undefined);
   /** Pending single-tap timer (RF-006.4.8/.4.10): a double-tap clears it before
       it fires, so the single-tap action doesn't run (nor recreate the markers). */
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -183,6 +188,7 @@ export const RouteMap: React.FC<Props> = ({
     onMapTapRef.current = onMapTap;
     onModelTapRef.current = onModelTap;
     onModelExpandRef.current = onModelExpand;
+    onStartTapRef.current = onStartTap;
     interactionRef.current = interaction;
   });
   const stops = useMemo(() => groupRowsByStop(rows), [rows]);
@@ -484,7 +490,7 @@ export const RouteMap: React.FC<Props> = ({
         props so the zoom rescale rebuilds the right icon — including the anchor
         mode (otherwise the car would "walk" on zoom). */
     const overlayMarkers: { marker: L.Marker; iconProps: Parameters<typeof createMarkerDivIcon>[0]; lastScale: number }[] = [];
-    const addOverlayMarker = (lat: number, lng: number, iconProps: Parameters<typeof createMarkerDivIcon>[0], zIndexOffset: number) => {
+    const addOverlayMarker = (lat: number, lng: number, iconProps: Parameters<typeof createMarkerDivIcon>[0], zIndexOffset: number): L.Marker => {
       const creationScale = scaleForZoom(safeZoom());
       const marker = L.marker([lat, lng], {
         icon: createMarkerDivIcon({ ...iconProps, scale: creationScale }),
@@ -492,11 +498,18 @@ export const RouteMap: React.FC<Props> = ({
       });
       marker.addTo(overlayLayer);
       overlayMarkers.push({ marker, iconProps, lastScale: creationScale });
+      return marker;
     };
     // The start is the route's one fixed landmark: it rises above stops and
     // addresses and loses ONLY to the selected marker (Z_START — feedback 10/07).
     // The anchor keeps parking below (it belongs to its stop's addresses).
-    if (startLat !== undefined && startLng !== undefined) addOverlayMarker(startLat, startLng, START_ICON_PROPS, Z_START);
+    if (startLat !== undefined && startLng !== undefined) {
+      const startMarker = addOverlayMarker(startLat, startLng, START_ICON_PROPS, Z_START);
+      // Selectable start (RF-006.11): the tap shows "parada 0" + redefine in the
+      // panel. Through the latest-callback ref — this effect must not re-run
+      // (and redraw the overlay) whenever the handler identity changes.
+      startMarker.on("click", () => onStartTapRef.current?.());
+    }
     if (anchorLat !== undefined && anchorLng !== undefined) addOverlayMarker(anchorLat, anchorLng, VEHICLE_ICON_PROPS, Z_VEHICLE);
 
     // Dashed radius circle (tela 9, spec §3): real meters, centered on the SEED.

@@ -1,6 +1,8 @@
 import { Card, CardContent } from "../../ui/card";
 import { Progress } from "../../ui/progress";
 import type { RouteProgress } from "../../../utils/routing/overview";
+import type { PlannedRouteTotals } from "../../../utils/routing/estimates";
+import { formatDurationMin, formatMeters } from "../../../utils/formatters";
 import { UI_LABELS } from "../../../constants/uiLabels";
 
 const OVERVIEW = UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW;
@@ -12,9 +14,12 @@ const OVERVIEW = UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW;
  * address-based progress bar (the bar's base is a decision, 09/07; the tiles
  * show both units). Structure + tokens only; Neon Flux dressing is REF-014's.
  *
- * Route distance/time totals are DELIBERATELY absent: they depend on the
- * traced path (RF-006.7) and the configurable estimates (RF-007) — showing
- * them now would be invented numbers.
+ * Since TASK-RF-006.11 the "Detalhes" subsection shows the CURRENT total sums
+ * (decision 12/07, superseding .8's deferral): estimated route duration
+ * (vehicle + walking + per-delivery handover), total distance and walking
+ * distance — `plannedRouteTotals`, the same function the Sumário uses, so the
+ * two screens can never disagree. Honest numbers: vehicle legs are straight
+ * lines until RF-006.7 traces streets; RF-007 makes the speeds configurable.
  */
 const StatTile = ({ label, done, total }: { label: string; done: number; total: number }) => (
   <div className="rounded-lg border border-input p-2 text-center">
@@ -23,7 +28,20 @@ const StatTile = ({ label, done, total }: { label: string; done: number; total: 
   </div>
 );
 
-export const RouteProgressCard = ({ progress }: { progress: RouteProgress }) => (
+const DetailTile = ({ label, value }: { label: string; value: string }) => (
+  <div className="rounded-lg border border-input p-2 text-center">
+    <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+    <p className="text-sm font-semibold tabular-nums">{value}</p>
+  </div>
+);
+
+interface Props {
+  progress: RouteProgress;
+  /** Current sums (RF-006.11); null (no stops yet) hides the subsection. */
+  totals?: PlannedRouteTotals | null;
+}
+
+export const RouteProgressCard = ({ progress, totals = null }: Props) => (
   <div className="px-4 pb-2">
     <Card className="shadow-none">
       <CardContent className="p-3">
@@ -35,6 +53,17 @@ export const RouteProgressCard = ({ progress }: { progress: RouteProgress }) => 
           <Progress value={progress.ratio} label={OVERVIEW.PROGRESS_ARIA} className="flex-1" />
           <span className="text-xs font-semibold tabular-nums">{OVERVIEW.PERCENT(progress.ratio)}</span>
         </div>
+        {totals && (
+          <div className="mt-3">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{OVERVIEW.SECTION_DETAILS}</p>
+            <div className="mt-1 grid grid-cols-3 gap-2">
+              <DetailTile label={OVERVIEW.TOTAL_TIME} value={formatDurationMin(totals.timeTotalMin)} />
+              <DetailTile label={OVERVIEW.TOTAL_DISTANCE} value={formatMeters(totals.distanceTotalKm * 1000)} />
+              <DetailTile label={OVERVIEW.WALK_DISTANCE} value={formatMeters(totals.distanceWalkKm * 1000)} />
+            </div>
+            <p className="mt-1 text-[10px] text-muted-foreground">{OVERVIEW.TOTALS_NOTE}</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   </div>

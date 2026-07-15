@@ -15,7 +15,8 @@ import { RoteiroStartSection, type StartPhase } from "../components/map/panel/Ro
 import { RoteiroPointSection, type StopOption } from "../components/map/panel/RoteiroPointSection";
 import { RoteiroDraftHeader, RoteiroDraftBody, RoteiroDraftPick } from "../components/map/panel/RoteiroDraftSection";
 import { RoteiroStopSection } from "../components/map/panel/RoteiroStopSection";
-import { RoteiroOverviewSection, type OverviewStopView, type OverviewSuggestionView } from "../components/map/panel/RoteiroOverviewSection";
+import { RoteiroOverviewSection, StartRow, type OverviewStopView, type OverviewStartView } from "../components/map/panel/RoteiroOverviewSection";
+import { SuggestedStopSection, type SuggestedStopView } from "../components/map/panel/SuggestedStopCard";
 import type { PanelMetric } from "../components/map/panel/PanelTitle";
 import { StopItemList } from "../components/map/panel/StopItemList";
 import { StopItemRow, StopItemDetail } from "../components/map/panel/StopItem";
@@ -40,7 +41,7 @@ import { buildDeliveryPoints } from "../utils/routing/points";
 import { suggestedNextPointId, suggestionOrigin, draftCandidateIds, farChosenPointIds, isComplete, toPlannedRoute, FAR_POINT_RADIUS_FACTOR, FAR_POINT_MIN_METERS } from "../utils/routing/builder";
 import { getRoteiro, saveRoteiro, deleteRoteiro } from "../services/routeStorage";
 import { routeProgress, nextStopSuggestion } from "../utils/routing/overview";
-import { stopWalkEstimate } from "../utils/routing/estimates";
+import { stopWalkEstimate, plannedRouteTotals } from "../utils/routing/estimates";
 import { assignedPointIds, pointsWithinRadius } from "../utils/routing/selectors";
 import { indexPointsById, nearestStopTo } from "../utils/routing/selectors";
 import { suggestVehicleStop } from "../utils/routing/vehicleStop";
@@ -226,6 +227,9 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   /** The selected member of the expanded stop (RF-006.4.16) — tapping a member
       picks it; null = the anchor (1st). Cleared with the expansion. */
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  /** The START selected by tapping its map marker (RF-006.11): the panel shows
+      "parada 0" + the redefine action. Cleared by any other selection. */
+  const [startSelected, setStartSelected] = useState(false);
   /** The grouping radius of the "Parada sugerida" preview — adjustable BEFORE
       creating (RF-006.4.6). Ephemeral; resets to the default per selected orphan. */
   const [previewRadiusMeters, setPreviewRadiusMeters] = useState(builderState.config.autoRadiusMeters);
@@ -348,23 +352,42 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   };
 
   /** Armed map tap → the tapped coordinate becomes the start (decision 08/07);
-      otherwise an empty-map tap just clears the orphan selection (tela 8). */
+      otherwise an empty-map tap deselects EVERYTHING: the whole route frames
+      and the panel shows the idle state (header + suggested-stop card).
+      ⚠️ Supersedes the .4.10/.4.16 "regroup keeping the focus" (decision 12/07,
+      RF-006.11: "mapa vazio → cabeçalho + card da sugestão"). */
   const handleMapTap = (latlng: LatLng) => {
     if (armedMapTap) {
       defineStart(latlng);
       return;
     }
-    // Tapping the empty map REGROUPS an ungrouped stop, keeping it focused
-    // (RF-006.4.11); only when nothing is ungrouped does it deselect.
-    if (expandedRoteiroStopId !== null) {
-      setExpandedRoteiroStopId(null);
-      setSelectedMemberId(null); // regroup returns to the anchor as the selected address (RF-006.4.16)
-      return;
-    }
+    setExpandedRoteiroStopId(null);
+    setSelectedMemberId(null);
     setSelectedPointId(null);
     setSelectedStopId(null);
-    setSelectedMemberId(null);
+    setStartSelected(false);
     setPanelView("selected");
+  };
+
+  /** Tap on the START marker (RF-006.11): selects it — the panel shows "parada
+      0" with the redefine action; the focus closes on the start point. */
+  const handleStartTap = () => {
+    setStartSelected(true);
+    setSelectedPointId(null);
+    setSelectedStopId(null);
+    setExpandedRoteiroStopId(null);
+    setSelectedMemberId(null);
+    setCardExpanded(false);
+    setPanelView("selected");
+  };
+
+  /** "Redefinir início" (parada 0 / start selection / endereço-início): reuses
+      the redefine flow — the start-definition section takes the idle header. */
+  const handleRedefineStart = () => {
+    setStartSelected(false);
+    setRedefining(true);
+    setPanelView("selected");
+    setPanelSnap("collapsed");
   };
 
   /** Double-tap a firmed stop → ungroup it on the MAP ONLY, focused (RF-006.4.11):
@@ -375,6 +398,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
     setSelectedPointId(null);
     setExpandedRoteiroStopId(stopId);
     setSelectedMemberId(null); // a fresh expand starts on the anchor (RF-006.4.16)
+    setStartSelected(false);
   };
   const handleModelExpand = (model: MarkerModel) => {
     if (model.kind !== "stop" || draft) return; // only firmed squares expand
@@ -417,6 +441,22 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
     setSelectedPointId(null);
     setExpandedRoteiroStopId(null);
     setSelectedMemberId(null);
+    setStartSelected(false);
+    setCardExpanded(false);
+    setPanelView("selected");
+    setPanelSnap("collapsed");
+  };
+
+  /** Suggestion card's map icon (RF-006.11): selects the SEED on the map — the
+      tela 8 preview (radius, incorporation) opens exactly as a manual tap would. */
+  const handleShowSuggestedOnMap = () => {
+    if (!overviewSuggestion) return;
+    setSelectedPointId(overviewSuggestion.seed.id);
+    setSelectedStopId(null);
+    setExpandedRoteiroStopId(null);
+    setSelectedMemberId(null);
+    setStartSelected(false);
+    setPreviewRadiusMeters(builderState.config.autoRadiusMeters);
     setCardExpanded(false);
     setPanelView("selected");
     setPanelSnap("collapsed");
@@ -438,6 +478,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       setSelectedPointId(null);
       setExpandedRoteiroStopId(null);
       setSelectedMemberId(null); // a focused (grouped) stop shows the anchor (RF-006.4.16)
+      setStartSelected(false);
       setCardExpanded(false);
       setPanelView("selected"); // a fresh stop opens on its summary, not the list
       // No auto-raise: the collapsed snap now FITS the summary (RF-006.4.12).
@@ -448,6 +489,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
     const expandedStop = expandedRoteiroStopId !== null ? builderState.stops.find((s) => s.id === expandedRoteiroStopId) : null;
     if (expandedStop && expandedStop.pointIds.includes(model.key)) {
       setSelectedMemberId(model.key);
+      setStartSelected(false);
       setCardExpanded(false);
       return;
     }
@@ -470,6 +512,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
     setSelectedPointId(model.key);
     setSelectedStopId(null);
     setExpandedRoteiroStopId(null);
+    setStartSelected(false);
     setPreviewRadiusMeters(builderState.config.autoRadiusMeters); // each orphan starts at the default radius
     setCardExpanded(false);
     setPanelView("selected"); // a map tap means "looking at the map" — leave the overview (RF-006.8)
@@ -494,6 +537,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
     setSelectedPointId(null);
     setSelectedStopId(stopId); // focus the freshly firmed, grouped stop
     setExpandedRoteiroStopId(null);
+    setStartSelected(false);
     setCardExpanded(false);
     setPanelView("selected");
     // No auto-raise: the collapsed snap now FITS the summary (RF-006.4.12).
@@ -684,8 +728,9 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   );
 
   // The draft-time pick joins the chain (RF-006.4.23): kept after "Adicionar",
-  // so the focus never drops to null (→ whole-route refit) mid-draft.
-  const focusAddress = pendingPoint ?? selectedPoint ?? selectedMemberPoint ?? draftSelectedPoint;
+  // so the focus never drops to null (→ whole-route refit) mid-draft. The
+  // selected START (RF-006.11) is one more single-point selection up front.
+  const focusAddress = (startSelected ? builderState.startPoint : null) ?? pendingPoint ?? selectedPoint ?? selectedMemberPoint ?? draftSelectedPoint;
   const roteiroFocus: { bounds: LatLng[]; maxZoom: number } | null = focusAddress
     ? { bounds: [{ lat: focusAddress.lat, lng: focusAddress.lng }], maxZoom: ADDRESS_MAX_ZOOM }
     : draft && draftFrame && draftFrame.length > 0
@@ -780,12 +825,11 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       shape tela 8 shows for a tapped orphan. Null before a start / when done. */
   const overviewSuggestion = useMemo(() => (mode === "roteiro" ? nextStopSuggestion(builderState, graph) : null), [mode, builderState, graph]);
   const overviewVehicleLeg = useMemo(() => (vehicleOrigin && overviewSuggestion ? suggestionPath(graph, vehicleOrigin, overviewSuggestion.anchor) : null), [graph, vehicleOrigin, overviewSuggestion]);
-  const overviewSuggestionPlace = overviewSuggestion ? stopPlaceSummaryFromPoints(overviewSuggestion.points) : null;
-  const overviewSuggestionView: OverviewSuggestionView | null = overviewSuggestion
+  /** The suggestion as its CARD view (RF-006.11): the SEED's street + number
+      (no complement — decision 12/07), the summary chips and the vehicle leg. */
+  const overviewSuggestionView: SuggestedStopView | null = overviewSuggestion
     ? {
-        order: overviewSuggestion.order,
-        neighborhoods: overviewSuggestionPlace?.neighborhoods ?? [],
-        zipcodes: overviewSuggestionPlace?.zipcodes ?? [],
+        addressLine: addressLineOf(overviewSuggestion.seed.address),
         metrics: [
           { label: UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(overviewSuggestion.points.length) },
           ...typedPackageChips(packagesByTypeFromPoints(overviewSuggestion.points)),
@@ -795,6 +839,23 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
           ? `${UI_LABELS.MAP_PANEL.ROTEIRO_POINT.DISTANCE_TO_HERE(formatMeters(overviewVehicleLeg.distanceMeters))}${overviewVehicleLeg.viaStreets ? "" : ` ${UI_LABELS.MAP_PANEL.ROTEIRO_START.SUGGESTION_STRAIGHT}`}`
           : null,
       }
+    : null;
+
+  /** Current sums for the "Detalhes" subsection (RF-006.11) — the SAME function
+      the Sumário uses (RF-008), so the two screens can never disagree. Null
+      before the first stop: there is nothing to sum yet. */
+  const overviewTotals = useMemo(() => (mode === "roteiro" && builderState.stops.length > 0 ? plannedRouteTotals(toPlannedRoute(builderState), points) : null), [mode, builderState, points]);
+
+  /** The start as an ADDRESS, when it is one ("Partir deste endereço" copies
+      the point's coords verbatim — exact match is the honest detection). */
+  const startAddressPoint = useMemo(() => {
+    const start = builderState.startPoint;
+    if (!start) return null;
+    return points.find((p) => p.lat === start.lat && p.lng === start.lng) ?? null;
+  }, [points, builderState.startPoint]);
+  /** "Parada 0" (RF-006.11): the start row of the overview / start selection. */
+  const overviewStart: OverviewStartView | null = builderState.startPoint
+    ? { addressLine: startAddressPoint ? addressLineOf(startAddressPoint.address) : UI_LABELS.MAP_PANEL.ROTEIRO_START.DEFINED }
     : null;
 
   /** Overview CTA (RF-006.8): commits the SUGGESTED stop — the exact commit
@@ -814,6 +875,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
     setSelectedPointId(null);
     setSelectedStopId(stopId); // focus the freshly firmed stop (same as handleCreateStop)
     setExpandedRoteiroStopId(null);
+    setStartSelected(false);
     setCardExpanded(false);
     setPanelView("selected");
   };
@@ -1036,6 +1098,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
         onMapTap={mode === "roteiro" ? handleMapTap : undefined}
         onModelTap={mode === "roteiro" ? handleModelTap : undefined}
         onModelExpand={mode === "roteiro" ? handleModelExpand : undefined}
+        onStartTap={mode === "roteiro" ? handleStartTap : undefined}
         roteiroOverlay={mode === "roteiro" ? roteiroOverlay : undefined}
       />
 
@@ -1076,15 +1139,26 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
                     in the body it sat below the fold, invisible. */}
                 {draftSelectedPoint && !draftSelectedIsMember && <RoteiroDraftPick item={pointToStopItemData(draftSelectedPoint)} onAdd={handleAddSelectedToDraft} />}
               </div>
+            ) : panelView === "overview" ? (
+              // "Ver detalhes" = a DEDICATED clean state (RF-006.11): only the
+              // concise header, whatever was selected — the body carries the
+              // whole study panel. Hiding it returns to the untouched context.
+              <div>
+                <RoteiroPanelHeader progress={progress.ratio} modeLabel={roteiroModeLabel} graphStatus={graphStatus} detailsOpen onToggleDetails={handleHideOverview} />
+              </div>
+            ) : startSelected && overviewStart ? (
+              // The START selected on the map (RF-006.11): "parada 0" + redefine.
+              <div>
+                <RoteiroPanelHeader progress={progress.ratio} modeLabel={roteiroModeLabel} graphStatus={graphStatus} detailsOpen={false} onToggleDetails={handleShowOverview} />
+                <PanelSection label={UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.SECTION_START}>
+                  <StartRow start={overviewStart} onRedefine={handleRedefineStart} />
+                </PanelSection>
+              </div>
             ) : roteiroContext === "stop-selected" && selectedStop ? (
               <div>
-                <RoteiroPanelHeader
-                  progress={progress.ratio}
-                  modeLabel={roteiroModeLabel}
-                  graphStatus={graphStatus}
-                  detailsOpen={panelView === "overview"}
-                  onToggleDetails={panelView === "overview" ? handleHideOverview : handleShowOverview}
-                />
+                {/* detailsOpen is impossible here: the overview branch above
+                    owns panelView === "overview" (RF-006.11). */}
+                <RoteiroPanelHeader progress={progress.ratio} modeLabel={roteiroModeLabel} graphStatus={graphStatus} detailsOpen={false} onToggleDetails={handleShowOverview} />
                 <RoteiroStopSection
                   stopOrder={selectedStop.order}
                   neighborhoods={stopPlace.neighborhoods}
@@ -1102,13 +1176,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
               </div>
             ) : roteiroContext === "point-selected" && selectedPointItem ? (
               <div>
-                <RoteiroPanelHeader
-                  progress={progress.ratio}
-                  modeLabel={roteiroModeLabel}
-                  graphStatus={graphStatus}
-                  detailsOpen={panelView === "overview"}
-                  onToggleDetails={panelView === "overview" ? handleHideOverview : handleShowOverview}
-                />
+                <RoteiroPanelHeader progress={progress.ratio} modeLabel={roteiroModeLabel} graphStatus={graphStatus} detailsOpen={false} onToggleDetails={handleShowOverview} />
                 <RoteiroPointSection
                   key={selectedPointItem.addressKey} // key-reset: the select re-anchors per point
                   item={selectedPointItem}
@@ -1124,6 +1192,8 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
                   defaultStopId={defaultStopId}
                   onCreateStop={handleCreateStop}
                   onIncorporate={handleIncorporate}
+                  isStart={startAddressPoint !== null && selectedPoint?.id === startAddressPoint.id}
+                  onRedefineStart={handleRedefineStart}
                 />
               </div>
             ) : (
@@ -1133,24 +1203,29 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
                   modeLabel={roteiroModeLabel}
                   statusHint={roteiroStatusHint}
                   graphStatus={graphStatus}
-                  detailsOpen={panelView === "overview"}
-                  onToggleDetails={panelView === "overview" ? handleHideOverview : handleShowOverview}
+                  detailsOpen={false}
+                  onToggleDetails={handleShowOverview}
                 />
-                <RoteiroStartSection
-                  phase={startPhase}
-                  notice={startNotice}
-                  pendingAddress={pendingPoint?.address}
-                  suggestionLabel={suggestionLabel}
-                  onUseGps={handleUseGps}
-                  onArmMapTap={() => {
-                    setArmedMapTap(true);
-                    setPendingPointId(null);
-                    setStartNotice(null);
-                  }}
-                  onConfirmPoint={handleConfirmPoint}
-                  onCancel={handleCancelStartAction}
-                  onRedefine={() => setRedefining(true)}
-                />
+                {/* The definition FLOW only (RF-006.11): the settled "Início
+                    definido | Redefinir" row left the idle header — the start
+                    now lives as "parada 0" (details) and on its map marker. */}
+                {startPhase !== "has-start" && (
+                  <RoteiroStartSection
+                    phase={startPhase}
+                    notice={startNotice}
+                    pendingAddress={pendingPoint?.address}
+                    suggestionLabel={suggestionLabel}
+                    onUseGps={handleUseGps}
+                    onArmMapTap={() => {
+                      setArmedMapTap(true);
+                      setPendingPointId(null);
+                      setStartNotice(null);
+                    }}
+                    onConfirmPoint={handleConfirmPoint}
+                    onCancel={handleCancelStartAction}
+                    onRedefine={handleRedefineStart}
+                  />
+                )}
               </div>
             )
           ) : (
@@ -1161,22 +1236,32 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
         {mode === "roteiro" ? (
           roteiroContext === "drafting" && draft ? (
             <RoteiroDraftBody chosen={chosenItems} candidates={candidateItems} onTogglePoint={(pointId) => dispatch({ type: "TOGGLE_DRAFT_POINT", pointId })} />
-          ) : panelView === "overview" || roteiroContext === "start-flow" ? (
-            // The roteiro's STUDY PANEL (RF-006.8): the idle context's default
-            // body (it used to be null — the "dead panel") and any context's
-            // "Ver detalhes". Progress + confirmed stops + the next suggestion.
+          ) : panelView === "overview" ? (
+            // "Ver detalhes" — the DEDICATED study panel (RF-006.8/.11): the
+            // same three sections from any context, nothing else.
             <RoteiroOverviewSection
               progress={progress}
+              totals={overviewTotals}
+              start={overviewStart}
+              onRedefineStart={handleRedefineStart}
               stops={overviewStops}
+              startKey={startAddressPoint?.id ?? null}
               suggestion={overviewSuggestionView}
               onShowStopOnMap={handleShowRoteiroStopOnMap}
+              onShowSuggestedOnMap={handleShowSuggestedOnMap}
               onCreateSuggested={handleCreateSuggested}
             />
+          ) : roteiroContext === "start-flow" && !startSelected ? (
+            // Idle (RF-006.11): ONLY the suggested-next-stop card — the lean
+            // panel the empty-map tap lands on. Null before a start exists.
+            overviewSuggestionView ? (
+              <SuggestedStopSection suggestion={overviewSuggestionView} onShowOnMap={handleShowSuggestedOnMap} onCreate={handleCreateSuggested} />
+            ) : null
           ) : roteiroContext === "stop-selected" && panelView === "list" ? (
             // "Ver lista completa" (RF-006.4.7): the stop's addresses by visit
             // order, neon palette, expandable — panel-side only for now (the map
             // ungroup arrives with the interaction fatia .4.8).
-            <StopItemList items={stopListItems} selectedKey={null} scrollSignal={scrollSignal} neon />
+            <StopItemList items={stopListItems} selectedKey={null} scrollSignal={scrollSignal} neon startKey={startAddressPoint?.id ?? null} />
           ) : roteiroContext === "stop-selected" && cardExpanded && stopSelectedItem ? (
             <StopItemDetail item={stopSelectedItem} />
           ) : roteiroContext === "point-selected" && cardExpanded && selectedPointItem ? (

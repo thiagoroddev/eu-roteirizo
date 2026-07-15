@@ -56,7 +56,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 ## TASK-RF-006 - UI de construção da rota (Meu roteiro) [XG, dividir]
 
-- **Status:** Pendente (**.1 → .4.27 e .8 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.5 · .6 · .7 · .9 · .10**)
+- **Status:** Pendente (**.1 → .4.27, .8 e .11 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.5 · .6 · .7 · .9 · .10 · .12**)
 - **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
@@ -101,6 +101,14 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 - **Riscos p/ o plano fino:** gutter tem ~28px e texto vertical é difícil no mobile — a execução pode refinar a forma (ex.: linha vertical + rótulo horizontal pequeno ao lado) **mantendo o conceito de conector entre linhas**; a **RF-006.6** usará o leading das linhas p/ drag na edição (no modo edição o conector pode se esconder); a11y: a informação não pode depender só do desenho (texto acessível na linha).
 - **Encaixe sugerido:** junto ou logo após a **RF-006.6** (mexe na mesma lista — antes disso o conector seria retrabalhado).
 - **Aceite:** cada endereço da lista mostra a perna desde o anterior; o 1º desde o veículo (caso âncora = 1º → "Parada do veículo"); pelas ruas quando há grafo, reta rotulada sem grafo; sem custo perceptível de render (memo por parada); smoke no aparelho valida a legibilidade do conector.
+
+<!-- TASK-RF-006.11 movida para em-andamento.md em 15/07/26 (plano aprovado — "sim", após 3 rodadas de espec). -->
+
+### TASK-RF-006.12 - Sugestão de próxima parada: algoritmo configurável respeitando o sentido das vias (pedido 12/07)
+- **Esforço-H/IA:** M/G · **Dep:** 006.3 ✅ (grafo dirigido), RF-007 (config) · **Status:** backlog (registrada a pedido, sem urgência)
+- **Problema (nas palavras do humano):** "a sugestão não é a que o usuário selecionou, é o algoritmo que define de acordo com as configurações — que se for 'a mais próxima', é a mais próxima **respeitando o sentido das vias**". Hoje o rank de `suggestedNextPointId` é **linha reta** a partir da origem — ignora mão única.
+- **Escopo a planejar:** critério de sugestão configurável (RF-007) com "mais próxima" medida pelo **grafo dirigido** (A* de veículo por candidato — atenção a custo: rank por reta + refino top-N, como a §6 do fluxo já faz p/ pernas a pé); UI de config junto da RF-007.
+- **Aceite:** com o grafo carregado, a sugestão nunca aponta um destino "perto em linha reta, longe pela mão única"; fallback reta sem grafo; critério persiste na config.
 
 **Critérios de aceite (RF-006):** fluxo da spec §4 ponta a ponta; painéis por contexto do §10.10; slots preenchidos sem reestruturar o MapPanel; Original sem regressão. ~~Validação de completude p/ salvar~~ **não existe** (RF-33: salvar é livre; completude = `isComplete`, gate só do "Iniciar rota"/RF-009).
 **Dependências novas:** nenhuma (~~`@turf/turf`~~ descartada 07/07 — haversine cobre ponto-em-raio).

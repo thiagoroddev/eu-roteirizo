@@ -140,6 +140,7 @@ vi.mock("../../components/RouteMap", () => ({
     onMapTap,
     onModelTap,
     onModelExpand,
+    onStartTap,
     roteiroOverlay,
   }: {
     interaction?: InteractionState;
@@ -151,6 +152,7 @@ vi.mock("../../components/RouteMap", () => ({
     onMapTap?: (latlng: LatLng) => void;
     onModelTap?: (model: MarkerModel) => void;
     onModelExpand?: (model: MarkerModel) => void;
+    onStartTap?: () => void;
     roteiroOverlay?: { start: LatLng | null; suggestionPath: LatLng[] | null; radiusCircle?: { center: LatLng; meters: number } | null; anchor?: LatLng | null };
   }) => (
     <div
@@ -176,6 +178,9 @@ vi.mock("../../components/RouteMap", () => ({
     >
       <button type="button" onClick={() => onMapTap?.({ lat: -22.95, lng: -43.19 })}>
         stub-map-tap
+      </button>
+      <button type="button" onClick={() => onStartTap?.()}>
+        stub-start-tap
       </button>
       <button type="button" onClick={() => models?.[0] && onModelTap?.(models[0])}>
         stub-first-point-tap
@@ -521,12 +526,12 @@ describe("MapPage (focus screen)", () => {
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.MY_ROTEIRO }));
 
     // Concise header (RF-006.8): percent + bar — the old two-line "Faltando"
-    // HUD is gone; the counts live in the overview's stat cards (0/1 twice:
-    // addresses and packages), visible because the idle body IS the overview.
+    // HUD is gone; since RF-006.11 the stat cards live ONLY in "Ver detalhes"
+    // (the idle body is just the suggested-next-stop card).
     expect(screen.queryByText(/^Faltando:/)).not.toBeInTheDocument();
-    expect(screen.getAllByText(OVERVIEW_LABELS.PERCENT(0)).length).toBeGreaterThan(0);
+    expect(screen.getByText(OVERVIEW_LABELS.PERCENT(0))).toBeInTheDocument();
     expect(screen.getAllByRole("progressbar").length).toBeGreaterThan(0);
-    expect(screen.getAllByText(OVERVIEW_LABELS.STAT_COUNT(0, 1))).toHaveLength(2);
+    expect(screen.queryByText(OVERVIEW_LABELS.STAT_COUNT(0, 1))).not.toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_HINT_START)).toBeInTheDocument();
     // No Original sections, no stop steppers (there are no stops to step).
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).not.toBeInTheDocument();
@@ -643,12 +648,16 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByText(START_LABELS.ARMED_HINT)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
-    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+    // Settled: the definition section leaves; the idle body is the suggested-
+    // next-stop CARD (RF-006.11) with the seed address + the qualified leg.
+    expect(screen.queryByText(START_LABELS.SECTION)).not.toBeInTheDocument();
     const stub = screen.getByTestId("route-map-stub");
     expect(stub).toHaveAttribute("data-overlay-start", "-22.95,-43.19");
     // Straight-line fallback (graph null): 2-point dashed path + "(linha reta)".
     expect(stub).toHaveAttribute("data-suggestion-points", "2");
-    expect(screen.getByText(new RegExp(`Sugestão: Rua Mapa, 10 — .+ ${START_LABELS.SUGGESTION_STRAIGHT.replace("(", "\\(").replace(")", "\\)")}`))).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.SECTION_NEXT)).toBeInTheDocument();
+    expect(screen.getByText("Rua Mapa, 10")).toBeInTheDocument();
+    expect(screen.getByText(/Distância até aqui: .+ \(linha reta\)/)).toBeInTheDocument();
   });
 
   it("tapping a faded point without a start asks for confirmation (partir deste endereço)", () => {
@@ -667,7 +676,7 @@ describe("MapPage (focus screen)", () => {
     expect(stub.getAttribute("data-models-summary")).toContain("address*");
 
     fireEvent.click(screen.getByRole("button", { name: START_LABELS.CONFIRM }));
-    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+    expect(screen.queryByText(START_LABELS.SECTION)).not.toBeInTheDocument();
     expect(stub).toHaveAttribute("data-overlay-start", "-22.9,-43.2");
   });
 
@@ -677,15 +686,17 @@ describe("MapPage (focus screen)", () => {
     fireEvent.click(screen.getByRole("button", { name: START_LABELS.ARM_MAP_TAP }));
     fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
 
-    // Automatic target = nearest to the start (-22.95,-43.19) → "Rua Beta, 20".
-    expect(screen.getByText(/Sugestão: Rua Beta, 20 —/)).toBeInTheDocument();
+    // Automatic target = nearest to the start (-22.95,-43.19) → "Rua Beta, 20",
+    // shown as the idle suggested-next-stop CARD (RF-006.11).
+    expect(screen.getByText(OVERVIEW_LABELS.SECTION_NEXT)).toBeInTheDocument();
+    expect(screen.getByText("Rua Beta, 20")).toBeInTheDocument();
 
-    // Tapping p1 re-points the dashed line to it (§6); the "Sugestão:" TEXT
-    // line no longer renders in the point-selected context (rev. 08/07 .4.4 —
-    // the "Parada sugerida" section carries the information now).
+    // Tapping p1 re-points the dashed line to it (§6); the card leaves with the
+    // selection (suggestion never renders alongside a selected address) and the
+    // "Prévia de parada" section carries the information now.
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
     expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-suggestion-target", "-22.9,-43.2");
-    expect(screen.queryByText(/^Sugestão:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(OVERVIEW_LABELS.SECTION_NEXT)).not.toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SUGGESTED)).toBeInTheDocument();
   });
 
@@ -695,7 +706,7 @@ describe("MapPage (focus screen)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: START_LABELS.USE_GPS }));
 
-    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+    expect(screen.queryByText(START_LABELS.SECTION)).not.toBeInTheDocument();
     expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "-22.93,-43.2");
   });
 
@@ -724,8 +735,13 @@ describe("MapPage (focus screen)", () => {
     renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
     fireEvent.click(screen.getByRole("button", { name: START_LABELS.ARM_MAP_TAP }));
     fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
-    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+    expect(screen.queryByText(START_LABELS.SECTION)).not.toBeInTheDocument();
 
+    // "Redefinir início" left the idle header (RF-006.11): it now lives on the
+    // START selection — tapping the start marker shows "parada 0" + the action.
+    fireEvent.click(screen.getByRole("button", { name: "stub-start-tap" }));
+    expect(screen.getByText(OVERVIEW_LABELS.SECTION_START)).toBeInTheDocument();
+    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument(); // tap-defined start has no address
     fireEvent.click(screen.getByRole("button", { name: START_LABELS.REDEFINE }));
     expect(screen.getByText(START_LABELS.SECTION)).toBeInTheDocument();
     // The start (and its marker) survives until redefined.
@@ -740,8 +756,10 @@ describe("MapPage (focus screen)", () => {
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.ORIGINAL }));
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_MODE.MY_ROTEIRO }));
 
-    // Not armed, not confirming: straight to has-start (the reducer kept the start).
-    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+    // Not armed, not confirming: straight to has-start (the reducer kept the
+    // start — its marker stays; the definition section is gone).
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "-22.95,-43.19");
+    expect(screen.queryByText(START_LABELS.SECTION)).not.toBeInTheDocument();
     expect(screen.queryByText(START_LABELS.ARMED_HINT)).not.toBeInTheDocument();
   });
 
@@ -758,13 +776,16 @@ describe("MapPage (focus screen)", () => {
   const POINT_LABELS = UI_LABELS.MAP_PANEL.ROTEIRO_POINT;
   const DRAFT_LABELS = UI_LABELS.MAP_PANEL.ROTEIRO_DRAFT;
 
-  /** Enters the roteiro over the 3-point fixture and defines the start by tap. */
+  /** Enters the roteiro over the 3-point fixture and defines the start by tap.
+      "Início definido" left the idle header (RF-006.11) — the settled start is
+      observable by its map marker + the definition section being gone. */
   const startRoteiroFlow = () => {
     uploaderState.routes = { "A-1": rowsThreePoints };
     renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
     fireEvent.click(screen.getByRole("button", { name: START_LABELS.ARM_MAP_TAP }));
     fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
-    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "-22.95,-43.19");
+    expect(screen.queryByText(START_LABELS.SECTION)).not.toBeInTheDocument();
   };
 
   // ------- Persistência (TASK-RF-008) -------
@@ -780,9 +801,10 @@ describe("MapPage (focus screen)", () => {
     };
     renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
 
-    // A parada volta como quadrado no mapa e o início como definido.
+    // A parada volta como quadrado no mapa e o início como marcador definido.
     await waitFor(() => expect(screen.getByTestId("route-map-stub").getAttribute("data-models-summary")).toContain("stop"));
-    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "-22.9,-43.2");
+    expect(screen.queryByText(START_LABELS.SECTION)).not.toBeInTheDocument();
   });
 
   it("auto-save: firma da parada persiste (debounce); a EDIÇÃO aberta pausa o save (o snapshot pré-edição fica)", async () => {
@@ -963,9 +985,10 @@ describe("MapPage (focus screen)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CONFIRM }));
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.ROTEIRO_NO_STOP_YET)).not.toBeInTheDocument();
-    // p3 entrou na parada → nada livre (100% no header E no card da visão geral,
-    // que é o corpo do contexto ocioso — RF-006.8).
-    expect(screen.getAllByText(OVERVIEW_LABELS.PERCENT(1)).length).toBeGreaterThan(0);
+    // p3 entrou na parada → nada livre: 100% no header e, COMPLETO, o card da
+    // sugestão não existe (RF-006.11 — o estado "Iniciar execução" é RF-009).
+    expect(screen.getByText(OVERVIEW_LABELS.PERCENT(1))).toBeInTheDocument();
+    expect(screen.queryByText(OVERVIEW_LABELS.SECTION_NEXT)).not.toBeInTheDocument();
   });
 
   it("tapping a committed stop opens its Original-style panel; Editar reopens the draft; Desfazer frees (RF-006.4.2)", () => {
@@ -996,51 +1019,66 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByRole("button", { name: DRAFT_LABELS.REMOVE_POINT("Rua Mapa, 10") })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.SAVE }));
 
-    // Desfazer → the addresses go back to free and the progress drops to 0%
-    // (header + overview card — the idle body is the overview, RF-006.8).
+    // Desfazer → the addresses go back to free, the progress drops to 0% and
+    // the idle panel offers the next suggestion as a card (RF-006.11).
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.DISSOLVE }));
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).not.toBeInTheDocument();
-    expect(screen.getAllByText(OVERVIEW_LABELS.PERCENT(0)).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(OVERVIEW_LABELS.STAT_COUNT(0, 3))).toHaveLength(2);
+    expect(screen.getByText(OVERVIEW_LABELS.PERCENT(0))).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.SECTION_NEXT)).toBeInTheDocument();
   });
 
   // ==========================================================================
-  // Visão geral do roteiro (TASK-RF-006.8) — o painel de estudo
+  // Visão geral do roteiro (TASK-RF-006.8, v2 na RF-006.11) — painel de estudo
   // ==========================================================================
 
-  it("ocioso NUNCA é morto (RF-006.8): progresso + paradas + sugestão numerada 1; o CTA comita a sugerida", () => {
+  it("ocioso ENXUTO (RF-006.11): só o cabeçalho + o card 'Próxima parada sugerida'; o CTA comita a sugerida", () => {
     startRoteiroFlow(); // início definido, nada selecionado → contexto ocioso
 
-    // Corpo = visão geral: card de progresso (0/3 nos dois stats), estado vazio
-    // de paradas e a sugestão da PRIMEIRA parada (numerada 1).
-    expect(screen.getByText(OVERVIEW_LABELS.SECTION_PROGRESS)).toBeInTheDocument();
-    expect(screen.getAllByText(OVERVIEW_LABELS.STAT_COUNT(0, 3))).toHaveLength(2);
-    expect(screen.getByText(OVERVIEW_LABELS.NO_STOPS)).toBeInTheDocument();
+    // Corpo = SÓ o card da sugestão (endereço da semente, sem número de parada);
+    // a visão completa (progresso/paradas) vive no "Ver detalhes".
+    expect(screen.queryByText(OVERVIEW_LABELS.SECTION_PROGRESS)).not.toBeInTheDocument();
+    expect(screen.queryByText(OVERVIEW_LABELS.NO_STOPS)).not.toBeInTheDocument();
     expect(screen.getByText(OVERVIEW_LABELS.SECTION_NEXT)).toBeInTheDocument();
-    expect(screen.getByText(new RegExp(`^${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`))).toBeInTheDocument();
+    expect(screen.getByText("Rua Gama, 30")).toBeInTheDocument(); // seed p3, o mais próximo do início
     // Distância de VEÍCULO até a âncora sugerida, qualificada (reta sem grafo).
     expect(screen.getByText(/Distância até aqui: .+ \(linha reta\)/)).toBeInTheDocument();
+    // A linha "Início definido | Redefinir" saiu do ocioso (RF-006.11).
+    expect(screen.queryByText(START_LABELS.DEFINED)).not.toBeInTheDocument();
 
-    // O CTA comita a sugerida na hora — o mesmo commit da tela 8 (seed p3, o
-    // ponto livre mais próximo do início) — e foca a parada firmada.
+    // O CTA comita a sugerida na hora — o mesmo commit da tela 8 — e foca a
+    // parada firmada (o card some: há seleção agora).
     fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
     expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
     expect(screen.getByText(OVERVIEW_LABELS.PERCENT(1 / 3))).toBeInTheDocument();
+    expect(screen.queryByText(OVERVIEW_LABELS.SECTION_NEXT)).not.toBeInTheDocument();
     expect(screen.getByTestId("route-map-stub").getAttribute("data-models-summary")).toContain("stop*");
   });
 
-  it("'Ver detalhes' abre a visão geral de qualquer contexto; sugestão em SEQUÊNCIA; 'Ver no mapa' volta à parada (RF-006.8)", () => {
+  it("'Ver detalhes' = estado dedicado LIMPO (RF-006.11): 3 seções com parada 0 e totais; 'Ver no mapa' volta à parada", () => {
     startRoteiroFlow();
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
     fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP })); // P1 = p1+p2, selecionada
 
     fireEvent.click(screen.getByRole("button", { name: OVERVIEW_LABELS.VIEW_DETAILS }));
-    // Painel a full; a parada confirmada listada; a PRÓXIMA numerada 2 —
-    // continua a sequência (no print de referência reiniciava em 1: errado).
+    // Painel a full e SEM as seções do contexto (a parada estava selecionada):
+    // só progresso (com a subseção Detalhes/totais), confirmadas (com a parada
+    // 0 = o início) e o card da sugestão por último.
     expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "0.85");
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).not.toBeInTheDocument();
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).not.toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.SECTION_PROGRESS)).toBeInTheDocument();
+    expect(screen.getAllByText(OVERVIEW_LABELS.STAT_COUNT(2, 3))).toHaveLength(2);
+    expect(screen.getByText(OVERVIEW_LABELS.SECTION_DETAILS)).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.TOTAL_TIME)).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.WALK_DISTANCE)).toBeInTheDocument();
+    // Parada 0: o início por toque (sem endereço) + a ação de redefinir.
+    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: START_LABELS.REDEFINE })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: OVERVIEW_LABELS.STOP_ARIA(1) })).toBeInTheDocument();
-    expect(screen.getByText(new RegExp(`^${UI_LABELS.MAP_PANEL.STOP_PREFIX} 2`))).toBeInTheDocument();
+    // A sugestão é o CARD com o endereço da semente (p3) — sem "Parada N".
+    expect(screen.getByText(OVERVIEW_LABELS.SECTION_NEXT)).toBeInTheDocument();
+    expect(screen.getByText("Rua Gama, 30")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: OVERVIEW_LABELS.HIDE_DETAILS })).toBeInTheDocument();
 
     // Expandir a parada confirmada → os endereços por ordinal (o MESMO
@@ -1048,11 +1086,26 @@ describe("MapPage (focus screen)", () => {
     fireEvent.click(screen.getByRole("button", { name: OVERVIEW_LABELS.STOP_ARIA(1) }));
     expect(screen.getByText(UI_LABELS.MAP_PANEL.ORDINAL(1))).toBeInTheDocument();
 
-    // "Ver no mapa" seleciona a parada e devolve o painel ao resumo colapsado.
-    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_ON_MAP }));
+    // "Ver no mapa" (o da parada, 1º) seleciona-a e devolve o resumo colapsado.
+    fireEvent.click(screen.getAllByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_ON_MAP })[0]);
     expect(screen.queryByText(OVERVIEW_LABELS.SECTION_PROGRESS)).not.toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
     expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "224px");
+  });
+
+  it("endereço que É o início ganha a flag e o redefinir na própria UI (RF-006.11)", () => {
+    uploaderState.routes = { "A-1": rowsThreePoints };
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+    // "Partir deste endereço": p1 vira o início (coordenada copiada verbatim).
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.CONFIRM }));
+
+    // Selecionar p1 (tela 8): a row do endereço carrega a flag de início e o
+    // botão de redefinir ao lado.
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    expect(screen.getByLabelText(OVERVIEW_LABELS.START_BADGE_ARIA)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.REDEFINE }));
+    expect(screen.getByText(START_LABELS.SECTION)).toBeInTheDocument();
   });
 
   it("'Ver lista completa' na parada firmada mostra os endereços por ordinal; 'Esconder lista' volta ao resumo (RF-006.4.7)", () => {
@@ -1079,7 +1132,10 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument();
   });
 
-  it("2 cliques no quadrado → desagrupa SÓ o mapa (painel fica no resumo); clicar fora regrupa mantendo foco (RF-006.4.11)", () => {
+  // Rev. 15/07 (RF-006.11): o toque no mapa vazio DESELECIONA (antes reagrupava
+  // mantendo o foco — .4.11/.4.16): "mapa vazio = quero ver o todo" — a rota
+  // inteira enquadra e o painel volta ao ocioso (cabeçalho + card da sugestão).
+  it("2 cliques no quadrado → desagrupa SÓ o mapa (painel fica no resumo); clicar fora DESELECIONA e volta ao ocioso (RF-006.11)", () => {
     startRoteiroFlow();
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
     fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
@@ -1096,10 +1152,13 @@ describe("MapPage (focus screen)", () => {
     expect(stub.getAttribute("data-models-summary")).toBe("address*,address*,address");
     expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument(); // resumo, não lista
 
-    // Clicar fora (mapa vazio) → reagrupa MANTENDO o foco (parada segue selecionada).
+    // Clicar fora (mapa vazio) → reagrupa E deseleciona: rota inteira no quadro,
+    // painel ocioso com o card da sugestão.
     fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
-    expect(stub.getAttribute("data-models-summary")).toContain("stop");
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
+    expect(stub.getAttribute("data-models-summary")).toBe("stop,address"); // sem seleção
+    expect(stub.getAttribute("data-focus-bounds")).toBe("none");
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).not.toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.SECTION_NEXT)).toBeInTheDocument();
   });
 
   // RF-006.4.20: o quão PERTO depende do QUE está focado. Endereço e parada

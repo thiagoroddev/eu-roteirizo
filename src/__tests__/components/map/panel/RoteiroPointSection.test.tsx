@@ -107,7 +107,7 @@ describe("RoteiroPointSection (tela 8 — TASK-RF-006.4.1/.4.2/.4.3, Original vi
     expect(handlers.onIncorporate).toHaveBeenCalledWith("stop_1");
   });
 
-  it("choosing can be cancelled; switching to a FAR stop shows the soft warning (RN-17 — never blocks)", () => {
+  it("popup (rev. 15/07): FAR stop shows the soft warning (RN-17 — never blocks); Confirmar e Cancelar fecham", () => {
     const handlers = renderSection();
 
     fireEvent.click(screen.getByRole("button", { name: POINT.INCORPORATE_OTHER }));
@@ -116,11 +116,14 @@ describe("RoteiroPointSection (tela 8 — TASK-RF-006.4.1/.4.2/.4.3, Original vi
     expect(screen.getByText(POINT.FAR_FROM_STOP)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: POINT.CONFIRM }));
     expect(handlers.onIncorporate).toHaveBeenCalledWith("stop_2");
+    // Confirming CLOSES the popup (rev. 15/07 — it used to be an inline select).
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
 
-    // Cancel hides the select again (back to the CTA row).
+    // Reopening and cancelling closes without incorporating again.
+    fireEvent.click(screen.getByRole("button", { name: POINT.INCORPORATE_OTHER }));
     fireEvent.click(screen.getByRole("button", { name: POINT.CANCEL }));
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: POINT.INCORPORATE_OTHER })).toBeInTheDocument();
+    expect(handlers.onIncorporate).toHaveBeenCalledTimes(1);
   });
 
   it("without stops there is no incorporate button — only 'Criar parada'", () => {

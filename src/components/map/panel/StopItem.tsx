@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { Car } from "lucide-react";
+import { Car, Flag } from "lucide-react";
 import { Badge } from "../../ui/badge";
 import { cn } from "@/lib/utils";
 import { UI_LABELS } from "../../../constants/uiLabels";
@@ -45,9 +45,12 @@ interface RowProps {
   /** "vehicle": the mini-marker shows the car glyph (the stop anchor / parada do
       veículo) instead of a number, in the route-infrastructure slate (RF-006.4.7). */
   markerGlyph?: "vehicle";
+  /** This address IS the route's start (RF-006.11 — "Partir deste endereço"):
+      a flag in the start blue marks it beside the address line. */
+  isStart?: boolean;
 }
 
-export const StopItemRow = ({ item, onTap, leading, highlighted = false, expanded, neon = false, markerGlyph }: RowProps) => {
+export const StopItemRow = ({ item, onTap, leading, highlighted = false, expanded, neon = false, markerGlyph, isStart = false }: RowProps) => {
   const typeColor = neon ? roteiroColorForLocationType(item.markerType) : colorForLocationType(item.markerType);
   const color = markerGlyph === "vehicle" ? ROTEIRO_MARKER_COLORS.vehicle : typeColor;
 
@@ -70,7 +73,16 @@ export const StopItemRow = ({ item, onTap, leading, highlighted = false, expande
         {markerGlyph === "vehicle" ? <Car className="h-3.5 w-3.5" aria-hidden /> : item.markerNumber}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium">{item.addressLine}</span>
+        <span className="flex items-center gap-1.5">
+          <span className="min-w-0 truncate text-sm font-medium">{item.addressLine}</span>
+          {isStart && (
+            // Start flag in the start-marker blue (RF-006.11) — same functional
+            // palette as the map's blue car, so both read as "the start".
+            <span className="shrink-0" role="img" aria-label={UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.START_BADGE_ARIA} title={UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.START_BADGE_ARIA}>
+              <Flag className="h-3.5 w-3.5" style={{ color: ROTEIRO_MARKER_COLORS.start.top }} aria-hidden />
+            </span>
+          )}
+        </span>
         {item.complement !== SHEET.NO_COMPLEMENT && <span className="block truncate text-xs text-muted-foreground">{`${SHEET.COMPLEMENT} ${item.complement}`}</span>}
       </span>
       {/* Package badge ALWAYS shows — indicating 1 or more (rev. 07/07). */}
@@ -159,9 +171,11 @@ interface Props {
   scrollSignal?: number;
   /** Meu roteiro palette for the mini-marker (RF-006.4.3 — the edit list). */
   neon?: boolean;
+  /** This address IS the route's start (RF-006.11) — flagged on the row. */
+  isStart?: boolean;
 }
 
-export const StopItem = ({ item, expanded, onTap, highlighted = false, leading, actions, trailing, scrollSignal = 0, neon = false }: Props) => {
+export const StopItem = ({ item, expanded, onTap, highlighted = false, leading, actions, trailing, scrollSignal = 0, neon = false, isStart = false }: Props) => {
   const ref = useRef<HTMLLIElement>(null);
 
   // Design §5: the SELECTED item scrolls into view when the list opens/changes
@@ -175,7 +189,7 @@ export const StopItem = ({ item, expanded, onTap, highlighted = false, leading, 
     <li ref={ref} className="border-b border-input last:border-b-0">
       <div className="flex items-center">
         <div className="min-w-0 flex-1">
-          <StopItemRow item={item} onTap={onTap} leading={leading} highlighted={highlighted} expanded={expanded} neon={neon} />
+          <StopItemRow item={item} onTap={onTap} leading={leading} highlighted={highlighted} expanded={expanded} neon={neon} isStart={isStart} />
         </div>
         {trailing && <div className="shrink-0 pr-3">{trailing}</div>}
       </div>

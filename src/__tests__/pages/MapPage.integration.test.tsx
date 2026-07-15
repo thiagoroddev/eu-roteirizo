@@ -227,7 +227,8 @@ const enterRoteiro = () => {
   renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
   fireEvent.click(screen.getByRole("button", { name: START_LABELS.ARM_MAP_TAP }));
   tapMap(-22.95, -43.19);
-  expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
+  // Settled start (RF-006.11): the definition section leaves the idle header.
+  expect(screen.queryByText(START_LABELS.SECTION)).not.toBeInTheDocument();
 };
 
 /** Taps p1 (preview) and firms P1 — absorbs p2 by radius; the stop stays selected. */

@@ -119,19 +119,19 @@ interface StopItemListProps {
 
 ## 4. Matriz modo × preenchimento (tela a tela)
 
-| Elemento | **Original — visualização** (agora, tela 5 read-only) | **Meu roteiro — OCIOSO (visão geral) ✅ RF-006.8** | Meu roteiro — visualização (tela 5) 🔮 | Meu roteiro — edição (telas 6/7) 🔮 | Rascunho (tela 9) 🔮 | Execução (§14) 🔮 |
-|---|---|---|---|---|---|---|
-| ModeBar | "Modo visualização", sem progresso | rótulo do estado + `%` + barra fina + "Ver detalhes" | idem + progresso | "Modo edição" + progresso | "Modo rascunho" | progresso da rota |
-| Título | `Parada {Stop}` + endereço representante | — (o corpo assume: card "Roteiro em construção") | `Parada N — Veículo (âncora)` | `Parada N — 2º endereço` | `Parada N — Veículo` | próxima entrega |
-| Métricas | `N endereços · N pacotes` | stat-cards `Endereços x/y` · `Pacotes x/y` + barra + `%` | + `~min e m a pé` | idem | `1 endereço · 1 pacote…` | `X/Y` + previsão |
-| actions | — (vazio) | "Criar parada" (sugestão) · "Ver no mapa" por parada | `Editar Parada · Iniciar rota` | `Remover/Adicionar/Tornar âncora/Inverter` ou `Mover/Resetar âncora` | `Salvar parada · Editar âncora/raio` | `Abrir GPS · Concluir` |
-| banner | — | — | — | — | "raio engloba N candidatos" | — |
-| Itens: número | **Sequence planilha** | PanelTitle por parada confirmada; drill-down com ordinais | ordinal 1º/2º + item âncora | idem + drag | idem | ordem do roteiro |
-| Itens: meta | badge pacotes | chips + estimativa a pé; sugestão com distância de veículo | + tempo/metros por perna | idem | idem | distância até |
-| footer | — | — | — | `Salvar alterações` | `Salvar alterações` | `Concluir entrega` |
-| Ponto livre (tela 8) | n/a (Original não tem órfão) | n/a (nada selecionado por definição) | título "Ponto livre" + `Criar parada · Incorporar` | ← | ← | n/a |
+| Elemento | **Original — visualização** (agora, tela 5 read-only) | **Meu roteiro — OCIOSO ✅ RF-006.8/.11** | **Meu roteiro — "VER DETALHES" ✅ RF-006.11** | Meu roteiro — visualização (tela 5) 🔮 | Meu roteiro — edição (telas 6/7) 🔮 | Rascunho (tela 9) 🔮 | Execução (§14) 🔮 |
+|---|---|---|---|---|---|---|---|
+| ModeBar | "Modo visualização", sem progresso | rótulo do estado + `%` + barra fina + "Ver detalhes" | idem, com "Esconder detalhes" (cabeçalho SÓ conciso) | idem + progresso | "Modo edição" + progresso | "Modo rascunho" | progresso da rota |
+| Título | `Parada {Stop}` + endereço representante | — (corpo = só o card "Próxima parada sugerida") | card "Roteiro em construção" | `Parada N — Veículo (âncora)` | `Parada N — 2º endereço` | `Parada N — Veículo` | próxima entrega |
+| Métricas | `N endereços · N pacotes` | chips do card da sugestão | stat-cards `x/y` + barra + `%` + **Detalhes** (tempo total · distância total · a pé) | + `~min e m a pé` | idem | `1 endereço · 1 pacote…` | `X/Y` + previsão |
+| actions | — (vazio) | "Criar parada" + ícone mapa (card) | idem + "Ver no mapa"/parada + "Redefinir início" (parada 0) | `Editar Parada · Iniciar rota` | `Remover/Adicionar/Tornar âncora/Inverter` ou `Mover/Resetar âncora` | `Salvar parada · Editar âncora/raio` | `Abrir GPS · Concluir` |
+| banner | — | — | — | — | — | "raio engloba N candidatos" | — |
+| Itens: número | **Sequence planilha** | — | **parada 0 = início** (glifo azul) + PanelTitle por parada; drill-down com ordinais | ordinal 1º/2º + item âncora | idem + drag | idem | ordem do roteiro |
+| Itens: meta | badge pacotes | distância de veículo no rótulo da seção | chips + estimativa a pé; card da sugestão por último (só se incompleto) | + tempo/metros por perna | idem | idem | distância até |
+| footer | — | — | — | — | `Salvar alterações` | `Salvar alterações` | `Concluir entrega` |
+| Ponto livre (tela 8) | n/a (Original não tem órfão) | n/a (nada selecionado por definição) | n/a | título "Ponto livre" + `Criar parada · Incorporar` | ← | ← | n/a |
 
-> **Contexto ocioso (RF-006.8):** não existe em nenhuma das telas 1–9 do fluxo — é o estado "nada selecionado" do Meu roteiro (pós-início ou toque no mapa vazio). O corpo do painel vira a **visão geral** (progresso + paradas confirmadas + sugestão de próxima parada numerada em sequência), também acessível de qualquer contexto pelo "Ver detalhes" do cabeçalho (Escape/arrasto saem, como na lista completa).
+> **Contexto ocioso (RF-006.8, v2 na RF-006.11):** não existe em nenhuma das telas 1–9 do fluxo — é o estado "nada selecionado" do Meu roteiro (pós-início ou toque no mapa vazio, que agora **deseleciona tudo** e enquadra a rota inteira — supersede o "reagrupa mantendo foco" da .4.10/.4.16). Ocioso = cabeçalho conciso + **card "Próxima parada sugerida"** (moldura de card = distinção imediata de parada confirmada; some quando completo — o estado "Iniciar execução" é RF-009). O **"Ver detalhes"** abre de qualquer contexto o MESMO estado dedicado (painel full, sem seções de contexto): "Roteiro em construção" (stats + barra + subseção Detalhes via `plannedRouteTotals`), "Paradas confirmadas" começando pela **parada 0 = o início** (UI de endereço + redefinir; o início também é selecionável pelo próprio marcador no mapa, e o endereço-início carrega flag + redefinir na própria row) e o card da sugestão. Escape/arrasto saem, como na lista completa.
 
 ---
 

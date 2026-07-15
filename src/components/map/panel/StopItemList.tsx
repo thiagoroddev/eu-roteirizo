@@ -25,9 +25,11 @@ interface Props {
   scrollSignal?: number;
   /** Meu roteiro palette for the mini-markers (RF-006.4.3 — the edit list). */
   neon?: boolean;
+  /** The address (point id) that IS the route's start — flagged (RF-006.11). */
+  startKey?: string | null;
 }
 
-export const StopItemList = ({ items, selectedKey, itemLeading, itemActions, itemTrailing, scrollSignal, neon = false }: Props) => {
+export const StopItemList = ({ items, selectedKey, itemLeading, itemActions, itemTrailing, scrollSignal, neon = false, startKey = null }: Props) => {
   // Everything starts EXPANDED; taps collapse/expand individually. The state
   // resets naturally: the component unmounts when the list view closes, and a
   // stop change renews the keys ("i:j").
@@ -61,6 +63,7 @@ export const StopItemList = ({ items, selectedKey, itemLeading, itemActions, ite
           trailing={itemTrailing?.(item)}
           scrollSignal={scrollSignal}
           neon={neon}
+          isStart={startKey !== null && item.addressKey === startKey}
         />
       ))}
     </ul>
