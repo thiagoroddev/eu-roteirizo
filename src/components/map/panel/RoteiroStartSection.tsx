@@ -12,9 +12,11 @@ export type StartPhase = "no-start" | "arming" | "locating" | "confirm-point" | 
 /**
  * RoteiroStartSection - the "Definir ponto inicial" section of the roteiro
  * panel header (TASK-RF-006.3, RF-21/22, fluxo §10.5/§10.10). One phase at a
- * time: pick GPS or arm a map tap → (optional) confirm a tapped address →
- * defined (with the suggestion line's label + redefine). All ephemeral state
- * lives in the MapScreen; this component only renders the phase.
+ * time: pick GPS or arm a map tap → (optional) confirm a tapped address. The
+ * DEFINED state left this section in RF-006.11 (the start became "parada 0" +
+ * its map marker), so this only renders the DEFINITION phases — the caller
+ * gates it out once the start is set. All ephemeral state lives in the
+ * MapScreen; this component only renders the phase.
  */
 interface Props {
   phase: StartPhase;
@@ -22,16 +24,13 @@ interface Props {
   notice: string | null;
   /** Address of the tapped point (confirm-point phase). */
   pendingAddress?: string;
-  /** Ready suggestion label ("Sugestão: … — 230 m (linha reta)"); null = none. */
-  suggestionLabel?: string | null;
   onUseGps: () => void;
   onArmMapTap: () => void;
   onConfirmPoint: () => void;
   onCancel: () => void;
-  onRedefine: () => void;
 }
 
-export const RoteiroStartSection = ({ phase, notice, pendingAddress, suggestionLabel, onUseGps, onArmMapTap, onConfirmPoint, onCancel, onRedefine }: Props) => (
+export const RoteiroStartSection = ({ phase, notice, pendingAddress, onUseGps, onArmMapTap, onConfirmPoint, onCancel }: Props) => (
   // Divider below the state header — same section chrome as the rest (rev. 08/07).
   <div className="border-t border-input px-4 pb-2 pt-2">
     {phase === "no-start" && (
@@ -73,18 +72,6 @@ export const RoteiroStartSection = ({ phase, notice, pendingAddress, suggestionL
             {START.CANCEL}
           </Button>
         </div>
-      </>
-    )}
-
-    {phase === "has-start" && (
-      <>
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-medium">{START.DEFINED}</p>
-          <Button type="button" variant="outline" size="sm" data-vaul-no-drag onClick={onRedefine}>
-            {START.REDEFINE}
-          </Button>
-        </div>
-        {suggestionLabel && <p className="truncate pt-1 text-xs text-muted-foreground">{suggestionLabel}</p>}
       </>
     )}
 

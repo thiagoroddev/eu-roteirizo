@@ -61,6 +61,15 @@ describe("start and next suggestion", () => {
     expect(state.startPoint).toEqual(START);
   });
 
+  it("CLEAR_START drops the start entirely (TASK-RF-006.14)", () => {
+    const started = run(initial(), { type: "SET_START", position: START });
+    const cleared = run(started, { type: "CLEAR_START" });
+    expect(cleared.startPoint).toBeNull();
+    // With committed stops, clearing the start leaves them untouched.
+    const withStop = withStopAB(run(initial(), { type: "SET_START", position: START }));
+    expect(run(withStop, { type: "CLEAR_START" }).stops).toEqual(withStop.stops);
+  });
+
   it("suggests nothing before a start exists", () => {
     expect(suggestedNextPointId(initial())).toBeNull();
   });
@@ -263,6 +272,42 @@ describe("vehicle stop (anchor)", () => {
     const moved = run(appended, { type: "MOVE_VEHICLE_STOP", position: { lat: a.lat, lng: a.lng } });
     expect(moved.draft?.pointIds).toEqual(["a", "b", "e"]);
     expect(moved.draft?.orderIsManual).toBe(false);
+  });
+
+  // ------- Âncora de parada FIRMADA (TASK-RF-006.5 — sem REOPEN) -------
+
+  it("MOVE_STOP_ANCHOR re-anchors a COMMITTED stop and re-sweeps its walking order", () => {
+    /** Stop over a+b+e (anchored on a), committed. Move the anchor east of e:
+     *  same geometry as the draft test above → sweep becomes [a, e, b]. */
+    const committed = run(openDraftOnA(initial()), { type: "TOGGLE_DRAFT_POINT", pointId: "e" }, { type: "TOGGLE_DRAFT_POINT", pointId: "b" }, { type: "COMMIT_STOP" });
+    const moved = run(committed, { type: "MOVE_STOP_ANCHOR", stopId: "stop_a", position: { lat: -22.98, lng: -43.1995 } });
+    expect(moved.stops[0].vehicleStop).toEqual({ lat: -22.98, lng: -43.1995 });
+    expect(moved.stops[0].pointIds).toEqual(["a", "e", "b"]);
+    // Unknown stop → no-op.
+    expect(run(committed, { type: "MOVE_STOP_ANCHOR", stopId: "stop_zzz", position: { lat: 0, lng: 0 } })).toEqual(committed);
+  });
+
+  it("MAKE_STOP_POINT_ANCHOR assumes the member's exact coordinate (members only)", () => {
+    const committed = withStopAB(initial());
+    const anchored = run(committed, { type: "MAKE_STOP_POINT_ANCHOR", stopId: "stop_a", pointId: "b" });
+    expect(anchored.stops[0].vehicleStop).toEqual({ lat: b.lat, lng: b.lng });
+    // A non-member never becomes the anchor.
+    expect(run(committed, { type: "MAKE_STOP_POINT_ANCHOR", stopId: "stop_a", pointId: "c" })).toBe(committed);
+  });
+
+  it("RESET_STOP_ANCHOR restores the suggested default and re-sweeps", () => {
+    const committed = withStopAB(initial());
+    const moved = run(committed, { type: "MOVE_STOP_ANCHOR", stopId: "stop_a", position: { lat: -22.9, lng: -43.1 } });
+    const reset = run(moved, { type: "RESET_STOP_ANCHOR", stopId: "stop_a", suggestedVehicleStop: { lat: a.lat, lng: a.lng } });
+    expect(reset.stops[0].vehicleStop).toEqual({ lat: a.lat, lng: a.lng });
+    expect(reset.stops[0].pointIds).toEqual(["a", "b"]);
+  });
+
+  it("a stop being EDITED (draft open over it) ignores the committed-anchor actions — the draft owns it", () => {
+    const reopened = run(withStopAB(initial()), { type: "REOPEN_STOP", stopId: "stop_a" });
+    expect(run(reopened, { type: "MOVE_STOP_ANCHOR", stopId: "stop_a", position: { lat: 0, lng: 0 } })).toBe(reopened);
+    expect(run(reopened, { type: "MAKE_STOP_POINT_ANCHOR", stopId: "stop_a", pointId: "b" })).toBe(reopened);
+    expect(run(reopened, { type: "RESET_STOP_ANCHOR", stopId: "stop_a", suggestedVehicleStop: { lat: 0, lng: 0 } })).toBe(reopened);
   });
 
   it("REORDER_DRAFT_POINT moves within bounds (index clamped)", () => {

@@ -1,4 +1,5 @@
 import { Badge } from "../../ui/badge";
+import { cn } from "@/lib/utils";
 import { UI_LABELS } from "../../../constants/uiLabels";
 
 /**
@@ -18,6 +19,8 @@ interface Props {
   neighborhoods?: string[];
   zipcodes?: string[];
   metrics: PanelMetric[];
+  /** Extra spacing hooks for list usages (overview rows — rev. 15/07). */
+  className?: string;
 }
 
 /** Exported since RF-006.4.2: the roteiro draft header reuses the SAME chips. */
@@ -32,12 +35,12 @@ export const PanelMetricsRow = ({ metrics }: Pick<Props, "metrics">) => (
   </div>
 );
 
-export const PanelTitle = ({ stopNumber, neighborhoods = [], zipcodes = [], metrics }: Props) => {
+export const PanelTitle = ({ stopNumber, neighborhoods = [], zipcodes = [], metrics, className }: Props) => {
   const title = stopNumber !== null ? `${UI_LABELS.MAP_PANEL.STOP_PREFIX} ${stopNumber}` : UI_LABELS.MAP_PANEL.NO_STOP;
   // Place on ONE line: "Parada 31 — Botafogo (22290-160)" (rev. 07/07).
   const place = [neighborhoods.join(", "), zipcodes.length > 0 ? `(${zipcodes.join(", ")})` : ""].filter(Boolean).join(" ");
   return (
-    <div className="px-4 pb-2">
+    <div className={cn("px-4 pb-2", className)}>
       <p className="truncate text-sm font-semibold">{place ? `${title} — ${place}` : title}</p>
       {metrics.length > 0 && <PanelMetricsRow metrics={metrics} />}
     </div>

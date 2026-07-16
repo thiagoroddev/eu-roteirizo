@@ -141,6 +141,7 @@ vi.mock("../../components/RouteMap", () => ({
     onModelTap,
     onModelExpand,
     onStartTap,
+    onAnchorDragEnd,
     roteiroOverlay,
   }: {
     interaction?: InteractionState;
@@ -153,6 +154,7 @@ vi.mock("../../components/RouteMap", () => ({
     onModelTap?: (model: MarkerModel) => void;
     onModelExpand?: (model: MarkerModel) => void;
     onStartTap?: () => void;
+    onAnchorDragEnd?: (latlng: LatLng) => void;
     roteiroOverlay?: { start: LatLng | null; suggestionPath: LatLng[] | null; radiusCircle?: { center: LatLng; meters: number } | null; anchor?: LatLng | null };
   }) => (
     <div
@@ -181,6 +183,11 @@ vi.mock("../../components/RouteMap", () => ({
       </button>
       <button type="button" onClick={() => onStartTap?.()}>
         stub-start-tap
+      </button>
+      {/* Drops the anchor car just NORTH of p2 (rowsThreePoints geometry): both
+          members end due south → the sweep re-orders to [p2, p1] (RF-006.5). */}
+      <button type="button" onClick={() => onAnchorDragEnd?.({ lat: -22.9002, lng: -43.2 })}>
+        stub-anchor-drag
       </button>
       <button type="button" onClick={() => models?.[0] && onModelTap?.(models[0])}>
         stub-first-point-tap
@@ -731,21 +738,39 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "none");
   });
 
-  it("'Redefinir início' re-opens the paths keeping the current start until a new one lands", () => {
+  it("start selecionado: 'Mudar posição' arma o toque mantendo o carro; um novo toque o reposiciona (RF-006.14)", () => {
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.ARM_MAP_TAP }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" })); // início em -22.95,-43.19
+    expect(screen.queryByText(START_LABELS.SECTION)).not.toBeInTheDocument();
+
+    // Tocar o carro do início seleciona-o (parada 0); "Mudar posição" arma o
+    // toque (mesmo evento de "Tocar no mapa") SEM apagar — o carro permanece.
+    fireEvent.click(screen.getByRole("button", { name: "stub-start-tap" }));
+    expect(screen.getByText(OVERVIEW_LABELS.SECTION_START)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.REPOSITION_START }));
+    expect(screen.getByText(START_LABELS.ARMED_HINT)).toBeInTheDocument();
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "-22.95,-43.19");
+
+    // Novo toque reposiciona o início (o stub-map-tap solta em -22.95,-43.19 de
+    // novo; o importante é que continua definido e a seção de definição some).
+    fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
+    expect(screen.queryByText(START_LABELS.SECTION)).not.toBeInTheDocument();
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "-22.95,-43.19");
+  });
+
+  it("start selecionado: 'Apagar início' remove o carro e volta à definição (RF-006.14)", () => {
     renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
     fireEvent.click(screen.getByRole("button", { name: START_LABELS.ARM_MAP_TAP }));
     fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
-    expect(screen.queryByText(START_LABELS.SECTION)).not.toBeInTheDocument();
-
-    // "Redefinir início" left the idle header (RF-006.11): it now lives on the
-    // START selection — tapping the start marker shows "parada 0" + the action.
-    fireEvent.click(screen.getByRole("button", { name: "stub-start-tap" }));
-    expect(screen.getByText(OVERVIEW_LABELS.SECTION_START)).toBeInTheDocument();
-    expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument(); // tap-defined start has no address
-    fireEvent.click(screen.getByRole("button", { name: START_LABELS.REDEFINE }));
-    expect(screen.getByText(START_LABELS.SECTION)).toBeInTheDocument();
-    // The start (and its marker) survives until redefined.
     expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "-22.95,-43.19");
+
+    fireEvent.click(screen.getByRole("button", { name: "stub-start-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.DELETE_START }));
+    // O carro some e o painel volta a oferecer GPS / Tocar no mapa.
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "none");
+    expect(screen.getByText(START_LABELS.SECTION)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: START_LABELS.ARM_MAP_TAP })).toBeInTheDocument();
   });
 
   it("switching modes resets the ephemeral start UI but keeps the defined start", () => {
@@ -1072,9 +1097,10 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByText(OVERVIEW_LABELS.SECTION_DETAILS)).toBeInTheDocument();
     expect(screen.getByText(OVERVIEW_LABELS.TOTAL_TIME)).toBeInTheDocument();
     expect(screen.getByText(OVERVIEW_LABELS.WALK_DISTANCE)).toBeInTheDocument();
-    // Parada 0: o início por toque (sem endereço) + a ação de redefinir.
+    // Parada 0: o início por toque (sem endereço) + os dois gestos (RF-006.14).
     expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: START_LABELS.REDEFINE })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: START_LABELS.DELETE_START })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: START_LABELS.REPOSITION_START })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: OVERVIEW_LABELS.STOP_ARIA(1) })).toBeInTheDocument();
     // A sugestão é o CARD com o endereço da semente (p3) — sem "Parada N".
     expect(screen.getByText(OVERVIEW_LABELS.SECTION_NEXT)).toBeInTheDocument();
@@ -1093,19 +1119,81 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "224px");
   });
 
-  it("endereço que É o início ganha a flag e o redefinir na própria UI (RF-006.11)", () => {
+  // ==========================================================================
+  // Gestos da âncora (TASK-RF-006.5)
+  // ==========================================================================
+
+  const STOP_LABELS_ANCHOR = UI_LABELS.MAP_PANEL.ROTEIRO_STOP;
+
+  it("mover âncora (RF-006.5): expande a parada (o carro aparece), o arrasto re-ancora pela rua e RENUMERA a ordem a pé", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP })); // P1 = p1+p2, âncora na semente p1
+    const stub = screen.getByTestId("route-map-stub");
+    expect(stub).toHaveAttribute("data-anchor", "none"); // agrupada: o quadrado JÁ está na âncora
+    // Âncora selecionada → título vira "Parada 1 — Veículo (âncora)" e a row
+    // mostra o 1º endereço (placeholder até a RF-006.9): Rua Mapa, 10.
+    expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1 — ${STOP_LABELS_ANCHOR.ANCHOR_PLACE}`)).toBeInTheDocument();
+
+    // "Mover âncora" desagrupa no mapa: o carro slate aparece (overlay) + dica.
+    fireEvent.click(screen.getByRole("button", { name: STOP_LABELS_ANCHOR.MOVE_ANCHOR }));
+    expect(stub).toHaveAttribute("data-anchor", "-22.9,-43.2");
+    expect(screen.getByText(STOP_LABELS_ANCHOR.MOVE_ANCHOR_HINT)).toBeInTheDocument();
+
+    // O arrasto solta o carro ao NORTE de p2 → re-projeção (reta sem grafo) e
+    // re-varredura: p2 vira o 1º da ordem — a row da âncora agora mostra p2.
+    fireEvent.click(screen.getByRole("button", { name: "stub-anchor-drag" }));
+    expect(stub).toHaveAttribute("data-anchor", "-22.9002,-43.2");
+    expect(screen.getByRole("button", { name: /Rua Beta, 20/ })).toBeInTheDocument();
+  });
+
+  it("resetar âncora (RF-006.5): volta ao padrão (projeção do endereço) e re-varre", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    fireEvent.click(screen.getByRole("button", { name: STOP_LABELS_ANCHOR.MOVE_ANCHOR }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-anchor-drag" })); // âncora longe do padrão
+    const stub = screen.getByTestId("route-map-stub");
+    expect(stub).toHaveAttribute("data-anchor", "-22.9002,-43.2");
+
+    // Resetar: sem grafo, o padrão é a coordenada do 1º endereço da ordem (p2
+    // após o arrasto) — a âncora ASSENTA nele e a varredura o mantém 1º.
+    fireEvent.click(screen.getByRole("button", { name: STOP_LABELS_ANCHOR.RESET_ANCHOR }));
+    expect(stub).toHaveAttribute("data-anchor", "-22.90015,-43.2");
+  });
+
+  it("tornar âncora (RF-006.5): o membro tocado vira a âncora (coordenada exata) e a seleção volta à âncora", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    // Desagrupa e toca o membro p2 (models: [p1, p2, p3] → segundo botão).
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-dbltap" }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-second-point-tap" }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: STOP_LABELS_ANCHOR.MAKE_ANCHOR }));
+    // A âncora assumiu a coordenada de p2 (carro visível — parada segue expandida)
+    // e o painel voltou à âncora, cuja row mostra o novo 1º endereço (p2).
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-anchor", "-22.90015,-43.2");
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Rua Beta, 20/ })).toBeInTheDocument();
+  });
+
+  it("endereço que É o início ganha a flag + os gestos apagar/mudar posição na própria UI (RF-006.11/.14)", () => {
     uploaderState.routes = { "A-1": rowsThreePoints };
     renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
     // "Partir deste endereço": p1 vira o início (coordenada copiada verbatim).
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
     fireEvent.click(screen.getByRole("button", { name: START_LABELS.CONFIRM }));
 
-    // Selecionar p1 (tela 8): a row do endereço carrega a flag de início e o
-    // botão de redefinir ao lado.
+    // Selecionar p1 (tela 8): a row do endereço carrega a flag de início e os
+    // dois gestos ao lado. "Apagar início" limpa e volta à definição.
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
     expect(screen.getByLabelText(OVERVIEW_LABELS.START_BADGE_ARIA)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: START_LABELS.REDEFINE }));
+    expect(screen.getByRole("button", { name: START_LABELS.REPOSITION_START })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: START_LABELS.DELETE_START }));
     expect(screen.getByText(START_LABELS.SECTION)).toBeInTheDocument();
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "none");
   });
 
   it("'Ver lista completa' na parada firmada mostra os endereços por ordinal; 'Esconder lista' volta ao resumo (RF-006.4.7)", () => {

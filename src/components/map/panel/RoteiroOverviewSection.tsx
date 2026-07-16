@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Car, MapPin, RotateCcw } from "lucide-react";
+import { Car, MapPin, Move, Trash2 } from "lucide-react";
 import { Button } from "../../ui/button";
 import { PanelSection } from "./PanelSection";
 import { PanelTitle, type PanelMetric } from "./PanelTitle";
@@ -13,6 +13,7 @@ import type { PlannedRouteTotals } from "../../../utils/routing/estimates";
 import { UI_LABELS } from "../../../constants/uiLabels";
 
 const OVERVIEW = UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW;
+const START = UI_LABELS.MAP_PANEL.ROTEIRO_START;
 
 /** A committed stop through the panel's own vocabulary (PanelTitle + chips). */
 export interface OverviewStopView {
@@ -33,29 +34,30 @@ export interface OverviewStartView {
 
 /**
  * StartRow - the start as "parada 0" (RF-006.11): an address-styled row with
- * the blue start car as its mini-marker and the redefine action beside it.
+ * the blue start car as its mini-marker and, beside it, the TWO start gestures
+ * (RF-006.14): "Mudar posição" (arms a map tap — the current start stays until
+ * a new one lands) and "Apagar início" (drops it — the car disappears). The old
+ * single "Redefinir" only re-armed and kept the car, which read as a bug.
  * Exported for the start-selected panel section (tapping the start marker).
  */
-export const StartRow = ({ start, onRedefine }: { start: OverviewStartView; onRedefine: () => void }) => (
+export const StartRow = ({ start, onDelete, onReposition }: { start: OverviewStartView; onDelete: () => void; onReposition: () => void }) => (
   <div className="flex items-center">
-    <div className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3">
+    {/* py-2.5: the overview list's ONE vertical rhythm (smoke 15/07 — the start
+        row had py-3 while the stop rows had no top padding at all). */}
+    <div className="flex min-w-0 flex-1 items-center gap-3 px-4 py-2.5">
       <span aria-hidden className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold" style={{ backgroundColor: ROTEIRO_MARKER_COLORS.start.bottom, color: "#FFFFFF" }}>
         <Car className="h-3.5 w-3.5" aria-hidden />
       </span>
       <span className="min-w-0 flex-1 truncate text-sm font-medium">{start.addressLine}</span>
     </div>
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      data-vaul-no-drag
-      aria-label={UI_LABELS.MAP_PANEL.ROTEIRO_START.REDEFINE}
-      title={UI_LABELS.MAP_PANEL.ROTEIRO_START.REDEFINE}
-      className="mr-2 shrink-0"
-      onClick={onRedefine}
-    >
-      <RotateCcw aria-hidden />
-    </Button>
+    <div className="mr-2 flex shrink-0 items-center gap-1">
+      <Button type="button" variant="ghost" size="icon" data-vaul-no-drag aria-label={START.REPOSITION_START} title={START.REPOSITION_START} onClick={onReposition}>
+        <Move aria-hidden />
+      </Button>
+      <Button type="button" variant="ghost" size="icon" data-vaul-no-drag aria-label={START.DELETE_START} title={START.DELETE_START} onClick={onDelete}>
+        <Trash2 aria-hidden />
+      </Button>
+    </div>
   </div>
 );
 
@@ -73,7 +75,9 @@ interface Props {
   totals: PlannedRouteTotals | null;
   /** The start as "parada 0"; null before a start exists. */
   start: OverviewStartView | null;
-  onRedefineStart: () => void;
+  /** Start gestures (RF-006.14): reposition arms a map tap; delete drops it. */
+  onDeleteStart: () => void;
+  onRepositionStart: () => void;
   stops: OverviewStopView[];
   /** The address (point id) that IS the start — flagged in drill-downs. */
   startKey: string | null;
@@ -87,7 +91,7 @@ interface Props {
   onCreateSuggested: () => void;
 }
 
-export const RoteiroOverviewSection = ({ progress, totals, start, onRedefineStart, stops, startKey, suggestion, onShowStopOnMap, onShowSuggestedOnMap, onCreateSuggested }: Props) => {
+export const RoteiroOverviewSection = ({ progress, totals, start, onDeleteStart, onRepositionStart, stops, startKey, suggestion, onShowStopOnMap, onShowSuggestedOnMap, onCreateSuggested }: Props) => {
   /** One drill-down open at a time — the overview is a scan, not an editor. */
   const [openStopId, setOpenStopId] = useState<string | null>(null);
 
@@ -103,7 +107,7 @@ export const RoteiroOverviewSection = ({ progress, totals, start, onRedefineStar
             15/07 — "cada parada separada por linha horizontal"). */}
         {start && (
           <div className="border-b border-input">
-            <StartRow start={start} onRedefine={onRedefineStart} />
+            <StartRow start={start} onDelete={onDeleteStart} onReposition={onRepositionStart} />
           </div>
         )}
         {stops.length === 0 ? (
@@ -123,7 +127,9 @@ export const RoteiroOverviewSection = ({ progress, totals, start, onRedefineStar
                     aria-expanded={openStopId === stop.id}
                     onClick={() => setOpenStopId((current) => (current === stop.id ? null : stop.id))}
                   >
-                    <PanelTitle stopNumber={String(stop.order)} neighborhoods={stop.neighborhoods} zipcodes={stop.zipcodes} metrics={stop.metrics} />
+                    {/* pt-2.5 = same rhythm as the start row (smoke 15/07: the
+                        title used to sit flush on the divider above). */}
+                    <PanelTitle className="pt-2.5" stopNumber={String(stop.order)} neighborhoods={stop.neighborhoods} zipcodes={stop.zipcodes} metrics={stop.metrics} />
                   </button>
                   <Button
                     type="button"

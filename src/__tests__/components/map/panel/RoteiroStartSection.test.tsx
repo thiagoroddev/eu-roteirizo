@@ -6,7 +6,7 @@ import { UI_LABELS } from "../../../../constants/uiLabels";
 const START = UI_LABELS.MAP_PANEL.ROTEIRO_START;
 
 const renderSection = (phase: StartPhase, extra: Partial<React.ComponentProps<typeof RoteiroStartSection>> = {}) => {
-  const handlers = { onUseGps: vi.fn(), onArmMapTap: vi.fn(), onConfirmPoint: vi.fn(), onCancel: vi.fn(), onRedefine: vi.fn() };
+  const handlers = { onUseGps: vi.fn(), onArmMapTap: vi.fn(), onConfirmPoint: vi.fn(), onCancel: vi.fn() };
   render(<RoteiroStartSection phase={phase} notice={null} {...handlers} {...extra} />);
   return handlers;
 };
@@ -46,14 +46,9 @@ describe("RoteiroStartSection (TASK-RF-006.3)", () => {
     expect(handlers.onConfirmPoint).toHaveBeenCalledTimes(1);
   });
 
-  it("has-start: defined + redefine + suggestion label", () => {
-    const handlers = renderSection("has-start", { suggestionLabel: "Sugestão: Rua Beta, 20 — 230 m" });
-
-    expect(screen.getByText(START.DEFINED)).toBeInTheDocument();
-    expect(screen.getByText("Sugestão: Rua Beta, 20 — 230 m")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: START.REDEFINE }));
-    expect(handlers.onRedefine).toHaveBeenCalledTimes(1);
-  });
+  // The has-start (DEFINED) row left this component with RF-006.11/.14: once a
+  // start is set the caller gates this section out and the start lives as
+  // "parada 0" + its map marker (with the Apagar/Mudar posição gestures).
 
   it("shows the notice (GPS errors) in any phase", () => {
     renderSection("no-start", { notice: UI_LABELS.ROUTING.GPS_DENIED });

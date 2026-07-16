@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Car, RotateCcw } from "lucide-react";
+import { Car, Move, Trash2 } from "lucide-react";
 import { Button } from "../../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../ui/dialog";
 import { PanelSection } from "./PanelSection";
@@ -60,9 +60,11 @@ interface Props {
   defaultStopId: string | null;
   onCreateStop: () => void;
   onIncorporate: (stopId: string) => void;
-  /** This address IS the route's start (RF-006.11): flag + redefine beside it. */
+  /** This address IS the route's start (RF-006.11): flag + start gestures beside it. */
   isStart?: boolean;
-  onRedefineStart?: () => void;
+  /** Start gestures (RF-006.14): reposition arms a map tap; delete drops it. */
+  onDeleteStart?: () => void;
+  onRepositionStart?: () => void;
 }
 
 export const RoteiroPointSection = ({
@@ -80,7 +82,8 @@ export const RoteiroPointSection = ({
   onCreateStop,
   onIncorporate,
   isStart = false,
-  onRedefineStart,
+  onDeleteStart,
+  onRepositionStart,
 }: Props) => {
   /** The target is chosen in a POPUP (rev. 15/07 — was an inline select). */
   const [incorporating, setIncorporating] = useState(false);
@@ -104,21 +107,34 @@ export const RoteiroPointSection = ({
           <div className="min-w-0 flex-1">
             <StopItemRow item={item} onTap={onTapCard} highlighted expanded={expanded} neon isStart={isStart} />
           </div>
-          {/* The start-address redefine lives beside its row (RF-006.11) — a
-              sibling, never nested: the row itself is a button. */}
-          {isStart && onRedefineStart && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              data-vaul-no-drag
-              aria-label={UI_LABELS.MAP_PANEL.ROTEIRO_START.REDEFINE}
-              title={UI_LABELS.MAP_PANEL.ROTEIRO_START.REDEFINE}
-              className="mr-2 shrink-0"
-              onClick={onRedefineStart}
-            >
-              <RotateCcw aria-hidden />
-            </Button>
+          {/* Start gestures beside the row (RF-006.14) — siblings, never nested
+              (the row itself is a button): reposition arms a map tap, delete
+              drops the start. */}
+          {isStart && onDeleteStart && onRepositionStart && (
+            <div className="mr-2 flex shrink-0 items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                data-vaul-no-drag
+                aria-label={UI_LABELS.MAP_PANEL.ROTEIRO_START.REPOSITION_START}
+                title={UI_LABELS.MAP_PANEL.ROTEIRO_START.REPOSITION_START}
+                onClick={onRepositionStart}
+              >
+                <Move aria-hidden />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                data-vaul-no-drag
+                aria-label={UI_LABELS.MAP_PANEL.ROTEIRO_START.DELETE_START}
+                title={UI_LABELS.MAP_PANEL.ROTEIRO_START.DELETE_START}
+                onClick={onDeleteStart}
+              >
+                <Trash2 aria-hidden />
+              </Button>
+            </div>
           )}
         </div>
       </PanelSection>
@@ -145,7 +161,7 @@ export const RoteiroPointSection = ({
         }
       >
         {vehicleDistanceLabel && (
-          <p className="flex items-center gap-1 px-4 pb-1 text-xs text-muted-foreground">
+          <p className="flex items-center gap-1 px-4 pb-1.5 text-xs text-muted-foreground">
             <span>{vehicleDistanceLabel}</span>
             <Car className="h-3.5 w-3.5 shrink-0" aria-hidden />
             <span className="sr-only">{POINT.VEHICLE_QUALIFIER}</span>

@@ -148,6 +148,13 @@ export const UI_LABELS = {
     ROTEIRO_STOP: {
       EDIT: "Editar parada",
       DISSOLVE: "Desfazer parada",
+      // Gestos da âncora (TASK-RF-006.5 — fluxo §9/§10).
+      MOVE_ANCHOR: "Mover âncora",
+      MOVE_ANCHOR_HINT: "Arraste o carro no mapa para a nova posição da parada do veículo.",
+      RESET_ANCHOR: "Resetar âncora",
+      MAKE_ANCHOR: "Tornar âncora",
+      /** Título da parada quando a ÂNCORA é o item selecionado (spec, matriz da árvore §4). */
+      ANCHOR_PLACE: "Veículo (âncora)",
     },
     // Seção "Definir ponto inicial" do painel do roteiro (RF-21/22 — TASK-RF-006.3).
     ROTEIRO_START: {
@@ -160,7 +167,10 @@ export const UI_LABELS = {
       CONFIRM_POINT: (address: string) => `Partir deste endereço: ${address}`,
       CONFIRM: "Confirmar início aqui",
       DEFINED: "Início definido",
-      REDEFINE: "Redefinir início",
+      // Redefinir virou DOIS gestos (TASK-RF-006.14 — o antigo "Redefinir" só
+      // rearmava e mantinha o carro, confundindo com "apagar").
+      DELETE_START: "Apagar início",
+      REPOSITION_START: "Mudar posição do início",
       // Distância SEMPRE qualificada (a pé / de veículo — feedback 08/07).
       SUGGESTION: (address: string, distance: string) => `Sugestão: ${address} — ${distance} a pé`,
       SUGGESTION_STRAIGHT: "(linha reta)",

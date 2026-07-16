@@ -131,6 +131,10 @@ interface Props {
   /** Tap on the START marker (Meu roteiro — RF-006.11): the start is selectable,
       showing "parada 0" + the redefine action in the panel. */
   onStartTap?: () => void;
+  /** Drag end of the ANCHOR car (Meu roteiro — TASK-RF-006.5): emits the RAW
+      dropped coordinate; the caller street-projects it (map matching stays
+      outside, as in the reducer) and re-anchors draft or committed stop. */
+  onAnchorDragEnd?: (latlng: LatLng) => void;
   /** Roteiro decorations, drawn on their OWN layer (TASK-RF-006.3/.4): start
       marker, dashed suggestion line, the draft's dashed radius circle (real
       meters, centered on the seed) and its provisional anchor. */
@@ -155,6 +159,7 @@ export const RouteMap: React.FC<Props> = ({
   onModelTap,
   onModelExpand,
   onStartTap,
+  onAnchorDragEnd,
   roteiroOverlay,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -174,6 +179,7 @@ export const RouteMap: React.FC<Props> = ({
   const onModelTapRef = useRef<((model: MarkerModel) => void) | undefined>(undefined);
   const onModelExpandRef = useRef<((model: MarkerModel) => void) | undefined>(undefined);
   const onStartTapRef = useRef<(() => void) | undefined>(undefined);
+  const onAnchorDragEndRef = useRef<((latlng: LatLng) => void) | undefined>(undefined);
   /** Pending single-tap timer (RF-006.4.8/.4.10): a double-tap clears it before
       it fires, so the single-tap action doesn't run (nor recreate the markers). */
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -189,6 +195,7 @@ export const RouteMap: React.FC<Props> = ({
     onModelTapRef.current = onModelTap;
     onModelExpandRef.current = onModelExpand;
     onStartTapRef.current = onStartTap;
+    onAnchorDragEndRef.current = onAnchorDragEnd;
     interactionRef.current = interaction;
   });
   const stops = useMemo(() => groupRowsByStop(rows), [rows]);
@@ -490,11 +497,12 @@ export const RouteMap: React.FC<Props> = ({
         props so the zoom rescale rebuilds the right icon — including the anchor
         mode (otherwise the car would "walk" on zoom). */
     const overlayMarkers: { marker: L.Marker; iconProps: Parameters<typeof createMarkerDivIcon>[0]; lastScale: number }[] = [];
-    const addOverlayMarker = (lat: number, lng: number, iconProps: Parameters<typeof createMarkerDivIcon>[0], zIndexOffset: number): L.Marker => {
+    const addOverlayMarker = (lat: number, lng: number, iconProps: Parameters<typeof createMarkerDivIcon>[0], zIndexOffset: number, options?: { draggable?: boolean }): L.Marker => {
       const creationScale = scaleForZoom(safeZoom());
       const marker = L.marker([lat, lng], {
         icon: createMarkerDivIcon({ ...iconProps, scale: creationScale }),
         zIndexOffset,
+        ...options,
       });
       marker.addTo(overlayLayer);
       overlayMarkers.push({ marker, iconProps, lastScale: creationScale });
@@ -510,7 +518,16 @@ export const RouteMap: React.FC<Props> = ({
       // (and redraw the overlay) whenever the handler identity changes.
       startMarker.on("click", () => onStartTapRef.current?.());
     }
-    if (anchorLat !== undefined && anchorLng !== undefined) addOverlayMarker(anchorLat, anchorLng, VEHICLE_ICON_PROPS, Z_VEHICLE);
+    if (anchorLat !== undefined && anchorLng !== undefined) {
+      // The anchor car is DRAGGABLE (TASK-RF-006.5): Leaflet pauses the map pan
+      // during a marker drag by itself — the drag×pan risk the épico flagged.
+      // The dropped coordinate goes out RAW; the caller street-projects it.
+      const anchorMarker = addOverlayMarker(anchorLat, anchorLng, VEHICLE_ICON_PROPS, Z_VEHICLE, { draggable: true });
+      anchorMarker.on("dragend", () => {
+        const position = anchorMarker.getLatLng();
+        onAnchorDragEndRef.current?.({ lat: position.lat, lng: position.lng });
+      });
+    }
 
     // Dashed radius circle (tela 9, spec §3): real meters, centered on the SEED.
     if (radiusCircle) {

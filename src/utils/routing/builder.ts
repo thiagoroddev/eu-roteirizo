@@ -56,6 +56,7 @@ export interface RouteBuilderState {
 
 export type RouteBuilderAction =
   | { type: "SET_START"; position: LatLng }
+  | { type: "CLEAR_START" }
   | { type: "SET_NEXT_SUGGESTION"; pointId: string | null }
   | { type: "OPEN_STOP_DRAFT"; seedPointId: string; suggestedVehicleStop: LatLng }
   | { type: "CREATE_STOP"; seedPointId: string; memberIds: string[]; vehicleStop: LatLng; radiusMeters: number }
@@ -65,6 +66,9 @@ export type RouteBuilderAction =
   | { type: "MOVE_VEHICLE_STOP"; position: LatLng }
   | { type: "MAKE_POINT_ANCHOR"; pointId: string }
   | { type: "RESET_VEHICLE_STOP"; suggestedVehicleStop: LatLng }
+  | { type: "MOVE_STOP_ANCHOR"; stopId: string; position: LatLng }
+  | { type: "MAKE_STOP_POINT_ANCHOR"; stopId: string; pointId: string }
+  | { type: "RESET_STOP_ANCHOR"; stopId: string; suggestedVehicleStop: LatLng }
   | { type: "REORDER_DRAFT_POINT"; pointId: string; toIndex: number }
   | { type: "REVERSE_DRAFT_ORDER" }
   | { type: "COMMIT_STOP" }
@@ -119,6 +123,13 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
   switch (action.type) {
     case "SET_START":
       return { ...state, startPoint: action.position };
+
+    /** "Apagar início" (TASK-RF-006.14): drops the start entirely — its marker
+     *  disappears and the panel returns to the definition flow. Every origin
+     *  selector already degrades without a start (suggestion falls back to the
+     *  last stop, then null), so no cleanup is needed here. */
+    case "CLEAR_START":
+      return { ...state, startPoint: null };
 
     case "SET_NEXT_SUGGESTION":
       return { ...state, nextSuggestionOverride: action.pointId };
@@ -211,6 +222,46 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
       if (!state.draft) return state;
       const reset: StopDraft = { ...state.draft, vehicleStop: action.suggestedVehicleStop, vehicleStopIsDefault: true };
       return { ...state, draft: resweepDraft(state, reset) };
+    }
+
+    /** Anchor gestures on a COMMITTED stop (TASK-RF-006.5 — fluxo §9): moving
+     *  the anchor of a firmed stop is a light gesture, no REOPEN required. Each
+     *  one re-sweeps that stop's walking order from the new anchor (§6) — the
+     *  reducer stays the single place where order and anchor agree. As always,
+     *  map matching happens OUTSIDE (`position`/`suggestedVehicleStop` arrive
+     *  already street-projected); a stop being edited (draft open over it) is
+     *  left alone — the draft owns it until commit/cancel. */
+    case "MOVE_STOP_ANCHOR": {
+      if (state.draft?.stopId === action.stopId) return state;
+      return {
+        ...state,
+        stops: state.stops.map((stop) =>
+          stop.id === action.stopId ? { ...stop, vehicleStop: action.position, pointIds: sweepWalkingOrder(action.position, draftPoints(state, stop.pointIds)) } : stop
+        ),
+      };
+    }
+
+    case "MAKE_STOP_POINT_ANCHOR": {
+      if (state.draft?.stopId === action.stopId) return state;
+      const stop = state.stops.find((s) => s.id === action.stopId);
+      const point = state.points.find((p) => p.id === action.pointId);
+      /** Only a MEMBER can become the anchor (same rule as the draft's). */
+      if (!stop || !point || !stop.pointIds.includes(point.id)) return state;
+      const position: LatLng = { lat: point.lat, lng: point.lng };
+      return {
+        ...state,
+        stops: state.stops.map((s) => (s.id === action.stopId ? { ...s, vehicleStop: position, pointIds: sweepWalkingOrder(position, draftPoints(state, s.pointIds)) } : s)),
+      };
+    }
+
+    case "RESET_STOP_ANCHOR": {
+      if (state.draft?.stopId === action.stopId) return state;
+      return {
+        ...state,
+        stops: state.stops.map((stop) =>
+          stop.id === action.stopId ? { ...stop, vehicleStop: action.suggestedVehicleStop, pointIds: sweepWalkingOrder(action.suggestedVehicleStop, draftPoints(state, stop.pointIds)) } : stop
+        ),
+      };
     }
 
     case "REORDER_DRAFT_POINT": {

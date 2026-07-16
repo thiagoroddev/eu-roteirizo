@@ -48,15 +48,16 @@ export const SuggestedStopSection = ({ suggestion, onShowOnMap, onCreate, divide
     }
   >
     {/* Vehicle leg on its OWN line (smoke 15/07: beside the label it truncated
-        — "63 m (li…"). The car icon still qualifies the distance. */}
+        — "63 m (li…"). The car icon still qualifies the distance. pb-1.5 keeps
+        the label→distance→card rhythm even with the overview rows. */}
     {suggestion.vehicleDistanceLabel && (
-      <p className="flex items-center gap-1 px-4 pb-1 text-xs text-muted-foreground">
+      <p className="flex items-center gap-1 px-4 pb-1.5 text-xs text-muted-foreground">
         <span>{suggestion.vehicleDistanceLabel}</span>
         <Car className="h-3.5 w-3.5 shrink-0" aria-hidden />
         <span className="sr-only">{POINT.VEHICLE_QUALIFIER}</span>
       </p>
     )}
-    <div className="px-4 pb-2">
+    <div className="px-4 pb-2.5">
       <Card className="shadow-none">
         <CardContent className="flex items-center gap-2 p-3">
           <span className="min-w-0 flex-1">

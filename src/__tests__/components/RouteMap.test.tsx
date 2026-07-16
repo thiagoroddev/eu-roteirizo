@@ -41,6 +41,8 @@ const markerMethods = {
   // (TASK-RF-023.4). If RouteMap ever calls them again, TypeError = regression.
   on: vi.fn(),
   setIcon: vi.fn().mockReturnThis(),
+  /** Where the anchor "lands" after a drag (RF-006.5) — the dragend handler reads it. */
+  getLatLng: vi.fn(() => ({ lat: -22.5, lng: -43.5 })),
 };
 
 vi.mock("leaflet", () => ({
@@ -440,6 +442,27 @@ describe("RouteMap (controlled embedded map)", () => {
     expect(L.circle).toHaveBeenCalledWith([-22.94, -43.18], expect.objectContaining({ radius: 40, dashArray: "6 8" }));
     // The anchor uses the SAME vehicle icon as the route start (decision 08/07).
     expect(L.marker).toHaveBeenCalledWith([-22.941, -43.181], expect.anything());
+  });
+
+  it("the anchor car is DRAGGABLE; dragend emits the dropped coordinate (RF-006.5)", () => {
+    const onAnchorDragEnd = vi.fn();
+    renderRouteMap(mockRowsWithCoordinates, {
+      models: externalModels,
+      onAnchorDragEnd,
+      roteiroOverlay: { start: null, suggestionPath: null, anchor: { lat: -22.941, lng: -43.181 } },
+    });
+
+    // The anchor marker asks Leaflet for the drag (Leaflet pauses the map pan
+    // by itself during a marker drag).
+    expect(
+      (L.marker as ReturnType<typeof vi.fn>).mock.calls.some(([latlng, options]) => Array.isArray(latlng) && latlng[0] === -22.941 && (options as { draggable?: boolean })?.draggable === true)
+    ).toBe(true);
+
+    const dragends = markerMethods.on.mock.calls.filter(([event]) => event === "dragend");
+    expect(dragends.length).toBeGreaterThan(0);
+    (dragends[dragends.length - 1][1] as () => void)();
+    // RAW coordinate out (the mock's getLatLng): street projection is the caller's.
+    expect(onAnchorDragEnd).toHaveBeenCalledWith({ lat: -22.5, lng: -43.5 });
   });
 
   it("does NOT refit when the models change identity with the same keys (candidate toggles)", () => {
