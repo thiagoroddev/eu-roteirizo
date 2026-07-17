@@ -19,7 +19,7 @@
 import type { DeliveryPoint, LatLng, PlannedRoute, RouteStop, RoutingConfig } from "../../types/routing";
 import { DEFAULT_ROUTING_CONFIG } from "../../types/routing";
 import { haversine } from "./geo";
-import { sweepWalkingOrder } from "./walkOrder";
+import { nearestFirstOrder } from "./walkOrder";
 import { indexPointsById, pointsWithinRadius, unassignedPoints } from "./selectors";
 
 /** The stop being created or edited (rendered faded on the map — fluxo §4). */
@@ -33,11 +33,13 @@ export interface StopDraft {
   radiusMeters: number;
   vehicleStop: LatLng;
   /** False after move/make-anchor; true again after reset. While true, the
-   *  caller may silently re-project the anchor when the road graph arrives. */
+   *  caller may silently re-project the anchor when the road graph arrives.
+   *  Also gates the "Resetar âncora" button (RF-006.6). */
   vehicleStopIsDefault: boolean;
-  /** True after a manual reorder/reverse; cleared whenever the anchor moves
-   *  (moving always re-sweeps the walking order — fluxo §6). */
-  orderIsManual: boolean;
+  /** Walking SENSE (RF-006.6): false = clockwise sweep, true = counter-clockwise.
+   *  A property, not an act — every re-sweep (anchor moved/made/reset, member
+   *  added or removed) preserves it. There is no manual ordering. */
+  reversed: boolean;
 }
 
 export interface RouteBuilderState {
@@ -66,10 +68,6 @@ export type RouteBuilderAction =
   | { type: "MOVE_VEHICLE_STOP"; position: LatLng }
   | { type: "MAKE_POINT_ANCHOR"; pointId: string }
   | { type: "RESET_VEHICLE_STOP"; suggestedVehicleStop: LatLng }
-  | { type: "MOVE_STOP_ANCHOR"; stopId: string; position: LatLng }
-  | { type: "MAKE_STOP_POINT_ANCHOR"; stopId: string; pointId: string }
-  | { type: "RESET_STOP_ANCHOR"; stopId: string; suggestedVehicleStop: LatLng }
-  | { type: "REORDER_DRAFT_POINT"; pointId: string; toIndex: number }
   | { type: "REVERSE_DRAFT_ORDER" }
   | { type: "COMMIT_STOP" }
   | { type: "CANCEL_DRAFT" }
@@ -112,11 +110,19 @@ const draftPoints = (state: RouteBuilderState, pointIds: string[]): DeliveryPoin
   return pointIds.map((id) => byId.get(id)).filter((p): p is DeliveryPoint => p !== undefined);
 };
 
-/** Re-sweeps the draft's walking order from its (possibly new) anchor. */
+/**
+ * The walking order of a set of points around an anchor, honoring the SENSE
+ * (RF-006.6/.17): the NEAREST address to the anchor is 1st and `reversed` picks
+ * the sweep sense (see `nearestFirstOrder`). Every order in this reducer goes
+ * through here — the order is DERIVED, always (anchor + sense are its only two
+ * inputs; there is no manual reordering).
+ */
+const sweepWithSense = (anchor: LatLng, points: DeliveryPoint[], reversed: boolean): string[] => nearestFirstOrder(anchor, points, reversed);
+
+/** Re-sweeps the draft's walking order from its (possibly new) anchor, keeping the sense. */
 const resweepDraft = (state: RouteBuilderState, draft: StopDraft): StopDraft => ({
   ...draft,
-  pointIds: sweepWalkingOrder(draft.vehicleStop, draftPoints(state, draft.pointIds)),
-  orderIsManual: false,
+  pointIds: sweepWithSense(draft.vehicleStop, draftPoints(state, draft.pointIds), draft.reversed),
 });
 
 export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuilderAction): RouteBuilderState => {
@@ -145,7 +151,7 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
         radiusMeters: state.config.autoRadiusMeters,
         vehicleStop: action.suggestedVehicleStop,
         vehicleStopIsDefault: true,
-        orderIsManual: false,
+        reversed: false,
       };
       return { ...state, draft };
     }
@@ -163,8 +169,11 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
       const byId = indexPointsById(state.points);
       /** Seed first, then the radius members; de-duped and filtered to free, known points. */
       const memberIds = [seed.id, ...action.memberIds].filter((id, i, arr) => arr.indexOf(id) === i && byId.has(id) && !assigned.has(id));
-      const pointIds = sweepWalkingOrder(action.vehicleStop, draftPoints(state, memberIds));
-      const committed: RouteStop = { id: stopId, order: 0, vehicleStop: action.vehicleStop, pointIds, radiusMeters: Math.max(0, action.radiusMeters) };
+      const pointIds = sweepWithSense(action.vehicleStop, draftPoints(state, memberIds), false);
+      /** Born clockwise and at the DEFAULT anchor: the caller passes the
+       *  `defaultAnchorSeed` projection, so "Resetar âncora" stays hidden until
+       *  the user actually moves it (RF-006.6). */
+      const committed: RouteStop = { id: stopId, order: 0, vehicleStop: action.vehicleStop, pointIds, radiusMeters: Math.max(0, action.radiusMeters), reversed: false, vehicleStopIsDefault: true };
       return { ...state, stops: normalizeOrders([...state.stops, committed]), nextSuggestionOverride: null };
     }
 
@@ -178,9 +187,12 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
         pointIds: stop.pointIds,
         radiusMeters: stop.radiusMeters,
         vehicleStop: stop.vehicleStop,
-        /** The stored anchor may have been moved by the user — never re-project it. */
-        vehicleStopIsDefault: false,
-        orderIsManual: false,
+        /** The stop's own flags carry into the edit (RF-006.6): the sense and
+         *  whether the anchor is still the default belong to the STOP, so the
+         *  draft must not invent them (it used to force `false`, which hid the
+         *  reset button's condition and dropped the sense on the next sweep). */
+        vehicleStopIsDefault: stop.vehicleStopIsDefault ?? true,
+        reversed: stop.reversed ?? false,
       };
       return { ...state, draft };
     }
@@ -198,9 +210,9 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
       }
       const point = state.points.find((p) => p.id === action.pointId);
       if (!point || idsAssignedElsewhere(state.stops, draft.stopId).has(point.id)) return state;
-      const grown = { ...draft, pointIds: [...draft.pointIds, point.id] };
-      /** A manual order is respected (append); otherwise keep the default sweep. */
-      return { ...state, draft: grown.orderIsManual ? grown : resweepDraft(state, grown) };
+      /** The order is always derived: a new member takes its place in the sweep
+       *  (RF-006.6 — the old "append when manual" branch died with manual order). */
+      return { ...state, draft: resweepDraft(state, { ...draft, pointIds: [...draft.pointIds, point.id] }) };
     }
 
     case "MOVE_VEHICLE_STOP": {
@@ -224,60 +236,18 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
       return { ...state, draft: resweepDraft(state, reset) };
     }
 
-    /** Anchor gestures on a COMMITTED stop (TASK-RF-006.5 — fluxo §9): moving
-     *  the anchor of a firmed stop is a light gesture, no REOPEN required. Each
-     *  one re-sweeps that stop's walking order from the new anchor (§6) — the
-     *  reducer stays the single place where order and anchor agree. As always,
-     *  map matching happens OUTSIDE (`position`/`suggestedVehicleStop` arrive
-     *  already street-projected); a stop being edited (draft open over it) is
-     *  left alone — the draft owns it until commit/cancel. */
-    case "MOVE_STOP_ANCHOR": {
-      if (state.draft?.stopId === action.stopId) return state;
-      return {
-        ...state,
-        stops: state.stops.map((stop) =>
-          stop.id === action.stopId ? { ...stop, vehicleStop: action.position, pointIds: sweepWalkingOrder(action.position, draftPoints(state, stop.pointIds)) } : stop
-        ),
-      };
-    }
-
-    case "MAKE_STOP_POINT_ANCHOR": {
-      if (state.draft?.stopId === action.stopId) return state;
-      const stop = state.stops.find((s) => s.id === action.stopId);
-      const point = state.points.find((p) => p.id === action.pointId);
-      /** Only a MEMBER can become the anchor (same rule as the draft's). */
-      if (!stop || !point || !stop.pointIds.includes(point.id)) return state;
-      const position: LatLng = { lat: point.lat, lng: point.lng };
-      return {
-        ...state,
-        stops: state.stops.map((s) => (s.id === action.stopId ? { ...s, vehicleStop: position, pointIds: sweepWalkingOrder(position, draftPoints(state, s.pointIds)) } : s)),
-      };
-    }
-
-    case "RESET_STOP_ANCHOR": {
-      if (state.draft?.stopId === action.stopId) return state;
-      return {
-        ...state,
-        stops: state.stops.map((stop) =>
-          stop.id === action.stopId ? { ...stop, vehicleStop: action.suggestedVehicleStop, pointIds: sweepWalkingOrder(action.suggestedVehicleStop, draftPoints(state, stop.pointIds)) } : stop
-        ),
-      };
-    }
-
-    case "REORDER_DRAFT_POINT": {
-      const { draft } = state;
-      if (!draft) return state;
-      const from = draft.pointIds.indexOf(action.pointId);
-      if (from === -1) return state;
-      const to = Math.max(0, Math.min(draft.pointIds.length - 1, action.toIndex));
-      const pointIds = [...draft.pointIds];
-      pointIds.splice(to, 0, ...pointIds.splice(from, 1));
-      return { ...state, draft: { ...draft, pointIds, orderIsManual: true } };
-    }
-
+    /** "Inverter ordem" (RF-006.6/.17): flips the walking SENSE. It RE-SWEEPS
+     *  with the toggled flag — a plain array reverse would drop the nearest
+     *  address from 1st, which the nearest-first order must keep (RF-006.17).
+     *  The flag is what makes the sense survive the next anchor move.
+     *
+     *  Anchor editing (move/make-anchor/reset/reverse) lives ONLY in the draft
+     *  (TASK-RF-006.15 — "editar = reabrir como rascunho"): the committed-stop
+     *  variants of these actions were removed. A firmed stop is read-only until
+     *  reopened. */
     case "REVERSE_DRAFT_ORDER": {
       if (!state.draft) return state;
-      return { ...state, draft: { ...state.draft, pointIds: [...state.draft.pointIds].reverse(), orderIsManual: true } };
+      return { ...state, draft: resweepDraft(state, { ...state.draft, reversed: !state.draft.reversed }) };
     }
 
     case "COMMIT_STOP": {
@@ -293,6 +263,9 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
         vehicleStop: draft.vehicleStop,
         pointIds,
         radiusMeters: draft.radiusMeters,
+        /** The sense and the anchor's default-ness belong to the STOP (RF-006.6). */
+        reversed: draft.reversed,
+        vehicleStopIsDefault: draft.vehicleStopIsDefault,
       };
       const existingIndex = state.stops.findIndex((s) => s.id === draft.stopId);
       const stops = existingIndex === -1 ? [...state.stops, committed] : state.stops.map((s, i) => (i === existingIndex ? committed : s));
@@ -316,16 +289,21 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
       if (!stop || !point) return state;
       if (idsAssignedElsewhere(state.stops, null).has(point.id)) return state;
       if (state.draft?.pointIds.includes(point.id)) return state;
-      /** Incorporating an orphan re-sweeps that stop's walking order (fluxo §6). */
-      const pointIds = sweepWalkingOrder(stop.vehicleStop, draftPoints(state, [...stop.pointIds, point.id]));
+      /** Incorporating an orphan re-sweeps that stop's walking order, keeping
+       *  its sense (fluxo §6; RF-006.6). The anchor does NOT move (§9). */
+      const pointIds = sweepWithSense(stop.vehicleStop, draftPoints(state, [...stop.pointIds, point.id]), stop.reversed ?? false);
       const stops = state.stops.map((s) => (s.id === stop.id ? { ...s, pointIds } : s));
       return { ...state, stops };
     }
 
     case "HYDRATE": {
       const byId = indexPointsById(state.points);
-      /** Defensive: drop ids the current spreadsheet doesn't have, then empty stops. */
-      const stops = action.route.stops.map((s) => ({ ...s, pointIds: s.pointIds.filter((id) => byId.has(id)) })).filter((s) => s.pointIds.length > 0);
+      /** Defensive: drop ids the current spreadsheet doesn't have, then empty
+       *  stops. Fields added later default here (RF-006.6): routes saved before
+       *  the sense/default-anchor flags read as clockwise, anchor-as-the-app-put-it. */
+      const stops = action.route.stops
+        .map((s) => ({ ...s, pointIds: s.pointIds.filter((id) => byId.has(id)), reversed: s.reversed ?? false, vehicleStopIsDefault: s.vehicleStopIsDefault ?? true }))
+        .filter((s) => s.pointIds.length > 0);
       return {
         ...state,
         routeId: action.route.id,
@@ -391,6 +369,22 @@ export const farChosenPointIds = (state: RouteBuilderState): string[] => {
  * last stop's anchor, else the start point). Null before a start is chosen.
  */
 export const suggestionOrigin = (state: RouteBuilderState): LatLng | null => state.draft?.vehicleStop ?? (state.stops.length > 0 ? state.stops[state.stops.length - 1].vehicleStop : state.startPoint);
+
+/**
+ * Where the vehicle COMES FROM for a given stop (TASK-RF-006.6): the anchor of
+ * the stop before it in the route, or the start point for the first one. Feeds
+ * `defaultAnchorSeed` — the default anchor is the stop's address nearest to
+ * this origin. Null when there is no previous stop and no start yet.
+ *
+ * @param stopId - A committed stop's id; an id being drafted (or unknown, i.e.
+ *                 a stop not yet created) falls back to the LAST stop's anchor,
+ *                 which is where the vehicle would arrive from.
+ */
+export const previousAnchorOrigin = (state: RouteBuilderState, stopId: string | null): LatLng | null => {
+  const index = stopId !== null ? state.stops.findIndex((s) => s.id === stopId) : -1;
+  if (index === -1) return state.stops.length > 0 ? state.stops[state.stops.length - 1].vehicleStop : state.startPoint;
+  return index === 0 ? state.startPoint : state.stops[index - 1].vehicleStop;
+};
 
 /**
  * The point the next-stop suggestion should target (fluxo §4 passo 2): a valid

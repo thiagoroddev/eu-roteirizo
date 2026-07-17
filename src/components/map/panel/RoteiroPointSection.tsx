@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { PanelSection } from "./PanelSection";
 import { PanelTitle, type PanelMetric } from "./PanelTitle";
 import { RadiusStepper } from "./RoteiroDraftSection";
-import { StopItemRow } from "./StopItem";
+import { StopItemRow, StopItemDetail } from "./StopItem";
 import type { StopItemData } from "../../../utils/markers/panelModels";
 import { UI_LABELS } from "../../../constants/uiLabels";
 
@@ -137,6 +137,10 @@ export const RoteiroPointSection = ({
             </div>
           )}
         </div>
+        {/* Its packages drill down RIGHT HERE (RF-006.15 bug fix): the detail
+            used to render in the panel body, AFTER "Prévia de parada" — visually
+            divorced from the address it belongs to. */}
+        {expanded && <StopItemDetail item={item} />}
       </PanelSection>
 
       {/* 3ª seção — "Prévia de parada" (renomeada 10/07; era "Parada sugerida",

@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { MapPin } from "lucide-react";
 
 import { RouteMap } from "../components/RouteMap";
+import { MapToast } from "../components/map/MapToast";
 import { Button } from "../components/ui/button";
 import { MapModeToggle, MODE_QUERY_PARAM, MODE_QUERY_ROTEIRO, type MapMode } from "../components/map/MapModeToggle";
 import { MapPanel, PANEL_COLLAPSED_PX, type PanelSnap } from "../components/map/panel/MapPanel";
@@ -20,6 +21,7 @@ import { SuggestedStopSection, type SuggestedStopView } from "../components/map/
 import type { PanelMetric } from "../components/map/panel/PanelTitle";
 import { StopItemList } from "../components/map/panel/StopItemList";
 import { StopItemRow, StopItemDetail } from "../components/map/panel/StopItem";
+import { useTransientMessage } from "../hooks/useTransientMessage";
 import { useManifestFromUrl } from "../hooks/useManifestFromUrl";
 import { useRouteBuilder } from "../hooks/useRouteBuilder";
 import { useRoadGraph } from "../hooks/useRoadGraph";
@@ -38,14 +40,24 @@ import {
   orderedStopPoints,
 } from "../utils/markers/roteiroModels";
 import { buildDeliveryPoints } from "../utils/routing/points";
-import { suggestedNextPointId, suggestionOrigin, draftCandidateIds, farChosenPointIds, isComplete, toPlannedRoute, FAR_POINT_RADIUS_FACTOR, FAR_POINT_MIN_METERS } from "../utils/routing/builder";
+import {
+  suggestedNextPointId,
+  suggestionOrigin,
+  previousAnchorOrigin,
+  draftCandidateIds,
+  farChosenPointIds,
+  isComplete,
+  toPlannedRoute,
+  FAR_POINT_RADIUS_FACTOR,
+  FAR_POINT_MIN_METERS,
+} from "../utils/routing/builder";
 import { getRoteiro, saveRoteiro, deleteRoteiro } from "../services/routeStorage";
 import { routeProgress, nextStopSuggestion } from "../utils/routing/overview";
 import { stopWalkEstimate, plannedRouteTotals } from "../utils/routing/estimates";
 import { assignedPointIds, pointsWithinRadius } from "../utils/routing/selectors";
 import { indexPointsById, nearestStopTo } from "../utils/routing/selectors";
-import { suggestVehicleStop } from "../utils/routing/vehicleStop";
-import { sweepWalkingOrder } from "../utils/routing/walkOrder";
+import { suggestVehicleStop, defaultAnchorSeed } from "../utils/routing/vehicleStop";
+import { nearestFirstOrder } from "../utils/routing/walkOrder";
 import { pedestrianGraph } from "../utils/routing/pedestrian";
 import { suggestionPath } from "../utils/routing/suggestion";
 import { haversine } from "../utils/routing/geo";
@@ -227,6 +239,8 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   /** The selected member of the expanded stop (RF-006.4.16) — tapping a member
       picks it; null = the anchor (1st). Cleared with the expansion. */
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  /** "Paradas reordenadas" toast when a vehicle move re-sweeps the order (RF-006.17). */
+  const [reorderNotice, showReorderNotice] = useTransientMessage();
   /** The START selected by tapping its map marker (RF-006.11): the panel shows
       "parada 0" + the redefine action. Cleared by any other selection. */
   const [startSelected, setStartSelected] = useState(false);
@@ -541,13 +555,14 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       focuses that grouped stop. Radius was tuned in the preview; further edits
       go through "Editar parada" (REOPEN). Reverses §8 (candidates by choice). */
   const handleCreateStop = () => {
-    if (!selectedPoint) return;
+    if (!selectedPoint || !suggestedAnchor) return;
     const stopId = `stop_${selectedPoint.id}`;
     dispatch({
       type: "CREATE_STOP",
       seedPointId: selectedPoint.id,
       memberIds: previewCandidateIds,
-      vehicleStop: suggestVehicleStop(graph, selectedPoint),
+      // The DEFAULT anchor (RF-006.6) — exactly what the preview showed.
+      vehicleStop: suggestedAnchor,
       radiusMeters: previewRadiusMeters,
     });
     setSelectedPointId(null);
@@ -611,21 +626,30 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
     dispatch({ type: "TOGGLE_DRAFT_POINT", pointId: draftSelectedPoint.id });
   };
 
-  // ADR-009 decision C: while the draft's anchor is still the DEFAULT
-  // suggestion, re-project it onto the street as soon as the graph arrives.
-  // User-moved anchors are never overwritten (vehicleStopIsDefault false).
-  // NOTE (RF-006.4.6): since "Criar parada" now COMMITS (no create-draft) and
-  // the only remaining draft path is REOPEN (which sets default=false), this
-  // effect is currently inert — create-time snapping via suggestVehicleStop
-  // covers the graph-ready case. It stays for when .5 (anchor gestures) brings
-  // back default-anchor drafts. Offline-created anchors are provisional until then.
-  const draftSeedId = draft?.seedPointId;
+  /**
+   * ADR-009 decision C: while the draft's anchor is still the DEFAULT one, keep
+   * it ON the default — re-projected as soon as the graph arrives (a stop
+   * created offline holds a raw coordinate until then), and re-seeded when the
+   * membership changes (the default IS "the member nearest to where the vehicle
+   * comes from", so it moves with the members — RF-006.6). A user-moved anchor
+   * is never touched (`vehicleStopIsDefault` false), and the equality guard
+   * keeps this from dispatching when the anchor already sits where it belongs.
+   *
+   * ⚠️ No longer inert (RF-006.6): REOPEN_STOP now CARRIES the stop's flag
+   * instead of forcing `false`, so reopening a default-anchored stop lands here.
+   */
   const draftAnchorIsDefault = draft?.vehicleStopIsDefault ?? false;
+  const draftPointsSignature = draft?.pointIds.join("|") ?? "";
   useEffect(() => {
-    if (!graph || !draftAnchorIsDefault || !draftSeedId) return;
-    const seed = pointsById.get(draftSeedId);
-    if (seed) dispatch({ type: "RESET_VEHICLE_STOP", suggestedVehicleStop: suggestVehicleStop(graph, seed) });
-  }, [graph, draftAnchorIsDefault, draftSeedId, pointsById, dispatch]);
+    if (!graph || !draftAnchorIsDefault || !draft) return;
+    const members = draft.pointIds.map((id) => pointsById.get(id)).filter((p): p is DeliveryPoint => p !== undefined);
+    const seed = defaultAnchorSeed(members, previousAnchorOrigin(builderState, draft.stopId));
+    if (!seed) return;
+    const projected = suggestVehicleStop(graph, seed);
+    if (projected.lat === draft.vehicleStop.lat && projected.lng === draft.vehicleStop.lng) return;
+    dispatch({ type: "RESET_VEHICLE_STOP", suggestedVehicleStop: projected });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires on graph arrival / membership change; the default flag + the equality guard above stop it from looping
+  }, [graph, draftAnchorIsDefault, draftPointsSignature, pointsById, dispatch]);
 
   const handleConfirmPoint = () => {
     if (!pendingPoint) return;
@@ -649,8 +673,10 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   // line — the SuggestedStopCard carries that now).
   const suggestion = useMemo(() => (origin && suggestedPoint ? suggestionPath(pedGraph, origin, { lat: suggestedPoint.lat, lng: suggestedPoint.lng }) : null), [pedGraph, origin, suggestedPoint]);
 
-  const draftSeed = draftSeedId !== undefined ? (pointsById.get(draftSeedId) ?? null) : null;
-  /** The stop shown UNGROUPED on the map — its anchor car renders and drags (RF-006.5). */
+  /** The draft's SEED — the tapped address the radius circle is centered on. */
+  const draftSeed = draft ? (pointsById.get(draft.seedPointId) ?? null) : null;
+  /** The firmed stop shown UNGROUPED on the map (double-tapped): its car shows
+      too (RF-006.16 — where the vehicle parks), but it doesn't drag. */
   const expandedStop = expandedRoteiroStopId !== null ? (builderState.stops.find((s) => s.id === expandedRoteiroStopId) ?? null) : null;
   const roteiroOverlay = useMemo(
     () => ({
@@ -663,49 +689,46 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
           : selectedPoint
             ? { center: { lat: selectedPoint.lat, lng: selectedPoint.lng }, meters: previewRadiusMeters }
             : null,
-      // The anchor car: the draft's, or the EXPANDED committed stop's (RF-006.5
-      // — spec §5: the expanded stop shows its vehicle; grouped stops don't
-      // need it, the square already sits on the anchor).
+      // The car shows for the draft OR an expanded firmed stop (RF-006.16); it
+      // only DRAGS in the draft (editing is the only place the anchor moves).
       anchor: draft?.vehicleStop ?? expandedStop?.vehicleStop ?? null,
+      anchorDraggable: draft !== null,
     }),
     [builderState.startPoint, previewRadiusMeters, suggestion, draft, draftSeed, selectedPoint, expandedStop]
   );
 
   /** Anchor drag (RF-006.5): street-project the dropped point (map matching
       lives OUTSIDE the reducer — nearestEdge via suggestVehicleStop; raw point
-      without a graph) and re-anchor whoever owns the car: draft or firmed stop. */
+      without a graph) and move the DRAFT's anchor. Anchor editing lives only in
+      the draft now (RF-006.15) — a firmed stop's car isn't draggable. */
   const handleAnchorDragEnd = (latlng: LatLng) => {
+    if (!draft) return;
     const position = suggestVehicleStop(graph, latlng);
-    if (draft) {
-      dispatch({ type: "MOVE_VEHICLE_STOP", position });
-      return;
+    // Moving the vehicle RE-SWEEPS (nearest-first — RF-006.17); if the order
+    // actually changed, flag it so the user isn't surprised. Projected here with
+    // the SAME function the reducer uses, so the notice matches the outcome.
+    const members = draft.pointIds.map((id) => pointsById.get(id)).filter((p): p is DeliveryPoint => p !== undefined);
+    const reordered = nearestFirstOrder(position, members, draft.reversed);
+    dispatch({ type: "MOVE_VEHICLE_STOP", position });
+    if (draft.pointIds.length === reordered.length && draft.pointIds.some((id, i) => id !== reordered[i])) {
+      showReorderNotice(UI_LABELS.MAP_PANEL.REORDERED_NOTICE);
     }
-    if (expandedRoteiroStopId !== null) dispatch({ type: "MOVE_STOP_ANCHOR", stopId: expandedRoteiroStopId, position });
   };
+  /** The distinct vehicle car is selectable when ungrouped (RF-006.17): tapping
+      it drops the member selection, so the panel returns to the vehicle stop. */
+  const handleAnchorTap = () => setSelectedMemberId(null);
 
-  /** "Mover âncora" (RF-006.5): expands the stop on the map so its car shows —
-      the drag is the move; the panel keeps a hint while it's ungrouped. */
-  const handleMoveAnchor = () => {
-    if (!selectedStop) return;
-    setExpandedRoteiroStopId(selectedStop.id);
-    setSelectedMemberId(null);
-  };
-  /** "Resetar âncora": back to the default — in front of the SELECTED address
-      (spec §9), or the stop's first walk-order address when the anchor itself
-      is selected. Street-projected like any anchor position. */
-  const handleResetAnchor = () => {
-    if (!selectedStop) return;
-    const seed = selectedMemberPoint ?? pointsById.get(selectedStop.pointIds[0]) ?? null;
+  // ------- Anchor/sense gestures INSIDE the edit (draft — RF-006.6) -------
+  /** Same DEFAULT rule as the firmed stop's reset, over the draft's members. */
+  const handleResetDraftAnchor = () => {
+    if (!draft) return;
+    const members = draft.pointIds.map((id) => pointsById.get(id)).filter((p): p is DeliveryPoint => p !== undefined);
+    const seed = defaultAnchorSeed(members, previousAnchorOrigin(builderState, draft.stopId));
     if (!seed) return;
-    dispatch({ type: "RESET_STOP_ANCHOR", stopId: selectedStop.id, suggestedVehicleStop: suggestVehicleStop(graph, seed) });
+    dispatch({ type: "RESET_VEHICLE_STOP", suggestedVehicleStop: suggestVehicleStop(graph, seed) });
   };
-  /** "Tornar âncora" (member selected — RF-006.5): the anchor assumes the
-      address's coordinate (spec §10); the selection returns to the anchor row. */
-  const handleMakeMemberAnchor = () => {
-    if (!selectedStop || effectiveSelectedMemberId === null) return;
-    dispatch({ type: "MAKE_STOP_POINT_ANCHOR", stopId: selectedStop.id, pointId: effectiveSelectedMemberId });
-    setSelectedMemberId(null);
-  };
+  const handleReverseDraftOrder = () => dispatch({ type: "REVERSE_DRAFT_ORDER" });
+  const handleMakeDraftAnchor = (pointId: string) => dispatch({ type: "MAKE_POINT_ANCHOR", pointId });
 
   // ------- Roteiro panel context (RF-006.4/.4.2) -------
   const roteiroContext: "drafting" | "stop-selected" | "point-selected" | "start-flow" = draft
@@ -733,6 +756,10 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   const candidatePoints = candidateIds.map((id) => pointsById.get(id)).filter((p): p is NonNullable<typeof p> => p !== undefined);
   const chosenItems = chosenPoints.map((point, index) => pointToStopItemData(point, { ordinal: index + 1 }));
   const candidateItems = candidatePoints.map((point) => pointToStopItemData(point));
+  /** The draft's ANCHOR row (RF-006.6) — the circuit's start AND end. Address is
+      a PLACEHOLDER (the first stop address) until the vehicle-stop geocoding
+      lands (RF-006.9), the same convention the firmed stop's row uses. */
+  const draftAnchorItem = chosenPoints[0] ? { ...pointToStopItemData(chosenPoints[0]), complement: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.NO_COMPLEMENT } : null;
   const draftPackages = chosenPoints.reduce((sum, p) => sum + p.packageCount, 0);
   /** "~min · m a pé" of the draft's walking circuit (coarse — RF-007 refines). */
   const draftEstimate = draft && chosenPoints.length > 0 ? stopWalkEstimate(draft.vehicleStop, chosenPoints, builderState.config) : null;
@@ -802,18 +829,22 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
     ...typedPackageChips(packagesByTypeFromPoints(stopPoints)),
     ...(stopEstimate ? [{ label: walkEstimateLabel(stopEstimate) }] : []),
   ];
-  /** The stop's ANCHOR row (RF-006.4.7): vehicle glyph + address WITHOUT
-      complement. The address is a PLACEHOLDER (the first stop address) until the
-      vehicle-stop geocoding lands (TASK-RF-006.9, in pendentes). */
-  const stopAnchorItem = stopPoints[0] ? { ...pointToStopItemData(stopPoints[0]), complement: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.NO_COMPLEMENT } : null;
-  /** The stop's full address list ("Ver lista completa" — RF-006.4.7), ordinals in visit order. */
+  /** The VEHICLE STOP is an INDEPENDENT entity per stop (RF-006.18): its own
+      clickable map marker + its own panel row, whether or not it coincides with
+      a delivery. The delivery it PARKS BY is the 1st (nearest to it — nearest-
+      first order), which carries the "Parada do veículo" badge. Address
+      placeholder = the 1st until geocoding (RF-006.9). */
+  const vehicleDeliveryPoint = stopPoints[0] ?? null;
+  const stopAnchorItem = vehicleDeliveryPoint ? { ...pointToStopItemData(vehicleDeliveryPoint), complement: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.NO_COMPLEMENT } : null;
+  /** The stop's full address list ("Ver parada" — RF-006.4.7), ordinals in visit order. */
   const stopListItems = stopPoints.map((point, index) => pointToStopItemData(point, { ordinal: index + 1 }));
-  /** "Endereço selecionado" of a firmed stop (RF-006.4.16): the tapped member
-      (ordinal marker, real address) when one is selected in the expanded group,
-      else the anchor (vehicle glyph, no complement). */
+  /** "Endereço selecionado" of a firmed stop (RF-006.18): with nothing tapped,
+      the VEHICLE STOP row (independent, with the quick "Editar local"); tapping
+      the 1st delivery shows it as the one the vehicle parks by (badge + packages);
+      any other tapped member is a plain address. */
   const selectedMemberIndex = effectiveSelectedMemberId ? stopPoints.findIndex((p) => p.id === effectiveSelectedMemberId) : -1;
-  const stopSelectedIsAnchor = selectedMemberIndex < 0;
-  const stopSelectedItem = stopSelectedIsAnchor ? stopAnchorItem : pointToStopItemData(stopPoints[selectedMemberIndex], { ordinal: selectedMemberIndex + 1 });
+  const stopSelectedKind: "member" | "coincident" | "vehicle" = selectedMemberIndex < 0 ? "vehicle" : selectedMemberIndex === 0 ? "coincident" : "member";
+  const stopSelectedItem = selectedMemberIndex >= 0 ? pointToStopItemData(stopPoints[selectedMemberIndex], { ordinal: selectedMemberIndex + 1 }) : stopAnchorItem;
 
   // ------- Suggested-stop preview (3ª seção do painel — RF-006.4.3/.4.4) -------
   /** How the stop WOULD look if created now: the summary aggregates the seed
@@ -822,15 +853,25 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       rule). Creating still seeds only the selected point — candidates enter by
       choice (§8, decision 26/06). */
   const suggestedOrder = builderState.stops.length + 1;
-  const suggestedAnchor = useMemo(() => (selectedPoint ? suggestVehicleStop(graph, selectedPoint) : null), [graph, selectedPoint]);
+  /** The would-be members: the tapped seed + whatever the radius circle shows. */
+  const previewMembers = useMemo(
+    () => (selectedPoint ? [selectedPoint, ...previewCandidateIds.map((id) => pointsById.get(id)).filter((p): p is DeliveryPoint => p !== undefined)] : []),
+    [selectedPoint, previewCandidateIds, pointsById]
+  );
+  /** The anchor this stop would be BORN with (RF-006.6): the member nearest to
+      where the vehicle comes from — NOT the tapped address. The preview must
+      show the same anchor `handleCreateStop` commits, or it would lie. */
+  const suggestedAnchor = useMemo(() => {
+    const seed = defaultAnchorSeed(previewMembers, previousAnchorOrigin(builderState, null));
+    return seed ? suggestVehicleStop(graph, seed) : null;
+  }, [graph, previewMembers, builderState]);
   const suggestedPoints = useMemo(() => {
-    if (!selectedPoint || !suggestedAnchor) return [];
-    const members = [selectedPoint, ...previewCandidateIds.map((id) => pointsById.get(id)).filter((p): p is NonNullable<ReturnType<typeof pointsById.get>> => p !== undefined)];
-    const byId = indexPointsById(members);
-    return sweepWalkingOrder(suggestedAnchor, members)
+    if (!suggestedAnchor || previewMembers.length === 0) return [];
+    const byId = indexPointsById(previewMembers);
+    return nearestFirstOrder(suggestedAnchor, previewMembers, false)
       .map((id) => byId.get(id))
-      .filter((p): p is NonNullable<ReturnType<typeof byId.get>> => p !== undefined);
-  }, [selectedPoint, suggestedAnchor, previewCandidateIds, pointsById]);
+      .filter((p): p is DeliveryPoint => p !== undefined);
+  }, [suggestedAnchor, previewMembers]);
   const suggestedEstimate = suggestedAnchor && suggestedPoints.length > 0 ? stopWalkEstimate(suggestedAnchor, suggestedPoints, builderState.config) : null;
   const suggestedPlace = stopPlaceSummaryFromPoints(suggestedPoints);
   const suggestedMetrics: PanelMetric[] = selectedPoint
@@ -1156,6 +1197,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
         onModelExpand={mode === "roteiro" ? handleModelExpand : undefined}
         onStartTap={mode === "roteiro" ? handleStartTap : undefined}
         onAnchorDragEnd={mode === "roteiro" ? handleAnchorDragEnd : undefined}
+        onAnchorTap={mode === "roteiro" ? handleAnchorTap : undefined}
         roteiroOverlay={mode === "roteiro" ? roteiroOverlay : undefined}
       />
 
@@ -1164,6 +1206,9 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       <div className="absolute left-1/2 top-3 z-[1100] -translate-x-1/2">
         <MapModeToggle mode={mode} onModeChange={handleModeChange} roteiroEnabled={roteiroAvailable} />
       </div>
+
+      {/* Reorder aviso (RF-006.17): floats under the toggle, auto-dismisses. */}
+      {reorderNotice && <MapToast message={reorderNotice} />}
 
       {/* Persistent bottom panel. Original: TWO views (rev. 07/07). Roteiro:
           three contexts (RF-006.4/.4.1) — start-flow (.3), point-selected
@@ -1222,17 +1267,13 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
                   zipcodes={stopPlace.zipcodes}
                   metrics={stopMetrics}
                   selectedItem={stopSelectedItem}
-                  isAnchor={stopSelectedIsAnchor}
+                  selectedKind={stopSelectedKind}
                   expanded={cardExpanded}
                   onTapCard={handleRoteiroCardTap}
                   onEdit={handleEditStop}
                   onDissolve={handleDissolveStop}
                   listOpen={panelView === "list"}
                   onToggleList={panelView === "list" ? handleHideRoteiroList : handleShowRoteiroList}
-                  onMoveAnchor={handleMoveAnchor}
-                  onResetAnchor={handleResetAnchor}
-                  onMakeMemberAnchor={handleMakeMemberAnchor}
-                  moveHintActive={expandedRoteiroStopId === selectedStop.id}
                 />
               </div>
             ) : roteiroContext === "point-selected" && selectedPointItem ? (
@@ -1295,7 +1336,16 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       >
         {mode === "roteiro" ? (
           roteiroContext === "drafting" && draft ? (
-            <RoteiroDraftBody chosen={chosenItems} candidates={candidateItems} onTogglePoint={(pointId) => dispatch({ type: "TOGGLE_DRAFT_POINT", pointId })} />
+            <RoteiroDraftBody
+              chosen={chosenItems}
+              candidates={candidateItems}
+              onTogglePoint={(pointId) => dispatch({ type: "TOGGLE_DRAFT_POINT", pointId })}
+              anchorItem={draftAnchorItem}
+              onResetAnchor={handleResetDraftAnchor}
+              onReverseOrder={handleReverseDraftOrder}
+              onMakeAnchor={handleMakeDraftAnchor}
+              anchorMoved={!draft.vehicleStopIsDefault}
+            />
           ) : panelView === "overview" ? (
             // "Ver detalhes" — the DEDICATED study panel (RF-006.8/.11): the
             // same three sections from any context, nothing else.
@@ -1319,14 +1369,10 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
               <SuggestedStopSection suggestion={overviewSuggestionView} onShowOnMap={handleShowSuggestedOnMap} onCreate={handleCreateSuggested} />
             ) : null
           ) : roteiroContext === "stop-selected" && panelView === "list" ? (
-            // "Ver lista completa" (RF-006.4.7): the stop's addresses by visit
-            // order, neon palette, expandable — panel-side only for now (the map
-            // ungroup arrives with the interaction fatia .4.8).
-            <StopItemList items={stopListItems} selectedKey={null} scrollSignal={scrollSignal} neon startKey={startAddressPoint?.id ?? null} />
-          ) : roteiroContext === "stop-selected" && cardExpanded && stopSelectedItem ? (
-            <StopItemDetail item={stopSelectedItem} />
-          ) : roteiroContext === "point-selected" && cardExpanded && selectedPointItem ? (
-            <StopItemDetail item={selectedPointItem} />
+            // "Ver parada" (RF-006.4.7): the stop's addresses by visit order; the
+            // 1st (where the vehicle parks — RF-006.18) carries the "Parada do
+            // veículo" badge.
+            <StopItemList items={stopListItems} selectedKey={null} scrollSignal={scrollSignal} neon startKey={startAddressPoint?.id ?? null} vehicleStopKey={vehicleDeliveryPoint?.id ?? null} />
           ) : null
         ) : panelView === "list" ? (
           <StopItemList

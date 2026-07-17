@@ -444,12 +444,12 @@ describe("RouteMap (controlled embedded map)", () => {
     expect(L.marker).toHaveBeenCalledWith([-22.941, -43.181], expect.anything());
   });
 
-  it("the anchor car is DRAGGABLE; dragend emits the dropped coordinate (RF-006.5)", () => {
+  it("the anchor car is DRAGGABLE only when anchorDraggable (the draft); dragend emits the dropped coordinate (RF-006.5/.16)", () => {
     const onAnchorDragEnd = vi.fn();
     renderRouteMap(mockRowsWithCoordinates, {
       models: externalModels,
       onAnchorDragEnd,
-      roteiroOverlay: { start: null, suggestionPath: null, anchor: { lat: -22.941, lng: -43.181 } },
+      roteiroOverlay: { start: null, suggestionPath: null, anchor: { lat: -22.941, lng: -43.181 }, anchorDraggable: true },
     });
 
     // The anchor marker asks Leaflet for the drag (Leaflet pauses the map pan
@@ -463,6 +463,21 @@ describe("RouteMap (controlled embedded map)", () => {
     (dragends[dragends.length - 1][1] as () => void)();
     // RAW coordinate out (the mock's getLatLng): street projection is the caller's.
     expect(onAnchorDragEnd).toHaveBeenCalledWith({ lat: -22.5, lng: -43.5 });
+  });
+
+  it("an expanded firmed stop SHOWS the anchor car but it does NOT drag (anchorDraggable false — RF-006.16)", () => {
+    const onAnchorDragEnd = vi.fn();
+    renderRouteMap(mockRowsWithCoordinates, {
+      models: externalModels,
+      onAnchorDragEnd,
+      roteiroOverlay: { start: null, suggestionPath: null, anchor: { lat: -22.941, lng: -43.181 }, anchorDraggable: false },
+    });
+
+    // Marker created NOT draggable, and no dragend handler wired.
+    expect(
+      (L.marker as ReturnType<typeof vi.fn>).mock.calls.some(([latlng, options]) => Array.isArray(latlng) && latlng[0] === -22.941 && (options as { draggable?: boolean })?.draggable === true)
+    ).toBe(false);
+    expect(markerMethods.on.mock.calls.filter(([event]) => event === "dragend").length).toBe(0);
   });
 
   it("does NOT refit when the models change identity with the same keys (candidate toggles)", () => {

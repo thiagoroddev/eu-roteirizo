@@ -48,9 +48,14 @@ interface RowProps {
   /** This address IS the route's start (RF-006.11 — "Partir deste endereço"):
       a flag in the start blue marks it beside the address line. */
   isStart?: boolean;
+  /** Show the "Parada do veículo" badge under the address (RF-006.15/.18): on the
+      vehicle row itself (with `markerGlyph="vehicle"`, no packages) AND on the
+      delivery the vehicle parks by (the 1st — keeps its ordinal + packages). The
+      vehicle stop is its own independent entity; this only flags where it parks. */
+  vehicleStop?: boolean;
 }
 
-export const StopItemRow = ({ item, onTap, leading, highlighted = false, expanded, neon = false, markerGlyph, isStart = false }: RowProps) => {
+export const StopItemRow = ({ item, onTap, leading, highlighted = false, expanded, neon = false, markerGlyph, isStart = false, vehicleStop = false }: RowProps) => {
   const typeColor = neon ? roteiroColorForLocationType(item.markerType) : colorForLocationType(item.markerType);
   const color = markerGlyph === "vehicle" ? ROTEIRO_MARKER_COLORS.vehicle : typeColor;
 
@@ -83,13 +88,26 @@ export const StopItemRow = ({ item, onTap, leading, highlighted = false, expande
             </span>
           )}
         </span>
-        {item.complement !== SHEET.NO_COMPLEMENT && <span className="block truncate text-xs text-muted-foreground">{`${SHEET.COMPLEMENT} ${item.complement}`}</span>}
+        {/* Real complement — the vehicle-only placeholder row has none. */}
+        {markerGlyph !== "vehicle" && item.complement !== SHEET.NO_COMPLEMENT && <span className="block truncate text-xs text-muted-foreground">{`${SHEET.COMPLEMENT} ${item.complement}`}</span>}
+        {/* "Parada do veículo" badge under the address (RF-006.15/.18): the vehicle
+            row AND the delivery it parks by both carry the same text badge. */}
+        {vehicleStop && (
+          <Badge variant="secondary" className="mt-0.5 gap-1 px-1.5 py-0 text-[10px] font-medium" style={{ backgroundColor: ROTEIRO_MARKER_COLORS.vehicle.bottom, color: "#FFFFFF" }}>
+            <Car className="h-3 w-3" aria-hidden />
+            {UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE}
+          </Badge>
+        )}
       </span>
-      {/* Package badge ALWAYS shows — indicating 1 or more (rev. 07/07). */}
-      <Badge variant="secondary" className="gap-1" aria-label={UI_LABELS.MAP_PANEL.METRIC_PACKAGES(item.packageCount)}>
-        <PackageGlyph />
-        {item.packageCount}
-      </Badge>
+      {/* Package badge for a delivery address (rev. 07/07). The VEHICLE STOP row
+          has no packages of its own — it's where the car parks, not a delivery —
+          so the count is hidden there (RF-006.16). */}
+      {markerGlyph !== "vehicle" && (
+        <Badge variant="secondary" className="gap-1" aria-label={UI_LABELS.MAP_PANEL.METRIC_PACKAGES(item.packageCount)}>
+          <PackageGlyph />
+          {item.packageCount}
+        </Badge>
+      )}
     </button>
   );
 };
@@ -173,9 +191,11 @@ interface Props {
   neon?: boolean;
   /** This address IS the route's start (RF-006.11) — flagged on the row. */
   isStart?: boolean;
+  /** This address is where the stop's vehicle parks (RF-006.15/.18) — "Parada do veículo" badge. */
+  vehicleStop?: boolean;
 }
 
-export const StopItem = ({ item, expanded, onTap, highlighted = false, leading, actions, trailing, scrollSignal = 0, neon = false, isStart = false }: Props) => {
+export const StopItem = ({ item, expanded, onTap, highlighted = false, leading, actions, trailing, scrollSignal = 0, neon = false, isStart = false, vehicleStop = false }: Props) => {
   const ref = useRef<HTMLLIElement>(null);
 
   // Design §5: the SELECTED item scrolls into view when the list opens/changes
@@ -189,7 +209,7 @@ export const StopItem = ({ item, expanded, onTap, highlighted = false, leading, 
     <li ref={ref} className="border-b border-input last:border-b-0">
       <div className="flex items-center">
         <div className="min-w-0 flex-1">
-          <StopItemRow item={item} onTap={onTap} leading={leading} highlighted={highlighted} expanded={expanded} neon={neon} isStart={isStart} />
+          <StopItemRow item={item} onTap={onTap} leading={leading} highlighted={highlighted} expanded={expanded} neon={neon} isStart={isStart} vehicleStop={vehicleStop} />
         </div>
         {trailing && <div className="shrink-0 pr-3">{trailing}</div>}
       </div>

@@ -6,6 +6,7 @@ import {
   farChosenPointIds,
   suggestedNextPointId,
   suggestionOrigin,
+  previousAnchorOrigin,
   remainingCounts,
   isComplete,
   toPlannedRoute,
@@ -13,7 +14,7 @@ import {
   type RouteBuilderState,
 } from "../../../utils/routing/builder";
 import { unassignedPoints } from "../../../utils/routing/selectors";
-import { sweepWalkingOrder } from "../../../utils/routing/walkOrder";
+import { nearestFirstOrder } from "../../../utils/routing/walkOrder";
 import type { DeliveryPoint, LatLng } from "../../../types/routing";
 
 const pt = (id: string, lat: number, lng: number, packageCount = 1): DeliveryPoint => ({ id, lat, lng, address: id, packageCount, packages: [] });
@@ -141,8 +142,11 @@ describe("CREATE_STOP (commit-on-create — RF-006.4.6)", () => {
     expect(stop.order).toBe(1);
     expect(stop.radiusMeters).toBe(30);
     expect([...stop.pointIds].sort()).toEqual(["a", "b", "e"]);
-    // A ordem é a varredura horária a partir da âncora (não a de entrada).
-    expect(stop.pointIds).toEqual(sweepWalkingOrder({ lat: a.lat, lng: a.lng }, [a, b, e]));
+    // A ordem sai da âncora (não da entrada): mais próximo em 1º e o sentido
+    // pelo 2º vizinho mais próximo (RF-006.17). `a` está sobre a âncora (1º);
+    // `e` (~15 m) é mais perto de `a` que `b` (~17 m) → [a, e, b].
+    expect(stop.pointIds).toEqual(nearestFirstOrder({ lat: a.lat, lng: a.lng }, [a, b, e], false));
+    expect(stop.pointIds).toEqual(["a", "e", "b"]);
   });
 
   it("de-dupa a semente, ignora pontos já assinalados e é no-op para semente desconhecida/tomada", () => {
@@ -171,7 +175,7 @@ describe("stop draft lifecycle", () => {
       pointIds: ["a"],
       radiusMeters: 30,
       vehicleStopIsDefault: true,
-      orderIsManual: false,
+      reversed: false,
     });
   });
 
@@ -194,8 +198,9 @@ describe("stop draft lifecycle", () => {
 
   it("TOGGLE_DRAFT_POINT opts a candidate in (re-sweeping the order) and out", () => {
     const added = run(openDraftOnA(initial()), { type: "TOGGLE_DRAFT_POINT", pointId: "e" }, { type: "TOGGLE_DRAFT_POINT", pointId: "b" });
-    /** Sweep from a's anchor: a (dist 0), b (north), e (east). */
-    expect(added.draft?.pointIds).toEqual(["a", "b", "e"]);
+    /** Order from a's anchor (RF-006.17): a is at the anchor (1º); e (~15 m) is a
+        nearer neighbour than b (~17 m), so the sense makes it 2º → [a, e, b]. */
+    expect(added.draft?.pointIds).toEqual(["a", "e", "b"]);
     expect(draftCandidateIds(added)).toEqual([]);
     const removed = run(added, { type: "TOGGLE_DRAFT_POINT", pointId: "b" });
     expect(removed.draft?.pointIds).toEqual(["a", "e"]);
@@ -240,13 +245,13 @@ describe("vehicle stop (anchor)", () => {
   it("MOVE_VEHICLE_STOP re-sweeps the walking order and clears the default flag", () => {
     const built = run(openDraftOnA(initial()), { type: "TOGGLE_DRAFT_POINT", pointId: "e" }, { type: "TOGGLE_DRAFT_POINT", pointId: "b" });
     /**
-     * Move the anchor east of e: a/e sit due west (~270°) and b north-west (~288°).
-     * Great-circle initial bearings of "due west" points differ by microdegrees at
-     * this latitude (the farther point bears slightly less), so a precedes e.
+     * Move the anchor east of e (RF-006.17): now `e` is the NEAREST (~36 m) → 1º;
+     * its nearer neighbour is `a` (~15 m vs b ~23 m), so the sense makes `a` 2º →
+     * [e, a, b].
      */
     const moved = run(built, { type: "MOVE_VEHICLE_STOP", position: { lat: -22.98, lng: -43.1995 } });
     expect(moved.draft?.vehicleStopIsDefault).toBe(false);
-    expect(moved.draft?.pointIds).toEqual(["a", "e", "b"]);
+    expect(moved.draft?.pointIds).toEqual(["e", "a", "b"]);
   });
 
   it("MAKE_POINT_ANCHOR assumes the exact address coordinate (members only)", () => {
@@ -264,58 +269,79 @@ describe("vehicle stop (anchor)", () => {
     expect(reset.draft?.vehicleStopIsDefault).toBe(true);
   });
 
-  it("a manual reorder survives toggles but not the next anchor move", () => {
-    const built = run(openDraftOnA(initial()), { type: "TOGGLE_DRAFT_POINT", pointId: "b" }, { type: "REVERSE_DRAFT_ORDER" });
-    expect(built.draft?.pointIds).toEqual(["b", "a"]);
-    const appended = run(built, { type: "TOGGLE_DRAFT_POINT", pointId: "e" });
-    expect(appended.draft?.pointIds).toEqual(["b", "a", "e"]);
-    const moved = run(appended, { type: "MOVE_VEHICLE_STOP", position: { lat: a.lat, lng: a.lng } });
-    expect(moved.draft?.pointIds).toEqual(["a", "b", "e"]);
-    expect(moved.draft?.orderIsManual).toBe(false);
-  });
-
-  // ------- Âncora de parada FIRMADA (TASK-RF-006.5 — sem REOPEN) -------
-
-  it("MOVE_STOP_ANCHOR re-anchors a COMMITTED stop and re-sweeps its walking order", () => {
-    /** Stop over a+b+e (anchored on a), committed. Move the anchor east of e:
-     *  same geometry as the draft test above → sweep becomes [a, e, b]. */
-    const committed = run(openDraftOnA(initial()), { type: "TOGGLE_DRAFT_POINT", pointId: "e" }, { type: "TOGGLE_DRAFT_POINT", pointId: "b" }, { type: "COMMIT_STOP" });
-    const moved = run(committed, { type: "MOVE_STOP_ANCHOR", stopId: "stop_a", position: { lat: -22.98, lng: -43.1995 } });
-    expect(moved.stops[0].vehicleStop).toEqual({ lat: -22.98, lng: -43.1995 });
-    expect(moved.stops[0].pointIds).toEqual(["a", "e", "b"]);
-    // Unknown stop → no-op.
-    expect(run(committed, { type: "MOVE_STOP_ANCHOR", stopId: "stop_zzz", position: { lat: 0, lng: 0 } })).toEqual(committed);
-  });
-
-  it("MAKE_STOP_POINT_ANCHOR assumes the member's exact coordinate (members only)", () => {
-    const committed = withStopAB(initial());
-    const anchored = run(committed, { type: "MAKE_STOP_POINT_ANCHOR", stopId: "stop_a", pointId: "b" });
-    expect(anchored.stops[0].vehicleStop).toEqual({ lat: b.lat, lng: b.lng });
-    // A non-member never becomes the anchor.
-    expect(run(committed, { type: "MAKE_STOP_POINT_ANCHOR", stopId: "stop_a", pointId: "c" })).toBe(committed);
-  });
-
-  it("RESET_STOP_ANCHOR restores the suggested default and re-sweeps", () => {
-    const committed = withStopAB(initial());
-    const moved = run(committed, { type: "MOVE_STOP_ANCHOR", stopId: "stop_a", position: { lat: -22.9, lng: -43.1 } });
-    const reset = run(moved, { type: "RESET_STOP_ANCHOR", stopId: "stop_a", suggestedVehicleStop: { lat: a.lat, lng: a.lng } });
-    expect(reset.stops[0].vehicleStop).toEqual({ lat: a.lat, lng: a.lng });
-    expect(reset.stops[0].pointIds).toEqual(["a", "b"]);
-  });
-
-  it("a stop being EDITED (draft open over it) ignores the committed-anchor actions — the draft owns it", () => {
-    const reopened = run(withStopAB(initial()), { type: "REOPEN_STOP", stopId: "stop_a" });
-    expect(run(reopened, { type: "MOVE_STOP_ANCHOR", stopId: "stop_a", position: { lat: 0, lng: 0 } })).toBe(reopened);
-    expect(run(reopened, { type: "MAKE_STOP_POINT_ANCHOR", stopId: "stop_a", pointId: "b" })).toBe(reopened);
-    expect(run(reopened, { type: "RESET_STOP_ANCHOR", stopId: "stop_a", suggestedVehicleStop: { lat: 0, lng: 0 } })).toBe(reopened);
-  });
-
-  it("REORDER_DRAFT_POINT moves within bounds (index clamped)", () => {
+  // RF-006.6 (supersede "a manual reorder survives toggles but not the next
+  // anchor move"): não existe mais ordem manual. O SENTIDO (horário/anti-
+  // horário) é propriedade da parada e sobrevive a TUDO que re-varre.
+  it("o SENTIDO invertido sobrevive a toggles E à mudança de âncora (RF-006.6/.17)", () => {
+    // 3 membros: com 2 o inverter é invisível (o mais próximo fica em 1º nos dois
+    // sentidos — RF-006.17). Âncora sobre `a` (1º); `e` (~15 m) é vizinho mais
+    // próximo que `b` (~17 m) → o sentido-padrão dá [a, e, b].
     const built = run(openDraftOnA(initial()), { type: "TOGGLE_DRAFT_POINT", pointId: "b" }, { type: "TOGGLE_DRAFT_POINT", pointId: "e" });
-    const reordered = run(built, { type: "REORDER_DRAFT_POINT", pointId: "e", toIndex: 0 });
-    expect(reordered.draft?.pointIds).toEqual(["e", "a", "b"]);
-    const clamped = run(reordered, { type: "REORDER_DRAFT_POINT", pointId: "e", toIndex: 99 });
-    expect(clamped.draft?.pointIds).toEqual(["a", "b", "e"]);
+    expect(built.draft?.pointIds).toEqual(["a", "e", "b"]);
+    expect(built.draft?.reversed).toBe(false);
+
+    // Inverter mantém o 1º (mais próximo) e vira o sentido → [a, b, e].
+    const reversed = run(built, { type: "REVERSE_DRAFT_ORDER" });
+    expect(reversed.draft?.pointIds).toEqual(["a", "b", "e"]);
+    expect(reversed.draft?.reversed).toBe(true);
+
+    // Mover a âncora RE-VARRE mantendo o anti-horário: `e` vira o 1º (mais
+    // próximo da nova posição) e o sentido invertido dá [e, b, a].
+    const moved = run(reversed, { type: "MOVE_VEHICLE_STOP", position: { lat: -22.98, lng: -43.1995 } });
+    expect(moved.draft?.reversed).toBe(true);
+    expect(moved.draft?.pointIds).toEqual(["e", "b", "a"]);
+  });
+
+  it("inverter DE NOVO volta ao sentido-padrão (RF-006.6/.17)", () => {
+    const twice = run(
+      openDraftOnA(initial()),
+      { type: "TOGGLE_DRAFT_POINT", pointId: "b" },
+      { type: "TOGGLE_DRAFT_POINT", pointId: "e" },
+      { type: "REVERSE_DRAFT_ORDER" },
+      { type: "REVERSE_DRAFT_ORDER" }
+    );
+    expect(twice.draft?.reversed).toBe(false);
+    expect(twice.draft?.pointIds).toEqual(["a", "e", "b"]);
+  });
+
+  // Rev. RF-006.15: as actions de âncora de parada FIRMADA (MOVE_STOP_ANCHOR,
+  // MAKE_STOP_POINT_ANCHOR, RESET_STOP_ANCHOR, REVERSE_STOP_ORDER) foram
+  // REMOVIDAS — editar a âncora = reabrir como rascunho. O que elas garantiam
+  // (re-varredura + flags) agora flui pelo par REOPEN → action de draft →
+  // COMMIT, coberto abaixo e pelos testes de draft acima.
+
+  // `REORDER_DRAFT_POINT` foi REMOVIDA na RF-006.6 (decisão 17/07: "não deve
+  // ser possível ordenar manualmente") — a ordem tem só duas entradas, a âncora
+  // e o sentido.
+
+  it("previousAnchorOrigin: de onde o veículo VEM para cada parada (RF-006.6)", () => {
+    const started = run(initial(), { type: "SET_START", position: START });
+    // Primeira parada: o veículo vem do INÍCIO.
+    expect(previousAnchorOrigin(withStopAB(started), "stop_a")).toEqual(START);
+
+    // Segunda parada: vem da âncora da anterior.
+    const twoStops = run(withStopAB(started), { type: "OPEN_STOP_DRAFT", seedPointId: "c", suggestedVehicleStop: { lat: c.lat, lng: c.lng } }, { type: "COMMIT_STOP" });
+    expect(previousAnchorOrigin(twoStops, "stop_c")).toEqual(twoStops.stops[0].vehicleStop);
+
+    // Parada ainda não criada (id desconhecido): vem da ÚLTIMA parada…
+    expect(previousAnchorOrigin(twoStops, null)).toEqual(twoStops.stops[1].vehicleStop);
+    // …e sem paradas, do início.
+    expect(previousAnchorOrigin(started, null)).toEqual(START);
+  });
+
+  it("a flag de PADRÃO da âncora flui commit→reopen→draft (RF-006.15): editar move a âncora, commit grava, reopen carrega", () => {
+    const committed = withStopAB(initial());
+    expect(committed.stops[0].vehicleStopIsDefault).toBe(true); // nasce no padrão → sem "Resetar" na edição
+
+    // Editar (reopen) → mover a âncora no rascunho → firmar de volta.
+    const moved = run(committed, { type: "REOPEN_STOP", stopId: "stop_a" }, { type: "MOVE_VEHICLE_STOP", position: { lat: -22.99, lng: -43.21 } });
+    expect(moved.draft?.vehicleStopIsDefault).toBe(false); // fora do padrão → "Resetar" aparece
+    const recommitted = run(moved, { type: "COMMIT_STOP" });
+    expect(recommitted.stops[0].vehicleStopIsDefault).toBe(false); // a flag foi gravada na parada
+
+    // Reabrir de novo carrega a flag; resetar no rascunho volta ao padrão.
+    const resetInDraft = run(recommitted, { type: "REOPEN_STOP", stopId: "stop_a" }, { type: "RESET_VEHICLE_STOP", suggestedVehicleStop: { lat: a.lat, lng: a.lng } });
+    expect(resetInDraft.draft?.vehicleStopIsDefault).toBe(true);
   });
 });
 
@@ -330,10 +356,28 @@ describe("editing committed stops", () => {
     expect(edited.stops[0].pointIds).toEqual(["a"]);
   });
 
-  it("REOPEN_STOP never re-projects a stored anchor (not default)", () => {
+  // Rev. RF-006.6: o REOPEN COPIA as flags do stop (antes forçava
+  // `vehicleStopIsDefault: false`). O sentido e o "está no padrão?" são do
+  // STOP — o draft não os inventa, senão o botão "Resetar" apareceria em toda
+  // edição e o anti-horário morreria na primeira re-varredura.
+  it("REOPEN_STOP carrega as flags do stop para o draft (âncora + sentido — RF-006.6)", () => {
     const state = run(withStopAB(initial()), { type: "REOPEN_STOP", stopId: "stop_a" });
-    expect(state.draft?.vehicleStopIsDefault).toBe(false);
+    expect(state.draft?.vehicleStopIsDefault).toBe(true); // a âncora nasceu no padrão e ninguém a moveu
     expect(state.draft?.vehicleStop).toEqual({ lat: a.lat, lng: a.lng });
+    expect(state.draft?.reversed).toBe(false);
+
+    // Uma parada editada (âncora movida + sentido invertido no rascunho, firmada
+    // de volta) reabre EXATAMENTE assim — as flags são do STOP (RF-006.15).
+    const edited = run(
+      withStopAB(initial()),
+      { type: "REOPEN_STOP", stopId: "stop_a" },
+      { type: "MOVE_VEHICLE_STOP", position: { lat: -22.99, lng: -43.21 } },
+      { type: "REVERSE_DRAFT_ORDER" },
+      { type: "COMMIT_STOP" }
+    );
+    const reopened = run(edited, { type: "REOPEN_STOP", stopId: "stop_a" });
+    expect(reopened.draft?.vehicleStopIsDefault).toBe(false);
+    expect(reopened.draft?.reversed).toBe(true);
   });
 
   it("DISSOLVE_STOP frees the points and renumbers the remainder", () => {
@@ -355,7 +399,7 @@ describe("editing committed stops", () => {
 
   it("ADD_POINT_TO_STOP incorporates an orphan and re-sweeps that stop", () => {
     const state = run(withStopAB(initial()), { type: "ADD_POINT_TO_STOP", stopId: "stop_a", pointId: "e" });
-    expect(state.stops[0].pointIds).toEqual(["a", "b", "e"]);
+    expect(state.stops[0].pointIds).toEqual(["a", "e", "b"]); // re-varrido: e (~15 m) antes de b (~17 m)
     /** Assigned or draft-held points are rejected. */
     expect(run(state, { type: "ADD_POINT_TO_STOP", stopId: "stop_a", pointId: "b" })).toBe(state);
     const drafting = run(state, { type: "OPEN_STOP_DRAFT", seedPointId: "c", suggestedVehicleStop: { lat: c.lat, lng: c.lng } });

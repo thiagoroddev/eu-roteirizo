@@ -27,9 +27,12 @@ interface Props {
   neon?: boolean;
   /** The address (point id) that IS the route's start — flagged (RF-006.11). */
   startKey?: string | null;
+  /** The address (point id) that IS the stop's vehicle stop — a car badge beside
+      the packages (RF-006.17); only when the anchor coincides with a member. */
+  vehicleStopKey?: string | null;
 }
 
-export const StopItemList = ({ items, selectedKey, itemLeading, itemActions, itemTrailing, scrollSignal, neon = false, startKey = null }: Props) => {
+export const StopItemList = ({ items, selectedKey, itemLeading, itemActions, itemTrailing, scrollSignal, neon = false, startKey = null, vehicleStopKey = null }: Props) => {
   // Everything starts EXPANDED; taps collapse/expand individually. The state
   // resets naturally: the component unmounts when the list view closes, and a
   // stop change renews the keys ("i:j").
@@ -64,6 +67,7 @@ export const StopItemList = ({ items, selectedKey, itemLeading, itemActions, ite
           scrollSignal={scrollSignal}
           neon={neon}
           isStart={startKey !== null && item.addressKey === startKey}
+          vehicleStop={vehicleStopKey !== null && item.addressKey === vehicleStopKey}
         />
       ))}
     </ul>

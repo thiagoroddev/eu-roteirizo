@@ -18,7 +18,7 @@
 | 4 | ~~**TASK-RF-008**~~ — persistência/auto-save | ✅ **CONCLUÍDA (10/07)** — roteiro sobrevive a sair/fechar/alternar; chip acende; Sumário adapta + totais; cascata no apagar. RF-33/35/RN-21 ✅. Smoke pendente (publicada). |
 | 5 | ~~**TASK-TEST-003**~~ — zoom real do Leaflet | ✅ **CONCLUÍDA (10/07)** — o `MapPage.integration.test` virou o contrato de zoom real (8 cenários, 660/660); defeitos .4.19/.4.20 reintroduzidos por mutação derrubam a rede. A RF-006.8 pode mexer no painel com rede armada. |
 | 6 | ~~**TASK-RF-006.8**~~ — painel de visão geral | ✅ **CONCLUÍDA (12/07)** — painel ocioso = visão geral (progresso + confirmadas + sugestão em sequência com CTA); cabeçalho conciso em todos os contextos (painel colapsado mais baixo); `PanelView` "overview". 670/670; **smoke pendente** (publicada). Desbloqueia a **REF-017** (compartilha o `RouteProgressCard`). |
-| 7 | ~~**TASK-RF-006.5**~~ → **.6** → **.7** | `.5` ✅ **CONCLUÍDA (15/07)** — âncora com mover/tornar/resetar + carro arrastável; smoke pendente. A `.6` (edição plena) é a próxima. Ao fim da `.7`, um retoque pluga distância/tempo totais nos cards da `.8`. |
+| 7 | ~~**TASK-RF-006.5**~~ → ~~**.6**~~ → **.7** | `.5` e `.6` ✅ **CONCLUÍDAS (15–17/07)** — âncora (mover/tornar/resetar + arrasto) e a ordem 100% derivada (âncora + sentido; sem reordenação manual, decisão 17/07). Série de smoke da **parada do veículo** ✅ **.15/.16/.17/.18** (representação no painel, **ordem "mais próximo primeiro"**, carro distinto tocável, popup de reordenação, **parada do veículo independente + clicável + "Editar local"**, badge de texto no 1º). **A `.7` (traçado) é a próxima**; ao fim dela, um retoque pluga distância/tempo totais nos cards da `.8`. Smokes pendentes no aparelho. |
 | 8 | **TASK-RF-007** → **RF-009** → **RF-012** → **RF-013** | Sem mudança em relação ao registrado. |
 
 **Backlog sem urgência, encaixar em intervalos:** `TASK-RF-006.9` (geocoding da âncora; placeholder aceitável), `TASK-DOC-005`, `TASK-REF-014`, `TASK-TEST-002`.
@@ -56,7 +56,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 ## TASK-RF-006 - UI de construção da rota (Meu roteiro) [XG, dividir]
 
-- **Status:** Pendente (**.1 → .4.27, .5, .8, .11, .13 e .14 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.6 · .7 · .9 · .10 · .12**)
+- **Status:** Pendente (**.1 → .4.27, .5, .6, .8, .11, .13, .14, .15 e .16 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.7 · .9 · .10 · .12**)
 - **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
@@ -95,7 +95,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
   - **Perna 0 = veículo (âncora) → 1º endereço.** Se o 1º endereço coincide com a posição da âncora → indicar **"Parada do veículo"** em vez de "0 m".
   - **Cálculo pelas RUAS** (requisito, NÃO linha reta): `suggestionPath(pedGraph, from, to)` por perna — o A* pedestre por par **já existe** (`src/utils/routing/suggestion.ts`, RF-006.3); fallback reta **sempre rotulado** "(linha reta)" enquanto o grafo não carrega (padrão do "Distância até aqui"). Tempo derivado da config de caminhada (refina com **RF-007**).
   - **Dados:** `StopItemData` ganha campo opcional de perna (`panelModels.ts` — hoje não existe nada de distância ali); preenchido em `MapPage`/`pointToStopItemData` a partir de `selectedStop.vehicleStop` + ordem de `stop.pointIds`; render no `StopItemList`/`StopItem`.
-- **Riscos p/ o plano fino:** gutter tem ~28px e texto vertical é difícil no mobile — a execução pode refinar a forma (ex.: linha vertical + rótulo horizontal pequeno ao lado) **mantendo o conceito de conector entre linhas**; a **RF-006.6** usará o leading das linhas p/ drag na edição (no modo edição o conector pode se esconder); a11y: a informação não pode depender só do desenho (texto acessível na linha).
+- **Riscos p/ o plano fino:** gutter tem ~28px e texto vertical é difícil no mobile — a execução pode refinar a forma (ex.: linha vertical + rótulo horizontal pequeno ao lado) **mantendo o conceito de conector entre linhas**; a11y: a informação não pode depender só do desenho (texto acessível na linha). ✅ **Conflito resolvido (17/07):** a `.6` decidiu que **não há reordenação manual** — o gutter esquerdo NÃO terá drag handle, então o conector tem o espaço livre.
 - **Encaixe sugerido:** junto ou logo após a **RF-006.6** (mexe na mesma lista — antes disso o conector seria retrabalhado).
 - **Aceite:** cada endereço da lista mostra a perna desde o anterior; o 1º desde o veículo (caso âncora = 1º → "Parada do veículo"); pelas ruas quando há grafo, reta rotulada sem grafo; sem custo perceptível de render (memo por parada); smoke no aparelho valida a legibilidade do conector.
 

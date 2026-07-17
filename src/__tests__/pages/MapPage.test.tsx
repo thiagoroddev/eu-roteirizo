@@ -142,6 +142,7 @@ vi.mock("../../components/RouteMap", () => ({
     onModelExpand,
     onStartTap,
     onAnchorDragEnd,
+    onAnchorTap,
     roteiroOverlay,
   }: {
     interaction?: InteractionState;
@@ -155,6 +156,7 @@ vi.mock("../../components/RouteMap", () => ({
     onModelExpand?: (model: MarkerModel) => void;
     onStartTap?: () => void;
     onAnchorDragEnd?: (latlng: LatLng) => void;
+    onAnchorTap?: () => void;
     roteiroOverlay?: { start: LatLng | null; suggestionPath: LatLng[] | null; radiusCircle?: { center: LatLng; meters: number } | null; anchor?: LatLng | null };
   }) => (
     <div
@@ -188,6 +190,15 @@ vi.mock("../../components/RouteMap", () => ({
           members end due south → the sweep re-orders to [p2, p1] (RF-006.5). */}
       <button type="button" onClick={() => onAnchorDragEnd?.({ lat: -22.9002, lng: -43.2 })}>
         stub-anchor-drag
+      </button>
+      {/* Drops the car nearer p1 (-22.9): p1 becomes the nearest → order flips
+          from [p2, p1] to [p1, p2], so the reorder aviso fires (RF-006.17). */}
+      <button type="button" onClick={() => onAnchorDragEnd?.({ lat: -22.90005, lng: -43.2 })}>
+        stub-anchor-drag-near-p1
+      </button>
+      {/* Taps the anchor car (selectable when ungrouped — RF-006.17). */}
+      <button type="button" onClick={() => onAnchorTap?.()}>
+        stub-anchor-tap
       </button>
       <button type="button" onClick={() => models?.[0] && onModelTap?.(models[0])}>
         stub-first-point-tap
@@ -1029,10 +1040,11 @@ describe("MapPage (focus screen)", () => {
     // Chips include the walking estimate.
     expect(screen.getByText(/~\d+ min/)).toBeInTheDocument();
     expect(screen.getByText("2 endereços")).toBeInTheDocument();
-    // "Endereço selecionado" agora é a parada do veículo (âncora), com o glifo
-    // do veículo no lugar do "1º" (RF-006.4.7).
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument();
-    expect(screen.queryByText("1º")).not.toBeInTheDocument();
+    // A âncora selecionada é SEMPRE o veículo (RF-006.16): seção "Endereço
+    // selecionado" + badge "Parada do veículo", sem o ordinal (glifo do carro).
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).toBeInTheDocument();
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.ORDINAL(1))).not.toBeInTheDocument();
 
     // Editar → back to the edit draft: the body is the Original's full-list
     // structure now (rev. 08/07 3ª rodada) — members carry the walking ordinal
@@ -1120,63 +1132,68 @@ describe("MapPage (focus screen)", () => {
   });
 
   // ==========================================================================
-  // Gestos da âncora (TASK-RF-006.5)
+  // Âncora no painel (TASK-RF-006.15 — reverteu os gestos da .5 para o modo edição)
   // ==========================================================================
 
   const STOP_LABELS_ANCHOR = UI_LABELS.MAP_PANEL.ROTEIRO_STOP;
 
-  it("mover âncora (RF-006.5): expande a parada (o carro aparece), o arrasto re-ancora pela rua e RENUMERA a ordem a pé", () => {
+  it("parada firmada é READ-ONLY: sem gestos de âncora; a âncora coincidente mostra ordinal + badge (RF-006.15)", () => {
     startRoteiroFlow();
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
-    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP })); // P1 = p1+p2, âncora na semente p1
-    const stub = screen.getByTestId("route-map-stub");
-    expect(stub).toHaveAttribute("data-anchor", "none"); // agrupada: o quadrado JÁ está na âncora
-    // Âncora selecionada → título vira "Parada 1 — Veículo (âncora)" e a row
-    // mostra o 1º endereço (placeholder até a RF-006.9): Rua Mapa, 10.
-    expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1 — ${STOP_LABELS_ANCHOR.ANCHOR_PLACE}`)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP })); // P1 = p1+p2; sem grafo → âncora = endereço (coincide)
 
-    // "Mover âncora" desagrupa no mapa: o carro slate aparece (overlay) + dica.
-    fireEvent.click(screen.getByRole("button", { name: STOP_LABELS_ANCHOR.MOVE_ANCHOR }));
-    expect(stub).toHaveAttribute("data-anchor", "-22.9,-43.2");
+    // Título de volta ao padrão da parada (a .5 punha "— Veículo (âncora)"); o
+    // fixture não tem bairro/CEP, então é só "Parada 1".
+    expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`)).toBeInTheDocument();
+    // A âncora selecionada é SEMPRE o veículo (RF-006.16): "Endereço
+    // selecionado" + badge, sem ordinal (glifo do carro).
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).toBeInTheDocument();
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.ORDINAL(1))).not.toBeInTheDocument();
+    // NENHUM gesto de âncora na parada firmada (migraram p/ o modo edição).
+    expect(screen.queryByRole("button", { name: STOP_LABELS_ANCHOR.RESET_ANCHOR })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: STOP_LABELS_ANCHOR.REVERSE_ORDER })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: STOP_LABELS_ANCHOR.MAKE_ANCHOR })).not.toBeInTheDocument();
+    // Agrupada: o carro da âncora NÃO aparece (só desagrupada ou no draft — RF-006.16).
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-anchor", "none");
+  });
+
+  it("editar a parada traz os gestos da âncora no RASCUNHO: Inverter + Tornar âncora por membro (RF-006.15/.17)", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.EDIT }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.MODE_DRAFT)).toBeInTheDocument();
+
+    // A row da âncora abre a lista com o badge + Inverter + a dica de arrasto.
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).toBeInTheDocument();
     expect(screen.getByText(STOP_LABELS_ANCHOR.MOVE_ANCHOR_HINT)).toBeInTheDocument();
 
-    // O arrasto solta o carro ao NORTE de p2 → re-projeção (reta sem grafo) e
-    // re-varredura: p2 vira o 1º da ordem — a row da âncora agora mostra p2.
-    fireEvent.click(screen.getByRole("button", { name: "stub-anchor-drag" }));
-    expect(stub).toHaveAttribute("data-anchor", "-22.9002,-43.2");
-    expect(screen.getByRole("button", { name: /Rua Beta, 20/ })).toBeInTheDocument();
+    // Ordem inicial [p2, p1] (âncora coincide com p2 → 1º). "Inverter" existe e
+    // está fiado; com 2 endereços o mais próximo fica em 1º nos dois sentidos
+    // (RF-006.17 — a reordenação por sentido é coberta no unit do reducer).
+    const memberRows = () => screen.getAllByRole("button", { name: /Rua (Mapa|Beta)/ });
+    expect(memberRows()[0]).toHaveAccessibleName(/Rua Beta, 20/);
+    fireEvent.click(screen.getByRole("button", { name: STOP_LABELS_ANCHOR.REVERSE_ORDER }));
+    expect(memberRows()[0]).toHaveAccessibleName(/Rua Beta, 20/);
+
+    // "Tornar âncora" existe por membro (ao lado do −).
+    expect(screen.getByRole("button", { name: `${STOP_LABELS_ANCHOR.MAKE_ANCHOR}: Rua Mapa, 10` })).toBeInTheDocument();
   });
 
-  it("resetar âncora (RF-006.5): volta ao padrão (projeção do endereço) e re-varre", () => {
+  it("desagrupar a parada firmada (2 cliques) MOSTRA o carro da âncora no mapa (RF-006.16)", () => {
     startRoteiroFlow();
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
     fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
-    fireEvent.click(screen.getByRole("button", { name: STOP_LABELS_ANCHOR.MOVE_ANCHOR }));
-    fireEvent.click(screen.getByRole("button", { name: "stub-anchor-drag" })); // âncora longe do padrão
     const stub = screen.getByTestId("route-map-stub");
-    expect(stub).toHaveAttribute("data-anchor", "-22.9002,-43.2");
+    // Agrupada: sem carro (o quadrado já está na âncora).
+    expect(stub).toHaveAttribute("data-anchor", "none");
 
-    // Resetar: sem grafo, o padrão é a coordenada do 1º endereço da ordem (p2
-    // após o arrasto) — a âncora ASSENTA nele e a varredura o mantém 1º.
-    fireEvent.click(screen.getByRole("button", { name: STOP_LABELS_ANCHOR.RESET_ANCHOR }));
-    expect(stub).toHaveAttribute("data-anchor", "-22.90015,-43.2");
-  });
-
-  it("tornar âncora (RF-006.5): o membro tocado vira a âncora (coordenada exata) e a seleção volta à âncora", () => {
-    startRoteiroFlow();
+    // Focar + desagrupar (duplo-clique) → o carro da âncora aparece no overlay,
+    // no local do veículo (sem grafo = coord do endereço-âncora p2).
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
-    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
-    // Desagrupa e toca o membro p2 (models: [p1, p2, p3] → segundo botão).
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-dbltap" }));
-    fireEvent.click(screen.getByRole("button", { name: "stub-second-point-tap" }));
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: STOP_LABELS_ANCHOR.MAKE_ANCHOR }));
-    // A âncora assumiu a coordenada de p2 (carro visível — parada segue expandida)
-    // e o painel voltou à âncora, cuja row mostra o novo 1º endereço (p2).
-    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-anchor", "-22.90015,-43.2");
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Rua Beta, 20/ })).toBeInTheDocument();
+    expect(stub).toHaveAttribute("data-anchor", "-22.90015,-43.2");
   });
 
   it("endereço que É o início ganha a flag + os gestos apagar/mudar posição na própria UI (RF-006.11/.14)", () => {
@@ -1203,21 +1220,21 @@ describe("MapPage (focus screen)", () => {
     fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
 
-    // Resumo: mostra a âncora (parada do veículo), sem lista.
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument();
+    // Resumo: a âncora (parada do veículo) — coincide sem grafo, mostra o badge.
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).toBeInTheDocument();
 
-    // Ver lista completa → os 2 endereços da parada por ordinal (a âncora some);
-    // é EVENTO DISTINTO do duplo-clique: abre a lista no painel (esconde o mapa),
-    // não expande os marcadores (RF-006.4.11).
+    // Ver parada → os 2 endereços por ordinal; o 1º (onde o veículo para) carrega
+    // o badge de texto "Parada do veículo" (RF-006.18).
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_FULL_LIST }));
     expect(screen.getByText(UI_LABELS.MAP_PANEL.ORDINAL(1))).toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.MAP_PANEL.ORDINAL(2))).toBeInTheDocument();
-    expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).not.toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).toBeInTheDocument();
     expect(screen.getByTestId("route-map-stub").getAttribute("data-models-summary")).toContain("stop"); // mapa segue agrupado
 
-    // Esconder lista → volta ao resumo (âncora de novo).
+    // Esconder lista → volta ao resumo (âncora de novo, com o badge).
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.HIDE_FULL_LIST }));
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).toBeInTheDocument();
   });
 
   // Rev. 15/07 (RF-006.11): o toque no mapa vazio DESELECIONA (antes reagrupava
@@ -1236,9 +1253,12 @@ describe("MapPage (focus screen)", () => {
     expect(stub.getAttribute("data-focus-bounds")).toBe("2"); // p1 + p2 da parada
 
     // Duplo-clique → desagrupa no MAPA; o painel FICA no resumo (não abre a lista).
+    // Sem membro tocado → a row da parada do veículo (independente — RF-006.18),
+    // com o badge de texto "Parada do veículo".
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-dbltap" }));
     expect(stub.getAttribute("data-models-summary")).toBe("address*,address*,address");
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument(); // resumo, não lista
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).toBeInTheDocument();
 
     // Clicar fora (mapa vazio) → reagrupa E deseleciona: rota inteira no quadro,
     // painel ocioso com o card da sugestão.
@@ -1290,24 +1310,54 @@ describe("MapPage (focus screen)", () => {
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-dbltap" })); // desagrupa no mapa
     const stub = screen.getByTestId("route-map-stub");
 
-    // Sem membro escolhido: o painel mostra a ÂNCORA e o mapa destaca o 1º membro.
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument();
+    // Sem membro escolhido: desagrupada → a row da parada do veículo (independente,
+    // badge de texto — RF-006.18); o mapa destaca o 1º.
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).toBeInTheDocument();
     const anchorHighlighted = stub.getAttribute("data-highlighted-model");
     expect(anchorHighlighted).not.toBe("none");
 
-    // Tocar o 2º membro → seleciona-o: o destaque do mapa migra e o painel troca
-    // para 'Endereço selecionado' (sem o sufixo da âncora).
+    // Tocar o outro membro → seleciona-o: o destaque do mapa migra e o painel
+    // troca para o endereço normal (o badge da âncora some).
     fireEvent.click(screen.getByRole("button", { name: "stub-second-point-tap" }));
     const memberHighlighted = stub.getAttribute("data-highlighted-model");
     expect(memberHighlighted).not.toBe("none");
     expect(memberHighlighted).not.toBe(anchorHighlighted);
-    expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).not.toBeInTheDocument();
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).not.toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).toBeInTheDocument();
 
-    // Clicar fora regrupa e volta para a âncora (RF-006.4.16).
+    // Clicar fora regrupa e volta para a parada do veículo (o badge volta).
     fireEvent.click(screen.getByRole("button", { name: "stub-map-tap" }));
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-dbltap" }));
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).toBeInTheDocument();
+  });
+
+  it("desagrupado: tocar o carro da âncora volta a seleção para a parada do veículo (RF-006.17/.18)", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" })); // focar
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-dbltap" })); // desagrupa
+
+    // Selecionar o 2º membro tira o foco da parada do veículo…
+    fireEvent.click(screen.getByRole("button", { name: "stub-second-point-tap" }));
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).not.toBeInTheDocument();
+
+    // …tocar o carro volta a seleção para a parada do veículo (badge de texto).
+    fireEvent.click(screen.getByRole("button", { name: "stub-anchor-tap" }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).toBeInTheDocument();
+  });
+
+  it("mover o veículo no mapa que muda a ordem mostra o aviso 'Endereços reordenados' (RF-006.17/.18)", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.EDIT })); // reabre como rascunho
+
+    // Ordem inicial [p2, p1] (âncora coincide com p2). Arrastar o carro para
+    // perto de p1 torna p1 o 1º → reordena → aviso.
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.REORDERED_NOTICE)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "stub-anchor-drag-near-p1" }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.REORDERED_NOTICE)).toBeInTheDocument();
   });
 
   it("Editar desagrupa a parada no mapa (membros como círculos) e o toque no mapa não faz toggle (RF-006.4.9)", () => {

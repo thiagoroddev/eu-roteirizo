@@ -89,8 +89,15 @@ export const UI_LABELS = {
     // Duas visões do painel (rev. 07/07 — TASK-RF-023.7)
     SECTION_STOP: "Resumo da parada",
     SECTION_SELECTED: "Endereço selecionado",
-    /** No Meu roteiro o "selecionado" da parada é a parada do veículo (RF-006.4.7). */
-    SECTION_SELECTED_ANCHOR: "Endereço selecionado — parada do veículo (âncora)",
+    /** Badge da "parada do veículo" (RF-006.15): no lugar do complemento na row.
+        A âncora que COINCIDE com um endereço de entrega mostra o ordinal + este
+        badge (tocável, pacotes); a distinta mostra o glifo do carro + o badge.
+        A informação "é parada do veículo" vive no endereço, não no rótulo da
+        seção (que voltou a ser só "Endereço selecionado"). */
+    VEHICLE_STOP_BADGE: "Parada do veículo",
+    /** Aviso flutuante (RF-006.17): mover o veículo no mapa recalcula a ordem a
+        pé (1º = mais próximo) — o toast avisa que os endereços foram reordenados. */
+    REORDERED_NOTICE: "Endereços reordenados",
     /** 3ª seção do painel do roteiro (RF-006.4.3): preview da parada a criar. */
     // "Prévia", não "sugerida" (feedback 10/07): a seção mostra a parada COMO
     // FICARIA a partir do endereço que o usuário tocou — qualquer endereço
@@ -147,14 +154,20 @@ export const UI_LABELS = {
     // Parada firmada selecionada (RF-006.4.2 — antecipação parcial da .6, fluxo §9).
     ROTEIRO_STOP: {
       EDIT: "Editar parada",
+      /** Atalho na row da parada do veículo (RF-006.18): reabre a parada como
+          rascunho (mesmo destino do "Editar parada"), já pronto p/ mover o carro. */
+      EDIT_VEHICLE: "Editar local do veículo",
       DISSOLVE: "Desfazer parada",
-      // Gestos da âncora (TASK-RF-006.5 — fluxo §9/§10).
-      MOVE_ANCHOR: "Mover âncora",
-      MOVE_ANCHOR_HINT: "Arraste o carro no mapa para a nova posição da parada do veículo.",
-      RESET_ANCHOR: "Resetar âncora",
+      // Gestos da âncora — SÓ no modo edição (TASK-RF-006.15 reverteu a .5:
+      // a parada firmada é read-only; editar âncora = reabrir como rascunho).
+      MOVE_ANCHOR_HINT: "Arraste o carro no mapa para mover a parada do veículo.",
+      /** Só aparece com a âncora FORA do padrão (RF-006.6) — resetar o que já
+          está no lugar não faz sentido. */
+      RESET_ANCHOR: "Resetar local do veículo",
       MAKE_ANCHOR: "Tornar âncora",
-      /** Título da parada quando a ÂNCORA é o item selecionado (spec, matriz da árvore §4). */
-      ANCHOR_PLACE: "Veículo (âncora)",
+      /** Sentido do circuito a pé (RF-006.6): a ordem nunca é manual — sai da
+          âncora (início/fim) e deste sentido. */
+      REVERSE_ORDER: "Inverter ordem",
     },
     // Seção "Definir ponto inicial" do painel do roteiro (RF-21/22 — TASK-RF-006.3).
     ROTEIRO_START: {

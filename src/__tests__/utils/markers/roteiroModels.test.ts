@@ -36,7 +36,7 @@ const draftOn = (seed: string, pointIds: string[]): StopDraft => ({
   radiusMeters: 30,
   vehicleStop: { lat: -22.98, lng: -43.2 },
   vehicleStopIsDefault: true,
-  orderIsManual: false,
+  reversed: false, // RF-006.6: o sentido substituiu `orderIsManual`
 });
 
 describe("computeRoteiroMarkerModels", () => {

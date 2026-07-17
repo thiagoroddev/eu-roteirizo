@@ -1,4 +1,4 @@
-import { Minus, Plus } from "lucide-react";
+import { Car, Minus, Plus } from "lucide-react";
 import { Button } from "../../ui/button";
 import { PanelModeBar } from "./PanelModeBar";
 import { PanelSection } from "./PanelSection";
@@ -9,6 +9,7 @@ import type { StopItemData } from "../../../utils/markers/panelModels";
 import { UI_LABELS } from "../../../constants/uiLabels";
 
 const DRAFT = UI_LABELS.MAP_PANEL.ROTEIRO_DRAFT;
+const STOP = UI_LABELS.MAP_PANEL.ROTEIRO_STOP;
 
 /** Radius stepper bounds (tela 9): 10 m steps keep the control simple in the field. */
 export const RADIUS_STEP = 10;
@@ -145,6 +146,15 @@ interface BodyProps {
   chosen: StopItemData[];
   candidates: StopItemData[];
   onTogglePoint: (pointId: string) => void;
+  /** The stop's ANCHOR as a row (RF-006.6) — the circuit's start AND end; null
+      while the draft has no members. Address is a placeholder until RF-006.9. */
+  anchorItem: StopItemData | null;
+  /** Anchor/sense gestures inside the edit — mirrors the firmed stop (RF-006.5/.6). */
+  onResetAnchor: () => void;
+  onReverseOrder: () => void;
+  onMakeAnchor: (pointId: string) => void;
+  /** Anchor left its default → "Resetar âncora" shows (RF-006.6). */
+  anchorMoved: boolean;
 }
 
 /** Trailing add/remove action of a list row (map taps toggle the same way). */
@@ -157,13 +167,56 @@ const toggleAction = (item: StopItemData, icon: "add" | "remove", onTogglePoint:
   );
 };
 
-export const RoteiroDraftBody = ({ chosen, candidates, onTogglePoint }: BodyProps) => (
+/** "Tornar âncora" + "Remover" of a chosen row (spec §9 — the two things you can
+    do to an address INSIDE a stop; ordering is not one of them, RF-006.6). */
+const memberActions = (item: StopItemData, onMakeAnchor: (pointId: string) => void, onTogglePoint: (pointId: string) => void) => {
+  const anchorAria = `${STOP.MAKE_ANCHOR}: ${item.addressLine}`;
+  return (
+    <div className="flex items-center gap-1">
+      <Button type="button" variant="outline" size="icon" data-vaul-no-drag className="h-8 w-8" aria-label={anchorAria} title={STOP.MAKE_ANCHOR} onClick={() => onMakeAnchor(item.addressKey)}>
+        <Car aria-hidden className="h-4 w-4" />
+      </Button>
+      {toggleAction(item, "remove", onTogglePoint)}
+    </div>
+  );
+};
+
+export const RoteiroDraftBody = ({ chosen, candidates, onTogglePoint, anchorItem, onResetAnchor, onReverseOrder, onMakeAnchor, anchorMoved }: BodyProps) => (
   <div className="pb-2">
-    <PanelSection label={DRAFT.SECTION_CHOSEN}>
+    <PanelSection
+      label={DRAFT.SECTION_CHOSEN}
+      /* Edit actions ride the label's line (RF-006.16): "Resetar local do
+         veículo" (only when the anchor left its default) and "Inverter ordem". */
+      actions={
+        chosen.length === 0 ? undefined : (
+          <>
+            {anchorMoved && (
+              <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" data-vaul-no-drag onClick={onResetAnchor}>
+                {STOP.RESET_ANCHOR}
+              </Button>
+            )}
+            <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" data-vaul-no-drag onClick={onReverseOrder}>
+              {STOP.REVERSE_ORDER}
+            </Button>
+          </>
+        )
+      }
+    >
       {chosen.length === 0 ? (
         <p className="px-4 py-2 text-xs text-muted-foreground">{DRAFT.EMPTY_HINT}</p>
       ) : (
-        <StopItemList items={chosen} selectedKey={null} neon itemTrailing={(item) => toggleAction(item, "remove", onTogglePoint)} />
+        <>
+          {/* The ANCHOR opens the list: it is where the walk starts and ends
+              (RF-006.6) — the vehicle stop (car glyph + badge, no packages). The
+              hint says moving = drag the car (edit is the only place it moves). */}
+          {anchorItem && (
+            <div className="border-b border-input">
+              <StopItemRow item={anchorItem} onTap={() => {}} markerGlyph="vehicle" neon vehicleStop />
+              <p className="px-4 pb-2 text-xs text-muted-foreground">{STOP.MOVE_ANCHOR_HINT}</p>
+            </div>
+          )}
+          <StopItemList items={chosen} selectedKey={null} neon itemTrailing={(item) => memberActions(item, onMakeAnchor, onTogglePoint)} />
+        </>
       )}
     </PanelSection>
 

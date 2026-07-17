@@ -110,9 +110,9 @@ A **parada do veículo** organiza o cálculo em duas camadas:
 
 ### Ordem dos endereços a pé dentro da parada
 
-- **Padrão:** **varredura horária** a partir da **parada do veículo** — ordena os endereços pelo **ângulo (bearing)** em torno dela (`atan2`, custo zero). Faz um **laço** que volta perto de onde começou — ideal para o circuito. (Melhor que "vizinho mais próximo", que pode terminar longe do veículo e encarecer o retorno.)
-- **Override manual (essencial):** a ordem automática é só sugestão. O usuário **reordena à mão** sempre que quiser — nenhum algoritmo sabe que "a entrada do prédio é pelos fundos". O controle manual é o diferencial; o auto-ordenamento só precisa ser "bom o bastante".
-- **Mover a parada do veículo recalcula a ordem:** arrastou o veículo para outro ponto da rua, a varredura horária é refeita a partir dele. Custo zero.
+- **Padrão (rev. RF-006.17):** o **1º é o endereço mais próximo** da parada do veículo (âncora coincidente ⇒ distância 0 ⇒ é ela mesma). A partir dele o circuito segue a **varredura por ângulo (bearing)** — mas no **sentido** (horário/anti-horário) que coloca em **2º o vizinho mais próximo do 1º** (com o 1º em distância 0, é o 2º que revela para que lado varrer). Continua sendo um **laço** que não se cruza. `atan2` + haversine, custo zero.
+- **Sem reordenação manual (RF-006.6):** a ordem é **100% derivada** de dois controles — a **âncora** (parada do veículo) e o **sentido** ("Inverter ordem", que alterna horário/anti-horário mantendo o 1º mais próximo). Não há arrastar-para-reordenar: definir a âncora e o sentido é o suficiente.
+- **Mover a parada do veículo recalcula a ordem:** arrastou o veículo para outro ponto da rua, a ordem é refeita a partir dele (novo 1º = mais próximo, novo sentido) e um **aviso** confirma a reordenação. Custo zero.
 
 ### Sugestão da próxima parada (linha tracejada)
 
@@ -183,7 +183,7 @@ Os botões dependem do que está selecionado:
 ## 10. Decisões fechadas
 
 1. **Numeração — Shopee × nossa:** ✅ no mapa, `Pn`/`En` (com cor) são a **numeração nova da rota manual**. A numeração da Shopee (`Stop` + `Sequence`) é ignorada **apenas para a ordem da rota** — mas é **preservada como identidade da etiqueta** do pacote e **exibida na execução** (ver §14): é por ela que o entregador acha o pacote na sacola. O **código** (`SPX TN`) também é preservado para chamados/problemas.
-2. **Ordem dos endereços a pé na parada:** ✅ o app **ordena automaticamente** (varredura horária a partir da **parada do veículo**) **e** o usuário pode **reordenar à mão** a qualquer momento (ver §6).
+2. **Ordem dos endereços a pé na parada:** ✅ o app **ordena automaticamente** — o **mais próximo da parada do veículo em 1º**, seguindo a varredura no sentido do vizinho mais próximo (rev. RF-006.17, ver §6). A ordem é **derivada** (âncora + sentido); **não** há reordenação manual (RF-006.6) — o usuário controla âncora e "Inverter ordem".
 3. **Âncora (parada do veículo):** ✅ **(decisão 26/06/26)** cada parada tem uma **âncora** = **ponto livre na rua**, sempre **no meio da rua**, separado dos endereços (pode parar numa rua principal sem entrar na do endereço). Base do **circuito** a pé e do salto de veículo entre paradas. **Sugerida em frente ao endereço selecionado** (otimizador de "menor volta" = futuro); **movível** (arrastar); **"tornar âncora"** num endereço faz a âncora **assumir a coordenada** dele; **"resetar"** volta ao padrão. Projetada na rua via map matching (`match.ts`). Sem GPS ao vivo. **Rótulo:** curto "âncora" / completo "parada do veículo (âncora)".
 4. **Veículo ao vivo por GPS:** ❌ não há posição de veículo por GPS ao vivo. A parada do veículo é sempre o ponto **sugerido/movido pelo usuário**. (Mantém a decisão de 24/06/26, agora sobre o ponto do veículo em vez do endereço-âncora.)
 5. **Ponto inicial:** ✅ **GPS** (`navigator.geolocation`, grátis) como principal; **toque no mapa** como alternativa; opcional **partir de um endereço da planilha**. **Não** usar "digitar endereço" (exigiria geocoding pago/limitado).

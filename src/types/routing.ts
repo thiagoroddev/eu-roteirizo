@@ -68,12 +68,29 @@ export interface RouteStop {
   vehicleStop: LatLng;
   /**
    * Ids of the points in this stop, in walking-visit order: a circuit that
-   * leaves from and returns to `vehicleStop`. See fluxo §6 (clockwise sweep
-   * from the vehicle stop + manual override).
+   * leaves from and returns to `vehicleStop`. See fluxo §6 (sweep from the
+   * vehicle stop). ALWAYS derived — the order has exactly two inputs, the
+   * anchor and `reversed` (decision 17/07: there is no manual reordering).
    */
   pointIds: string[];
   /** Radius (meters) used to suggest candidate points when creating this stop. */
   radiusMeters: number;
+  /**
+   * Walking SENSE of the circuit (TASK-RF-006.6): absent/false = clockwise (the
+   * default sweep), true = counter-clockwise. It is a property of the stop, not
+   * an act: re-sweeping (moving/anchoring) preserves it. Optional for backward
+   * compatibility — routes saved before it hydrate as clockwise.
+   */
+  reversed?: boolean;
+  /**
+   * Whether `vehicleStop` still sits where the app put it — the address nearest
+   * to where the vehicle comes from (see utils/routing/vehicleStop.ts). False
+   * after the user moves it or makes an address the anchor; true again after a
+   * reset. Gates the "Resetar âncora" button, which only makes sense once the
+   * anchor left its default (decision 17/07). Absent (older routes) = true: the
+   * anchor is the one the app chose back then.
+   */
+  vehicleStopIsDefault?: boolean;
 }
 
 /** User-configurable speeds/times used for the estimates (fluxo §6/§8). */

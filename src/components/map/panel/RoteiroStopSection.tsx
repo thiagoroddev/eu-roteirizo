@@ -1,8 +1,8 @@
-import { Undo2 } from "lucide-react";
+import { Pencil, Undo2 } from "lucide-react";
 import { Button } from "../../ui/button";
 import { PanelSection } from "./PanelSection";
 import { PanelTitle, type PanelMetric } from "./PanelTitle";
-import { StopItemRow } from "./StopItem";
+import { StopItemRow, StopItemDetail } from "./StopItem";
 import type { StopItemData } from "../../../utils/markers/panelModels";
 import { UI_LABELS } from "../../../constants/uiLabels";
 
@@ -10,22 +10,22 @@ const STOP = UI_LABELS.MAP_PANEL.ROTEIRO_STOP;
 
 /**
  * RoteiroStopSection - a committed stop, selected on the map (TASK-RF-006.4.2/
- * .4.3/.4.7 — partial .6, fluxo §9; anchor gestures since TASK-RF-006.5).
- * Mirrors the Original header (via PanelSection — the shared divider/label
- * chrome):
- * - "Resumo da parada": title + typed chips, with ALL THREE actions on the
- *   label's line (RF-006.4.17 — "Ver parada", "Editar parada" and an
- *   icon-only "Desfazer parada"), so the collapsed panel stays short. When the
- *   ANCHOR is the selected item, the title reads "Parada N — Veículo (âncora)"
- *   (spec matrix — RF-006.5).
- * - "Endereço selecionado": the address selected in the expanded group — either
- *   a tapped MEMBER (its ordinal marker + real complement, RF-006.4.16) or, with
- *   none chosen, the stop's ANCHOR ("— parada do veículo (âncora)": vehicle glyph,
- *   address WITHOUT complement, RF-006.4.7; a placeholder = the first stop
- *   address until geocoding). Below the row, the anchor gestures (RF-006.5):
- *   "Mover âncora" (ungroups the stop so its draggable car shows — the drag IS
- *   the move) and "Resetar âncora"; a tapped member offers "Tornar âncora".
- *   Only in the summary view — the full-list view replaces it.
+ * .4.3/.4.7; simplified in TASK-RF-006.15). Mirrors the Original header (via
+ * PanelSection — the shared divider/label chrome):
+ * - "Resumo da parada": title ("Parada N — bairro (CEPs)") + typed chips, with
+ *   the three actions on the label's line (RF-006.4.17 — "Ver parada", "Editar
+ *   parada" and an icon-only "Desfazer parada").
+ * - "Endereço selecionado": the row shape follows `selectedKind` (RF-006.17):
+ *   - "vehicle": the VEHICLE STOP representation (grouped summary, or the
+ *     ungrouped DISTINCT anchor) — car glyph + "Parada do veículo" badge, no
+ *     package count, not tappable.
+ *   - "coincident": the vehicle parks ON this delivery address (ungrouped) —
+ *     the normal delivery row (ordinal + packages, tappable) plus a car badge.
+ *   - "member": a plain tapped member (ordinal + packages, tappable).
+ *
+ * Anchor EDITING (move/reverse/reset/make-anchor) is NOT here (RF-006.15
+ * reverted RF-006.5): a firmed stop is read-only; editing the anchor means
+ * "Editar parada" (reopen as draft).
  */
 interface Props {
   stopOrder: number;
@@ -35,97 +35,79 @@ interface Props {
   metrics: PanelMetric[];
   /** The selected address of the stop — a tapped member or the anchor — null while empty. */
   selectedItem: StopItemData | null;
-  /** Whether `selectedItem` is the vehicle anchor (glyph + "âncora" label) vs a member. */
-  isAnchor: boolean;
+  /** How to render the selected row (RF-006.17): the vehicle stop, a coincident
+      delivery (vehicle + packages), or a plain member. */
+  selectedKind: "member" | "coincident" | "vehicle";
+  /** Whether the selected-address detail is open in the panel body. */
   expanded: boolean;
   onTapCard: () => void;
   onEdit: () => void;
   onDissolve: () => void;
-  /** Whether the full-list view is open (flips the toggle + hides the anchor row). */
+  /** Whether the full-list view is open (flips the toggle + hides the address row). */
   listOpen: boolean;
   onToggleList: () => void;
-  /** Anchor gestures (TASK-RF-006.5 — fluxo §9/§10). */
-  onMoveAnchor: () => void;
-  onResetAnchor: () => void;
-  onMakeMemberAnchor: () => void;
-  /** True while the stop is ungrouped on the map — the drag hint shows. */
-  moveHintActive: boolean;
 }
 
-export const RoteiroStopSection = ({
-  stopOrder,
-  neighborhoods,
-  zipcodes,
-  metrics,
-  selectedItem,
-  isAnchor,
-  expanded,
-  onTapCard,
-  onEdit,
-  onDissolve,
-  listOpen,
-  onToggleList,
-  onMoveAnchor,
-  onResetAnchor,
-  onMakeMemberAnchor,
-  moveHintActive,
-}: Props) => (
-  <div>
-    <PanelSection
-      label={UI_LABELS.MAP_PANEL.SECTION_STOP}
-      /* All three actions ride the label's line (RF-006.4.17): every row removed
-         from the header shortens the collapsed panel. Compact sizing; "Desfazer"
-         drops to icon-only (its label is the accessible name) — "Editar" keeps
-         its text, being the one the user reaches for. */
-      /* No wrapper div: PanelSection already lays the slot out as `flex shrink-0
-         gap-2` — nesting one (and its margin) is what pushed these buttons off
-         the Original's flush-right px-4 edge. */
-      actions={
-        <>
-          <Button type="button" size="sm" className="h-7 px-2 text-xs" data-vaul-no-drag onClick={onEdit}>
-            {STOP.EDIT}
-          </Button>
-          <Button type="button" variant="outline" size="icon" className="h-7 w-7 shrink-0" data-vaul-no-drag onClick={onDissolve} title={STOP.DISSOLVE} aria-label={STOP.DISSOLVE}>
-            <Undo2 aria-hidden className="h-4 w-4" />
-          </Button>
-          <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" data-vaul-no-drag onClick={onToggleList}>
-            {listOpen ? UI_LABELS.MAP_PANEL.HIDE_FULL_LIST : UI_LABELS.MAP_PANEL.VIEW_FULL_LIST}
-          </Button>
-        </>
-      }
-    >
-      {/* Anchor selected → "Parada N — Veículo (âncora)" (spec matrix, RF-006.5). */}
-      <PanelTitle stopNumber={String(stopOrder)} neighborhoods={isAnchor && !listOpen ? [STOP.ANCHOR_PLACE] : neighborhoods} zipcodes={isAnchor && !listOpen ? [] : zipcodes} metrics={metrics} />
-    </PanelSection>
-
-    {/* The selected address lives in the SUMMARY view only; the full list IS the
-        addresses. Highlighted by default — it IS the selected address. The anchor
-        shows the vehicle glyph (RF-006.4.13); a tapped member shows its ordinal
-        marker + complement (RF-006.4.16). */}
-    {!listOpen && selectedItem && (
-      <PanelSection label={isAnchor ? UI_LABELS.MAP_PANEL.SECTION_SELECTED_ANCHOR : UI_LABELS.MAP_PANEL.SECTION_SELECTED}>
-        <StopItemRow item={selectedItem} onTap={onTapCard} highlighted expanded={expanded} neon {...(isAnchor ? { markerGlyph: "vehicle" as const } : {})} />
-        {/* Anchor gestures (RF-006.5): move = drag the car (the button ungroups
-            the stop so the car appears); reset = back to the default projection.
-            A tapped member offers "Tornar âncora" instead (spec §9). */}
-        <div className="flex flex-wrap items-center gap-2 px-4 pb-2 pt-1">
-          {isAnchor ? (
-            <>
-              <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" data-vaul-no-drag onClick={onMoveAnchor}>
-                {STOP.MOVE_ANCHOR}
-              </Button>
-              <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" data-vaul-no-drag onClick={onResetAnchor}>
-                {STOP.RESET_ANCHOR}
-              </Button>
-            </>
-          ) : (
-            <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" data-vaul-no-drag onClick={onMakeMemberAnchor}>
-              {STOP.MAKE_ANCHOR}
+export const RoteiroStopSection = ({ stopOrder, neighborhoods, zipcodes, metrics, selectedItem, selectedKind, expanded, onTapCard, onEdit, onDissolve, listOpen, onToggleList }: Props) => {
+  const isVehicle = selectedKind === "vehicle";
+  return (
+    <div>
+      <PanelSection
+        label={UI_LABELS.MAP_PANEL.SECTION_STOP}
+        /* All three actions ride the label's line (RF-006.4.17): every row removed
+           from the header shortens the collapsed panel. Compact sizing; "Desfazer"
+           drops to icon-only (its label is the accessible name) — "Editar" keeps
+           its text, being the one the user reaches for. */
+        actions={
+          <>
+            <Button type="button" size="sm" className="h-7 px-2 text-xs" data-vaul-no-drag onClick={onEdit}>
+              {STOP.EDIT}
             </Button>
-          )}
-        </div>
-        {isAnchor && moveHintActive && <p className="px-4 pb-2 text-xs text-muted-foreground">{STOP.MOVE_ANCHOR_HINT}</p>}
+            <Button type="button" variant="outline" size="icon" className="h-7 w-7 shrink-0" data-vaul-no-drag onClick={onDissolve} title={STOP.DISSOLVE} aria-label={STOP.DISSOLVE}>
+              <Undo2 aria-hidden className="h-4 w-4" />
+            </Button>
+            <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" data-vaul-no-drag onClick={onToggleList}>
+              {listOpen ? UI_LABELS.MAP_PANEL.HIDE_FULL_LIST : UI_LABELS.MAP_PANEL.VIEW_FULL_LIST}
+            </Button>
+          </>
+        }
+      >
+        {/* Title always the stop's PLACE (RF-006.15 reverted the "Veículo (âncora)"
+            swap): the vehicle-stop info lives on the address row, not the title. */}
+        <PanelTitle stopNumber={String(stopOrder)} neighborhoods={neighborhoods} zipcodes={zipcodes} metrics={metrics} />
       </PanelSection>
-    )}
-  </div>
-);
+
+      {/* The selected address lives in the SUMMARY view only; the full list IS the
+          addresses. Section label always "Endereço selecionado" (RF-006.15). The
+          row shape follows `selectedKind` (RF-006.17/.18): the vehicle stop (car
+          glyph + "Parada do veículo", no packages, not tappable, with a quick
+          "Editar local" that reopens the draft), the delivery it parks by (same
+          badge, but a normal tappable delivery) or a plain member. */}
+      {!listOpen && selectedItem && (
+        <PanelSection label={UI_LABELS.MAP_PANEL.SECTION_SELECTED}>
+          {isVehicle ? (
+            /* The vehicle stop is its OWN independent row (RF-006.18): a quick
+               "Editar local" reopens the draft (same as "Editar parada"), ready
+               to move the car — no need to open the full edit first. The
+               highlight (bg-accent) rides the WHOLE row so the button stays
+               inside it, not floating past the edge. */
+            <div className="flex items-center bg-accent">
+              <div className="min-w-0 flex-1">
+                <StopItemRow item={selectedItem} onTap={() => {}} highlighted neon markerGlyph="vehicle" vehicleStop />
+              </div>
+              <Button type="button" variant="ghost" size="icon" className="mr-2 h-8 w-8 shrink-0" data-vaul-no-drag onClick={onEdit} title={STOP.EDIT_VEHICLE} aria-label={STOP.EDIT_VEHICLE}>
+                <Pencil aria-hidden className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <>
+              <StopItemRow item={selectedItem} onTap={onTapCard} highlighted expanded={expanded} neon {...(selectedKind === "coincident" ? { vehicleStop: true } : {})} />
+              {/* A member drills its packages down right here (RF-006.15). */}
+              {expanded && <StopItemDetail item={selectedItem} />}
+            </>
+          )}
+        </PanelSection>
+      )}
+    </div>
+  );
+};

@@ -135,6 +135,10 @@ interface Props {
       dropped coordinate; the caller street-projects it (map matching stays
       outside, as in the reducer) and re-anchors draft or committed stop. */
   onAnchorDragEnd?: (latlng: LatLng) => void;
+  /** Tap on the ANCHOR car when it is NOT draggable (RF-006.17): the distinct
+      vehicle stop of an expanded firmed stop is selectable, so the car cycles
+      back into the panel after a member was tapped. */
+  onAnchorTap?: () => void;
   /** Roteiro decorations, drawn on their OWN layer (TASK-RF-006.3/.4): start
       marker, dashed suggestion line, the draft's dashed radius circle (real
       meters, centered on the seed) and its provisional anchor. */
@@ -143,6 +147,10 @@ interface Props {
     suggestionPath: LatLng[] | null;
     radiusCircle?: { center: LatLng; meters: number } | null;
     anchor?: LatLng | null;
+    /** The anchor car is DRAGGABLE only in the edit draft (RF-006.16): an
+        expanded firmed stop SHOWS the car but doesn't let it move (editing the
+        anchor means "Editar parada"). */
+    anchorDraggable?: boolean;
   };
 }
 
@@ -160,6 +168,7 @@ export const RouteMap: React.FC<Props> = ({
   onModelExpand,
   onStartTap,
   onAnchorDragEnd,
+  onAnchorTap,
   roteiroOverlay,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -180,6 +189,7 @@ export const RouteMap: React.FC<Props> = ({
   const onModelExpandRef = useRef<((model: MarkerModel) => void) | undefined>(undefined);
   const onStartTapRef = useRef<(() => void) | undefined>(undefined);
   const onAnchorDragEndRef = useRef<((latlng: LatLng) => void) | undefined>(undefined);
+  const onAnchorTapRef = useRef<(() => void) | undefined>(undefined);
   /** Pending single-tap timer (RF-006.4.8/.4.10): a double-tap clears it before
       it fires, so the single-tap action doesn't run (nor recreate the markers). */
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -196,6 +206,7 @@ export const RouteMap: React.FC<Props> = ({
     onModelExpandRef.current = onModelExpand;
     onStartTapRef.current = onStartTap;
     onAnchorDragEndRef.current = onAnchorDragEnd;
+    onAnchorTapRef.current = onAnchorTap;
     interactionRef.current = interaction;
   });
   const stops = useMemo(() => groupRowsByStop(rows), [rows]);
@@ -211,6 +222,7 @@ export const RouteMap: React.FC<Props> = ({
   const radiusCircle = roteiroOverlay?.radiusCircle ?? null;
   const anchorLat = roteiroOverlay?.anchor?.lat;
   const anchorLng = roteiroOverlay?.anchor?.lng;
+  const anchorDraggable = roteiroOverlay?.anchorDraggable ?? false;
   /** Bounds signature: refit ONLY when the framed set changes (markers appear/
       disappear or the start moves) — never on visual-state churn like toggling
       a draft candidate, which would destroy the user's zoom mid-draft (RF-006.4). */
@@ -519,14 +531,22 @@ export const RouteMap: React.FC<Props> = ({
       startMarker.on("click", () => onStartTapRef.current?.());
     }
     if (anchorLat !== undefined && anchorLng !== undefined) {
-      // The anchor car is DRAGGABLE (TASK-RF-006.5): Leaflet pauses the map pan
-      // during a marker drag by itself — the drag×pan risk the épico flagged.
-      // The dropped coordinate goes out RAW; the caller street-projects it.
-      const anchorMarker = addOverlayMarker(anchorLat, anchorLng, VEHICLE_ICON_PROPS, Z_VEHICLE, { draggable: true });
-      anchorMarker.on("dragend", () => {
-        const position = anchorMarker.getLatLng();
-        onAnchorDragEndRef.current?.({ lat: position.lat, lng: position.lng });
-      });
+      // The car shows for the draft OR an expanded firmed stop (RF-006.16), but
+      // it only DRAGS in the draft: Leaflet pauses the map pan during a marker
+      // drag by itself — the drag×pan risk the épico flagged. The dropped
+      // coordinate goes out RAW; the caller street-projects it.
+      const anchorMarker = addOverlayMarker(anchorLat, anchorLng, VEHICLE_ICON_PROPS, Z_VEHICLE, { draggable: anchorDraggable });
+      if (anchorDraggable) {
+        anchorMarker.on("dragend", () => {
+          const position = anchorMarker.getLatLng();
+          onAnchorDragEndRef.current?.({ lat: position.lat, lng: position.lng });
+        });
+      } else {
+        // Firmed & ungrouped: the car is SELECTABLE (RF-006.17), so it cycles
+        // back into the panel after a member was tapped. Draggable drafts don't
+        // wire this (a click is the start of a drag there).
+        anchorMarker.on("click", () => onAnchorTapRef.current?.());
+      }
     }
 
     // Dashed radius circle (tela 9, spec §3): real meters, centered on the SEED.
@@ -556,7 +576,7 @@ export const RouteMap: React.FC<Props> = ({
     return () => {
       map.off("zoomend", rescaleOverlay);
     };
-  }, [startLat, startLng, suggestionPath, radiusCircle, anchorLat, anchorLng]);
+  }, [startLat, startLng, suggestionPath, radiusCircle, anchorLat, anchorLng, anchorDraggable]);
 
   // Fills the parent (focus screen layout); leaving the screen is the shell's
   // header back arrow / the page's Escape handler (TASK-RF-023.5).

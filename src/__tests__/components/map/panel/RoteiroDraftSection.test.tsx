@@ -5,6 +5,7 @@ import type { StopItemData } from "../../../../utils/markers/panelModels";
 import { ICON_KEYS, UI_LABELS } from "../../../../constants";
 
 const DRAFT = UI_LABELS.MAP_PANEL.ROTEIRO_DRAFT;
+const STOP = UI_LABELS.MAP_PANEL.ROTEIRO_STOP;
 
 /** Points adapted to the Original list vocabulary (RF-006.4.3 — the edit body
     renders the full-list structure; `addressKey` is the point id). */
@@ -23,6 +24,14 @@ const bodyProps = {
   chosen: [listItem("pt_a", "Rua Mapa, 10", UI_LABELS.MAP_PANEL.ORDINAL(1))],
   candidates: [listItem("pt_b", "Rua Beta, 20", "", 3)],
   onTogglePoint: vi.fn(),
+  // Âncora + sentido dentro da edição (RF-006.6). Endereço PRÓPRIO no fixture
+  // só para as queries não ficarem ambíguas: na página ele é o placeholder do
+  // 1º endereço (mesmo texto) até o geocoding da âncora chegar (RF-006.9).
+  anchorItem: listItem("pt_anchor", "Rua da Âncora, 1", ""),
+  onResetAnchor: vi.fn(),
+  onReverseOrder: vi.fn(),
+  onMakeAnchor: vi.fn(),
+  anchorMoved: false,
 };
 
 const headerHandlers = () => ({ onSave: vi.fn(), onCancel: vi.fn() });
@@ -83,6 +92,24 @@ describe("RoteiroDraftSection (tela 9 — TASK-RF-006.4/.4.1/.4.2/.4.3)", () => 
     fireEvent.click(screen.getByRole("button", { name: DRAFT.ADD_POINT("Rua Beta, 20") }));
     expect(onTogglePoint).toHaveBeenNthCalledWith(1, "pt_a");
     expect(onTogglePoint).toHaveBeenNthCalledWith(2, "pt_b");
+  });
+
+  it("body: a ÂNCORA abre a lista com o sentido; 'Tornar âncora' por membro; 'Resetar' só fora do padrão (RF-006.6)", () => {
+    const handlers = { onMakeAnchor: vi.fn(), onReverseOrder: vi.fn(), onResetAnchor: vi.fn() };
+    const { rerender } = render(<RoteiroDraftBody {...bodyProps} {...handlers} />);
+
+    // Inverter sempre; resetar só quando a âncora saiu do padrão.
+    fireEvent.click(screen.getByRole("button", { name: STOP.REVERSE_ORDER }));
+    expect(handlers.onReverseOrder).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: STOP.RESET_ANCHOR })).not.toBeInTheDocument();
+
+    // "Tornar âncora" vive por MEMBRO, ao lado do − (spec §9).
+    fireEvent.click(screen.getByRole("button", { name: `${STOP.MAKE_ANCHOR}: Rua Mapa, 10` }));
+    expect(handlers.onMakeAnchor).toHaveBeenCalledWith("pt_a");
+
+    rerender(<RoteiroDraftBody {...bodyProps} {...handlers} anchorMoved />);
+    fireEvent.click(screen.getByRole("button", { name: STOP.RESET_ANCHOR }));
+    expect(handlers.onResetAnchor).toHaveBeenCalledTimes(1);
   });
 
   it("radius stepper (in the header) steps by 10 m and disables at the bounds", () => {

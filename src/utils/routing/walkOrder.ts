@@ -2,10 +2,13 @@
  * utils/routing/walkOrder.ts - Default walking order inside a stop (fluxo §6).
  *
  * The courier parks at the vehicle stop and delivers the stop's addresses on a
- * foot circuit that leaves from and returns to it. The default order is a
- * CLOCKWISE SWEEP around the vehicle stop (north first), so the circuit never
- * criss-crosses; ties (same bearing) go nearest-first. The user can still
- * reorder manually (builder.ts), which survives until the anchor moves again.
+ * foot circuit that leaves from and returns to it. Two orders live here:
+ * - `sweepWalkingOrder`: the base CLOCKWISE SWEEP around the vehicle stop
+ *   (north first), ties nearest-first — never criss-crosses.
+ * - `nearestFirstOrder` (RF-006.17): the order the app actually uses — the
+ *   NEAREST address to the vehicle is 1st, then the sweep continues in the
+ *   sense (clockwise/counter) that puts the closer neighbour 2nd; `reversed`
+ *   ("Inverter ordem") flips that sense while keeping the nearest 1st.
  *
  * Pure trigonometry — no fetch, Leaflet or DOM.
  */
@@ -53,3 +56,42 @@ export const sweepWalkingOrder = (vehicleStop: LatLng, points: DeliveryPoint[]):
     }))
     .sort((a, b) => a.bearing - b.bearing || a.distance - b.distance)
     .map((entry) => entry.id);
+
+/** The point nearest `vehicleStop`. Ties keep the earlier point (stable). */
+const nearestPoint = (vehicleStop: LatLng, points: DeliveryPoint[]): DeliveryPoint => points.reduce((best, point) => (haversine(vehicleStop, point) < haversine(vehicleStop, best) ? point : best));
+
+/**
+ * The walking order the app uses (RF-006.17): the address NEAREST the vehicle
+ * stop is 1st (a coincident anchor sits at distance 0, so it is always 1st),
+ * then the circuit continues in the SENSE that puts the closer of the 1st's two
+ * bearing-neighbours 2nd — because with the 1st at distance 0, only the 2nd
+ * reveals which way to sweep. `reversed` ("Inverter ordem") flips that sense,
+ * always keeping the nearest 1st. Built on `sweepWalkingOrder`, so the circuit
+ * still never criss-crosses.
+ *
+ * @param vehicleStop - Where the vehicle parks (the circuit's start/end).
+ * @param points - The stop's delivery points (any order).
+ * @param reversed - Walk the auto-chosen sense backwards.
+ * @returns The point ids in visit order.
+ */
+export const nearestFirstOrder = (vehicleStop: LatLng, points: DeliveryPoint[], reversed: boolean): string[] => {
+  if (points.length <= 1) return points.map((point) => point.id);
+
+  const byId = new Map(points.map((point) => [point.id, point]));
+  const clockwise = sweepWalkingOrder(vehicleStop, points);
+  const first = nearestPoint(vehicleStop, points);
+  const start = clockwise.indexOf(first.id);
+
+  // Rotate the clockwise ring to begin at the nearest; the counter-clockwise
+  // ring keeps that same 1st and reverses the rest.
+  const cwRing = [...clockwise.slice(start), ...clockwise.slice(0, start)];
+  const ccwRing = [cwRing[0], ...cwRing.slice(1).reverse()];
+
+  // Default sense: whichever ring puts the closer neighbour of the 1st in 2nd.
+  const cwSecond = byId.get(cwRing[1])!;
+  const ccwSecond = byId.get(ccwRing[1])!;
+  const base = haversine(first, cwSecond) <= haversine(first, ccwSecond) ? cwRing : ccwRing;
+  const flipped = base === cwRing ? ccwRing : cwRing;
+
+  return reversed ? flipped : base;
+};
