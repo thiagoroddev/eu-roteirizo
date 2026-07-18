@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import type { DeliveryPoint } from "../../types/routing";
 import type { RoadGraph } from "../../utils/routing/graph";
+import type { FetchRoadGraphResult } from "../../utils/routing/osm";
 
 vi.mock("../../services/graphCache", () => ({
   loadRoadGraph: vi.fn(),
@@ -48,6 +49,34 @@ describe("useRoadGraph (lazy, ADR-009 decision B)", () => {
     expect(bbox.north).toBeGreaterThan(-22.979);
     expect(bbox.west).toBeLessThan(-43.2);
     expect(bbox.east).toBeGreaterThan(-43.199);
+  });
+
+  it("does not wedge: disabling mid-load then re-enabling reaches ready (TASK-BG-006)", async () => {
+    // First run stays in flight; we abandon it and let it resolve late.
+    let resolveFirst!: (r: FetchRoadGraphResult) => void;
+    const firstRun = new Promise<FetchRoadGraphResult>((resolve) => {
+      resolveFirst = resolve;
+    });
+    vi.mocked(loadRoadGraph).mockReturnValueOnce(firstRun).mockResolvedValueOnce({ graph: GRAPH });
+
+    const { result, rerender } = renderHook(({ enabled }) => useRoadGraph(POINTS, enabled), { initialProps: { enabled: true } });
+    await waitFor(() => expect(result.current.status).toBe("loading"));
+
+    // Leave the mode while the load is in flight (cleanup cancels this run).
+    rerender({ enabled: false });
+    // The abandoned run resolves late with a DIFFERENT outcome — must be ignored,
+    // not applied (the old shared cancel flag swallowed it AND blocked the restart).
+    await act(async () => {
+      resolveFirst({ error: "abandonado" });
+      await firstRun;
+    });
+
+    // Re-enter the mode: the load must restart and reach ready, not stay stuck.
+    rerender({ enabled: true });
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+    expect(result.current.graph).toBe(GRAPH);
+    expect(result.current.error).toBeNull();
+    expect(loadRoadGraph).toHaveBeenCalledTimes(2);
   });
 
   it("reports the error and retries on demand", async () => {

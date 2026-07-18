@@ -509,7 +509,9 @@ describe("RouteMap (controlled embedded map)", () => {
 
     // The anchor marker asks Leaflet for the drag (Leaflet pauses the map pan
     // by itself during a marker drag).
-    const draggableAnchor = (L.marker as ReturnType<typeof vi.fn>).mock.calls.find(([latlng, options]) => Array.isArray(latlng) && latlng[0] === -22.941 && (options as { draggable?: boolean })?.draggable === true);
+    const draggableAnchor = (L.marker as ReturnType<typeof vi.fn>).mock.calls.find(
+      ([latlng, options]) => Array.isArray(latlng) && latlng[0] === -22.941 && (options as { draggable?: boolean })?.draggable === true
+    );
     expect(draggableAnchor).toBeTruthy();
     // …and it rises ABOVE the addresses (RF-006.19) so a member sitting on top
     // can't intercept the grab — not the usual "car parks below" z.
