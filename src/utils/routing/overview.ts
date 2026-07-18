@@ -11,9 +11,10 @@
 import type { DeliveryPoint, LatLng } from "../../types/routing";
 import type { RoadGraph } from "./graph";
 import type { RouteBuilderState } from "./builder";
-import { remainingCounts, suggestedNextPointId, previousAnchorOrigin } from "./builder";
+import { remainingCounts, suggestedNextPointId, suggestionCandidates, suggestionOrigin, previousAnchorOrigin } from "./builder";
 import { totalPoints, totalPackages, assignedPointIds, pointsWithinRadius, indexPointsById } from "./selectors";
 import { suggestVehicleStop, defaultAnchorSeed } from "./vehicleStop";
+import { nearestByVehicleGraph } from "./suggestion";
 import { nearestFirstOrder } from "./walkOrder";
 
 export interface RouteProgress {
@@ -55,13 +56,30 @@ export interface NextStopSuggestion {
 }
 
 /**
- * How the NEXT stop would look if created now (overview's third section):
- * seeded by `suggestedNextPointId`, aggregating the free points inside the
- * default radius — the same preview the tapped-orphan flow shows (tela 8).
- * Null before a start exists or when every point is committed.
+ * The seed for the next stop (TASK-RF-006.12): the free candidate nearest the
+ * suggestion origin RESPECTING ONE-WAY, over the directed vehicle graph — so the
+ * suggestion never points at a spot "close in a straight line but far by the
+ * street sense". Falls back to `suggestedNextPointId`'s straight-line pick
+ * without a graph, and a valid manual override always wins.
  */
-export const nextStopSuggestion = (state: RouteBuilderState, graph: RoadGraph | null): NextStopSuggestion | null => {
-  const seedId = suggestedNextPointId(state);
+export const suggestedNextSeed = (state: RouteBuilderState, graph: RoadGraph | null): string | null => {
+  const straight = suggestedNextPointId(state);
+  if (straight === null || !graph || state.nextSuggestionOverride === straight) return straight;
+
+  const origin = suggestionOrigin(state);
+  const candidates = suggestionCandidates(state);
+  return origin && candidates.length > 0 ? nearestByVehicleGraph(graph, origin, candidates) : straight;
+};
+
+/**
+ * How the NEXT stop would look if created now (overview's third section):
+ * seeded by `suggestedNextSeed` (one-way aware — RF-006.12), aggregating the
+ * free points inside the default radius — the same preview the tapped-orphan
+ * flow shows (tela 8). Null before a start exists or when every point is
+ * committed. `seedId` is injectable so the page computes the seed once and
+ * shares it with the drawn suggestion line.
+ */
+export const nextStopSuggestion = (state: RouteBuilderState, graph: RoadGraph | null, seedId: string | null = suggestedNextSeed(state, graph)): NextStopSuggestion | null => {
   if (seedId === null) return null;
   const seed = state.points.find((p) => p.id === seedId);
   if (!seed) return null;

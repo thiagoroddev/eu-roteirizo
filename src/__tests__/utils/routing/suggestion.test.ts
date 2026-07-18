@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { suggestionPath } from "../../../utils/routing/suggestion";
+import { suggestionPath, nearestByVehicleGraph } from "../../../utils/routing/suggestion";
 import { pedestrianGraph } from "../../../utils/routing/pedestrian";
 import { haversine } from "../../../utils/routing/geo";
 import { buildGraph, type RoadGraph } from "../../../utils/routing/graph";
 import { squareGraph, osmWay, A, B, COORDS } from "./__fixtures__/syntheticGraph";
+import type { DeliveryPoint } from "../../../types/routing";
 
 /** Two mid-block points slightly south of the A–C street (lat -22.98). */
 const FROM = { lat: -22.98005, lng: -43.19995 };
@@ -42,5 +43,23 @@ describe("suggestionPath", () => {
     const result = suggestionPath(oneWay, nearB, nearA);
     expect(result.viaStreets).toBe(false);
     expect(result.path).toEqual([nearB, nearA]);
+  });
+});
+
+describe("nearestByVehicleGraph (RF-006.12)", () => {
+  const pt = (id: string, lat: number, lng: number): DeliveryPoint => ({ id, lat, lng, address: id, packageCount: 1, packages: [] });
+
+  it("returns null with no candidates", () => {
+    expect(nearestByVehicleGraph(squareGraph, COORDS[B], [])).toBeNull();
+  });
+
+  it("picks the candidate nearest by the DIRECTED graph (one-way), not the straight line", () => {
+    // p1: mid-Rua AB, just north of B — CLOSER in a straight line, but Rua AB is
+    // one-way A→B, so reaching it from B means the detour B→D→C→A.
+    const p1 = pt("p1", -22.9807, -43.2);
+    // p2: on Rua BD east of B — a touch FARTHER straight-line, directly reachable.
+    const p2 = pt("p2", -22.981, -43.1996);
+    expect(haversine(COORDS[B], p1)).toBeLessThan(haversine(COORDS[B], p2)); // straight line would pick p1
+    expect(nearestByVehicleGraph(squareGraph, COORDS[B], [p1, p2])).toBe("p2"); // the sense picks the reachable one
   });
 });

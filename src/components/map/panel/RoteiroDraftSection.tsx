@@ -1,3 +1,4 @@
+import { type ReactNode } from "react";
 import { Car, Minus, Plus } from "lucide-react";
 import { Button } from "../../ui/button";
 import { PanelModeBar } from "./PanelModeBar";
@@ -121,21 +122,14 @@ export const RoteiroDraftHeader = ({ stopNumber, metrics, addresses, radiusMeter
 );
 
 /**
- * RoteiroDraftPick - the free point tapped on the MAP during the edit
- * (RF-006.4.23/.4.24). Rendered in the panel HEADER (beside the other draft
- * chrome), NOT in the body: the collapsed snap fits the header, so picking an
- * address grows the panel until it shows — like every other selected-address
- * section. The tap looks; this CTA is what edits.
+ * RoteiroDraftPick - a point tapped on the MAP during the edit, in the panel
+ * HEADER (RF-006.4.23/.4.24; extended RF-006.19): the collapsed snap fits the
+ * header, so picking an address grows the panel until it shows. The `actions`
+ * differ by what was tapped — a FREE point gets "Adicionar a esta parada", a
+ * MEMBER gets "Tornar âncora"/"Remover". The tap looks; the buttons edit.
  */
-export const RoteiroDraftPick = ({ item, onAdd }: { item: StopItemData; onAdd?: () => void }) => (
-  <PanelSection
-    label={UI_LABELS.MAP_PANEL.SECTION_SELECTED}
-    actions={
-      <Button type="button" size="sm" className="h-7 px-2 text-xs" data-vaul-no-drag onClick={onAdd}>
-        {DRAFT.ADD_TO_STOP}
-      </Button>
-    }
-  >
+export const RoteiroDraftPick = ({ item, actions }: { item: StopItemData; actions: ReactNode }) => (
+  <PanelSection label={UI_LABELS.MAP_PANEL.SECTION_SELECTED} actions={actions}>
     <StopItemRow item={item} onTap={() => {}} highlighted neon />
   </PanelSection>
 );
@@ -155,6 +149,8 @@ interface BodyProps {
   onMakeAnchor: (pointId: string) => void;
   /** Anchor left its default → "Resetar âncora" shows (RF-006.6). */
   anchorMoved: boolean;
+  /** The chosen member selected on the map (RF-006.19) — highlighted + scrolled to. */
+  selectedMemberKey?: string | null;
 }
 
 /** Trailing add/remove action of a list row (map taps toggle the same way). */
@@ -181,7 +177,7 @@ const memberActions = (item: StopItemData, onMakeAnchor: (pointId: string) => vo
   );
 };
 
-export const RoteiroDraftBody = ({ chosen, candidates, onTogglePoint, anchorItem, onResetAnchor, onReverseOrder, onMakeAnchor, anchorMoved }: BodyProps) => (
+export const RoteiroDraftBody = ({ chosen, candidates, onTogglePoint, anchorItem, onResetAnchor, onReverseOrder, onMakeAnchor, anchorMoved, selectedMemberKey = null }: BodyProps) => (
   <div className="pb-2">
     <PanelSection
       label={DRAFT.SECTION_CHOSEN}
@@ -215,7 +211,7 @@ export const RoteiroDraftBody = ({ chosen, candidates, onTogglePoint, anchorItem
               <p className="px-4 pb-2 text-xs text-muted-foreground">{STOP.MOVE_ANCHOR_HINT}</p>
             </div>
           )}
-          <StopItemList items={chosen} selectedKey={null} neon itemTrailing={(item) => memberActions(item, onMakeAnchor, onTogglePoint)} />
+          <StopItemList items={chosen} selectedKey={selectedMemberKey} neon itemTrailing={(item) => memberActions(item, onMakeAnchor, onTogglePoint)} />
         </>
       )}
     </PanelSection>

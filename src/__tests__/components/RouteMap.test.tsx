@@ -433,6 +433,61 @@ describe("RouteMap (controlled embedded map)", () => {
     expect(L.polyline).not.toHaveBeenCalled();
   });
 
+  it("desenha a rota de veículo (contínua) e o circuito a pé (tracejado âmbar), empilhados veículo→circuito→sugestão (RF-006.7)", () => {
+    const vehicleRoute = [
+      { lat: -22.9, lng: -43.2 },
+      { lat: -22.91, lng: -43.21 },
+    ];
+    const footCircuit = [
+      { lat: -22.9, lng: -43.2 },
+      { lat: -22.901, lng: -43.199 },
+      { lat: -22.9, lng: -43.2 },
+    ];
+    const suggestionPath = [
+      { lat: -22.9, lng: -43.2 },
+      { lat: -22.95, lng: -43.15 },
+    ];
+    renderRouteMap(mockRowsWithCoordinates, {
+      models: externalModels,
+      roteiroOverlay: { start: null, suggestionPath, vehicleRoute, footCircuit, suggestionFaded: false },
+    });
+
+    const calls = vi.mocked(L.polyline).mock.calls;
+    const pairs = (p: { lat: number; lng: number }[]) => p.map((q) => [q.lat, q.lng]);
+    const indexOf = (p: { lat: number; lng: number }[]) => calls.findIndex((c) => JSON.stringify(c[0]) === JSON.stringify(pairs(p)));
+
+    // Veículo = CONTÍNUA (sem dashArray); circuito = tracejado âmbar.
+    expect(calls[indexOf(vehicleRoute)][1]).not.toHaveProperty("dashArray");
+    expect(L.polyline).toHaveBeenCalledWith(pairs(footCircuit), expect.objectContaining({ dashArray: "6 8", color: "#F59E0B" }));
+    // Empilhamento (ordem de add no canvas): veículo < circuito < sugestão.
+    expect(indexOf(vehicleRoute)).toBeLessThan(indexOf(footCircuit));
+    expect(indexOf(footCircuit)).toBeLessThan(indexOf(suggestionPath));
+  });
+
+  it("a sugestão é FORTE fora do rascunho (RF-006.7)", () => {
+    const suggestionPath = [
+      { lat: -22.9, lng: -43.2 },
+      { lat: -22.95, lng: -43.15 },
+    ];
+    renderRouteMap(mockRowsWithCoordinates, { models: externalModels, roteiroOverlay: { start: null, suggestionPath, suggestionFaded: false } });
+    expect(L.polyline).toHaveBeenCalledWith(
+      suggestionPath.map((p) => [p.lat, p.lng]),
+      expect.objectContaining({ weight: 4, opacity: 0.9 })
+    );
+  });
+
+  it("a sugestão é DESBOTADA no rascunho (RF-006.7)", () => {
+    const suggestionPath = [
+      { lat: -22.9, lng: -43.2 },
+      { lat: -22.95, lng: -43.15 },
+    ];
+    renderRouteMap(mockRowsWithCoordinates, { models: externalModels, roteiroOverlay: { start: null, suggestionPath, suggestionFaded: true } });
+    expect(L.polyline).toHaveBeenCalledWith(
+      suggestionPath.map((p) => [p.lat, p.lng]),
+      expect.objectContaining({ weight: 3, opacity: 0.55 })
+    );
+  });
+
   it("draws the draft's DASHED radius circle in real meters and its anchor with the shared VEHICLE marker (RF-006.4.1)", () => {
     renderRouteMap(mockRowsWithCoordinates, {
       models: externalModels,
@@ -454,9 +509,11 @@ describe("RouteMap (controlled embedded map)", () => {
 
     // The anchor marker asks Leaflet for the drag (Leaflet pauses the map pan
     // by itself during a marker drag).
-    expect(
-      (L.marker as ReturnType<typeof vi.fn>).mock.calls.some(([latlng, options]) => Array.isArray(latlng) && latlng[0] === -22.941 && (options as { draggable?: boolean })?.draggable === true)
-    ).toBe(true);
+    const draggableAnchor = (L.marker as ReturnType<typeof vi.fn>).mock.calls.find(([latlng, options]) => Array.isArray(latlng) && latlng[0] === -22.941 && (options as { draggable?: boolean })?.draggable === true);
+    expect(draggableAnchor).toBeTruthy();
+    // …and it rises ABOVE the addresses (RF-006.19) so a member sitting on top
+    // can't intercept the grab — not the usual "car parks below" z.
+    expect((draggableAnchor?.[1] as { zIndexOffset?: number })?.zIndexOffset).toBeGreaterThan(200000);
 
     const dragends = markerMethods.on.mock.calls.filter(([event]) => event === "dragend");
     expect(dragends.length).toBeGreaterThan(0);

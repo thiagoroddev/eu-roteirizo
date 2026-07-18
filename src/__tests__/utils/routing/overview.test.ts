@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { routeProgress, nextStopSuggestion } from "../../../utils/routing/overview";
+import { routeProgress, nextStopSuggestion, suggestedNextSeed } from "../../../utils/routing/overview";
 import { createInitialBuilderState, routeBuilderReducer, type RouteBuilderAction, type RouteBuilderState } from "../../../utils/routing/builder";
+import { squareGraph, COORDS, B } from "./__fixtures__/syntheticGraph";
 import type { DeliveryPoint, LatLng } from "../../../types/routing";
 
 const pt = (id: string, lat: number, lng: number, packageCount = 1): DeliveryPoint => ({ id, lat, lng, address: id, packageCount, packages: [] });
@@ -89,5 +90,22 @@ describe("nextStopSuggestion", () => {
 
   it("null when every point is committed", () => {
     expect(nextStopSuggestion(withAllCommitted(started()), null)).toBeNull();
+  });
+});
+
+describe("suggestedNextSeed (RF-006.12 — respeita a mão única)", () => {
+  // Sobre o grafo sintético (Rua AB é mão única A→B): dois candidatos livres a
+  // partir do início em B — p1 mais perto EM RETA (mid-AB, ao norte de B), mas
+  // atrás da contramão; p2 um pouco mais longe em reta (Rua BD, leste), direto.
+  const p1 = pt("p1", -22.9807, -43.2);
+  const p2 = pt("p2", -22.981, -43.1996);
+  const startedAtB = run(createInitialBuilderState([p1, p2], undefined, { routeId: "r", createdAt: "2026-07-07T00:00:00.000Z" }), { type: "SET_START", position: COORDS[B] });
+
+  it("sem grafo cai na sugestão por LINHA RETA (o mais perto)", () => {
+    expect(suggestedNextSeed(startedAtB, null)).toBe("p1");
+  });
+
+  it("com o grafo dirigido escolhe o ALCANÇÁVEL pela mão única, não o mais perto em reta", () => {
+    expect(suggestedNextSeed(startedAtB, squareGraph)).toBe("p2");
   });
 });

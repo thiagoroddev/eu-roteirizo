@@ -73,6 +73,8 @@ interface Props {
   progress: RouteProgress;
   /** Current sums (RF-006.11); null hides the Detalhes subsection. */
   totals: PlannedRouteTotals | null;
+  /** Whether the totals came from the street graph (RF-006.7) — drives the caption. */
+  totalsViaStreets?: boolean;
   /** The start as "parada 0"; null before a start exists. */
   start: OverviewStartView | null;
   /** Start gestures (RF-006.14): reposition arms a map tap; delete drops it. */
@@ -91,14 +93,27 @@ interface Props {
   onCreateSuggested: () => void;
 }
 
-export const RoteiroOverviewSection = ({ progress, totals, start, onDeleteStart, onRepositionStart, stops, startKey, suggestion, onShowStopOnMap, onShowSuggestedOnMap, onCreateSuggested }: Props) => {
+export const RoteiroOverviewSection = ({
+  progress,
+  totals,
+  totalsViaStreets = false,
+  start,
+  onDeleteStart,
+  onRepositionStart,
+  stops,
+  startKey,
+  suggestion,
+  onShowStopOnMap,
+  onShowSuggestedOnMap,
+  onCreateSuggested,
+}: Props) => {
   /** One drill-down open at a time — the overview is a scan, not an editor. */
   const [openStopId, setOpenStopId] = useState<string | null>(null);
 
   return (
     <div>
       <PanelSection label={OVERVIEW.SECTION_PROGRESS}>
-        <RouteProgressCard progress={progress} totals={totals} />
+        <RouteProgressCard progress={progress} totals={totals} viaStreets={totalsViaStreets} />
       </PanelSection>
 
       <PanelSection label={OVERVIEW.SECTION_CONFIRMED}>

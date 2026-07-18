@@ -1,15 +1,18 @@
 /**
- * utils/routing/estimates.ts - Simple walking estimate of a stop (TASK-RF-006.4.1).
+ * utils/routing/estimates.ts - Walking/route estimates (TASK-RF-006.4.1/.7).
  *
  * The draft panel shows "~12 min · 850 m a pé" for the stop being built: the
  * walking CIRCUIT (vehicle stop → points in visit order → back to the vehicle,
- * fluxo §6) measured by haversine legs, plus the fixed handover time per
- * package. This is the coarse estimate — the street-graph version (per-leg,
- * vehicle legs, totals) is RF-007. Pure: no Leaflet/DOM/React.
+ * fluxo §6). By default the legs are haversine (coarse, cheap); pass the graphs
+ * (RF-006.7) and the distances become the real street path (foot circuit over
+ * the pedestrian graph, vehicle legs over the directed graph). Pure: no
+ * Leaflet/DOM/React.
  */
 
 import type { DeliveryPoint, LatLng, PlannedRoute, RoutingConfig } from "../../types/routing";
+import type { RoadGraph } from "./graph";
 import { haversine } from "./geo";
+import { vehicleRoutePath, footCircuitPath } from "./routePath";
 
 export interface StopWalkEstimate {
   /** Circuit length in meters (0 with no points). */
@@ -19,23 +22,30 @@ export interface StopWalkEstimate {
 }
 
 /**
- * Estimates the walking circuit of a stop draft.
+ * Estimates the walking circuit of a stop.
  *
  * @param vehicleStop - The anchor the circuit leaves from and returns to.
  * @param orderedPoints - The chosen points, in walking-visit order.
  * @param config - Speeds/times (walkingSpeedKmh, walkingMinutesPerDelivery).
+ * @param pedGraph - The pedestrian graph (RF-006.7): when given, the circuit
+ *   length is the real street path; else haversine legs (coarse). Default null.
  * @returns Circuit meters + total minutes.
  */
-export const stopWalkEstimate = (vehicleStop: LatLng, orderedPoints: DeliveryPoint[], config: RoutingConfig): StopWalkEstimate => {
+export const stopWalkEstimate = (vehicleStop: LatLng, orderedPoints: DeliveryPoint[], config: RoutingConfig, pedGraph: RoadGraph | null = null): StopWalkEstimate => {
   if (orderedPoints.length === 0) return { meters: 0, minutes: 0 };
 
-  let meters = 0;
-  let cursor: LatLng = vehicleStop;
-  for (const point of orderedPoints) {
-    meters += haversine(cursor, point);
-    cursor = point;
+  let meters: number;
+  if (pedGraph) {
+    meters = footCircuitPath(pedGraph, vehicleStop, orderedPoints).distanceMeters;
+  } else {
+    meters = 0;
+    let cursor: LatLng = vehicleStop;
+    for (const point of orderedPoints) {
+      meters += haversine(cursor, point);
+      cursor = point;
+    }
+    meters += haversine(cursor, vehicleStop);
   }
-  meters += haversine(cursor, vehicleStop);
 
   const packages = orderedPoints.reduce((sum, point) => sum + point.packageCount, 0);
   const walkMinutes = (meters / 1000 / config.walkingSpeedKmh) * 60;
@@ -55,16 +65,28 @@ export interface PlannedRouteTotals {
   timeTotalMin: number;
 }
 
+/** Graphs (RF-006.7) that turn the coarse haversine totals into real street km. */
+export interface PlannedRouteTotalsGraphs {
+  /** Directed vehicle graph (respects one-way) — refines the vehicle legs. */
+  graph?: RoadGraph | null;
+  /** Pedestrian graph (ignores one-way) — refines the walking circuits. */
+  pedGraph?: RoadGraph | null;
+  /** Pre-computed vehicle street distance (m): reuse it (the map already traced
+   *  the route) instead of running the vehicle A* chain a second time. */
+  vehicleMetersOverride?: number;
+}
+
 /**
- * Coarse totals of a persisted PlannedRoute (RF-008): vehicle legs are
- * straight-line (start → anchor → anchor…, haversine) at `vehicleSpeedKmh`;
- * walking is the per-stop circuit of `stopWalkEstimate`. The street-graph
- * vehicle path (RF-006.7) and the configurable estimates (RF-007) refine this
- * later without changing the shape. Pure — points the spreadsheet no longer
- * has are simply skipped (mirrors the reducer's defensive HYDRATE).
+ * Totals of a persisted PlannedRoute (RF-008). WITHOUT `graphs`: coarse — vehicle
+ * legs straight-line (start → anchor → anchor…, haversine) at `vehicleSpeedKmh`,
+ * walking the per-stop haversine circuit. WITH `graphs` (RF-006.7): real street
+ * distances (vehicle over the directed graph, walking over the pedestrian graph),
+ * same shape. The Sumário (RF-008) calls it without graphs → unchanged. Pure —
+ * points the spreadsheet no longer has are skipped (mirrors HYDRATE).
  */
-export const plannedRouteTotals = (route: PlannedRoute, points: DeliveryPoint[]): PlannedRouteTotals => {
+export const plannedRouteTotals = (route: PlannedRoute, points: DeliveryPoint[], graphs?: PlannedRouteTotalsGraphs): PlannedRouteTotals => {
   const byId = new Map(points.map((p) => [p.id, p]));
+  const pedGraph = graphs?.pedGraph ?? null;
 
   let walkMeters = 0;
   let walkMinutes = 0;
@@ -72,16 +94,27 @@ export const plannedRouteTotals = (route: PlannedRoute, points: DeliveryPoint[])
   for (const stop of route.stops) {
     const stopPoints = stop.pointIds.map((id) => byId.get(id)).filter((p): p is DeliveryPoint => p !== undefined);
     walkPoints += stopPoints.length;
-    const estimate = stopWalkEstimate(stop.vehicleStop, stopPoints, route.config);
+    const estimate = stopWalkEstimate(stop.vehicleStop, stopPoints, route.config, pedGraph);
     walkMeters += estimate.meters;
     walkMinutes += estimate.minutes;
   }
 
-  let vehicleMeters = 0;
-  let cursor: LatLng | null = route.startPoint;
-  for (const stop of route.stops) {
-    if (cursor) vehicleMeters += haversine(cursor, stop.vehicleStop);
-    cursor = stop.vehicleStop;
+  let vehicleMeters: number;
+  if (graphs?.vehicleMetersOverride !== undefined) {
+    vehicleMeters = graphs.vehicleMetersOverride;
+  } else if (graphs?.graph) {
+    vehicleMeters = vehicleRoutePath(
+      graphs.graph,
+      route.startPoint,
+      route.stops.map((stop) => stop.vehicleStop)
+    ).distanceMeters;
+  } else {
+    vehicleMeters = 0;
+    let cursor: LatLng | null = route.startPoint;
+    for (const stop of route.stops) {
+      if (cursor) vehicleMeters += haversine(cursor, stop.vehicleStop);
+      cursor = stop.vehicleStop;
+    }
   }
   const timeVehicleMin = (vehicleMeters / 1000 / route.config.vehicleSpeedKmh) * 60;
 

@@ -387,16 +387,25 @@ export const previousAnchorOrigin = (state: RouteBuilderState, stopId: string | 
 };
 
 /**
+ * The free points eligible to SEED the next stop (fluxo §4 passo 2 / §6):
+ * unassigned, not in the open draft, and — while drafting — OUTSIDE its radius
+ * (those inside are the draft's candidates, not the next stop). Pure, no graph —
+ * the graph-aware rank (RF-006.12) lives in `overview.suggestedNextSeed`.
+ */
+export const suggestionCandidates = (state: RouteBuilderState): DeliveryPoint[] => {
+  const inRadius = idsWithinDraftRadius(state);
+  return unassignedPoints(state.points, state.stops).filter((p) => !state.draft?.pointIds.includes(p.id) && !inRadius.has(p.id));
+};
+
+/**
  * The point the next-stop suggestion should target (fluxo §4 passo 2): a valid
- * manual override wins; otherwise the nearest free point (haversine) from the
- * suggestion origin. While a draft is open the pool also excludes the points
- * INSIDE its radius (fluxo §6: the dashed line points at the nearest address
- * OUTSIDE the radius — those inside are the draft's candidates, not the next
- * stop). Null before a start is chosen or when nothing is left.
+ * manual override wins; otherwise the nearest free point by STRAIGHT LINE from
+ * the suggestion origin. This is the graph-free base — respecting the street
+ * sense (one-way) is `overview.suggestedNextSeed` (RF-006.12), which re-ranks
+ * these candidates over the directed graph. Null before a start or when empty.
  */
 export const suggestedNextPointId = (state: RouteBuilderState): string | null => {
-  const inRadius = idsWithinDraftRadius(state);
-  const free = unassignedPoints(state.points, state.stops).filter((p) => !state.draft?.pointIds.includes(p.id) && !inRadius.has(p.id));
+  const free = suggestionCandidates(state);
   if (free.length === 0) return null;
 
   if (state.nextSuggestionOverride !== null && free.some((p) => p.id === state.nextSuggestionOverride)) {

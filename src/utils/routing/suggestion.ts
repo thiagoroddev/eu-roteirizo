@@ -8,7 +8,7 @@
  * loaded (or the target is unreachable). Pure: no Leaflet/DOM/React.
  */
 
-import type { LatLng } from "../../types/routing";
+import type { DeliveryPoint, LatLng } from "../../types/routing";
 import type { RoadGraph } from "./graph";
 import { pathToLatLngs } from "./graph";
 import { haversine } from "./geo";
@@ -49,4 +49,47 @@ export const suggestionPath = (graph: RoadGraph | null, from: LatLng, to: LatLng
   const approachFrom = haversine(from, streetPath[0] ?? from);
   const approachTo = haversine(streetPath[streetPath.length - 1] ?? to, to);
   return { path: [from, ...streetPath, to], distanceMeters: distance + approachFrom + approachTo, viaStreets: true };
+};
+
+/** Straight-line prefilter before the (costlier) A* refine — ⚙️ MANUAL KNOB. */
+const SUGGESTION_TOP_N = 6;
+
+/**
+ * The candidate NEAREST `origin` by the DIRECTED graph (RF-006.12): the vehicle
+ * hop to the next stop respects one-way, so a point "close in a straight line
+ * but far by the street sense" loses. Ranks only the top-N straight-line
+ * candidates by real `suggestionPath` distance (the full A* on every candidate
+ * would be too costly). Returns the candidate id, or null if empty.
+ *
+ * @param graph - The DIRECTED vehicle graph (must be non-null; callers fall back
+ *                to the straight-line pick when the graph hasn't loaded).
+ * @param origin - Where the vehicle comes from (last anchor / start).
+ * @param candidates - The free points eligible to seed the next stop.
+ * @param topN - How many straight-line-nearest candidates to A*-refine.
+ * @returns The nearest candidate's id.
+ */
+export const nearestByVehicleGraph = (graph: RoadGraph, origin: LatLng, candidates: DeliveryPoint[], topN: number = SUGGESTION_TOP_N): string | null => {
+  if (candidates.length === 0) return null;
+
+  // Cheap straight-line prefilter, then rank the top-N by real DIRECTED distance.
+  const top = [...candidates].sort((a, b) => haversine(origin, a) - haversine(origin, b)).slice(0, topN);
+  // Match the ORIGIN once and reuse it: `matchToGraph` clones the adjacency, so
+  // re-matching the origin per candidate (as `suggestionPath` does) would double
+  // the cost — the heaviest part of the whole rank.
+  const originMatch = matchToGraph(graph, origin);
+  if (!originMatch) return top[0].id; // origin off the graph → the straight-line nearest
+
+  let best = top[0];
+  let bestDistance = Infinity;
+  for (const candidate of top) {
+    const candidateMatch = matchToGraph(originMatch.graph, candidate);
+    if (!candidateMatch) continue;
+    const { path, distance } = aStar(candidateMatch.graph, originMatch.node, candidateMatch.node);
+    const cost = path ? distance : Infinity; // unreachable by the street sense → ranked last
+    if (cost < bestDistance) {
+      bestDistance = cost;
+      best = candidate;
+    }
+  }
+  return best.id;
 };

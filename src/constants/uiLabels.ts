@@ -137,8 +137,11 @@ export const UI_LABELS = {
       TOTAL_TIME: "Tempo total",
       TOTAL_DISTANCE: "Distância total",
       WALK_DISTANCE: "Distância a pé",
-      /** Qualificação honesta: RF-006.7 traz o traçado; RF-007, a config. */
+      /** Qualificação honesta: sem grafo (raro, durante o carregamento) as pernas
+          de veículo são em linha reta; RF-007 torna as velocidades configuráveis. */
       TOTALS_NOTE: "Estimativas — veículo em linha reta.",
+      /** Com o grafo carregado (RF-006.7): distâncias medidas pelas ruas. */
+      TOTALS_NOTE_STREETS: "Estimativas — distâncias pelas ruas.",
       // Início como "parada 0" (RF-006.11): só nos detalhes + seleção no mapa.
       SECTION_START: "Ponto inicial da rota",
       /** Ícone que marca o endereço que É o início (fluxo "Partir deste endereço"). */

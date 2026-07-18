@@ -157,10 +157,21 @@ vi.mock("../../components/RouteMap", () => ({
     onStartTap?: () => void;
     onAnchorDragEnd?: (latlng: LatLng) => void;
     onAnchorTap?: () => void;
-    roteiroOverlay?: { start: LatLng | null; suggestionPath: LatLng[] | null; radiusCircle?: { center: LatLng; meters: number } | null; anchor?: LatLng | null };
+    roteiroOverlay?: {
+      start: LatLng | null;
+      suggestionPath: LatLng[] | null;
+      radiusCircle?: { center: LatLng; meters: number } | null;
+      anchor?: LatLng | null;
+      vehicleRoute?: LatLng[] | null;
+      footCircuit?: LatLng[] | null;
+      suggestionFaded?: boolean;
+    };
   }) => (
     <div
       data-testid="route-map-stub"
+      data-vehicle-route={String(roteiroOverlay?.vehicleRoute?.length ?? "none")}
+      data-foot-circuit={String(roteiroOverlay?.footCircuit?.length ?? "none")}
+      data-suggestion-faded={String(roteiroOverlay?.suggestionFaded ?? false)}
       data-controlled={String(!!onInteractionChange)}
       data-expanded-stop={String(interaction?.expandedStopKey ?? null)}
       data-external-models={String(models !== undefined)}
@@ -1302,6 +1313,21 @@ describe("MapPage (focus screen)", () => {
     expect(stub.getAttribute("data-focus-zoom")).toBe(String(ADDRESS_MAX_ZOOM));
   });
 
+  it("editar a parada a partir do DESAGRUPADO mantém o zoom (MAX), sem zoom-out ao entrar na edição (RF-006.18)", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" })); // focar
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-dbltap" })); // desagrupa → MAX
+    const stub = screen.getByTestId("route-map-stub");
+    expect(stub.getAttribute("data-focus-zoom")).toBe(String(MAP_CONFIG.ZOOM.MAX));
+
+    // Editar → o rascunho abre no MESMO zoom do desagrupado (não cai pra FOCUS_MAX).
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.EDIT }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.MODE_DRAFT)).toBeInTheDocument();
+    expect(stub.getAttribute("data-focus-zoom")).toBe(String(MAP_CONFIG.ZOOM.MAX));
+  });
+
   it("desagrupado: tocar qualquer membro seleciona-o — destaque no mapa e no painel (RF-006.4.16)", () => {
     startRoteiroFlow();
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
@@ -1358,6 +1384,35 @@ describe("MapPage (focus screen)", () => {
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.REORDERED_NOTICE)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "stub-anchor-drag-near-p1" }));
     expect(screen.getByText(UI_LABELS.MAP_PANEL.REORDERED_NOTICE)).toBeInTheDocument();
+  });
+
+  it("traçados por contexto: rota de veículo com paradas, circuito na parada, sugestão forte fora do rascunho (RF-006.7)", () => {
+    startRoteiroFlow();
+    const stub = screen.getByTestId("route-map-stub");
+    // Ocioso (sem paradas): sem rota de veículo, sem circuito; sugestão forte (não é draft).
+    expect(stub.getAttribute("data-vehicle-route")).toBe("none");
+    expect(stub.getAttribute("data-foot-circuit")).toBe("none");
+    expect(stub.getAttribute("data-suggestion-faded")).toBe("false");
+
+    // Criar parada (fica focada) → rota de veículo E circuito a pé aparecem.
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    expect(stub.getAttribute("data-vehicle-route")).not.toBe("none");
+    expect(stub.getAttribute("data-foot-circuit")).not.toBe("none");
+    expect(stub.getAttribute("data-suggestion-faded")).toBe("false");
+  });
+
+  it("no RASCUNHO o circuito a pé acompanha a edição e a sugestão desbota (RF-006.7)", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" })); // focar
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.EDIT })); // rascunho
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.MODE_DRAFT)).toBeInTheDocument();
+
+    const stub = screen.getByTestId("route-map-stub");
+    expect(stub.getAttribute("data-foot-circuit")).not.toBe("none"); // circuito no rascunho
+    expect(stub.getAttribute("data-suggestion-faded")).toBe("true"); // desbotada no rascunho
   });
 
   it("Editar desagrupa a parada no mapa (membros como círculos) e o toque no mapa não faz toggle (RF-006.4.9)", () => {
@@ -1422,6 +1477,21 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByText(OVERVIEW_LABELS.PERCENT(1))).toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
     expect(stub.getAttribute("data-focus-bounds")).toBe("3");
+  });
+
+  it("edição: tocar um endereço DA PARADA agora o seleciona (destaque no mapa), não fica inerte (RF-006.19)", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP })); // P1 = p1+p2
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" })); // foca
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.EDIT })); // rascunho
+    const stub = screen.getByTestId("route-map-stub");
+
+    // models[0] é um MEMBRO da parada. Tocá-lo agora SELECIONA (destaca no mapa)
+    // em vez de ficar inerte (RF-006.4.9 → RF-006.19). Não vira "Adicionar" (é membro).
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    expect(stub.getAttribute("data-highlighted-model")).not.toBe("none");
+    expect(screen.queryByRole("button", { name: DRAFT_LABELS.ADD_TO_STOP })).not.toBeInTheDocument();
   });
 
   it("o círculo do preview segue o stepper de raio (RF-006.4.6)", () => {

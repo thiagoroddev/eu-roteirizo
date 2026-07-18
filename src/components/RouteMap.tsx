@@ -41,6 +41,10 @@ const Z_SELECTED = 200000;
 /** Vehicle/anchor sits BELOW the address markers (RF-006.4.2): the tipless car
     parks on the street and must never cover an address. */
 const Z_VEHICLE = 50000;
+/** ...EXCEPT while DRAGGABLE in the edit draft (RF-006.19): it rises ABOVE every
+    address so the drag isn't blocked by a member marker sitting on top of it
+    (the "can't grab the car" smoke). Only the draft raises it. */
+const Z_ANCHOR_DRAG = 250000;
 /** The route START outranks everything except the SELECTED marker (feedback
     10/07, supersedes the .4.27 "below the addresses": buried under a cluster,
     the start was impossible to find — it's the route's one fixed landmark). */
@@ -58,6 +62,14 @@ const DOUBLE_TAP_MS = 220;
 // The suggestion line, in the mode's neon accent (RF-006.4.2 — the old gray
 // vanished on light tiles); still faded/dashed per fluxo §3/§6.
 const SUGGESTION_LINE_STYLE = { dashArray: "6 8", weight: 3, color: ROTEIRO_ACCENT, opacity: 0.55 } as const;
+/** The suggestion is FADED in a draft, STRONGER once the stop is firmed (fluxo §6). */
+const SUGGESTION_LINE_STRONG = { ...SUGGESTION_LINE_STYLE, weight: 4, opacity: 0.9 } as const;
+/** Vehicle route between anchors (RF-006.7): CONTINUOUS (no dashArray), in the
+    anchor's slate — reads as "the car's street path". ⚙️ MANUAL KNOB (color/weight). */
+const VEHICLE_ROUTE_STYLE = { weight: 4, color: ROTEIRO_MARKER_COLORS.vehicle.bottom, opacity: 0.9 } as const;
+/** Foot circuit of a stop (RF-006.7): DASHED amber — distinct from the marker
+    palette (green/blue/gray) and the cyan suggestion. ⚙️ MANUAL KNOB. */
+const FOOT_CIRCUIT_STYLE = { dashArray: "6 8", weight: 3, color: "#F59E0B", opacity: 0.85 } as const;
 
 /** Route START: the same tipless CAR circle as the anchor, parked on the street,
     in strong BLUE — the COLOR tells start and anchor apart (RF-006.4.27;
@@ -151,6 +163,12 @@ interface Props {
         expanded firmed stop SHOWS the car but doesn't let it move (editing the
         anchor means "Editar parada"). */
     anchorDraggable?: boolean;
+    /** Vehicle route (RF-006.7): the continuous line start → anchors (street path). */
+    vehicleRoute?: LatLng[] | null;
+    /** Foot circuit (RF-006.7): the dashed loop of the selected/draft stop. */
+    footCircuit?: LatLng[] | null;
+    /** Fade the suggestion (RF-006.7): true in a draft, false when firmed. */
+    suggestionFaded?: boolean;
   };
 }
 
@@ -223,6 +241,9 @@ export const RouteMap: React.FC<Props> = ({
   const anchorLat = roteiroOverlay?.anchor?.lat;
   const anchorLng = roteiroOverlay?.anchor?.lng;
   const anchorDraggable = roteiroOverlay?.anchorDraggable ?? false;
+  const vehicleRoute = roteiroOverlay?.vehicleRoute ?? null;
+  const footCircuit = roteiroOverlay?.footCircuit ?? null;
+  const suggestionFaded = roteiroOverlay?.suggestionFaded ?? false;
   /** Bounds signature: refit ONLY when the framed set changes (markers appear/
       disappear or the start moves) — never on visual-state churn like toggling
       a draft candidate, which would destroy the user's zoom mid-draft (RF-006.4). */
@@ -535,7 +556,7 @@ export const RouteMap: React.FC<Props> = ({
       // it only DRAGS in the draft: Leaflet pauses the map pan during a marker
       // drag by itself — the drag×pan risk the épico flagged. The dropped
       // coordinate goes out RAW; the caller street-projects it.
-      const anchorMarker = addOverlayMarker(anchorLat, anchorLng, VEHICLE_ICON_PROPS, Z_VEHICLE, { draggable: anchorDraggable });
+      const anchorMarker = addOverlayMarker(anchorLat, anchorLng, VEHICLE_ICON_PROPS, anchorDraggable ? Z_ANCHOR_DRAG : Z_VEHICLE, { draggable: anchorDraggable });
       if (anchorDraggable) {
         anchorMarker.on("dragend", () => {
           const position = anchorMarker.getLatLng();
@@ -554,10 +575,24 @@ export const RouteMap: React.FC<Props> = ({
       L.circle([radiusCircle.center.lat, radiusCircle.center.lng], RADIUS_CIRCLE_STYLE(radiusCircle.meters)).addTo(overlayLayer);
     }
 
+    // Route traces (RF-006.7). Canvas (`preferCanvas`) has no zIndexOffset, so
+    // ADD ORDER = stacking: vehicle route (bottom) → foot circuit → suggestion (top).
+    if (vehicleRoute && vehicleRoute.length >= 2) {
+      L.polyline(
+        vehicleRoute.map((p) => [p.lat, p.lng] as [number, number]),
+        VEHICLE_ROUTE_STYLE
+      ).addTo(overlayLayer);
+    }
+    if (footCircuit && footCircuit.length >= 2) {
+      L.polyline(
+        footCircuit.map((p) => [p.lat, p.lng] as [number, number]),
+        FOOT_CIRCUIT_STYLE
+      ).addTo(overlayLayer);
+    }
     if (suggestionPath && suggestionPath.length >= 2) {
       L.polyline(
         suggestionPath.map((p) => [p.lat, p.lng] as [number, number]),
-        SUGGESTION_LINE_STYLE
+        suggestionFaded ? SUGGESTION_LINE_STYLE : SUGGESTION_LINE_STRONG
       ).addTo(overlayLayer);
     }
 
@@ -576,7 +611,7 @@ export const RouteMap: React.FC<Props> = ({
     return () => {
       map.off("zoomend", rescaleOverlay);
     };
-  }, [startLat, startLng, suggestionPath, radiusCircle, anchorLat, anchorLng, anchorDraggable]);
+  }, [startLat, startLng, suggestionPath, radiusCircle, anchorLat, anchorLng, anchorDraggable, vehicleRoute, footCircuit, suggestionFaded]);
 
   // Fills the parent (focus screen layout); leaving the screen is the shell's
   // header back arrow / the page's Escape handler (TASK-RF-023.5).

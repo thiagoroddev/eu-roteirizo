@@ -40,19 +40,9 @@ import {
   orderedStopPoints,
 } from "../utils/markers/roteiroModels";
 import { buildDeliveryPoints } from "../utils/routing/points";
-import {
-  suggestedNextPointId,
-  suggestionOrigin,
-  previousAnchorOrigin,
-  draftCandidateIds,
-  farChosenPointIds,
-  isComplete,
-  toPlannedRoute,
-  FAR_POINT_RADIUS_FACTOR,
-  FAR_POINT_MIN_METERS,
-} from "../utils/routing/builder";
+import { suggestionOrigin, previousAnchorOrigin, draftCandidateIds, farChosenPointIds, isComplete, toPlannedRoute, FAR_POINT_RADIUS_FACTOR, FAR_POINT_MIN_METERS } from "../utils/routing/builder";
 import { getRoteiro, saveRoteiro, deleteRoteiro } from "../services/routeStorage";
-import { routeProgress, nextStopSuggestion } from "../utils/routing/overview";
+import { routeProgress, nextStopSuggestion, suggestedNextSeed } from "../utils/routing/overview";
 import { stopWalkEstimate, plannedRouteTotals } from "../utils/routing/estimates";
 import { assignedPointIds, pointsWithinRadius } from "../utils/routing/selectors";
 import { indexPointsById, nearestStopTo } from "../utils/routing/selectors";
@@ -60,6 +50,7 @@ import { suggestVehicleStop, defaultAnchorSeed } from "../utils/routing/vehicleS
 import { nearestFirstOrder } from "../utils/routing/walkOrder";
 import { pedestrianGraph } from "../utils/routing/pedestrian";
 import { suggestionPath } from "../utils/routing/suggestion";
+import { vehicleRoutePath, footCircuitPath } from "../utils/routing/routePath";
 import { haversine } from "../utils/routing/geo";
 import { isWithinRioBounds } from "../utils/coordinates";
 import { formatMeters } from "../utils/formatters";
@@ -241,6 +232,9 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   /** "Paradas reordenadas" toast when a vehicle move re-sweeps the order (RF-006.17). */
   const [reorderNotice, showReorderNotice] = useTransientMessage();
+  /** Zoom the edit (draft) opens at (RF-006.18 smoke): captured from the stop's
+      view on "Editar parada", so entering the edit doesn't jump the zoom. */
+  const [draftEntryMaxZoom, setDraftEntryMaxZoom] = useState<number>(FOCUS_MAX_ZOOM);
   /** The START selected by tapping its map marker (RF-006.11): the panel shows
       "parada 0" + the redefine action. Cleared by any other selection. */
   const [startSelected, setStartSelected] = useState(false);
@@ -530,7 +524,11 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
     // shields the creation branch below (SET_NEXT_SUGGESTION must never fire
     // while drafting).
     if (draft) {
-      if (!draft.pointIds.includes(model.key)) setDraftSelectedPointId(model.key);
+      // Tap SELECTS the point (RF-006.19): a FREE one to "Adicionar a esta
+      // parada", a MEMBER to see it + "Tornar âncora"/"Remover". Membership is
+      // still never TOGGLED by the tap (RF-006.4.9) — the tap looks, the buttons
+      // edit; members used to be inert here, which read as "the map is dead".
+      setDraftSelectedPointId(model.key);
       return;
     }
     if (!hasStart || redefining) {
@@ -577,6 +575,10 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   /** Committed-stop actions (RF-006.4.2 — fluxo §9; REOPEN/DISSOLVE were ready). */
   const handleEditStop = () => {
     if (!selectedStop) return;
+    // Open the edit at the SAME zoom the stop was showing (RF-006.18 smoke): a
+    // tapped address / ungrouped stop is close, a grouped one wider — otherwise
+    // the draft always refit to FOCUS_MAX and jumped the zoom on entry.
+    setDraftEntryMaxZoom(effectiveSelectedMemberId ? ADDRESS_MAX_ZOOM : expandedRoteiroStopId === selectedStop.id ? MAP_CONFIG.ZOOM.MAX : FOCUS_MAX_ZOOM);
     dispatch({ type: "REOPEN_STOP", stopId: selectedStop.id });
     setSelectedStopId(null);
     setExpandedRoteiroStopId(null);
@@ -666,22 +668,53 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   // ------- Suggestion line (RF-22): rank is straight-line (selector); the path
   // and the real walking distance are computed for the chosen target only. -----
   const origin = suggestionOrigin(builderState);
-  const suggestedId = suggestedNextPointId(builderState);
+  /** The suggested next stop's seed — ranked over the DIRECTED graph so it
+      respects one-way (RF-006.12); straight-line without a graph. Memoized: the
+      rank runs an A* over the top-N candidates. Shared with the overview seed. */
+  const suggestedId = useMemo(() => suggestedNextSeed(builderState, graph), [builderState, graph]);
   const suggestedPoint = suggestedId !== null ? (pointsById.get(suggestedId) ?? null) : null;
-  // The suggestion PATH (dashed map line) is still drawn; its text label left
-  // the panel with RF-006.11 (the start section no longer shows a "Sugestão:"
-  // line — the SuggestedStopCard carries that now).
-  const suggestion = useMemo(() => (origin && suggestedPoint ? suggestionPath(pedGraph, origin, { lat: suggestedPoint.lat, lng: suggestedPoint.lng }) : null), [pedGraph, origin, suggestedPoint]);
+  // The suggestion PATH (dashed map line) follows the VEHICLE graph (directed,
+  // respects one-way — RF-006.7/.12), matching the ranked target; its text label
+  // left the panel with RF-006.11 (the SuggestedStopCard carries that now).
+  const suggestion = useMemo(() => (origin && suggestedPoint ? suggestionPath(graph, origin, { lat: suggestedPoint.lat, lng: suggestedPoint.lng }) : null), [graph, origin, suggestedPoint]);
 
   /** The draft's SEED — the tapped address the radius circle is centered on. */
   const draftSeed = draft ? (pointsById.get(draft.seedPointId) ?? null) : null;
   /** The firmed stop shown UNGROUPED on the map (double-tapped): its car shows
       too (RF-006.16 — where the vehicle parks), but it doesn't drag. */
   const expandedStop = expandedRoteiroStopId !== null ? (builderState.stops.find((s) => s.id === expandedRoteiroStopId) ?? null) : null;
+
+  // ------- Route traces (RF-006.7) -------
+  /** Vehicle route: start → each anchor over the DIRECTED graph (respects one-
+      way; straight fallback without a graph). Drawn whenever a stop is firmed;
+      its distance is reused for the overview's real vehicle km. */
+  const vehicleRoute = useMemo(() => {
+    const anchors = builderState.stops.map((s) => s.vehicleStop);
+    return anchors.length > 0 ? vehicleRoutePath(graph, builderState.startPoint, anchors) : null;
+  }, [graph, builderState.startPoint, builderState.stops]);
+  /** Foot circuit (dashed loop) of the stop in FOCUS: the DRAFT while building/
+      editing (follows the chosen points live), else the selected/expanded firmed
+      stop — over the PEDESTRIAN graph (ignores one-way). */
+  const footCircuit = useMemo(() => {
+    if (draft) {
+      const ordered = draft.pointIds.map((id) => pointsById.get(id)).filter((p): p is DeliveryPoint => p !== undefined);
+      return ordered.length > 0 ? footCircuitPath(pedGraph, draft.vehicleStop, ordered) : null;
+    }
+    const stop = selectedStop ?? expandedStop;
+    if (!stop) return null;
+    const ordered = orderedStopPoints(stop, pointsById);
+    return ordered.length > 0 ? footCircuitPath(pedGraph, stop.vehicleStop, ordered) : null;
+  }, [draft, selectedStop, expandedStop, pedGraph, pointsById]);
+
   const roteiroOverlay = useMemo(
     () => ({
       start: builderState.startPoint,
       suggestionPath: suggestion?.path ?? null,
+      // Route traces (RF-006.7): vehicle backbone + the focused stop's foot loop;
+      // the suggestion is faded while a draft is open, stronger once firmed (§6).
+      vehicleRoute: vehicleRoute?.path ?? null,
+      footCircuit: footCircuit?.path ?? null,
+      suggestionFaded: draft !== null,
       // The radius circle also PREVIEWS on the selected orphan, before creating (U6).
       radiusCircle:
         draft && draftSeed
@@ -694,7 +727,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       anchor: draft?.vehicleStop ?? expandedStop?.vehicleStop ?? null,
       anchorDraggable: draft !== null,
     }),
-    [builderState.startPoint, previewRadiusMeters, suggestion, draft, draftSeed, selectedPoint, expandedStop]
+    [builderState.startPoint, previewRadiusMeters, suggestion, draft, draftSeed, selectedPoint, expandedStop, vehicleRoute, footCircuit]
   );
 
   /** Anchor drag (RF-006.5): street-project the dropped point (map matching
@@ -817,7 +850,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   const roteiroFocus: { bounds: LatLng[]; maxZoom: number } | null = focusAddress
     ? { bounds: [{ lat: focusAddress.lat, lng: focusAddress.lng }], maxZoom: ADDRESS_MAX_ZOOM }
     : draft && draftFrame && draftFrame.length > 0
-      ? { bounds: draftFrame.map((p) => ({ lat: p.lat, lng: p.lng })), maxZoom: FOCUS_MAX_ZOOM }
+      ? { bounds: draftFrame.map((p) => ({ lat: p.lat, lng: p.lng })), maxZoom: draftEntryMaxZoom }
       : selectedStop && stopPoints.length > 0
         ? { bounds: stopPoints.map((p) => ({ lat: p.lat, lng: p.lng })), maxZoom: expandedRoteiroStopId === selectedStop.id ? MAP_CONFIG.ZOOM.MAX : FOCUS_MAX_ZOOM }
         : null;
@@ -920,7 +953,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   /** The would-be NEXT stop (RF-006.8 — numbered in sequence, stops.length + 1):
       the reducer's suggested seed + default-radius candidates, the same preview
       shape tela 8 shows for a tapped orphan. Null before a start / when done. */
-  const overviewSuggestion = useMemo(() => (mode === "roteiro" ? nextStopSuggestion(builderState, graph) : null), [mode, builderState, graph]);
+  const overviewSuggestion = useMemo(() => (mode === "roteiro" ? nextStopSuggestion(builderState, graph, suggestedId) : null), [mode, builderState, graph, suggestedId]);
   const overviewVehicleLeg = useMemo(() => (vehicleOrigin && overviewSuggestion ? suggestionPath(graph, vehicleOrigin, overviewSuggestion.anchor) : null), [graph, vehicleOrigin, overviewSuggestion]);
   /** The suggestion as its CARD view (RF-006.11): the SEED's street + number
       (no complement — decision 12/07), the summary chips and the vehicle leg. */
@@ -941,7 +974,20 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   /** Current sums for the "Detalhes" subsection (RF-006.11) — the SAME function
       the Sumário uses (RF-008), so the two screens can never disagree. Null
       before the first stop: there is nothing to sum yet. */
-  const overviewTotals = useMemo(() => (mode === "roteiro" && builderState.stops.length > 0 ? plannedRouteTotals(toPlannedRoute(builderState), points) : null), [mode, builderState, points]);
+  const overviewTotals = useMemo(
+    () =>
+      mode === "roteiro" && builderState.stops.length > 0
+        ? // Real street km (RF-006.7) only while "Ver detalhes" is open (the only
+          // consumer) — the vehicle A* chain is reused from the drawn route, so
+          // opening the panel costs one pass of the foot circuits, not two.
+          plannedRouteTotals(toPlannedRoute(builderState), points, panelView === "overview" ? { graph, pedGraph, vehicleMetersOverride: vehicleRoute?.distanceMeters } : undefined)
+        : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- toPlannedRoute reads only stops/startPoint/config (routeId/createdAt are stable); narrowing off the whole builderState keeps draft edits from recomputing the graph totals.
+    [mode, builderState.stops, builderState.startPoint, builderState.config, points, panelView, graph, pedGraph, vehicleRoute]
+  );
+  /** Whether the shown totals came from the street graph (RF-006.7) — drives the
+      honest "Detalhes" caption (streets vs the straight-line fallback). */
+  const overviewViaStreets = graph !== null;
 
   /** The start as an ADDRESS, when it is one ("Partir deste endereço" copies
       the point's coords verbatim — exact match is the honest detection). */
@@ -1236,10 +1282,21 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
                   onSave={handleSaveStop}
                   onCancel={handleCancelDraft}
                 />
-                {/* Map-tapped pick lives in the HEADER (RF-006.4.24): the collapsed
-                    snap fits the header, so picking grows the panel until it shows —
-                    in the body it sat below the fold, invisible. */}
-                {draftSelectedPoint && !draftSelectedIsMember && <RoteiroDraftPick item={pointToStopItemData(draftSelectedPoint)} onAdd={handleAddSelectedToDraft} />}
+                {/* A FREE point tapped on the map gets the header pick with
+                    "Adicionar" (RF-006.4.24). A MEMBER tapped instead SELECTS it
+                    (RF-006.19) — highlighted in the "Endereços da parada" list
+                    below, where its "Tornar âncora"/"Remover" already live (no
+                    duplicate pick). */}
+                {draftSelectedPoint && !draftSelectedIsMember && (
+                  <RoteiroDraftPick
+                    item={pointToStopItemData(draftSelectedPoint)}
+                    actions={
+                      <Button type="button" size="sm" className="h-7 px-2 text-xs" data-vaul-no-drag onClick={handleAddSelectedToDraft}>
+                        {UI_LABELS.MAP_PANEL.ROTEIRO_DRAFT.ADD_TO_STOP}
+                      </Button>
+                    }
+                  />
+                )}
               </div>
             ) : panelView === "overview" ? (
               // "Ver detalhes" = a DEDICATED clean state (RF-006.11): only the
@@ -1345,6 +1402,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
               onReverseOrder={handleReverseDraftOrder}
               onMakeAnchor={handleMakeDraftAnchor}
               anchorMoved={!draft.vehicleStopIsDefault}
+              selectedMemberKey={draftSelectedIsMember ? draftSelectedPointId : null}
             />
           ) : panelView === "overview" ? (
             // "Ver detalhes" — the DEDICATED study panel (RF-006.8/.11): the
@@ -1352,6 +1410,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
             <RoteiroOverviewSection
               progress={progress}
               totals={overviewTotals}
+              totalsViaStreets={overviewViaStreets}
               start={overviewStart}
               onDeleteStart={handleDeleteStart}
               onRepositionStart={handleRepositionStart}

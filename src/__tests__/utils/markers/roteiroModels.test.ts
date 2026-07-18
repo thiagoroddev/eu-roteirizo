@@ -171,13 +171,13 @@ describe("computeRoteiroMarkerModels — draft/stop context (TASK-RF-006.4)", ()
   });
 
   // RF-006.4.23: during the edit the tap SELECTS (its own channel), the CTA edits.
-  it("draftSelectedPointId highlights the tapped free point DURING the draft (RF-006.4.23)", () => {
+  it("draftSelectedPointId highlights the tapped point — free OR member — DURING the draft (RF-006.4.23/.19)", () => {
     const models = computeRoteiroMarkerModels([a, b, c], [], { draft: draftOn("pt_a", ["pt_a"]), draftSelectedPointId: "pt_c" });
     const picked = models.find((m) => m.key === "pt_c")!;
     expect(picked.iconProps).toMatchObject({ selected: true, emphasis: true, highlight: true, ringStyle: "solid" });
-    // A member never doubles as the draft pick (the − removes; the pick adds).
+    // A tapped MEMBER now highlights too (RF-006.19): it used to be inert.
     const memberAsPick = computeRoteiroMarkerModels([a, b], [], { draft: draftOn("pt_a", ["pt_a"]), draftSelectedPointId: "pt_a" });
-    expect(memberAsPick.find((m) => m.key === "pt_a")!.iconProps.highlight).toBeFalsy();
+    expect(memberAsPick.find((m) => m.key === "pt_a")!.iconProps.highlight).toBe(true);
   });
 
   it("circles carry NO tooltip while drafting — the tap selects, the panel informs (RF-006.4.23)", () => {

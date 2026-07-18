@@ -39,9 +39,11 @@ interface Props {
   progress: RouteProgress;
   /** Current sums (RF-006.11); null (no stops yet) hides the subsection. */
   totals?: PlannedRouteTotals | null;
+  /** Whether the distances came from the street graph (RF-006.7) — picks the caption. */
+  viaStreets?: boolean;
 }
 
-export const RouteProgressCard = ({ progress, totals = null }: Props) => (
+export const RouteProgressCard = ({ progress, totals = null, viaStreets = false }: Props) => (
   <div className="px-4 pb-2">
     <Card className="shadow-none">
       <CardContent className="p-3">
@@ -61,7 +63,7 @@ export const RouteProgressCard = ({ progress, totals = null }: Props) => (
               <DetailTile label={OVERVIEW.TOTAL_DISTANCE} value={formatMeters(totals.distanceTotalKm * 1000)} />
               <DetailTile label={OVERVIEW.WALK_DISTANCE} value={formatMeters(totals.distanceWalkKm * 1000)} />
             </div>
-            <p className="mt-1 text-[10px] text-muted-foreground">{OVERVIEW.TOTALS_NOTE}</p>
+            <p className="mt-1 text-[10px] text-muted-foreground">{viaStreets ? OVERVIEW.TOTALS_NOTE_STREETS : OVERVIEW.TOTALS_NOTE}</p>
           </div>
         )}
       </CardContent>

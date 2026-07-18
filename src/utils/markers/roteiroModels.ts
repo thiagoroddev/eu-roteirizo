@@ -177,9 +177,9 @@ export const computeRoteiroMarkerModels = (points: DeliveryPoint[], stops: Route
     const memberIndex = draft?.pointIds.indexOf(point.id) ?? -1;
     const isMember = memberIndex >= 0;
     const isCandidate = !isMember && candidateIds.has(point.id);
-    // Two selection channels that never coexist: the free orphan (tela 8, no
-    // draft) and the draft-time pick awaiting "Adicionar" (RF-006.4.23).
-    const isSelected = draft ? !isMember && opts.draftSelectedPointId === point.id : opts.selectedPointId === point.id;
+    // The draft-time pick (RF-006.4.23) OR a tapped MEMBER (RF-006.19): both
+    // highlight the point. Outside a draft it's the free orphan (tela 8).
+    const isSelected = draft ? opts.draftSelectedPointId === point.id : opts.selectedPointId === point.id;
     models.push({
       key: point.id,
       kind: "address",

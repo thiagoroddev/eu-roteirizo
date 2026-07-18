@@ -18,8 +18,8 @@
 | 4 | ~~**TASK-RF-008**~~ — persistência/auto-save | ✅ **CONCLUÍDA (10/07)** — roteiro sobrevive a sair/fechar/alternar; chip acende; Sumário adapta + totais; cascata no apagar. RF-33/35/RN-21 ✅. Smoke pendente (publicada). |
 | 5 | ~~**TASK-TEST-003**~~ — zoom real do Leaflet | ✅ **CONCLUÍDA (10/07)** — o `MapPage.integration.test` virou o contrato de zoom real (8 cenários, 660/660); defeitos .4.19/.4.20 reintroduzidos por mutação derrubam a rede. A RF-006.8 pode mexer no painel com rede armada. |
 | 6 | ~~**TASK-RF-006.8**~~ — painel de visão geral | ✅ **CONCLUÍDA (12/07)** — painel ocioso = visão geral (progresso + confirmadas + sugestão em sequência com CTA); cabeçalho conciso em todos os contextos (painel colapsado mais baixo); `PanelView` "overview". 670/670; **smoke pendente** (publicada). Desbloqueia a **REF-017** (compartilha o `RouteProgressCard`). |
-| 7 | ~~**TASK-RF-006.5**~~ → ~~**.6**~~ → **.7** | `.5` e `.6` ✅ **CONCLUÍDAS (15–17/07)** — âncora (mover/tornar/resetar + arrasto) e a ordem 100% derivada (âncora + sentido; sem reordenação manual, decisão 17/07). Série de smoke da **parada do veículo** ✅ **.15/.16/.17/.18** (representação no painel, **ordem "mais próximo primeiro"**, carro distinto tocável, popup de reordenação, **parada do veículo independente + clicável + "Editar local"**, badge de texto no 1º). **A `.7` (traçado) é a próxima**; ao fim dela, um retoque pluga distância/tempo totais nos cards da `.8`. Smokes pendentes no aparelho. |
-| 8 | **TASK-RF-007** → **RF-009** → **RF-012** → **RF-013** | Sem mudança em relação ao registrado. |
+| 7 | ~~**TASK-RF-006.5**~~ → ~~**.6**~~ → ~~**.7**~~ | `.5`/`.6`/**`.7`** ✅ **CONCLUÍDAS (15–17/07)** — âncora, ordem derivada, e o **traçado** (rota do veículo pela rua + circuito a pé + km real; **RF-29 fechado**; o retoque dos totais reais nos cards da `.8` já entrou junto). Série de smoke da **parada do veículo** ✅ **.15/.16/.17/.18** + **.19** (modo edição interativo: carro pegável + endereços da parada selecionáveis) — **.19 clicável CONFIRMADO no aparelho (L-9)**. ⚠️ **Smoke do TRAÇADO bloqueado**: o grafo OSM não fica "ready" (linha reta eterna + "Carregando ruas…") → **TASK-BG-006** (bug primário a atacar). |
+| 8 | **TASK-RF-006.9** → **.10** → **RF-007** → **RF-009** → **RF-012** → **RF-013** | Backlog do épico. **`.12` ✅ (17/07, smoke L-15)** — sugestão respeita a mão única (grafo dirigido); o critério configurável ficou com a RF-007. `.9` (geocoding da âncora), `.10` (por-perna/conector) — ver blocos abaixo. |
 
 **Backlog sem urgência, encaixar em intervalos:** `TASK-RF-006.9` (geocoding da âncora; placeholder aceitável), `TASK-DOC-005`, `TASK-REF-014`, `TASK-TEST-002`.
 
@@ -54,9 +54,42 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 ---
 
+## TASK-BG-006 - Grafo OSM nunca fica "ready" → traçado e sugestão em linha reta ("Carregando ruas…" eterno) (smoke L-15/L-9)
+
+- **Status:** Pendente
+- **Modo:** Standard
+- **Valor:** Crítico (bloqueia a validação visual do traçado da RF-006.7/.12 — o core recém-construído)
+- **Urgência:** IMEDIATA
+- **Esforço-H/IA:** M/M (H1 é pequeno; H2 é separável e maior)
+- **Data-hora origem:** 17/07/26 (smoke L-15) · reconfirmado 18/07/26 (smoke L-9)
+- **Dependências:** TASK-RF-006.3 ✅ (grafo/`useRoadGraph`), TASK-RF-006.7 ✅ (traçado)
+- **REQ/ADR/DT:** RF-22, RF-29, RF-30; ADR-002, ADR-009(B); **DT-005** (Overpass público)
+
+**Sintoma (palavras do humano, smokes L-15 e L-9):** no Meu roteiro, "a sugestão continua em linha reta e até o traçado das paradas já confirmadas não respeita mais as ruas". O painel mostra **"Carregando ruas…"** persistente e o rótulo **"(linha reta)"** no "Distância até aqui". Como os DOIS aparecem juntos, o grafo está genuinamente `null` (status `loading`) — não é o desenho passando null com grafo pronto (H3 abaixo).
+
+**Causa-raiz — hipóteses ranqueadas (INVESTIGAR antes de corrigir — não há correção aprovada ainda):**
+
+- **H1 (mais provável) — "wedge" do load: cancelado sem restart em `useRoadGraph`.** O `cancelledRef` é um ref **compartilhado** entre execuções do efeito. Se o efeito re-executa/desmonta com um load EM VOO (ex.: alternar Original↔Meu roteiro, F5 no meio, qualquer re-run que passe `enabled=false`→`true`), o cleanup faz `cancelledRef.current = true`; o `.then` de `loadRoadGraph` cai em `if (cancelledRef.current) return;` e **engole o resultado — não seta grafo NEM erro** → status preso em `"loading"` para sempre. O guard `if (startedAttemptRef.current === attempt) return;` **impede o restart** (só `retry()`/`attempt++` destrava — e o botão Repetir só existe no estado `"error"`, não no `"loading"`). Bate com o L-9: "Carregando ruas…" **sem** botão Repetir. → [useRoadGraph.ts:42-74](../../src/hooks/useRoadGraph.ts#L42-L74).
+  - **Direção de correção (a planejar):** `cancelled` LOCAL ao run (closure `let cancelled = false` capturado no cleanup), não ref compartilhado; guard "load-once" que destrava quando um load foi cancelado sem completar (rastrear CONCLUSÃO, não só início) — ou refazer o load ao reentrar no modo; considerar abortar o fetch no cleanup (fiar o `AbortController` ao cancelamento) p/ não deixar request órfão.
+- **H2 — bbox grande / Overpass lento (DT-005).** `bboxFromPoints(points, 300 m)` cobre o envelope de TODAS as entregas → rota espalhada = bbox grande = resposta pesada do Overpass público (rate-limited). Explica LENTIDÃO, mas load > 30 s vira `"error"` + Repetir (que o humano NÃO relata) → **concorre** com H1, não substitui. → [osm.ts:117-187](../../src/utils/routing/osm.ts#L117-L187). Correção maior (bbox por sub-área/tiles de grafo, ou mirror/self-host — DT-005): provável tarefa própria.
+- **H3 (descartar rápido) — grafo "ready" mas desenho passa null.** Seria status "ready" (sem "Carregando ruas…") e sem "(linha reta)". Ambos aparecem → H3 por último.
+
+**Plano de verificação (próxima conversa):**
+- `npm run dev` (logs DEV de `fetchRoadGraph` já existem: "malha carregada — nós/arestas") com rota PEQUENA (poucas entregas próximas): grafo fica "ready"? Linhas seguem as ruas?
+- Rota ESPALHADA: medir o tempo do fetch; ver se estoura 30 s (→ "error").
+- **Reproduzir o toggle Original↔roteiro DURANTE "Carregando ruas…"**: travou em loading eterno → **confirma H1**.
+- Instrumentar (atrás de `import.meta.env.DEV`, sem PII) as transições de `graphLoadStatus` + tamanho do bbox + nós/arestas.
+
+**Relação com o backlog:** distinta da **TASK-DOC-005** (decidir a APRESENTAÇÃO do status "Carregando ruas…") e da **DT-005** (cota do Overpass) — esta aqui é o **defeito funcional** (grafo não chega a "ready"). A H2 pode acabar empurrando parte da correção para a DT-005.
+
+**Aceite:** entrar no Meu roteiro carrega o grafo até "ready" de forma confiável (sem travar em "loading"); traçado do veículo e circuito a pé seguem as ruas (não "(linha reta)") quando há rede; alternar modos no meio do load não trava; fallback reta legítimo (offline/sem grafo) preservado; smoke no aparelho valida com rota pequena E espalhada.
+**Dependências novas:** nenhuma.
+
+---
+
 ## TASK-RF-006 - UI de construção da rota (Meu roteiro) [XG, dividir]
 
-- **Status:** Pendente (**.1 → .4.27, .5, .6, .8, .11, .13, .14, .15 e .16 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.7 · .9 · .10 · .12**)
+- **Status:** Pendente (**.1 → .4.27, .5, .6, .7, .8, .11, .12, .13, .14, .15, .16, .17, .18 e .19 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.9 · .10**. ⚠️ Smoke do traçado (.7/.12) bloqueado pela **TASK-BG-006**)
 - **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
@@ -75,7 +108,8 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 - Parada selecionada lista endereços por **ordinal** + item âncora; edição = `REOPEN_STOP` (reabre como rascunho): Remover/Adicionar/Tornar âncora/Inverter, drag (`itemLeading`), footer "Salvar alterações"; Desfazer parada; Incorporar órfão.
 - **Aceite:** editar uma parada pronta ponta a ponta pelos slots, sem reestruturar o painel.
 
-### TASK-RF-006.7 - Traçado do percurso (veículo + a pé + km)
+### ~~TASK-RF-006.7~~ - Traçado do percurso (veículo + a pé + km)
+- ✅ **CONCLUÍDA (17/07, smoke L-15)** — ver índice. **RF-29 fechado.** ⚠️ **Smoke bloqueado pela TASK-BG-006** (grafo não fica "ready" → linha reta eterna). A linha/circuito/km só se validam no aparelho quando o grafo carregar.
 - **Esforço-H/IA:** M/G · **Dep:** 006.4 ✅ (+ grafo da .3 ✅)
 - Linha contínua âncora→âncora pela rua real (A*, mão única; fallback reta sem grafo); laço tracejado a pé do circuito da parada selecionada; tracejado da próxima "mais forte" pós-conclusão; km acumulado no painel (tempo fino é RF-007).
 - **Aceite:** linha segue as ruas respeitando mão única; km coerente.
@@ -101,8 +135,9 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 <!-- TASK-RF-006.11 movida para em-andamento.md em 15/07/26 (plano aprovado — "sim", após 3 rodadas de espec). -->
 
-### TASK-RF-006.12 - Sugestão de próxima parada: algoritmo configurável respeitando o sentido das vias (pedido 12/07)
-- **Esforço-H/IA:** M/G · **Dep:** 006.3 ✅ (grafo dirigido), RF-007 (config) · **Status:** backlog (registrada a pedido, sem urgência)
+### ~~TASK-RF-006.12~~ - Sugestão de próxima parada: algoritmo configurável respeitando o sentido das vias (pedido 12/07)
+- ✅ **NÚCLEO CONCLUÍDO (17/07, smoke L-15)** — a sugestão (rank + linha) respeita a mão única via grafo dirigido (`nearestByVehicleGraph`/`suggestedNextSeed`; top-N por reta + refino A*). Ver índice. **Resta só o "configurável"** (escolher o critério), que depende da **RF-007** (config) — absorvido lá.
+- **Esforço-H/IA:** M/G · **Dep:** 006.3 ✅ (grafo dirigido), RF-007 (config) · **Status:** núcleo ✅; config → RF-007
 - **Problema (nas palavras do humano):** "a sugestão não é a que o usuário selecionou, é o algoritmo que define de acordo com as configurações — que se for 'a mais próxima', é a mais próxima **respeitando o sentido das vias**". Hoje o rank de `suggestedNextPointId` é **linha reta** a partir da origem — ignora mão única.
 - **Escopo a planejar:** critério de sugestão configurável (RF-007) com "mais próxima" medida pelo **grafo dirigido** (A* de veículo por candidato — atenção a custo: rank por reta + refino top-N, como a §6 do fluxo já faz p/ pernas a pé); UI de config junto da RF-007.
 - **Aceite:** com o grafo carregado, a sugestão nunca aponta um destino "perto em linha reta, longe pela mão única"; fallback reta sem grafo; critério persiste na config.
