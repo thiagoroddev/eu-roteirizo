@@ -24,6 +24,9 @@ export interface OverviewStopView {
   metrics: PanelMetric[];
   /** Addresses in visit order (ordinals) — the tap-to-expand drill-down. */
   items: StopItemData[];
+  /** The address the vehicle parks by (1st) — its "Parada do veículo" badge in
+      the drill-down (RF-006.10 smoke), matching the firmed-stop view. */
+  vehicleStopKey: string | null;
 }
 
 /** The route's start as a row ("parada 0" — RF-006.11). */
@@ -162,7 +165,7 @@ export const RoteiroOverviewSection = ({
                     <MapPin aria-hidden />
                   </Button>
                 </div>
-                {openStopId === stop.id && <StopItemList items={stop.items} selectedKey={null} neon startKey={startKey} />}
+                {openStopId === stop.id && <StopItemList items={stop.items} selectedKey={null} neon startKey={startKey} vehicleStopKey={stop.vehicleStopKey} />}
               </li>
             ))}
           </ul>

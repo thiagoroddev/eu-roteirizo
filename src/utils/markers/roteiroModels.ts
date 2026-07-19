@@ -24,7 +24,7 @@
  */
 
 import type { RowData } from "../../types";
-import type { DeliveryPoint, RouteStop } from "../../types/routing";
+import type { DeliveryPoint, RouteStop, StopLeg } from "../../types/routing";
 import type { StopDraft } from "../routing/builder";
 import type { StopWalkEstimate } from "../routing/estimates";
 import type { MarkerModel } from "./markerModels";
@@ -259,6 +259,16 @@ export const packagesByTypeFromPoints = (points: DeliveryPoint[]): { commercial:
 /** Below this, showing meters undermines trust ("3 m a pé") — time only. */
 export const WALK_ESTIMATE_MIN_METERS = 20;
 
+/**
+ * Label of one walking leg to the next address (RF-006.10): "110 metros" (the
+ * walking icon is the component's job), with the honest "(linha reta)" suffix
+ * while there is no graph.
+ */
+export const legLabel = (leg: StopLeg): string => {
+  const distance = UI_LABELS.MAP_PANEL.LEG_METERS(Math.round(leg.meters));
+  return leg.viaStreets ? distance : `${distance} ${UI_LABELS.MAP_PANEL.ROTEIRO_START.SUGGESTION_STRAIGHT}`;
+};
+
 /** "~12 min · 850 m a pé", or time-only for negligible circuits (RF-006.4.2).
  *  Needs only the totals (meters + combined minutes), not the RF-007.1 split. */
 export const walkEstimateLabel = (estimate: Pick<StopWalkEstimate, "meters" | "minutes">): string =>
@@ -294,7 +304,7 @@ const packageRow = (row: RowData): PackageRowData => {
  * marker carries NO Sequence (decision 08/07): empty for a free point, or the
  * walking ORDINAL ("1º") when the point belongs to a stop.
  */
-export const pointToStopItemData = (point: DeliveryPoint, opts: { ordinal?: number | null } = {}): StopItemData => {
+export const pointToStopItemData = (point: DeliveryPoint, opts: { ordinal?: number | null; leg?: StopLeg | null } = {}): StopItemData => {
   const rows = pointRows(point);
   return {
     addressKey: point.id,
@@ -305,5 +315,6 @@ export const pointToStopItemData = (point: DeliveryPoint, opts: { ordinal?: numb
     packageCount: point.packageCount,
     packages: rows.map((row) => packageRow(row)),
     mapsUrl: `https://www.google.com/maps?q=${point.lat},${point.lng}`,
+    leg: opts.leg ?? null,
   };
 };

@@ -6,6 +6,7 @@
  */
 
 import type { RowData } from "../../types";
+import type { StopLeg } from "../../types/routing";
 import type { StopGroup } from "./stopGrouping";
 import { COLUMN_NAMES, ICON_KEYS, UI_LABELS } from "../../constants";
 import { extractComplement, extractRowComplement, locationTypeLabel } from "./markerModels";
@@ -117,6 +118,9 @@ export interface StopItemData {
   packageCount: number;
   packages: PackageRowData[];
   mapsUrl: string;
+  /** Walking leg INTO this address (RF-006.10) — only in Meu roteiro's ordered
+   *  lists; absent/null elsewhere (Original, free points). */
+  leg?: StopLeg | null;
 }
 
 const packageRow = (row: RowData, stop: StopGroup): PackageRowData => {

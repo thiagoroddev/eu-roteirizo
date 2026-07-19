@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { stopWalkEstimate, plannedRouteTotals } from "../../../utils/routing/estimates";
+import { stopWalkEstimate, plannedRouteTotals, stopLegs } from "../../../utils/routing/estimates";
 import { haversine } from "../../../utils/routing/geo";
 import { pedestrianGraph } from "../../../utils/routing/pedestrian";
 import { footCircuitPath } from "../../../utils/routing/routePath";
@@ -51,6 +51,34 @@ describe("stopWalkEstimate (coarse — TASK-RF-006.4.1; RF-007 refines)", () => 
     const coarseEstimate = stopWalkEstimate(anchorA, [p], DEFAULT_ROUTING_CONFIG);
     expect(graphEstimate.meters).toBeCloseTo(footCircuitPath(walk, anchorA, [p]).distanceMeters, 6); // usa o circuito de rua
     expect(graphEstimate.meters).toBeGreaterThan(coarseEstimate.meters); // L da rua > diagonal reta
+  });
+});
+
+describe("stopLegs (RF-006.10 — perna a pé entre endereços consecutivos)", () => {
+  const p1 = pt("p1", -22.9795, -43.2);
+  const p2 = pt("p2", -22.9795, -43.199); // ~102 m a leste de p1
+  const p3 = pt("p3", -22.979, -43.199); // ~56 m ao norte de p2
+
+  it("perna de cada endereço até o PRÓXIMO; o último é null; reta sem grafo", () => {
+    const legs = stopLegs([p1, p2, p3]);
+    expect(legs).toHaveLength(3);
+    expect(legs[0]).toMatchObject({ viaStreets: false });
+    expect(legs[0]?.meters).toBeCloseTo(haversine(p1, p2), 3);
+    expect(legs[1]?.meters).toBeCloseTo(haversine(p2, p3), 3);
+    expect(legs[2]).toBeNull(); // último não anda para lugar nenhum
+  });
+
+  it("0 ou 1 ponto → sem perna de saída", () => {
+    expect(stopLegs([])).toEqual([]);
+    expect(stopLegs([p1])).toEqual([null]);
+  });
+
+  it("com o grafo pedestre, a perna vira distância de RUA (viaStreets)", () => {
+    const walk = pedestrianGraph(squareGraph);
+    const a2 = pt("a2", nearNode(A).lat, nearNode(A).lng);
+    const d2 = pt("d2", nearNode(D).lat, nearNode(D).lng);
+    const legs = stopLegs([a2, d2], walk);
+    expect(legs[0]?.viaStreets).toBe(true);
   });
 });
 

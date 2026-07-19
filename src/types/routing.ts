@@ -109,6 +109,15 @@ export interface RoutingConfig {
   autoRadiusMeters: number;
 }
 
+/** One walking leg FROM an address to the NEXT one in visit order (RF-006.10) —
+ *  the connector shown below the address' ordinal. The last address has none. */
+export interface StopLeg {
+  /** Street (or straight-line fallback) distance in meters. */
+  meters: number;
+  /** True when measured over the pedestrian graph; false = straight-line fallback. */
+  viaStreets: boolean;
+}
+
 /** A planned route: ordered stops over the imported points, plus config. Persisted locally. */
 export interface PlannedRoute {
   id: string;

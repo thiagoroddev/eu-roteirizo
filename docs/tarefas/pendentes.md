@@ -19,7 +19,7 @@
 | 5 | ~~**TASK-TEST-003**~~ — zoom real do Leaflet | ✅ **CONCLUÍDA (10/07)** — o `MapPage.integration.test` virou o contrato de zoom real (8 cenários, 660/660); defeitos .4.19/.4.20 reintroduzidos por mutação derrubam a rede. A RF-006.8 pode mexer no painel com rede armada. |
 | 6 | ~~**TASK-RF-006.8**~~ — painel de visão geral | ✅ **CONCLUÍDA (12/07)** — painel ocioso = visão geral (progresso + confirmadas + sugestão em sequência com CTA); cabeçalho conciso em todos os contextos (painel colapsado mais baixo); `PanelView` "overview". 670/670; **smoke pendente** (publicada). Desbloqueia a **REF-017** (compartilha o `RouteProgressCard`). |
 | 7 | ~~**TASK-RF-006.5**~~ → ~~**.6**~~ → ~~**.7**~~ | `.5`/`.6`/**`.7`** ✅ **CONCLUÍDAS (15–17/07)** — âncora, ordem derivada, e o **traçado** (rota do veículo pela rua + circuito a pé + km real; **RF-29 fechado**; o retoque dos totais reais nos cards da `.8` já entrou junto). Série de smoke da **parada do veículo** ✅ **.15/.16/.17/.18** + **.19** (modo edição interativo: carro pegável + endereços da parada selecionáveis) — **.19 clicável CONFIRMADO no aparelho (L-9)**. ✅ **Smoke do TRAÇADO DESBLOQUEADO**: a **TASK-BG-006** (wedge do `useRoadGraph` prendia o grafo em "loading") foi **concluída (18/07, smoke no aparelho OK)** — traçado/sugestão seguem as ruas. |
-| 8 | ~~**RF-007.1**~~ → ~~**RF-006.20**~~ → **RF-006.21** → **RF-006.10** → **.9** → **RF-009** → **RF-012** → **RF-013** | **Melhoria do painel (pedido 18/07):** `RF-007.1` ✅ (motor de tempo realista) e `RF-006.20` ✅ (cards PARADAS/Duração/Distância com popup + Comercial + contagem) **concluídas 18/07 (smoke L-9)**. Próximas: `RF-006.21` (Google Maps ao lado do cabeçalho — isolada, rápida) → `RF-006.10` (setas + distância/perna, consome a RF-007.1). `RF-007.2` (tela de config) e `.9` (geocoding da âncora) encaixam quando houver espaço. Blocos abaixo. |
+| 8 | ~~**RF-007.1 · RF-006.20 · RF-006.21 · RF-006.10**~~ → **RF-007.2** → **.9** → **RF-009** → **RF-012** → **RF-013** | **Melhoria do painel (pedido 18/07) — CONCLUÍDA (18–19/07, smoke L-9):** `RF-007.1` (motor de tempo realista) + `RF-006.20` (cards PARADAS/Duração/Distância com popup + Comercial + contagem) + `RF-006.21` (Google Maps no cabeçalho) + `RF-006.10` (distância a pé por perna no gutter, roadmap). Próximas do backlog: `RF-007.2` (tela de config editável), `RF-006.9` (geocoding da âncora), depois `RF-009/012/013`. |
 
 **Backlog sem urgência, encaixar em intervalos:** `TASK-RF-006.9` (geocoding da âncora; placeholder aceitável), `TASK-DOC-005`, `TASK-REF-014`, `TASK-TEST-002`.
 
@@ -60,7 +60,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 ## TASK-RF-006 - UI de construção da rota (Meu roteiro) [XG, dividir]
 
-- **Status:** Pendente (**.1 → .4.27, .5, .6, .7, .8, .11, .12, .13, .14, .15, .16, .17, .18 e .19 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.6 · .9 · .10 · .21** (`.20` ✅ concluída 18/07; `.21` criada 18/07). ✅ Smoke do traçado (.7/.12) desbloqueado — **TASK-BG-006** concluída (18/07))
+- **Status:** Pendente (**.1 → .4.27, .5, .6, .7, .8, .11, .12, .13, .14, .15, .16, .17, .18 e .19 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.6 · .9** (`.10`/`.20`/`.21` ✅ concluídas 18–19/07 — melhoria do painel). ✅ Smoke do traçado (.7/.12) desbloqueado — **TASK-BG-006** concluída (18/07))
 - **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
@@ -93,6 +93,8 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 - **Solução a planejar:** obter o endereço (rua + nº aproximado) da coordenada da âncora via **reverse-geocoding**, respeitando **RNF-03/RNF-13 (nenhuma API paga em produção)** — avaliar Nominatim/OSM com cache (idb) e rate-limit, ou derivar do grafo OSM já baixado (nome da via do segmento mais próximo — `nearestEdge`), que evita chamada externa. Sem PII em log (TASK-BG-002). Client-side.
 - **Aceite:** a âncora mostra a via real (ou "via + aprox.") em vez do 1º endereço; offline/fallback degrada para o placeholder atual; sem custo recorrente.
 
+<!-- TASK-RF-006.10 CONCLUÍDA em 19/07/26 (smoke L-9, "ok agora sim"). Ver 0-indice-concluidas.md → 2026-07-19--00h56--TASK-RF-006.10.md. -->
+
 ### TASK-RF-006.10 - Distância/tempo por perna na lista de endereços (conector vertical) (pedido 10/07)
 - **Esforço-H/IA:** M/M · **Dep:** 006.4 ✅ (lista/`StopItemData`) · **REQ:** RF-30, RF-31; `fluxo-roteirizacao.md` §6 "por-perna" · *(criada a pedido do humano 10/07, prints do smoke M-32)*
 - **Problema:** a lista de endereços do Meu roteiro mostra ordinal/endereço/pacotes, mas não o **custo de cada perna** — a informação que decide "vale andar ou criar outra parada?" (fluxo §6: "cada endereço mostra tempo + metros do ponto anterior até ele, com ícone de pedestre"; RF-30 está 🟡 justamente com "falta a distância nas pernas/paradas").
@@ -121,7 +123,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 - **Aceite:** três stat-cards na linha (Endereços/Pacotes/Paradas); Duração e Distância abrem popup com a decomposição correta; Comercial bate com os chips de tipo; label mostra a contagem; sem regressão no Original; smoke no aparelho valida a legibilidade dos popups no mobile.
 - **Dependências novas:** nenhuma (Dialog shadcn já instalado).
 
-<!-- TASK-RF-006.21 movida para em-andamento.md em 18/07/26 (plano aprovado — "sim"). -->
+<!-- TASK-RF-006.21 CONCLUÍDA em 19/07/26 (smoke L-9). Ver 0-indice-concluidas.md → 2026-07-19--00h55--TASK-RF-006.21.md. -->
 
 ### TASK-RF-006.21 - "Abrir no Google Maps" ao lado de "Informações do pacote" no detalhe (pedido 18/07)
 - **Esforço-H/IA:** P/P · **Dep:** nenhuma (isolada) · *(pedido do humano 18/07, prints L-9)*

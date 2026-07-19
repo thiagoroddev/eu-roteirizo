@@ -7,6 +7,7 @@ import {
   packagesByTypeFromPoints,
   stopPlaceSummaryFromPoints,
   walkEstimateLabel,
+  legLabel,
   orderedStopPoints,
   NO_STOP_INDEX,
 } from "../../../utils/markers/roteiroModels";
@@ -298,6 +299,17 @@ describe("pure helpers (TASK-RF-006.4.2)", () => {
     const p1: DeliveryPoint = { ...typedPt("p1", "Home"), packages: [{ id: "1", rawData: { [COLUMN_NAMES.NEIGHBORHOOD]: "Botafogo", [COLUMN_NAMES.ZIPCODE]: "22290-000" } }] };
     const p2: DeliveryPoint = { ...typedPt("p2", "Home"), packages: [{ id: "2", rawData: { [COLUMN_NAMES.NEIGHBORHOOD]: "Botafogo", [COLUMN_NAMES.ZIPCODE]: "22290-001" } }] };
     expect(stopPlaceSummaryFromPoints([p1, p2])).toEqual({ neighborhoods: ["Botafogo"], zipcodes: ["22290-000", "22290-001"] });
+  });
+
+  it("legLabel: perna → 'X metros'; sem grafo ganha '(linha reta)' (RF-006.10)", () => {
+    const street = legLabel({ meters: 110, viaStreets: true });
+    expect(street).toBe("110 metros");
+    expect(street).not.toContain("linha reta");
+    expect(legLabel({ meters: 110, viaStreets: false })).toContain(UI_LABELS.MAP_PANEL.ROTEIRO_START.SUGGESTION_STRAIGHT);
+  });
+
+  it("legLabel: arredonda os metros (RF-006.10)", () => {
+    expect(legLabel({ meters: 24.6, viaStreets: true })).toBe("25 metros");
   });
 
   it("walkEstimateLabel drops negligible meters (< 20 m)", () => {

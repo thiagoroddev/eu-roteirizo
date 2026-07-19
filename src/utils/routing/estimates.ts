@@ -9,10 +9,11 @@
  * Leaflet/DOM/React.
  */
 
-import type { DeliveryPoint, LatLng, PlannedRoute, RoutingConfig } from "../../types/routing";
+import type { DeliveryPoint, LatLng, PlannedRoute, RoutingConfig, StopLeg } from "../../types/routing";
 import type { RoadGraph } from "./graph";
 import { haversine } from "./geo";
 import { vehicleRoutePath, footCircuitPath } from "./routePath";
+import { suggestionPath } from "./suggestion";
 
 export interface StopWalkEstimate {
   /** Circuit length in meters (0 with no points). */
@@ -59,6 +60,27 @@ export const stopWalkEstimate = (vehicleStop: LatLng, orderedPoints: DeliveryPoi
   const minutes = Math.ceil(walkMinutes + deliveryMinutes);
   return { meters, walkMinutes, deliveryMinutes, minutes };
 };
+
+/**
+ * Walking leg from each of a stop's ordered addresses to the NEXT (RF-006.10):
+ * `legs[i]` is the segment from point[i] to point[i+1] — the distance walked to
+ * REACH the next address, an independent "roadmap" datum about the relation to
+ * the next, shown in point[i]'s left gutter (not tied to its packages). Aligned
+ * 1:1 with `orderedPoints`; the LAST address has no outgoing leg (`null`), and a
+ * single-address stop yields `[null]`. Street distance over the pedestrian graph
+ * when given, else the straight-line fallback. Pure.
+ *
+ * @param orderedPoints - The stop's points, in walking-visit order.
+ * @param pedGraph - The pedestrian graph, or null for straight-line legs.
+ * @returns One entry per point (null for the last), in order.
+ */
+export const stopLegs = (orderedPoints: DeliveryPoint[], pedGraph: RoadGraph | null = null): (StopLeg | null)[] =>
+  orderedPoints.map((point, index) => {
+    const next = orderedPoints[index + 1];
+    if (!next) return null;
+    const path = suggestionPath(pedGraph, point, next);
+    return { meters: path.distanceMeters, viaStreets: path.viaStreets };
+  });
 
 /** Totals of a saved roteiro, for the Sumário's "Info Meu Roteiro" (RF-008). */
 export interface PlannedRouteTotals {

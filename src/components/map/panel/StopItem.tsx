@@ -1,10 +1,12 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { Car, Flag } from "lucide-react";
+import { ArrowDown, Car, Flag, Footprints } from "lucide-react";
 import { Badge } from "../../ui/badge";
 import { cn } from "@/lib/utils";
 import { UI_LABELS } from "../../../constants/uiLabels";
 import { colorForLocationType, roteiroColorForLocationType, ROTEIRO_MARKER_COLORS } from "../../../utils/markers/markerColors";
+import { legLabel } from "../../../utils/markers/roteiroModels";
 import type { StopItemData } from "../../../utils/markers/panelModels";
+import type { StopLeg } from "../../../types/routing";
 
 const SHEET = UI_LABELS.ROUTE_MAP.ADDRESS_SHEET;
 
@@ -139,16 +141,35 @@ const PackageRow = ({ label, complement, spxTn, type, typeLabel }: StopItemData[
 };
 
 /**
+ * LegConnector - an independent "roadmap" datum (RF-006.10): the walking
+ * distance from THIS address to the NEXT, living in the detail's LEFT gutter
+ * (the ~52px already reserved by pl-[3.25rem]), vertically centered so it adapts
+ * to 1 or many packages (smoke 19/07) — it belongs to the relation with the next
+ * address, NOT to the packages beside it. Compact: a walking icon + the distance
+ * read VERTICALLY + a down arrow to the next. Renders only with the detail
+ * (expanded) and only when there IS a next (the last/single address shows none).
+ */
+const LegConnector = ({ leg }: { leg: StopLeg }) => (
+  <span className="pointer-events-none absolute inset-y-0 left-0 flex w-[3.25rem] flex-col items-center justify-center gap-0.5 text-muted-foreground" aria-label={UI_LABELS.MAP_PANEL.LEG_ARIA}>
+    <Footprints className="h-3 w-3 shrink-0" aria-hidden />
+    <span className="text-[10px] leading-none [writing-mode:vertical-rl] rotate-180">{legLabel(leg)}</span>
+    <ArrowDown className="h-3 w-3 shrink-0" aria-hidden />
+  </span>
+);
+
+/**
  * StopItemDetail - the drill-down of an address: one PackageRow per package
  * (RF-28) and the Google Maps link. The Maps link sits BESIDE the "Informações
  * do pacote" header now (RF-006.21 — closer to the address, easier to reach);
- * the footer keeps only the optional `actions`. Neighborhood/zipcode/type lines
+ * the footer keeps only the optional `actions`. The incoming walking leg
+ * (RF-006.10) sits in the left gutter, centered. Neighborhood/zipcode/type lines
  * were moved OUT (rev. 07/07): place info lives in the stop summary, the type
  * only on the per-package colored badge. Shared by the list's StopItem and by
  * the default view's selected-address card, so both drill-downs match.
  */
 export const StopItemDetail = ({ item, actions }: { item: StopItemData; actions?: ReactNode }) => (
-  <div className="space-y-2 px-4 pb-4 pl-[3.25rem]">
+  <div className="relative space-y-2 px-4 pb-4 pl-[3.25rem]">
+    {item.leg && <LegConnector leg={item.leg} />}
     <div>
       <div className="flex items-center justify-between gap-2">
         <div className="text-sm font-semibold">{SHEET.PACKAGES_HEADER(item.packageCount)}</div>

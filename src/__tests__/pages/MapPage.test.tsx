@@ -1136,6 +1136,9 @@ describe("MapPage (focus screen)", () => {
     // StopItemList do Original — nada de card novo).
     fireEvent.click(screen.getByRole("button", { name: OVERVIEW_LABELS.STOP_ARIA(1) }));
     expect(screen.getByText(UI_LABELS.MAP_PANEL.ORDINAL(1))).toBeInTheDocument();
+    // RF-006.10: entre os endereços há o conector com a distância "X metros"
+    // (só o conector usa "metros"; os chips usam "m a pé").
+    expect(screen.getAllByText((content, el) => el?.tagName === "SPAN" && content.includes("metros")).length).toBeGreaterThan(0);
 
     // "Ver no mapa" (o da parada, 1º) seleciona-a e devolve o resumo colapsado.
     fireEvent.click(screen.getAllByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_ON_MAP })[0]);

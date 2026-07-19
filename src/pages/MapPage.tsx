@@ -43,7 +43,7 @@ import { buildDeliveryPoints } from "../utils/routing/points";
 import { suggestionOrigin, previousAnchorOrigin, draftCandidateIds, farChosenPointIds, isComplete, toPlannedRoute, FAR_POINT_RADIUS_FACTOR, FAR_POINT_MIN_METERS } from "../utils/routing/builder";
 import { getRoteiro, saveRoteiro, deleteRoteiro } from "../services/routeStorage";
 import { routeProgress, nextStopSuggestion, suggestedNextSeed } from "../utils/routing/overview";
-import { stopWalkEstimate, plannedRouteTotals } from "../utils/routing/estimates";
+import { stopWalkEstimate, plannedRouteTotals, stopLegs } from "../utils/routing/estimates";
 import { assignedPointIds, pointsWithinRadius } from "../utils/routing/selectors";
 import { indexPointsById, nearestStopTo } from "../utils/routing/selectors";
 import { suggestVehicleStop, defaultAnchorSeed } from "../utils/routing/vehicleStop";
@@ -787,7 +787,9 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       members with their walking ordinal, candidates plain. */
   const chosenPoints = draft ? draft.pointIds.map((id) => pointsById.get(id)).filter((p): p is NonNullable<typeof p> => p !== undefined) : [];
   const candidatePoints = candidateIds.map((id) => pointsById.get(id)).filter((p): p is NonNullable<typeof p> => p !== undefined);
-  const chosenItems = chosenPoints.map((point, index) => pointToStopItemData(point, { ordinal: index + 1 }));
+  /** Walking legs between the draft's ordered members (RF-006.10). */
+  const chosenLegs = stopLegs(chosenPoints, pedGraph);
+  const chosenItems = chosenPoints.map((point, index) => pointToStopItemData(point, { ordinal: index + 1, leg: chosenLegs[index] }));
   const candidateItems = candidatePoints.map((point) => pointToStopItemData(point));
   /** The draft's ANCHOR row (RF-006.6) — the circuit's start AND end. Address is
       a PLACEHOLDER (the first stop address) until the vehicle-stop geocoding
@@ -869,8 +871,10 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       placeholder = the 1st until geocoding (RF-006.9). */
   const vehicleDeliveryPoint = stopPoints[0] ?? null;
   const stopAnchorItem = vehicleDeliveryPoint ? { ...pointToStopItemData(vehicleDeliveryPoint), complement: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.NO_COMPLEMENT } : null;
-  /** The stop's full address list ("Ver parada" — RF-006.4.7), ordinals in visit order. */
-  const stopListItems = stopPoints.map((point, index) => pointToStopItemData(point, { ordinal: index + 1 }));
+  /** The stop's full address list ("Ver parada" — RF-006.4.7), ordinals in visit
+      order, each with its walking leg from the previous (RF-006.10). */
+  const stopListLegs = stopLegs(stopPoints, pedGraph);
+  const stopListItems = stopPoints.map((point, index) => pointToStopItemData(point, { ordinal: index + 1, leg: stopListLegs[index] }));
   /** "Endereço selecionado" of a firmed stop (RF-006.18): with nothing tapped,
       the VEHICLE STOP row (independent, with the quick "Editar local"); tapping
       the 1st delivery shows it as the one the vehicle parks by (badge + packages);
@@ -933,6 +937,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       builderState.stops.map((stop) => {
         const stopPts = orderedStopPoints(stop, pointsById);
         const estimate = stopPts.length > 0 ? stopWalkEstimate(stop.vehicleStop, stopPts, builderState.config) : null;
+        const legs = stopLegs(stopPts, pedGraph);
         const place = stopPlaceSummaryFromPoints(stopPts);
         return {
           id: stop.id,
@@ -944,10 +949,13 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
             ...typedPackageChips(packagesByTypeFromPoints(stopPts)),
             ...(estimate ? [{ label: walkEstimateLabel(estimate) }] : []),
           ],
-          items: stopPts.map((point, index) => pointToStopItemData(point, { ordinal: index + 1 })),
+          items: stopPts.map((point, index) => pointToStopItemData(point, { ordinal: index + 1, leg: legs[index] })),
+          /** The vehicle parks by the 1st (nearest-first) — its "Parada do
+              veículo" badge in the drill-down, like the firmed-stop view (RF-006.18). */
+          vehicleStopKey: stopPts[0]?.id ?? null,
         };
       }),
-    [builderState.stops, builderState.config, pointsById]
+    [builderState.stops, builderState.config, pointsById, pedGraph]
   );
 
   /** The would-be NEXT stop (RF-006.8 — numbered in sequence, stops.length + 1):

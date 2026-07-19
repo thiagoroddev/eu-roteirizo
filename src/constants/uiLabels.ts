@@ -95,6 +95,11 @@ export const UI_LABELS = {
         A informação "é parada do veículo" vive no endereço, não no rótulo da
         seção (que voltou a ser só "Endereço selecionado"). */
     VEHICLE_STOP_BADGE: "Parada do veículo",
+    /** Rótulo da perna a pé entre endereços no gutter (RF-006.10): "110 metros"
+        (por extenso; o ícone de caminhada acompanha, decisão smoke 18/07). */
+    LEG_METERS: (meters: number) => `${meters} metros`,
+    /** aria-label do conector de perna (leitor de tela). */
+    LEG_ARIA: "Distância a pé até o próximo endereço",
     /** Aviso flutuante (RF-006.17): mover o veículo no mapa recalcula a ordem a
         pé (1º = mais próximo) — o toast avisa que os endereços foram reordenados. */
     REORDERED_NOTICE: "Endereços reordenados",
