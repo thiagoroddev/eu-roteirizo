@@ -19,7 +19,7 @@
 | 5 | ~~**TASK-TEST-003**~~ — zoom real do Leaflet | ✅ **CONCLUÍDA (10/07)** — o `MapPage.integration.test` virou o contrato de zoom real (8 cenários, 660/660); defeitos .4.19/.4.20 reintroduzidos por mutação derrubam a rede. A RF-006.8 pode mexer no painel com rede armada. |
 | 6 | ~~**TASK-RF-006.8**~~ — painel de visão geral | ✅ **CONCLUÍDA (12/07)** — painel ocioso = visão geral (progresso + confirmadas + sugestão em sequência com CTA); cabeçalho conciso em todos os contextos (painel colapsado mais baixo); `PanelView` "overview". 670/670; **smoke pendente** (publicada). Desbloqueia a **REF-017** (compartilha o `RouteProgressCard`). |
 | 7 | ~~**TASK-RF-006.5**~~ → ~~**.6**~~ → ~~**.7**~~ | `.5`/`.6`/**`.7`** ✅ **CONCLUÍDAS (15–17/07)** — âncora, ordem derivada, e o **traçado** (rota do veículo pela rua + circuito a pé + km real; **RF-29 fechado**; o retoque dos totais reais nos cards da `.8` já entrou junto). Série de smoke da **parada do veículo** ✅ **.15/.16/.17/.18** + **.19** (modo edição interativo: carro pegável + endereços da parada selecionáveis) — **.19 clicável CONFIRMADO no aparelho (L-9)**. ✅ **Smoke do TRAÇADO DESBLOQUEADO**: a **TASK-BG-006** (wedge do `useRoadGraph` prendia o grafo em "loading") foi **concluída (18/07, smoke no aparelho OK)** — traçado/sugestão seguem as ruas. |
-| 8 | ~~**RF-007.1 · RF-006.20 · RF-006.21 · RF-006.10**~~ → **RF-007.2** → **.9** → **RF-009** → **RF-012** → **RF-013** | **Melhoria do painel (pedido 18/07) — CONCLUÍDA (18–19/07, smoke L-9):** `RF-007.1` (motor de tempo realista) + `RF-006.20` (cards PARADAS/Duração/Distância com popup + Comercial + contagem) + `RF-006.21` (Google Maps no cabeçalho) + `RF-006.10` (distância a pé por perna no gutter, roadmap). Próximas do backlog: `RF-007.2` (tela de config editável), `RF-006.9` (geocoding da âncora), depois `RF-009/012/013`. |
+| 8 | ~~**RF-007 (.1+.2) · RF-006.20 · RF-006.21 · RF-006.10 · BG-007**~~ → **RF-006.9** → **RF-009** → **RF-012** → **RF-013** | **Melhoria do painel + tempo de entrega (pedido 18/07) — CONCLUÍDA (18–19/07, smokes L-9):** `RF-007.1` (motor de tempo realista) + `RF-007.2` (config GLOBAL no ⚙️: base em min/adicional em seg; regra por tipo+complemento) + `RF-006.20` (cards PARADAS/Duração/Distância com popup + Comercial + contagem) + `RF-006.21` (Google Maps no cabeçalho) + `RF-006.10` (distância a pé por perna no gutter) + `TASK-BG-007` (z-index dos dialogs). **RF-007 fechada.** Próximas: `RF-006.9` (geocoding da âncora), depois `RF-009/012/013`. |
 
 **Backlog sem urgência, encaixar em intervalos:** `TASK-RF-006.9` (geocoding da âncora; placeholder aceitável), `TASK-DOC-005`, `TASK-REF-014`, `TASK-TEST-002`.
 
@@ -148,7 +148,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 ## TASK-RF-007 - Estimativas de tempo configuráveis (modelo de entrega realista a pé / veículo)
 
-- **Status:** Pendente (**re-especificada 18/07/26**; **.1 ✅ CONCLUÍDA (18/07, smoke L-9)** — motor + config + split; **resta a .2** tela de ajustes editável)
+- **Status:** ✅ **CONCLUÍDA (18–19/07)** — **.1** motor + config + split (18/07) e **.2** config global no ⚙️ + regra por tipo/complemento (19/07). Ver índice de concluídas.
 - **Modo:** Standard
 - **Valor:** Importante (diferencial do produto — tempo realista a pé; alimenta os cards da RF-006.20 e o por-perna da RF-006.10)
 - **Urgência:** IMEDIATA
@@ -162,14 +162,13 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 <!-- TASK-RF-007.1 CONCLUÍDA em 18/07/26 (smoke L-9). Ver 0-indice-concluidas.md → 2026-07-18--22h41--TASK-RF-007.1.md. -->
 
-<!-- TASK-RF-007.2 movida para em-andamento.md em 19/07/26 (plano aprovado — Global + regra por tipo/complemento). -->
+<!-- TASK-RF-007.2 CONCLUÍDA em 19/07/26 (smoke OK). Ver 0-indice-concluidas.md → 2026-07-19--19h30--TASK-RF-007.2.md.
+     Escopo final (decisão do humano 19/07): só tempo-base (minutos, 2 min) e adicional por pacote (segundos, 30 s)
+     são configuráveis, e de forma GLOBAL (⚙️ do cabeçalho); velocidade a pé/veículo ficaram só em código.
+     A regra de tempo virou por tipo+complemento (residencial por endereço, comercial por complemento).
+     O "critério configurável da sugestão" (RF-006.12) NÃO foi absorvido — segue sem dono, reabrir se voltar a importar. -->
 
-### TASK-RF-007.2 - Tela de ajustes editável (config persistida) — follow-up
-- **Esforço-H/IA:** M/M · **Dep:** RF-007.1 · **REQ:** RF-39; `fluxo-roteirizacao.md` §8 (tela 10)
-- Painel de config (texto em `UI_LABELS`) para editar velocidade a pé, tempo-base, seg/pacote, velocidade do veículo; persistir em `PlannedRoute.config`. Também acolhe o **critério configurável da sugestão** (RF-006.12, absorvido aqui).
-- **Aceite:** usuário edita os valores e os totais/estimativas recalculam; persiste entre sessões.
-
-**Critérios de aceite (RF-007):** os três tempos aparecem decompostos e somados corretamente; funções puras cobertas por teste; config persiste (na .2).
+**Critérios de aceite (RF-007):** ✅ os três tempos aparecem decompostos e somados corretamente; funções puras cobertas por teste; config global persiste. **RF-007 CONCLUÍDA (.1 + .2, 18–19/07).**
 **Dependências novas:** nenhuma.
 
 ---
