@@ -12,6 +12,7 @@
 
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppShell, FocusShell } from "./components/shell/AppShell";
+import { DeliverySettingsProvider } from "./contexts/DeliverySettingsContext";
 import HomePage from "./pages/HomePage";
 import RoutesPage from "./pages/RoutesPage";
 import SummaryPage from "./pages/SummaryPage";
@@ -19,18 +20,22 @@ import MapPage from "./pages/MapPage";
 
 function App() {
   return (
-    <Routes>
-      <Route element={<AppShell />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/rotas" element={<RoutesPage />} />
-      </Route>
-      {/* Focus screens (no bottom nav — fluxo §11): Sumário and the map. */}
-      <Route element={<FocusShell />}>
-        <Route path="/sumario" element={<SummaryPage />} />
-        <Route path="/mapa" element={<MapPage />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    // Global delivery-time preference (RF-007.2) — the ⚙️ (AppHeader) edits it,
+    // the estimate screens read it; wraps both shells so it's shared app-wide.
+    <DeliverySettingsProvider>
+      <Routes>
+        <Route element={<AppShell />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/rotas" element={<RoutesPage />} />
+        </Route>
+        {/* Focus screens (no bottom nav — fluxo §11): Sumário and the map. */}
+        <Route element={<FocusShell />}>
+          <Route path="/sumario" element={<SummaryPage />} />
+          <Route path="/mapa" element={<MapPage />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </DeliverySettingsProvider>
   );
 }
 

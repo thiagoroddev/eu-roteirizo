@@ -14,6 +14,7 @@ import type { RowData } from "../../types";
 import type { MarkerSvgProps } from "./markerSvg";
 import type { StopGroup, AddressGroup } from "./stopGrouping";
 import { COLUMN_NAMES, ICON_KEYS, UI_LABELS } from "../../constants";
+import { rowComplement } from "../complement";
 import { colorForLocationType } from "./markerColors";
 import { escapeHtml } from "../escapeHtml";
 import { getCommercialDisplayStatus } from "../inferLocationType";
@@ -47,14 +48,9 @@ export interface InteractionState {
    PURE HELPERS
 ============================================================================ */
 
-/** Complement of ONE row: the address text after the 2nd comma (same split as
-    inferLocationType); "" when absent. Per-package display (rev. 07/07). */
-export const extractRowComplement = (row: RowData): string =>
-  String(row[COLUMN_NAMES.DESTINATION_ADDRESS] ?? "")
-    .split(",")
-    .slice(2)
-    .join(", ")
-    .trim();
+/** Complement of ONE row (per-package display, rev. 07/07). Delegates to the
+    neutral `rowComplement` (RF-007.2 — one implementation shared with routing). */
+export const extractRowComplement = (row: RowData): string => rowComplement(row);
 
 /** Address-level complement (first row's), with the "—" fallback. */
 export const extractComplement = (address: AddressGroup): string => extractRowComplement(address.rows[0] ?? {}) || SHEET.NO_COMPLEMENT;

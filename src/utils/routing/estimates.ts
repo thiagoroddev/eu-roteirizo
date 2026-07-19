@@ -9,11 +9,15 @@
  * Leaflet/DOM/React.
  */
 
+import type { RowData } from "../../types";
 import type { DeliveryPoint, LatLng, PlannedRoute, RoutingConfig, StopLeg } from "../../types/routing";
 import type { RoadGraph } from "./graph";
 import { haversine } from "./geo";
 import { vehicleRoutePath, footCircuitPath } from "./routePath";
 import { suggestionPath } from "./suggestion";
+import { resolveLocationType } from "../inferLocationType";
+import { normalizeComplement, rowComplement } from "../complement";
+import { ICON_KEYS } from "../../constants";
 
 export interface StopWalkEstimate {
   /** Circuit length in meters (0 with no points). */
@@ -36,6 +40,30 @@ export interface StopWalkEstimate {
  *   length is the real street path; else haversine legs (coarse). Default null.
  * @returns Circuit meters + total minutes.
  */
+/**
+ * Delivery-unit key of a package (RF-007.2): COMMERCIAL packages split by
+ * DISTINCT complement (`"com:sala 210"`) — different suites are different
+ * businesses, so different deliveries; RESIDENTIAL/indefinite packages all fold
+ * into ONE per-address unit (`"res"`) — a residence is a single hand-off
+ * regardless of apartment. So a point's distinct keys = its distinct deliveries.
+ */
+const deliveryUnitKey = (row: RowData): string => {
+  const type = resolveLocationType(row);
+  const isCommercial = type === ICON_KEYS.OFFICE || type === ICON_KEYS.OFFICE_CORRECTED;
+  return isCommercial ? `com:${normalizeComplement(rowComplement(row))}` : "res";
+};
+
+/**
+ * Handover seconds of ONE delivery point (RF-007.2): each distinct delivery unit
+ * (see `deliveryUnitKey`) costs `deliveryBaseSeconds`; every EXTRA package within
+ * a unit adds `deliveryPerPackageSeconds`. So 2 residential packages (same
+ * address) = base + extra; 2 commercial with different complements = 2×base.
+ */
+export const pointDeliverySeconds = (point: DeliveryPoint, config: RoutingConfig): number => {
+  const units = new Set(point.packages.map((pkg) => deliveryUnitKey(pkg.rawData))).size;
+  return units * config.deliveryBaseSeconds + (point.packageCount - units) * config.deliveryPerPackageSeconds;
+};
+
 export const stopWalkEstimate = (vehicleStop: LatLng, orderedPoints: DeliveryPoint[], config: RoutingConfig, pedGraph: RoadGraph | null = null): StopWalkEstimate => {
   if (orderedPoints.length === 0) return { meters: 0, walkMinutes: 0, deliveryMinutes: 0, minutes: 0 };
 
@@ -52,9 +80,10 @@ export const stopWalkEstimate = (vehicleStop: LatLng, orderedPoints: DeliveryPoi
     meters += haversine(cursor, vehicleStop);
   }
 
-  // Delivery time is PER ADDRESS: base for the first package + extra for each
-  // additional one (base + (N−1)×extra), summed over the stop's points. RF-007.1.
-  const deliverySeconds = orderedPoints.reduce((sum, point) => sum + config.deliveryBaseSeconds + Math.max(0, point.packageCount - 1) * config.deliveryPerPackageSeconds, 0);
+  // Delivery time groups packages into "deliveries" by type + complement
+  // (RF-007.2 — `pointDeliverySeconds`): commercial splits by complement,
+  // residential folds per address; base per delivery + extra per repeat.
+  const deliverySeconds = orderedPoints.reduce((sum, point) => sum + pointDeliverySeconds(point, config), 0);
   const walkMinutes = (meters / 1000 / config.walkingSpeedKmh) * 60;
   const deliveryMinutes = deliverySeconds / 60;
   const minutes = Math.ceil(walkMinutes + deliveryMinutes);

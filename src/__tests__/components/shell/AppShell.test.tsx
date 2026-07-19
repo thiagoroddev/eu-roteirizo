@@ -80,9 +80,14 @@ describe("AppShell (integration)", () => {
     expect(screen.getByText(UI_LABELS.SHELL.APP_TITLE_WITH_ROUTE("L-23"))).toBeInTheDocument();
   });
 
-  it("keeps the settings gear disabled until TASK-RF-007", () => {
+  it("abre as Configurações de entrega pelo ⚙️ (RF-007.2)", () => {
     renderApp();
 
-    expect(screen.getByRole("button", { name: UI_LABELS.SHELL.SETTINGS_ARIA })).toBeDisabled();
+    const gear = screen.getByRole("button", { name: UI_LABELS.SHELL.SETTINGS_ARIA });
+    expect(gear).not.toBeDisabled();
+    fireEvent.click(gear);
+    expect(screen.getByText(UI_LABELS.DELIVERY_SETTINGS.TITLE)).toBeInTheDocument();
+    expect(screen.getByLabelText(UI_LABELS.DELIVERY_SETTINGS.BASE_LABEL)).toBeInTheDocument();
+    expect(screen.getByLabelText(UI_LABELS.DELIVERY_SETTINGS.PER_PACKAGE_LABEL)).toBeInTheDocument();
   });
 });

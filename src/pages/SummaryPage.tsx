@@ -8,6 +8,7 @@ import { PlannedRouteInfo } from "../components/summary/PlannedRouteInfo";
 import { Button } from "../components/ui/button";
 import { MODE_QUERY_PARAM, MODE_QUERY_ROTEIRO } from "../components/map/MapModeToggle";
 import { useManifestFromUrl } from "../hooks/useManifestFromUrl";
+import { useDeliverySettings } from "../contexts/DeliverySettingsContext";
 import { getRoteiro } from "../services/routeStorage";
 import { buildDeliveryPoints } from "../utils/routing/points";
 import { plannedRouteTotals } from "../utils/routing/estimates";
@@ -32,6 +33,7 @@ import { UI_LABELS } from "../constants/uiLabels";
 function SummaryPage() {
   const navigate = useNavigate();
   const { manifestId, routeName, routes, loading, error, availableCols, isSingleRoute, currentRows } = useManifestFromUrl();
+  const { settings: deliverySettings } = useDeliverySettings();
 
   const [showTable, setShowTable] = useState(false);
   const [showSimpleTable, setShowSimpleTable] = useState(false);
@@ -54,8 +56,9 @@ function SummaryPage() {
       refine them; the section's shape stays. */
   const roteiroInfo = useMemo(() => {
     if (!savedRoteiro || savedRoteiro.stops.length === 0) return null;
-    return plannedRouteTotals(savedRoteiro, buildDeliveryPoints(currentRows));
-  }, [savedRoteiro, currentRows]);
+    // Delivery times come from the GLOBAL preference (RF-007.2), not the stored route.
+    return plannedRouteTotals({ ...savedRoteiro, config: { ...savedRoteiro.config, ...deliverySettings } }, buildDeliveryPoints(currentRows));
+  }, [savedRoteiro, currentRows, deliverySettings]);
 
   // A malformed URL has nothing to show — go back to the saved list.
   if (!manifestId || !routeName) return <Navigate to="/rotas" replace />;

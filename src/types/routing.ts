@@ -133,8 +133,8 @@ export interface PlannedRoute {
  *  ⚙️ MANUAL KNOBs — calibrate on the device smoke (RF-007.1). */
 export const DEFAULT_ROUTING_CONFIG: RoutingConfig = {
   walkingSpeedKmh: 5,
-  deliveryBaseSeconds: 40, // ⚙️ MANUAL KNOB — time for a single-package delivery
-  deliveryPerPackageSeconds: 15, // ⚙️ MANUAL KNOB — each extra package (photo + app data)
+  deliveryBaseSeconds: 120, // ⚙️ MANUAL KNOB — a single-package delivery (2 min; edited in MINUTES)
+  deliveryPerPackageSeconds: 30, // ⚙️ MANUAL KNOB — each extra package, photo + app data (edited in seconds)
   vehicleSpeedKmh: 25,
   autoRadiusMeters: 30,
 };

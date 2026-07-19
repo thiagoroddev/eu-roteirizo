@@ -1,13 +1,34 @@
 import { describe, it, expect } from "vitest";
-import { stopWalkEstimate, plannedRouteTotals, stopLegs } from "../../../utils/routing/estimates";
+import { stopWalkEstimate, plannedRouteTotals, stopLegs, pointDeliverySeconds } from "../../../utils/routing/estimates";
 import { haversine } from "../../../utils/routing/geo";
 import { pedestrianGraph } from "../../../utils/routing/pedestrian";
 import { footCircuitPath } from "../../../utils/routing/routePath";
 import { squareGraph, COORDS, A, B, C, D } from "./__fixtures__/syntheticGraph";
 import { DEFAULT_ROUTING_CONFIG } from "../../../types/routing";
+import { COLUMN_NAMES } from "../../../constants";
 import type { DeliveryPoint, LatLng, PlannedRoute } from "../../../types/routing";
 
-const pt = (id: string, lat: number, lng: number, packageCount = 1): DeliveryPoint => ({ id, lat, lng, address: id, packageCount, packages: [] });
+const ADDR = COLUMN_NAMES.DESTINATION_ADDRESS;
+/** A residential package at the given full address (drives type/complement). */
+const resPkg = (id: string, address: string) => ({ id, rawData: { [ADDR]: address } });
+/** N residential packages at the same address (all fold to ONE delivery unit). */
+const pt = (id: string, lat: number, lng: number, packageCount = 1): DeliveryPoint => ({
+  id,
+  lat,
+  lng,
+  address: id,
+  packageCount,
+  packages: Array.from({ length: packageCount }, (_, i) => resPkg(`${id}-${i}`, `${id}, 10, Apt ${i + 1}`)),
+});
+/** A point whose packages are exactly the given full addresses (type + complement). */
+const pointWith = (addresses: string[]): DeliveryPoint => ({
+  id: addresses[0] ?? "p",
+  lat: -22.98,
+  lng: -43.2,
+  address: addresses[0] ?? "",
+  packageCount: addresses.length,
+  packages: addresses.map((a, i) => resPkg(`${i}`, a)),
+});
 
 const anchor: LatLng = { lat: -22.98, lng: -43.2 };
 /** A point a hair off a fixture node, so matching lands it on the street. */
@@ -51,6 +72,32 @@ describe("stopWalkEstimate (coarse — TASK-RF-006.4.1; RF-007 refines)", () => 
     const coarseEstimate = stopWalkEstimate(anchorA, [p], DEFAULT_ROUTING_CONFIG);
     expect(graphEstimate.meters).toBeCloseTo(footCircuitPath(walk, anchorA, [p]).distanceMeters, 6); // usa o circuito de rua
     expect(graphEstimate.meters).toBeGreaterThan(coarseEstimate.meters); // L da rua > diagonal reta
+  });
+});
+
+describe("pointDeliverySeconds (RF-007.2 — entregas por tipo + complemento)", () => {
+  const base = DEFAULT_ROUTING_CONFIG.deliveryBaseSeconds;
+  const extra = DEFAULT_ROUTING_CONFIG.deliveryPerPackageSeconds;
+
+  it("residencial no mesmo endereço = 1 entrega (complemento ignorado): base + extra", () => {
+    // 2 residenciais, complementos DIFERENTES → ainda 1 entrega.
+    const p = pointWith(["Rua X, 100, Apt 402", "Rua X, 100, Apt 919"]);
+    expect(pointDeliverySeconds(p, DEFAULT_ROUTING_CONFIG)).toBe(base + extra);
+  });
+
+  it("comercial com complementos DIFERENTES = entregas separadas: 2×base (sem adicional)", () => {
+    const p = pointWith(["Rua X, 100, Sala 210", "Rua X, 100, Sala 305"]);
+    expect(pointDeliverySeconds(p, DEFAULT_ROUTING_CONFIG)).toBe(2 * base);
+  });
+
+  it("comercial com MESMO complemento = 1 entrega: base + extra", () => {
+    const p = pointWith(["Rua X, 100, Sala 210", "Rua X, 100, Sala 210"]);
+    expect(pointDeliverySeconds(p, DEFAULT_ROUTING_CONFIG)).toBe(base + extra);
+  });
+
+  it("tipos diferentes no mesmo endereço = entregas separadas (residencial + comercial): 2×base", () => {
+    const p = pointWith(["Rua X, 100, Apt 402", "Rua X, 100, Sala 210"]);
+    expect(pointDeliverySeconds(p, DEFAULT_ROUTING_CONFIG)).toBe(2 * base);
   });
 });
 

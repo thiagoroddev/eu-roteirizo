@@ -24,6 +24,7 @@ import { StopItemRow, StopItemDetail } from "../components/map/panel/StopItem";
 import { useTransientMessage } from "../hooks/useTransientMessage";
 import { useManifestFromUrl } from "../hooks/useManifestFromUrl";
 import { useRouteBuilder } from "../hooks/useRouteBuilder";
+import { useDeliverySettings } from "../contexts/DeliverySettingsContext";
 import { useRoadGraph } from "../hooks/useRoadGraph";
 import type { RowData } from "../types";
 import type { DeliveryPoint, LatLng } from "../types/routing";
@@ -146,6 +147,11 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   // ------- Meu roteiro domain (ADR-009: DeliveryPoint/RouteStop, never StopGroup) -------
   const points = useMemo(() => buildDeliveryPoints(rows), [rows]);
   const { state: builderState, dispatch } = useRouteBuilder(points);
+  /** GLOBAL delivery times (RF-007.2 — the ⚙️) overlaid on the route's config;
+      walking/vehicle speeds stay the config's code defaults. All delivery-time
+      estimates read `estimateConfig`, not `builderState.config`. */
+  const { settings: deliverySettings } = useDeliverySettings();
+  const estimateConfig = useMemo(() => ({ ...builderState.config, ...deliverySettings }), [builderState.config, deliverySettings]);
   const roteiroAvailable = points.length > 0;
   const mode: MapMode = searchParams.get(MODE_QUERY_PARAM) === MODE_QUERY_ROTEIRO && roteiroAvailable ? "roteiro" : "original";
   /** Construction progress (RF-006.8): the concise header's %/bar and the
@@ -797,7 +803,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   const draftAnchorItem = chosenPoints[0] ? { ...pointToStopItemData(chosenPoints[0]), complement: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.NO_COMPLEMENT } : null;
   const draftPackages = chosenPoints.reduce((sum, p) => sum + p.packageCount, 0);
   /** "~min · m a pé" of the draft's walking circuit (coarse — RF-007 refines). */
-  const draftEstimate = draft && chosenPoints.length > 0 ? stopWalkEstimate(draft.vehicleStop, chosenPoints, builderState.config) : null;
+  const draftEstimate = draft && chosenPoints.length > 0 ? stopWalkEstimate(draft.vehicleStop, chosenPoints, estimateConfig) : null;
   const draftMetrics: PanelMetric[] = [
     { label: UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(chosenPoints.length) },
     { label: UI_LABELS.MAP_PANEL.METRIC_PACKAGES(draftPackages) },
@@ -857,7 +863,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
         ? { bounds: stopPoints.map((p) => ({ lat: p.lat, lng: p.lng })), maxZoom: expandedRoteiroStopId === selectedStop.id ? MAP_CONFIG.ZOOM.MAX : FOCUS_MAX_ZOOM }
         : null;
 
-  const stopEstimate = selectedStop && stopPoints.length > 0 ? stopWalkEstimate(selectedStop.vehicleStop, stopPoints, builderState.config) : null;
+  const stopEstimate = selectedStop && stopPoints.length > 0 ? stopWalkEstimate(selectedStop.vehicleStop, stopPoints, estimateConfig) : null;
   const stopPlace = stopPlaceSummaryFromPoints(stopPoints);
   const stopMetrics: PanelMetric[] = [
     { label: UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(stopPoints.length) },
@@ -909,7 +915,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       .map((id) => byId.get(id))
       .filter((p): p is DeliveryPoint => p !== undefined);
   }, [suggestedAnchor, previewMembers]);
-  const suggestedEstimate = suggestedAnchor && suggestedPoints.length > 0 ? stopWalkEstimate(suggestedAnchor, suggestedPoints, builderState.config) : null;
+  const suggestedEstimate = suggestedAnchor && suggestedPoints.length > 0 ? stopWalkEstimate(suggestedAnchor, suggestedPoints, estimateConfig) : null;
   const suggestedPlace = stopPlaceSummaryFromPoints(suggestedPoints);
   const suggestedMetrics: PanelMetric[] = selectedPoint
     ? [
@@ -936,7 +942,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
     () =>
       builderState.stops.map((stop) => {
         const stopPts = orderedStopPoints(stop, pointsById);
-        const estimate = stopPts.length > 0 ? stopWalkEstimate(stop.vehicleStop, stopPts, builderState.config) : null;
+        const estimate = stopPts.length > 0 ? stopWalkEstimate(stop.vehicleStop, stopPts, estimateConfig) : null;
         const legs = stopLegs(stopPts, pedGraph);
         const place = stopPlaceSummaryFromPoints(stopPts);
         return {
@@ -955,7 +961,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
           vehicleStopKey: stopPts[0]?.id ?? null,
         };
       }),
-    [builderState.stops, builderState.config, pointsById, pedGraph]
+    [builderState.stops, estimateConfig, pointsById, pedGraph]
   );
 
   /** The would-be NEXT stop (RF-006.8 — numbered in sequence, stops.length + 1):
@@ -971,7 +977,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
         metrics: [
           { label: UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(overviewSuggestion.points.length) },
           ...typedPackageChips(packagesByTypeFromPoints(overviewSuggestion.points)),
-          { label: walkEstimateLabel(stopWalkEstimate(overviewSuggestion.anchor, overviewSuggestion.points, builderState.config)) },
+          { label: walkEstimateLabel(stopWalkEstimate(overviewSuggestion.anchor, overviewSuggestion.points, estimateConfig)) },
         ],
         vehicleDistanceLabel: overviewVehicleLeg
           ? `${UI_LABELS.MAP_PANEL.ROTEIRO_POINT.DISTANCE_TO_HERE(formatMeters(overviewVehicleLeg.distanceMeters))}${overviewVehicleLeg.viaStreets ? "" : ` ${UI_LABELS.MAP_PANEL.ROTEIRO_START.SUGGESTION_STRAIGHT}`}`
@@ -988,10 +994,15 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
         ? // Real street km (RF-006.7) only while "Ver detalhes" is open (the only
           // consumer) — the vehicle A* chain is reused from the drawn route, so
           // opening the panel costs one pass of the foot circuits, not two.
-          plannedRouteTotals(toPlannedRoute(builderState), points, panelView === "overview" ? { graph, pedGraph, vehicleMetersOverride: vehicleRoute?.distanceMeters } : undefined)
+          // Override the route's delivery times with the GLOBAL preference (RF-007.2).
+          plannedRouteTotals(
+            { ...toPlannedRoute(builderState), config: estimateConfig },
+            points,
+            panelView === "overview" ? { graph, pedGraph, vehicleMetersOverride: vehicleRoute?.distanceMeters } : undefined
+          )
         : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps -- toPlannedRoute reads only stops/startPoint/config (routeId/createdAt are stable); narrowing off the whole builderState keeps draft edits from recomputing the graph totals.
-    [mode, builderState.stops, builderState.startPoint, builderState.config, points, panelView, graph, pedGraph, vehicleRoute]
+    [mode, builderState.stops, builderState.startPoint, estimateConfig, points, panelView, graph, pedGraph, vehicleRoute]
   );
   /** Whether the shown totals came from the street graph (RF-006.7) — drives the
       honest "Detalhes" caption (streets vs the straight-line fallback). */

@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { ArrowLeft, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { ThemeToggle } from "../ThemeToggle";
+import { DeliverySettingsDialog } from "./DeliverySettingsDialog";
 import { UI_LABELS } from "../../constants/uiLabels";
 
 interface Props {
@@ -14,11 +16,12 @@ interface Props {
 /**
  * AppHeader - fixed top bar of the app shell (ADR-003).
  * Present on every screen (tabbed and focus layouts alike). Carries the app
- * title and global controls; the route-settings gear ships disabled until the
- * settings panel exists (TASK-RF-007).
+ * title and global controls; the gear opens the GLOBAL delivery-time settings
+ * (RF-007.2 — was disabled until this panel existed).
  */
 export const AppHeader = ({ showBack = false, title = UI_LABELS.SHELL.APP_TITLE }: Props) => {
   const navigate = useNavigate();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-input bg-background px-4">
       <div className="flex min-w-0 items-center gap-1">
@@ -31,10 +34,11 @@ export const AppHeader = ({ showBack = false, title = UI_LABELS.SHELL.APP_TITLE 
       </div>
       <div className="flex items-center gap-2">
         <ThemeToggle />
-        <Button variant="outline" size="icon" disabled aria-label={UI_LABELS.SHELL.SETTINGS_ARIA} title={UI_LABELS.SHELL.SETTINGS_ARIA}>
+        <Button variant="outline" size="icon" aria-label={UI_LABELS.SHELL.SETTINGS_ARIA} title={UI_LABELS.SHELL.SETTINGS_ARIA} onClick={() => setSettingsOpen(true)}>
           <Settings />
         </Button>
       </div>
+      <DeliverySettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </header>
   );
 };

@@ -162,6 +162,8 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 <!-- TASK-RF-007.1 CONCLUÍDA em 18/07/26 (smoke L-9). Ver 0-indice-concluidas.md → 2026-07-18--22h41--TASK-RF-007.1.md. -->
 
+<!-- TASK-RF-007.2 movida para em-andamento.md em 19/07/26 (plano aprovado — Global + regra por tipo/complemento). -->
+
 ### TASK-RF-007.2 - Tela de ajustes editável (config persistida) — follow-up
 - **Esforço-H/IA:** M/M · **Dep:** RF-007.1 · **REQ:** RF-39; `fluxo-roteirizacao.md` §8 (tela 10)
 - Painel de config (texto em `UI_LABELS`) para editar velocidade a pé, tempo-base, seg/pacote, velocidade do veículo; persistir em `PlannedRoute.config`. Também acolhe o **critério configurável da sugestão** (RF-006.12, absorvido aqui).

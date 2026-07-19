@@ -48,8 +48,19 @@ export const UI_LABELS = {
     NAV_ARIA: "Navegação principal",
     NAV_HOME: "Início",
     NAV_ROUTES: "Rotas",
-    SETTINGS_ARIA: "Configurações de rota (em breve)",
+    SETTINGS_ARIA: "Configurações de entrega",
     BACK_ARIA: "Voltar",
+  },
+  // Config global de tempo de entrega (RF-007.2) — editada no ⚙️, vale p/ todas as rotas.
+  DELIVERY_SETTINGS: {
+    TITLE: "Configurações de entrega",
+    DESCRIPTION: "Tempo estimado por entrega. Vale para todas as rotas.",
+    BASE_LABEL: "Tempo de entrega (1 pacote)",
+    PER_PACKAGE_LABEL: "Adicional por pacote extra",
+    MINUTES: "minutos",
+    SECONDS: "segundos",
+    SAVE: "Salvar",
+    CANCEL: "Cancelar",
   },
   // Aba Rotas (TASK-RF-022.3): lista de romaneios salvos
   ROUTES_PAGE: {
