@@ -19,6 +19,7 @@
 
 import { openDB, type IDBPDatabase } from "idb";
 import type { PlannedRoute } from "../types/routing";
+import { normalizeRoutingConfig } from "../types/routing";
 
 const DB_NAME = "danfo-roteiros";
 /** Bump (with an upgrade path) if the RoteiroRecord shape ever changes. */
@@ -63,12 +64,15 @@ export const saveRoteiro = async (manifestId: string, routeName: string, route: 
   }
 };
 
-/** Loads one route's roteiro. `null` on miss or storage failure (read degrades). */
+/** Loads one route's roteiro. `null` on miss or storage failure (read degrades).
+ *  The config is normalized (RF-007.1) so routes saved with the old config shape
+ *  come back with the delivery-time fields filled from defaults. */
 export const getRoteiro = async (manifestId: string, routeName: string): Promise<PlannedRoute | null> => {
   try {
     const db = await getDb();
     const record = (await db.get(STORE, [manifestId, routeName])) as RoteiroRecord | undefined;
-    return record?.route ?? null;
+    if (!record) return null;
+    return { ...record.route, config: normalizeRoutingConfig(record.route.config) };
   } catch {
     return null;
   }

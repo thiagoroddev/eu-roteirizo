@@ -17,7 +17,11 @@ import { vehicleRoutePath, footCircuitPath } from "./routePath";
 export interface StopWalkEstimate {
   /** Circuit length in meters (0 with no points). */
   meters: number;
-  /** Walking time + handover per package, in minutes (rounded up). */
+  /** Walking time only (no handover), in minutes. RF-007.1. */
+  walkMinutes: number;
+  /** Delivery/handover time for the stop's addresses, in minutes. RF-007.1. */
+  deliveryMinutes: number;
+  /** walkMinutes + deliveryMinutes, rounded up — the stop's total on-foot time. */
   minutes: number;
 }
 
@@ -26,13 +30,13 @@ export interface StopWalkEstimate {
  *
  * @param vehicleStop - The anchor the circuit leaves from and returns to.
  * @param orderedPoints - The chosen points, in walking-visit order.
- * @param config - Speeds/times (walkingSpeedKmh, walkingMinutesPerDelivery).
+ * @param config - Speeds/times (walkingSpeedKmh, deliveryBaseSeconds, deliveryPerPackageSeconds).
  * @param pedGraph - The pedestrian graph (RF-006.7): when given, the circuit
  *   length is the real street path; else haversine legs (coarse). Default null.
  * @returns Circuit meters + total minutes.
  */
 export const stopWalkEstimate = (vehicleStop: LatLng, orderedPoints: DeliveryPoint[], config: RoutingConfig, pedGraph: RoadGraph | null = null): StopWalkEstimate => {
-  if (orderedPoints.length === 0) return { meters: 0, minutes: 0 };
+  if (orderedPoints.length === 0) return { meters: 0, walkMinutes: 0, deliveryMinutes: 0, minutes: 0 };
 
   let meters: number;
   if (pedGraph) {
@@ -47,10 +51,13 @@ export const stopWalkEstimate = (vehicleStop: LatLng, orderedPoints: DeliveryPoi
     meters += haversine(cursor, vehicleStop);
   }
 
-  const packages = orderedPoints.reduce((sum, point) => sum + point.packageCount, 0);
+  // Delivery time is PER ADDRESS: base for the first package + extra for each
+  // additional one (base + (N−1)×extra), summed over the stop's points. RF-007.1.
+  const deliverySeconds = orderedPoints.reduce((sum, point) => sum + config.deliveryBaseSeconds + Math.max(0, point.packageCount - 1) * config.deliveryPerPackageSeconds, 0);
   const walkMinutes = (meters / 1000 / config.walkingSpeedKmh) * 60;
-  const minutes = Math.ceil(walkMinutes + packages * config.walkingMinutesPerDelivery);
-  return { meters, minutes };
+  const deliveryMinutes = deliverySeconds / 60;
+  const minutes = Math.ceil(walkMinutes + deliveryMinutes);
+  return { meters, walkMinutes, deliveryMinutes, minutes };
 };
 
 /** Totals of a saved roteiro, for the Sumário's "Info Meu Roteiro" (RF-008). */
@@ -61,7 +68,11 @@ export interface PlannedRouteTotals {
   distanceWalkKm: number;
   distanceTotalKm: number;
   timeVehicleMin: number;
+  /** Walking time only, no handover (RF-007.1 split it out of the old walk time). */
   timeWalkMin: number;
+  /** Delivery/handover time across all stops (RF-007.1). */
+  timeDeliveryMin: number;
+  /** vehicle + walking + delivery. */
   timeTotalMin: number;
 }
 
@@ -90,13 +101,15 @@ export const plannedRouteTotals = (route: PlannedRoute, points: DeliveryPoint[],
 
   let walkMeters = 0;
   let walkMinutes = 0;
+  let deliveryMinutes = 0;
   let walkPoints = 0;
   for (const stop of route.stops) {
     const stopPoints = stop.pointIds.map((id) => byId.get(id)).filter((p): p is DeliveryPoint => p !== undefined);
     walkPoints += stopPoints.length;
     const estimate = stopWalkEstimate(stop.vehicleStop, stopPoints, route.config, pedGraph);
     walkMeters += estimate.meters;
-    walkMinutes += estimate.minutes;
+    walkMinutes += estimate.walkMinutes;
+    deliveryMinutes += estimate.deliveryMinutes;
   }
 
   let vehicleMeters: number;
@@ -126,6 +139,7 @@ export const plannedRouteTotals = (route: PlannedRoute, points: DeliveryPoint[],
     distanceTotalKm: (vehicleMeters + walkMeters) / 1000,
     timeVehicleMin,
     timeWalkMin: walkMinutes,
-    timeTotalMin: timeVehicleMin + walkMinutes,
+    timeDeliveryMin: deliveryMinutes,
+    timeTotalMin: timeVehicleMin + walkMinutes + deliveryMinutes,
   };
 };

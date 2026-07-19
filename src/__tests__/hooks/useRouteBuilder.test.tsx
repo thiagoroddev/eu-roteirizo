@@ -22,7 +22,7 @@ describe("useRouteBuilder", () => {
   });
 
   it("accepts a custom config", () => {
-    const { result } = renderHook(() => useRouteBuilder(POINTS, { walkingSpeedKmh: 4, walkingMinutesPerDelivery: 2, vehicleSpeedKmh: 30, autoRadiusMeters: 50 }));
+    const { result } = renderHook(() => useRouteBuilder(POINTS, { walkingSpeedKmh: 4, deliveryBaseSeconds: 40, deliveryPerPackageSeconds: 15, vehicleSpeedKmh: 30, autoRadiusMeters: 50 }));
     expect(result.current.state.config.autoRadiusMeters).toBe(50);
   });
 });

@@ -117,7 +117,8 @@ export const UI_LABELS = {
     // O antigo HUD "Faltando: X · Y" migrou para os stat-cards (como feito/total).
     ROTEIRO_OVERVIEW: {
       SECTION_PROGRESS: "Roteiro em construção",
-      SECTION_CONFIRMED: "Paradas confirmadas",
+      /** "N paradas confirmadas" (RF-006.20 — contagem no próprio label). */
+      SECTION_CONFIRMED: (count: number) => `${count} ${count === 1 ? "parada confirmada" : "paradas confirmadas"}`,
       // "Próxima parada sugerida" (renomeada 15/07): a sugestão é do ALGORITMO
       // (não escolha do usuário) e o card a distingue de parada confirmada.
       SECTION_NEXT: "Próxima parada sugerida",
@@ -125,6 +126,7 @@ export const UI_LABELS = {
       HIDE_DETAILS: "Esconder detalhes",
       STAT_ADDRESSES: "Endereços",
       STAT_PACKAGES: "Pacotes",
+      STAT_STOPS: "Paradas",
       /** "29/76" — atribuídos/total. */
       STAT_COUNT: (done: number, total: number) => `${done}/${total}`,
       /** A barra escolhe UMA base: endereços (decisão 09/07). */
@@ -132,11 +134,21 @@ export const UI_LABELS = {
       PROGRESS_ARIA: "Progresso do roteiro (endereços atribuídos)",
       NO_STOPS: "Nenhuma parada confirmada ainda.",
       STOP_ARIA: (order: number) => `Parada ${order} — ver endereços`,
-      // Subseção "Detalhes" do card (RF-006.11): somatórias correntes.
-      SECTION_DETAILS: "Detalhes",
-      TOTAL_TIME: "Tempo total",
-      TOTAL_DISTANCE: "Distância total",
-      WALK_DISTANCE: "Distância a pé",
+      // Cards de somatória (RF-006.20): Duração e Distância abrem um popup de
+      // decomposição ("Detalhes"); Comercial é só contagem, sem popup.
+      CARD_DURATION: "Duração total",
+      CARD_DISTANCE: "Distância total",
+      CARD_COMMERCIAL: "Comercial",
+      DETAILS_BUTTON: "Detalhes",
+      /** Popup da Duração — decomposição dos três tempos (RF-007.1). */
+      DURATION_DIALOG_TITLE: "Duração total",
+      DURATION_VEHICLE: "Viagem no veículo",
+      DURATION_WALK: "Caminhadas",
+      DURATION_DELIVERY: "Entregas",
+      /** Popup da Distância — veículo vs a pé. */
+      DISTANCE_DIALOG_TITLE: "Distância total",
+      DISTANCE_VEHICLE: "Distância no veículo",
+      DISTANCE_WALK: "Distância a pé",
       /** Qualificação honesta: sem grafo (raro, durante o carregamento) as pernas
           de veículo são em linha reta; RF-007 torna as velocidades configuráveis. */
       TOTALS_NOTE: "Estimativas — veículo em linha reta.",
@@ -290,6 +302,7 @@ export const UI_LABELS = {
     DISTANCE_TOTAL: "Distância total:",
     TIME_VEHICLE: "Tempo (veículo):",
     TIME_WALK: "Tempo (a pé):",
+    TIME_DELIVERY: "Tempo (entregas):",
     TIME_TOTAL: "Tempo total:",
   },
   ROUTING: {

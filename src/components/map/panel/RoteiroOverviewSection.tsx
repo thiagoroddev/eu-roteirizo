@@ -71,10 +71,12 @@ export const StartRow = ({ start, onDelete, onReposition }: { start: OverviewSta
  */
 interface Props {
   progress: RouteProgress;
-  /** Current sums (RF-006.11); null hides the Detalhes subsection. */
+  /** Current sums (RF-006.11); null hides the summary cards. */
   totals: PlannedRouteTotals | null;
   /** Whether the totals came from the street graph (RF-006.7) — drives the caption. */
   totalsViaStreets?: boolean;
+  /** Commercial-hours package count among committed points (RF-006.20). */
+  commercialPackages: number;
   /** The start as "parada 0"; null before a start exists. */
   start: OverviewStartView | null;
   /** Start gestures (RF-006.14): reposition arms a map tap; delete drops it. */
@@ -97,6 +99,7 @@ export const RoteiroOverviewSection = ({
   progress,
   totals,
   totalsViaStreets = false,
+  commercialPackages,
   start,
   onDeleteStart,
   onRepositionStart,
@@ -113,10 +116,10 @@ export const RoteiroOverviewSection = ({
   return (
     <div>
       <PanelSection label={OVERVIEW.SECTION_PROGRESS}>
-        <RouteProgressCard progress={progress} totals={totals} viaStreets={totalsViaStreets} />
+        <RouteProgressCard progress={progress} totals={totals} viaStreets={totalsViaStreets} commercialPackages={commercialPackages} />
       </PanelSection>
 
-      <PanelSection label={OVERVIEW.SECTION_CONFIRMED}>
+      <PanelSection label={OVERVIEW.SECTION_CONFIRMED(stops.length)}>
         {/* "Parada 0" — the start opens the list (RF-006.11). Divider below it:
             the confirmed list reads like the single-stop address list (smoke
             15/07 — "cada parada separada por linha horizontal"). */}

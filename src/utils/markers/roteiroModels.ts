@@ -259,8 +259,9 @@ export const packagesByTypeFromPoints = (points: DeliveryPoint[]): { commercial:
 /** Below this, showing meters undermines trust ("3 m a pé") — time only. */
 export const WALK_ESTIMATE_MIN_METERS = 20;
 
-/** "~12 min · 850 m a pé", or time-only for negligible circuits (RF-006.4.2). */
-export const walkEstimateLabel = (estimate: StopWalkEstimate): string =>
+/** "~12 min · 850 m a pé", or time-only for negligible circuits (RF-006.4.2).
+ *  Needs only the totals (meters + combined minutes), not the RF-007.1 split. */
+export const walkEstimateLabel = (estimate: Pick<StopWalkEstimate, "meters" | "minutes">): string =>
   estimate.meters < WALK_ESTIMATE_MIN_METERS
     ? UI_LABELS.MAP_PANEL.ROTEIRO_DRAFT.ESTIMATE_TIME_ONLY(estimate.minutes)
     : UI_LABELS.MAP_PANEL.ROTEIRO_DRAFT.ESTIMATE(estimate.minutes, formatMeters(estimate.meters));

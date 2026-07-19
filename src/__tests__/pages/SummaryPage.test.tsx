@@ -116,7 +116,7 @@ describe("SummaryPage (focus screen)", () => {
       id: "route_saved",
       startPoint: { lat: -22.9, lng: -43.1 },
       stops: [{ id: "s1", order: 1, vehicleStop: { lat: -22.9, lng: -43.1 }, pointIds: ["pt_-22.90000,-43.10000"], radiusMeters: 30 }],
-      config: { walkingSpeedKmh: 5, walkingMinutesPerDelivery: 1.5, vehicleSpeedKmh: 25 },
+      config: { walkingSpeedKmh: 5, deliveryBaseSeconds: 40, deliveryPerPackageSeconds: 15, vehicleSpeedKmh: 25, autoRadiusMeters: 30 },
       createdAt: "2026-07-10T10:00:00.000Z",
     };
     renderPage();

@@ -31,6 +31,21 @@ describe("routeStorage (RF-008)", () => {
     expect(loaded).toEqual(route());
   });
 
+  it("RF-007.1: config antigo (sem os campos de entrega) é hidratado com defaults ao ler", async () => {
+    // Um registro salvo antes da RF-007.1: tinha walkingMinutesPerDelivery e NÃO os campos de entrega.
+    const oldConfig = { walkingSpeedKmh: 4, walkingMinutesPerDelivery: 2, vehicleSpeedKmh: 30, autoRadiusMeters: 50 } as unknown as PlannedRoute["config"];
+    await saveRoteiro("m1", "A-1", route({ config: oldConfig }));
+
+    const loaded = await getRoteiro("m1", "A-1");
+    // campos novos preenchidos com defaults
+    expect(loaded?.config.deliveryBaseSeconds).toBe(DEFAULT_ROUTING_CONFIG.deliveryBaseSeconds);
+    expect(loaded?.config.deliveryPerPackageSeconds).toBe(DEFAULT_ROUTING_CONFIG.deliveryPerPackageSeconds);
+    // campos existentes preservados
+    expect(loaded?.config.walkingSpeedKmh).toBe(4);
+    expect(loaded?.config.vehicleSpeedKmh).toBe(30);
+    expect(loaded?.config.autoRadiusMeters).toBe(50);
+  });
+
   it("misses degrade to null (unknown route / other manifest)", async () => {
     await saveRoteiro("m1", "A-1", route());
     expect(await getRoteiro("m1", "B-2")).toBeNull();

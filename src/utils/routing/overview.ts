@@ -22,6 +22,8 @@ export interface RouteProgress {
   addressesTotal: number;
   packagesDone: number;
   packagesTotal: number;
+  /** Number of confirmed stops (RF-006.20's "PARADAS" stat card). */
+  stopsCount: number;
   /** 0..1 — ADDRESSES are the base of the bar (decision 09/07): they are the
       unit the roteiro is built in. The cards still show both counts. */
   ratio: number;
@@ -40,6 +42,7 @@ export const routeProgress = (state: RouteBuilderState): RouteProgress => {
     addressesTotal,
     packagesDone,
     packagesTotal,
+    stopsCount: state.stops.length,
     ratio: addressesTotal === 0 ? 0 : addressesDone / addressesTotal,
   };
 };

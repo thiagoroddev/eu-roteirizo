@@ -140,15 +140,22 @@ const PackageRow = ({ label, complement, spxTn, type, typeLabel }: StopItemData[
 
 /**
  * StopItemDetail - the drill-down of an address: one PackageRow per package
- * (RF-28) and the Google Maps link. Neighborhood/zipcode/type lines were moved
- * OUT (rev. 07/07): place info lives in the stop summary; the type only on the
- * per-package colored badge. Shared by the list's StopItem and by the default
- * view's selected-address card, so both drill-downs show the same content.
+ * (RF-28) and the Google Maps link. The Maps link sits BESIDE the "Informações
+ * do pacote" header now (RF-006.21 — closer to the address, easier to reach);
+ * the footer keeps only the optional `actions`. Neighborhood/zipcode/type lines
+ * were moved OUT (rev. 07/07): place info lives in the stop summary, the type
+ * only on the per-package colored badge. Shared by the list's StopItem and by
+ * the default view's selected-address card, so both drill-downs match.
  */
 export const StopItemDetail = ({ item, actions }: { item: StopItemData; actions?: ReactNode }) => (
   <div className="space-y-2 px-4 pb-4 pl-[3.25rem]">
     <div>
-      <div className="text-sm font-semibold">{SHEET.PACKAGES_HEADER(item.packageCount)}</div>
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-sm font-semibold">{SHEET.PACKAGES_HEADER(item.packageCount)}</div>
+        <a href={item.mapsUrl} target="_blank" rel="noopener noreferrer" data-vaul-no-drag className="shrink-0 text-sm font-medium text-primary underline-offset-4 hover:underline">
+          {SHEET.GOOGLE_MAPS}
+        </a>
+      </div>
       {/* Divider between packages so each one reads as a unit (rev. 07/07). */}
       <ul className="mt-1 divide-y divide-input">
         {item.packages.map((pkg, index) => (
@@ -157,12 +164,7 @@ export const StopItemDetail = ({ item, actions }: { item: StopItemData; actions?
       </ul>
     </div>
 
-    <div className="flex items-center justify-between gap-2">
-      <a href={item.mapsUrl} target="_blank" rel="noopener noreferrer" data-vaul-no-drag className="text-sm font-medium text-primary underline-offset-4 hover:underline">
-        {SHEET.GOOGLE_MAPS}
-      </a>
-      {actions && <div className="flex gap-2">{actions}</div>}
-    </div>
+    {actions && <div className="flex justify-end gap-2">{actions}</div>}
   </div>
 );
 

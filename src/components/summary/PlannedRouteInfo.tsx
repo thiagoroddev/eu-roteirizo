@@ -13,6 +13,7 @@ export interface PlannedRouteInfoData {
   distanceTotalKm: number;
   timeVehicleMin: number;
   timeWalkMin: number;
+  timeDeliveryMin: number;
   timeTotalMin: number;
 }
 
@@ -59,6 +60,9 @@ export const PlannedRouteInfo = ({ info }: Props) => {
           </li>
           <li>
             <strong>{UI_LABELS.ROTEIRO_INFO.TIME_WALK}</strong> {min(info.timeWalkMin)}
+          </li>
+          <li>
+            <strong>{UI_LABELS.ROTEIRO_INFO.TIME_DELIVERY}</strong> {min(info.timeDeliveryMin)}
           </li>
           <li>
             <strong>{UI_LABELS.ROTEIRO_INFO.TIME_TOTAL}</strong> {min(info.timeTotalMin)}

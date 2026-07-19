@@ -97,8 +97,12 @@ export interface RouteStop {
 export interface RoutingConfig {
   /** Walking speed between addresses inside a stop. */
   walkingSpeedKmh: number;
-  /** Fixed time spent per delivery (handover), in minutes. */
-  walkingMinutesPerDelivery: number;
+  /** Delivery (handover) time for an address's FIRST package, in seconds
+   *  (walk-up + first photo/data entry). RF-007.1. */
+  deliveryBaseSeconds: number;
+  /** Extra time per ADDITIONAL package at the same address, in seconds
+   *  (more photos + Shopee app data). Address time = base + (N−1)×this. RF-007.1. */
+  deliveryPerPackageSeconds: number;
   /** Vehicle speed between the vehicle stops of consecutive stops. */
   vehicleSpeedKmh: number;
   /** Default radius (meters) for auto-grouping when creating a stop. */
@@ -116,10 +120,26 @@ export interface PlannedRoute {
   createdAt: string;
 }
 
-/** Sensible defaults for a new route's config. */
+/** Sensible defaults for a new route's config. The delivery times are
+ *  ⚙️ MANUAL KNOBs — calibrate on the device smoke (RF-007.1). */
 export const DEFAULT_ROUTING_CONFIG: RoutingConfig = {
   walkingSpeedKmh: 5,
-  walkingMinutesPerDelivery: 1.5,
+  deliveryBaseSeconds: 40, // ⚙️ MANUAL KNOB — time for a single-package delivery
+  deliveryPerPackageSeconds: 15, // ⚙️ MANUAL KNOB — each extra package (photo + app data)
   vehicleSpeedKmh: 25,
   autoRadiusMeters: 30,
 };
+
+/**
+ * Fills a possibly-old persisted config with current defaults for any missing
+ * field (RF-007.1). Routes saved before RF-007.1 carry the retired
+ * `walkingMinutesPerDelivery` and lack the delivery-seconds fields; reading them
+ * back through this keeps the math well-defined (no NaN) without a store bump.
+ */
+export const normalizeRoutingConfig = (raw: Partial<RoutingConfig> | null | undefined): RoutingConfig => ({
+  walkingSpeedKmh: raw?.walkingSpeedKmh ?? DEFAULT_ROUTING_CONFIG.walkingSpeedKmh,
+  deliveryBaseSeconds: raw?.deliveryBaseSeconds ?? DEFAULT_ROUTING_CONFIG.deliveryBaseSeconds,
+  deliveryPerPackageSeconds: raw?.deliveryPerPackageSeconds ?? DEFAULT_ROUTING_CONFIG.deliveryPerPackageSeconds,
+  vehicleSpeedKmh: raw?.vehicleSpeedKmh ?? DEFAULT_ROUTING_CONFIG.vehicleSpeedKmh,
+  autoRadiusMeters: raw?.autoRadiusMeters ?? DEFAULT_ROUTING_CONFIG.autoRadiusMeters,
+});

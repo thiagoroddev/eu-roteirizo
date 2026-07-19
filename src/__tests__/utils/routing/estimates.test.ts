@@ -22,15 +22,25 @@ describe("stopWalkEstimate (coarse — TASK-RF-006.4.1; RF-007 refines)", () => 
     expect(meters).toBeCloseTo(expected, 3);
   });
 
-  it("adds the fixed handover time per PACKAGE to the walking time", () => {
+  it("tempo de entrega de um endereço = base + (N−1)×extra, somado à caminhada (RF-007.1)", () => {
     const a = pt("a", -22.9795, -43.2, 3);
-    const { meters, minutes } = stopWalkEstimate(anchor, [a], DEFAULT_ROUTING_CONFIG);
-    const walkMinutes = (meters / 1000 / DEFAULT_ROUTING_CONFIG.walkingSpeedKmh) * 60;
-    expect(minutes).toBe(Math.ceil(walkMinutes + 3 * DEFAULT_ROUTING_CONFIG.walkingMinutesPerDelivery));
+    const { meters, walkMinutes, deliveryMinutes, minutes } = stopWalkEstimate(anchor, [a], DEFAULT_ROUTING_CONFIG);
+    const expectedWalk = (meters / 1000 / DEFAULT_ROUTING_CONFIG.walkingSpeedKmh) * 60;
+    const expectedDeliverySeconds = DEFAULT_ROUTING_CONFIG.deliveryBaseSeconds + 2 * DEFAULT_ROUTING_CONFIG.deliveryPerPackageSeconds;
+    expect(walkMinutes).toBeCloseTo(expectedWalk, 6);
+    expect(deliveryMinutes).toBeCloseTo(expectedDeliverySeconds / 60, 6);
+    expect(minutes).toBe(Math.ceil(expectedWalk + expectedDeliverySeconds / 60));
+  });
+
+  it("tempo de entrega é POR ENDEREÇO (dois endereços de 1 pacote = 2×base), RF-007.1", () => {
+    const a = pt("a", -22.9795, -43.2, 1);
+    const b = pt("b", -22.9795, -43.199, 1);
+    const { deliveryMinutes } = stopWalkEstimate(anchor, [a, b], DEFAULT_ROUTING_CONFIG);
+    expect(deliveryMinutes).toBeCloseTo((2 * DEFAULT_ROUTING_CONFIG.deliveryBaseSeconds) / 60, 6);
   });
 
   it("returns zeros with no points", () => {
-    expect(stopWalkEstimate(anchor, [], DEFAULT_ROUTING_CONFIG)).toEqual({ meters: 0, minutes: 0 });
+    expect(stopWalkEstimate(anchor, [], DEFAULT_ROUTING_CONFIG)).toEqual({ meters: 0, walkMinutes: 0, deliveryMinutes: 0, minutes: 0 });
   });
 
   it("com o grafo pedestre, mede o circuito pelas RUAS — mais longo que o haversine (RF-006.7)", () => {
@@ -69,7 +79,7 @@ describe("plannedRouteTotals (RF-008 — o 'Info Meu Roteiro' do Sumário)", () 
     const walkMeters = stopWalkEstimate(anchor, [a], DEFAULT_ROUTING_CONFIG).meters + stopWalkEstimate(anchor2, [b], DEFAULT_ROUTING_CONFIG).meters;
     expect(totals.distanceWalkKm).toBeCloseTo(walkMeters / 1000, 6);
     expect(totals.distanceTotalKm).toBeCloseTo((vehicleMeters + walkMeters) / 1000, 6);
-    expect(totals.timeTotalMin).toBeCloseTo(totals.timeVehicleMin + totals.timeWalkMin, 6);
+    expect(totals.timeTotalMin).toBeCloseTo(totals.timeVehicleMin + totals.timeWalkMin + totals.timeDeliveryMin, 6);
   });
 
   it("sem início, a 1ª perna de veículo não existe (só âncora → âncora)", () => {

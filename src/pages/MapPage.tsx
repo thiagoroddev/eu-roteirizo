@@ -989,6 +989,13 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       honest "Detalhes" caption (streets vs the straight-line fallback). */
   const overviewViaStreets = graph !== null;
 
+  /** Commercial-hours packages among the COMMITTED points — the overview's
+      "Comercial" stat card (RF-006.20). Mirrors the typed chips' counting. */
+  const overviewCommercialPackages = useMemo(() => {
+    const assigned = assignedPointIds(builderState.stops);
+    return packagesByTypeFromPoints(points.filter((p) => assigned.has(p.id))).commercial;
+  }, [builderState.stops, points]);
+
   /** The start as an ADDRESS, when it is one ("Partir deste endereço" copies
       the point's coords verbatim — exact match is the honest detection). */
   const startAddressPoint = useMemo(() => {
@@ -1411,6 +1418,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
               progress={progress}
               totals={overviewTotals}
               totalsViaStreets={overviewViaStreets}
+              commercialPackages={overviewCommercialPackages}
               start={overviewStart}
               onDeleteStart={handleDeleteStart}
               onRepositionStart={handleRepositionStart}

@@ -40,13 +40,14 @@ const withAllCommitted = (state: RouteBuilderState): RouteBuilderState =>
 describe("routeProgress", () => {
   it("starts at zero: nothing committed → 0/total and ratio 0", () => {
     const progress = routeProgress(initial());
-    expect(progress).toEqual({ addressesDone: 0, addressesTotal: 5, packagesDone: 0, packagesTotal: 8, ratio: 0 });
+    expect(progress).toEqual({ addressesDone: 0, addressesTotal: 5, packagesDone: 0, packagesTotal: 8, stopsCount: 0, ratio: 0 });
   });
 
   it("counts committed addresses AND packages; the ratio's base is addresses (decision 09/07)", () => {
     const progress = routeProgress(withStopAB(started()));
     expect(progress.addressesDone).toBe(2); // a + b
     expect(progress.packagesDone).toBe(3); // a carries 2 packages
+    expect(progress.stopsCount).toBe(1); // RF-006.20: uma parada confirmada
     expect(progress.ratio).toBeCloseTo(2 / 5);
   });
 

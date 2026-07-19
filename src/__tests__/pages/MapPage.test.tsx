@@ -1117,9 +1117,11 @@ describe("MapPage (focus screen)", () => {
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).not.toBeInTheDocument();
     expect(screen.getByText(OVERVIEW_LABELS.SECTION_PROGRESS)).toBeInTheDocument();
     expect(screen.getAllByText(OVERVIEW_LABELS.STAT_COUNT(2, 3))).toHaveLength(2);
-    expect(screen.getByText(OVERVIEW_LABELS.SECTION_DETAILS)).toBeInTheDocument();
-    expect(screen.getByText(OVERVIEW_LABELS.TOTAL_TIME)).toBeInTheDocument();
-    expect(screen.getByText(OVERVIEW_LABELS.WALK_DISTANCE)).toBeInTheDocument();
+    // RF-006.20: 3º stat card PARADAS + os cards Duração/Distância/Comercial.
+    expect(screen.getByText(OVERVIEW_LABELS.STAT_STOPS)).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.CARD_DURATION)).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.CARD_DISTANCE)).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.CARD_COMMERCIAL)).toBeInTheDocument();
     // Parada 0: o início por toque (sem endereço) + os dois gestos (RF-006.14).
     expect(screen.getByText(START_LABELS.DEFINED)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: START_LABELS.DELETE_START })).toBeInTheDocument();
@@ -1140,6 +1142,19 @@ describe("MapPage (focus screen)", () => {
     expect(screen.queryByText(OVERVIEW_LABELS.SECTION_PROGRESS)).not.toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
     expect(screen.getByTestId("vaul-root")).toHaveAttribute("data-active-snap", "224px");
+  });
+
+  it("RF-006.20: 'Detalhes' da Duração abre um popup com viagem/caminhadas/entregas (split da RF-007.1)", () => {
+    startRoteiroFlow();
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    fireEvent.click(screen.getByRole("button", { name: OVERVIEW_LABELS.VIEW_DETAILS }));
+
+    // O 1º "Detalhes" é o da Duração → popup com os três tempos decompostos.
+    fireEvent.click(screen.getAllByText(OVERVIEW_LABELS.DETAILS_BUTTON)[0]);
+    expect(screen.getByText(OVERVIEW_LABELS.DURATION_VEHICLE)).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.DURATION_WALK)).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.DURATION_DELIVERY)).toBeInTheDocument();
   });
 
   // ==========================================================================
