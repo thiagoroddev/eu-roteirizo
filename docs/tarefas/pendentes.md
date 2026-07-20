@@ -19,7 +19,7 @@
 | 5 | ~~**TASK-TEST-003**~~ — zoom real do Leaflet | ✅ **CONCLUÍDA (10/07)** — o `MapPage.integration.test` virou o contrato de zoom real (8 cenários, 660/660); defeitos .4.19/.4.20 reintroduzidos por mutação derrubam a rede. A RF-006.8 pode mexer no painel com rede armada. |
 | 6 | ~~**TASK-RF-006.8**~~ — painel de visão geral | ✅ **CONCLUÍDA (12/07)** — painel ocioso = visão geral (progresso + confirmadas + sugestão em sequência com CTA); cabeçalho conciso em todos os contextos (painel colapsado mais baixo); `PanelView` "overview". 670/670; **smoke pendente** (publicada). Desbloqueia a **REF-017** (compartilha o `RouteProgressCard`). |
 | 7 | ~~**TASK-RF-006.5**~~ → ~~**.6**~~ → ~~**.7**~~ | `.5`/`.6`/**`.7`** ✅ **CONCLUÍDAS (15–17/07)** — âncora, ordem derivada, e o **traçado** (rota do veículo pela rua + circuito a pé + km real; **RF-29 fechado**; o retoque dos totais reais nos cards da `.8` já entrou junto). Série de smoke da **parada do veículo** ✅ **.15/.16/.17/.18** + **.19** (modo edição interativo: carro pegável + endereços da parada selecionáveis) — **.19 clicável CONFIRMADO no aparelho (L-9)**. ✅ **Smoke do TRAÇADO DESBLOQUEADO**: a **TASK-BG-006** (wedge do `useRoadGraph` prendia o grafo em "loading") foi **concluída (18/07, smoke no aparelho OK)** — traçado/sugestão seguem as ruas. |
-| 8 | ~~**RF-007 (.1+.2) · RF-006.20 · RF-006.21 · RF-006.10 · BG-007**~~ → **RF-006.9** → **RF-009** → **RF-012** → **RF-013** | **Melhoria do painel + tempo de entrega (pedido 18/07) — CONCLUÍDA (18–19/07, smokes L-9):** `RF-007.1` (motor de tempo realista) + `RF-007.2` (config GLOBAL no ⚙️: base em min/adicional em seg; regra por tipo+complemento) + `RF-006.20` (cards PARADAS/Duração/Distância com popup + Comercial + contagem) + `RF-006.21` (Google Maps no cabeçalho) + `RF-006.10` (distância a pé por perna no gutter) + `TASK-BG-007` (z-index dos dialogs). **RF-007 fechada.** Próximas: `RF-006.9` (geocoding da âncora), depois `RF-009/012/013`. |
+| 8 | ~~**RF-007 (.1+.2) · RF-006.20 · RF-006.21 · RF-006.10 · BG-007 · REF-017**~~ → **RF-006.9** → **RF-009** → **RF-012** → **RF-013** | **Melhoria do painel + tempo de entrega (pedido 18/07) — CONCLUÍDA (18–19/07, smokes L-9):** `RF-007.1` (motor de tempo realista) + `RF-007.2` (config GLOBAL no ⚙️: base em min/adicional em seg; regra por tipo+complemento) + `RF-006.20` (cards PARADAS/Duração/Distância com popup + Comercial + contagem) + `RF-006.21` (Google Maps no cabeçalho) + `RF-006.10` (distância a pé por perna no gutter) + `TASK-BG-007` (z-index dos dialogs). **RF-007 fechada.** Próximas: `RF-006.9` (geocoding da âncora), depois `RF-009/012/013`. |
 
 **Backlog sem urgência, encaixar em intervalos:** `TASK-RF-006.9` (geocoding da âncora; placeholder aceitável), `TASK-DOC-005`, `TASK-REF-014`, `TASK-TEST-002`.
 
@@ -60,7 +60,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 ## TASK-RF-006 - UI de construção da rota (Meu roteiro) [XG, dividir]
 
-- **Status:** Pendente (**.1 → .4.27, .5, .6, .7, .8, .11, .12, .13, .14, .15, .16, .17, .18 e .19 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); restam **.6 · .9** (`.10`/`.20`/`.21` ✅ concluídas 18–19/07 — melhoria do painel). ✅ Smoke do traçado (.7/.12) desbloqueado — **TASK-BG-006** concluída (18/07))
+- **Status:** Pendente (**.1 → .4.27, .5, .6, .7, .8, .11, .12, .13, .14, .15, .16, .17, .18 e .19 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); resta só a **.9** (geocoding da âncora) — `.6` ✅ 17/07 e `.10`/`.20`/`.21` ✅ 18–19/07 (melhoria do painel). ✅ Smoke do traçado (.7/.12) desbloqueado — **TASK-BG-006** concluída (18/07))
 - **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA
@@ -74,10 +74,9 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 <!-- TASK-RF-006.5 movida para em-andamento.md em 15/07/26 (plano aprovado). -->
 
-### TASK-RF-006.6 - Parada firmada: visualização + edição no painel (telas 5–7)
-- **Esforço-H/IA:** G/G · **Dep:** 006.5 · *(dividir em .6a/.6b se estourar; parte já antecipada na .4.2/.4.9 — tap na parada → painel + Editar/Desfazer + edição desagrupada; e o **"Adicionar" foi antecipado pela .4.23**, achado do smoke)*
-- Parada selecionada lista endereços por **ordinal** + item âncora; edição = `REOPEN_STOP` (reabre como rascunho): Remover/Adicionar/Tornar âncora/Inverter, drag (`itemLeading`), footer "Salvar alterações"; Desfazer parada; Incorporar órfão.
-- **Aceite:** editar uma parada pronta ponta a ponta pelos slots, sem reestruturar o painel.
+### ~~TASK-RF-006.6~~ - Parada firmada: visualização + edição no painel (telas 5–7)
+- ✅ **CONCLUÍDA (17/07)** — ver índice (`TASK-RF-006.6`: âncora início/fim + sentido, **SEM ordem manual** — a decisão do humano 17/07 matou o drag/reordenação; a ordem é 100% derivada). O texto antigo deste bloco (que ainda previa `drag (itemLeading)`) ficou **superado** por essa decisão.
+- *(Corrigido em 19/07: o bloco seguia listado como pendente e o cabeçalho da RF-006 a contava como restante — erro de sincronização dos docs.)*
 
 ### ~~TASK-RF-006.7~~ - Traçado do percurso (veículo + a pé + km)
 - ✅ **CONCLUÍDA (17/07, smoke L-15)** — ver índice. **RF-29 fechado.** ✅ **Smoke DESBLOQUEADO**: a **TASK-BG-006** (grafo preso em "loading" pelo wedge do `useRoadGraph`) foi concluída (18/07, smoke no aparelho OK) — linha/circuito/km validados seguindo as ruas.
@@ -183,7 +182,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 - **Data-hora origem:** 22/06/26 22:45
 - **Dependências:** TASK-RF-004 ✅, TASK-RF-006, TASK-RF-008
 - **REQ/ADR/DT:** draft §8
-- **Observações:** Sem GPS em tempo real nem âncora ao vivo (decisão final 24/06). Execução manual e guiada. **Escopo ampliado (RF-37/47/48/49, RN-22):** pausar/retomar (resumível), concluir/desfazer entrega, avançar/retroceder (muda o foco), modo lista, e Roteiro **não editável** durante a execução. Refinar as subtarefas ao iniciar.
+- **Observações:** ⚠️ **Gancho da REF-017:** o Sumário já mostra o ESTADO do roteiro ("Roteiro em construção" / "em execução — X% concluído" / "finalizado — 100%") via `plannedRouteStatus` (`utils/routing/status.ts`), que recebe um **`deliveredRatio` opcional**. Enquanto a execução não registrar entregas concluídas, um roteiro pronto lê **"em execução — 0%"** para sempre. Ao implementar a RF-009, **passar o `deliveredRatio`** — os 3 estados já funcionam, nenhum chamador muda. Sem GPS em tempo real nem âncora ao vivo (decisão final 24/06). Execução manual e guiada. **Escopo ampliado (RF-37/47/48/49, RN-22):** pausar/retomar (resumível), concluir/desfazer entrega, avançar/retroceder (muda o foco), modo lista, e Roteiro **não editável** durante a execução. Refinar as subtarefas ao iniciar.
 
 **Objetivo:** percorrer uma rota salva com avanço manual e navegação delegada a Maps/Waze.
 
@@ -288,7 +287,6 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 | TASK-TEST-002 | Testar o zoom do mapa e definir o limite mínimo ideal (detalhe de rua p/ roteirizar a pé); alinhar `MAP_CONFIG.ZOOM.MIN` com o bloqueio do tile worker (hoje z<14) | Standard | Importante | Normal | P/M | - | RNF-12, RNF-15 | `[ ]` | 24/06/26 14:50 |
 | TASK-DOC-005 | Decidir o destino do status "Carregando ruas…" (grafo OSM, origem RF-006.3): formalizar em requisito, trocar a apresentação ou manter como está | Light | Desejável | Normal | P/P | - | RF-22 | `[ ]` | 09/07/26 17:00 |
 | TASK-REF-014 | Ajustar o radius do tema para `0.5rem` conforme `neonflux.md` (hoje 1rem/pill) — pendência estética anotada na REF-012 | Light | Desejável | Normal | P/P | - | ADR-006 | `[ ]` | 09/07/26 17:00 |
-| TASK-REF-017 | **Redesenhar o card "Info Meu Roteiro" do Sumário** (feedback 10/07: "espero que seja rascunho e não final" — É rascunho: a lista `rótulo: valor` veio do placeholder da fase 1/RF-022.4, a RF-008 só a alimentou). Virar cards-estatística no padrão do design system (alinhar com o "Roteiro em Construção" da **RF-006.8** — compartilhar os componentes de stat), hierarquia visual (totais em destaque, parciais como chips) e zeros tratados (hoje "Distância (veículo): 0 km" com 1 parada parece bug). Fazer junto ou logo após a RF-006.8 | Standard | Importante | Normal | P/M | RF-008 ✅ | RF-43; ADR-004 | `[ ]` | 10/07/26 21:00 |
 
 ---
 

@@ -68,13 +68,15 @@ describe("SummaryPage (focus screen)", () => {
     renderPage();
 
     expect(uploaderState.loadManifest).toHaveBeenCalledWith("hash-1");
-    expect(screen.getByText(new RegExp(UI_LABELS.ROUTE_SUMMARY.TITLE("A-1")))).toBeInTheDocument();
+    // REF-017: o título duplicado saiu (o header já mostra a rota); a tela é
+    // identificada pelo toggle das duas seções, abrindo em "Info Original".
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.SECTION_ORIGINAL })).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("'Ver Original' navigates to the map focus screen (TASK-RF-022.5)", () => {
+  it("'Ver no Mapa' navigates to the map focus screen (TASK-RF-022.5)", () => {
     renderPage();
 
-    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.VIEW_MAP }));
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.VIEW_ON_MAP }));
     expect(screen.getByTestId("map-page-stub")).toBeInTheDocument();
   });
 
@@ -104,14 +106,18 @@ describe("SummaryPage (focus screen)", () => {
     uploaderState.availableCols = [COLUMN_NAMES.LATITUDE, COLUMN_NAMES.LONGITUDE, COLUMN_NAMES.SEQUENCE, COLUMN_NAMES.STOP, COLUMN_NAMES.PLANNED_VEHICLE_TYPE];
   });
 
-  it("does not render the 'Info Meu Roteiro' section while no Roteiro exists", () => {
+  // REF-017: sem roteiro a seção não é alcançável — o segmento fica DESABILITADO
+  // (antes a seção simplesmente não era renderizada abaixo do card).
+  it("sem Roteiro salvo: o segmento 'Info Meu Roteiro' fica desabilitado e a tela abre no Original", () => {
     renderPage();
 
-    expect(screen.queryByText(UI_LABELS.ROTEIRO_INFO.TITLE)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.NO_ROTEIRO_YET })).toBeDisabled();
+    expect(screen.queryByText(UI_LABELS.ROTEIRO_INFO.CARD_ADDRESSES)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.SECTION_ORIGINAL })).toHaveAttribute("aria-pressed", "true");
   });
 
-  // RF-008: com roteiro salvo, o botão adapta e o Info mostra os totais do salvo.
-  it("com roteiro salvo: botão vira 'Ver Meu Roteiro' e o 'Info Meu Roteiro' aparece", async () => {
+  // RF-008 + REF-017: com roteiro salvo a tela ABRE na seção Meu Roteiro.
+  it("com roteiro salvo: abre em 'Info Meu Roteiro' com os cards de totais e sem o CTA de criação", async () => {
     routeStorageState.saved = {
       id: "route_saved",
       startPoint: { lat: -22.9, lng: -43.1 },
@@ -121,10 +127,28 @@ describe("SummaryPage (focus screen)", () => {
     };
     renderPage();
 
-    expect(await screen.findByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.VIEW_ROTEIRO })).toBeInTheDocument();
+    expect(await screen.findByText(UI_LABELS.ROTEIRO_INFO.CARD_ADDRESSES)).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.ROTEIRO_INFO.CARD_STOPS)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.CREATE_ROTEIRO })).not.toBeInTheDocument();
-    expect(screen.getByText(UI_LABELS.ROTEIRO_INFO.TITLE)).toBeInTheDocument();
-    expect(screen.getByText(UI_LABELS.ROTEIRO_INFO.VEHICLE_STOPS)).toBeInTheDocument();
+    // o toggle TROCA a seção (não empilha): o segmento do roteiro está ativo
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.SECTION_ROTEIRO })).toHaveAttribute("aria-pressed", "true");
+    routeStorageState.saved = null;
+  });
+
+  it("REF-017: o toggle alterna de volta para o Original", async () => {
+    routeStorageState.saved = {
+      id: "route_saved",
+      startPoint: { lat: -22.9, lng: -43.1 },
+      stops: [{ id: "s1", order: 1, vehicleStop: { lat: -22.9, lng: -43.1 }, pointIds: ["pt_-22.90000,-43.10000"], radiusMeters: 30 }],
+      config: { walkingSpeedKmh: 5, deliveryBaseSeconds: 40, deliveryPerPackageSeconds: 15, vehicleSpeedKmh: 25, autoRadiusMeters: 30 },
+      createdAt: "2026-07-10T10:00:00.000Z",
+    };
+    renderPage();
+
+    await screen.findByText(UI_LABELS.ROTEIRO_INFO.CARD_ADDRESSES);
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.SECTION_ORIGINAL }));
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.SECTION_ORIGINAL })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByText(UI_LABELS.ROTEIRO_INFO.CARD_ADDRESSES)).not.toBeInTheDocument();
     routeStorageState.saved = null;
   });
 

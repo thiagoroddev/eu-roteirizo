@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Card, CardContent } from "../../ui/card";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from "../../ui/dialog";
+import { StatTile, DetailTile, BreakdownRow } from "../../ui/stat-tile";
 import type { RouteProgress } from "../../../utils/routing/overview";
 import type { PlannedRouteTotals } from "../../../utils/routing/estimates";
 import { formatDurationMin, formatMeters } from "../../../utils/formatters";
@@ -21,13 +22,6 @@ const OVERVIEW = UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW;
  * count of commercial-hours packages. The totals are `plannedRouteTotals`, the
  * SAME function the Sumário uses, so the two screens can never disagree.
  */
-const StatTile = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-lg border border-input p-2 text-center">
-    <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-    <p className="text-lg font-semibold tabular-nums">{value}</p>
-  </div>
-);
-
 /** A summary card whose "Detalhes" button opens a breakdown popup. */
 const DetailDialogCard = ({ label, value, title, children }: { label: string; value: string; title: string; children: ReactNode }) => (
   <Dialog>
@@ -47,21 +41,6 @@ const DetailDialogCard = ({ label, value, title, children }: { label: string; va
       <div className="mt-1">{children}</div>
     </DialogContent>
   </Dialog>
-);
-
-/** A static summary card (no popup) — "Comercial". */
-const DetailTile = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex flex-col items-center justify-center rounded-lg border border-input p-2 text-center">
-    <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-    <p className="text-sm font-semibold tabular-nums">{value}</p>
-  </div>
-);
-
-const BreakdownRow = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex items-center justify-between py-1.5 text-sm">
-    <span className="text-muted-foreground">{label}</span>
-    <span className="font-semibold tabular-nums">{value}</span>
-  </div>
 );
 
 interface Props {

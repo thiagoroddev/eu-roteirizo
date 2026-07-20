@@ -320,6 +320,36 @@ export const UI_LABELS = {
     TIME_WALK: "Tempo (a pé):",
     TIME_DELIVERY: "Tempo (entregas):",
     TIME_TOTAL: "Tempo total:",
+    // Redesenho (TASK-REF-017): rótulos de CARD (sem dois-pontos) + barra de fluxo.
+    // Os 4 cards (REF-017, smoke 19/07): mesmo vocabulário do painel do mapa
+    // (Endereços/Pacotes/Paradas) + Comercial. Totais de tempo/distância NÃO são
+    // cards — as barras de fluxo já dão total e composição.
+    CARD_ADDRESSES: "Endereços",
+    CARD_PACKAGES: "Pacotes",
+    CARD_STOPS: "Paradas",
+    /** Pacotes com horário comercial dentro do roteiro (mesma métrica do painel). */
+    CARD_COMMERCIAL: "Comercial",
+    /** Barras de fluxo: "de que é feito este total". Tempo tem 3 segmentos
+        (RF-007.1); distância tem 2 (não há distância "de entrega"). */
+    FLOW_TITLE: "Fluxo de tempo estimado",
+    FLOW_DISTANCE_TITLE: "Fluxo de distância",
+    FLOW_TOTAL: (total: string) => `Total: ${total}`,
+    FLOW_VEHICLE: "Veículo",
+    FLOW_WALK: "A pé",
+    FLOW_DELIVERY: "Entregas",
+    /** Valor ausente/zero num card de distância ou tempo (evita "0 km" que parece bug). */
+    EMPTY_VALUE: "—",
+    /** Estado sem roteiro (o toggle fica desabilitado; a seção não é alcançável). */
+    NO_ROTEIRO: "Nenhum roteiro criado para esta rota ainda.",
+    // Estado do roteiro no topo do Sumário (REF-017, textos do humano 19/07).
+    // ⚠️ O percentual de EXECUÇÃO depende da RF-009 (nada registra entrega
+    // concluída ainda), então hoje um roteiro completo lê "0% concluído".
+    STATUS_BUILDING: "Roteiro em construção (rascunho incompleto)",
+    STATUS_EXECUTING: (percent: number) => `Roteiro em execução — ${percent}% concluído`,
+    STATUS_FINISHED: "Roteiro finalizado — 100%",
+    /** Cobertura do rascunho: "7 de 78 endereços". */
+    STATUS_COVERAGE: (done: number, total: number) => `${done} de ${total} endereços`,
+    STATUS_NONE: "Sem roteiro",
   },
   ROUTING: {
     OVERPASS_HTTP_ERROR: (status: number) => `O servidor de mapas respondeu com erro (${status}). Tente novamente em instantes.`,
@@ -356,6 +386,8 @@ export const UI_LABELS = {
     ESTIMATED_DISTANCE: "Distância estimada:",
     NEIGHBORHOODS: "Bairros:",
     CITY: "Cidade:",
+    /** Tipo de veículo planejado — virou linha das "Informações gerais" (REF-017). */
+    VEHICLE: "Veículo:",
     // "Ver Original" abre o mapa no modo Original (RF-43, rev. 26/06 — antes "Ver no Mapa")
     VIEW_MAP: "Ver Original",
     NO_COORDINATES: "Sem Coordenadas",
@@ -366,6 +398,22 @@ export const UI_LABELS = {
     VIEW_ROTEIRO: "Ver Meu Roteiro",
     SIMPLE_TABLE: "Tabela Simplificada",
     ORIGINAL_TABLE: "Tabela Original",
+    // Redesenho do Sumário (TASK-REF-017): as duas seções viram um toggle e o
+    // botão do mapa passa a SEGUIR o toggle (um só, contextual).
+    SECTION_ORIGINAL: "Info Original",
+    SECTION_ROTEIRO: "Info Meu Roteiro",
+    TOGGLE_ARIA: "Seção do sumário",
+    /** Hint do segmento desabilitado: a rota ainda não tem roteiro. */
+    NO_ROTEIRO_YET: "Esta rota ainda não tem roteiro. Use “Criar Roteiro”.",
+    VIEW_ON_MAP: "Ver no Mapa",
+    /** Cabeçalho do bloco de dados textuais do Original (AT, Data, Bairros…). */
+    GENERAL_INFO: "Informações gerais",
+    // Rótulos de CARD (sem dois-pontos — os antigos acima seguem para o bloco de linhas).
+    CARD_PACKAGES: "Pacotes",
+    CARD_STOPS: "Paradas",
+    CARD_COMMERCIAL: "Comercial",
+    CARD_ESTIMATED_TIME: "Tempo estimado",
+    CARD_ESTIMATED_DISTANCE: "Distância estimada",
   },
   EXAMPLE_TABLE: {
     TITLE: "Exemplo de planilha ideal (dados fictícios)",
