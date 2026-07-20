@@ -17,7 +17,7 @@
  */
 
 import type { OsmElement, RoadGraph } from "./graph";
-import { buildGraph } from "./graph";
+import { buildGraph, countEdges } from "./graph";
 import { UI_LABELS } from "../../constants/uiLabels";
 
 /** Public Overpass API endpoint (see DT-005 — rate-limited, swap before release). */
@@ -57,12 +57,28 @@ export interface FetchRoadGraphOptions {
   endpoint?: string;
 }
 
+/** Medição de UMA carga de malha (TASK-CHORE-006 / ADR-010). Só números. */
+export interface GraphFetchStats {
+  /** Área do bbox consultado, em km². */
+  bboxKm2: number;
+  /** Tempo até a resposta chegar (rede + fila do servidor), em ms. */
+  networkMs: number;
+  /** Tempo total, incluindo parse + `buildGraph`, em ms. */
+  totalMs: number;
+  /** Tamanho aproximado da resposta, em KB. */
+  responseKb: number;
+  nodes: number;
+  edges: number;
+}
+
 /** Result of `fetchRoadGraph`: a graph on success, OR a UI error message. */
 export interface FetchRoadGraphResult {
   /** The directed road graph (present on success; empty graph if the area has no roads). */
   graph?: RoadGraph;
   /** A user-facing error message (from UI_LABELS.ROUTING) when the fetch/parse failed. */
   error?: string;
+  /** Medição da carga (só no sucesso) — quem persiste é o `graphCache` (camada de IO). */
+  stats?: GraphFetchStats;
 }
 
 /** Shape of the Overpass JSON we consume (only `elements` is used). */
@@ -136,6 +152,24 @@ export const bboxFromPoints = (coords: { lat: number; lng: number }[], marginMet
 };
 
 /**
+ * Área aproximada de um bbox, em km² (TASK-CHORE-006).
+ *
+ * É a métrica que diz se a lentidão da carga é proporcional ao **tamanho da
+ * área** pedida ou independe dela (fila do Overpass) — a pergunta que a ADR-010
+ * deixou em aberto. Mesmo modelo esférico do `bboxFromPoints`: os graus de
+ * longitude encolhem com a latitude, então usa o cosseno da latitude central.
+ *
+ * @param bbox - The bounding box to measure.
+ * @returns The approximate area in km².
+ */
+export const bboxAreaKm2 = (bbox: BBox): number => {
+  const latKm = ((bbox.north - bbox.south) * METERS_PER_DEGREE_LAT) / 1000;
+  const centerLat = ((bbox.south + bbox.north) / 2) * (Math.PI / 180);
+  const lngKm = ((bbox.east - bbox.west) * METERS_PER_DEGREE_LAT * Math.cos(centerLat)) / 1000;
+  return Math.abs(latKm * lngKm);
+};
+
+/**
  * Fetches the navigable road network for a bbox from Overpass and builds the
  * directed RoadGraph.
  *
@@ -155,6 +189,8 @@ export const fetchRoadGraph = async (bbox: BBox, options: FetchRoadGraphOptions 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
+  const startedAt = performance.now();
+
   try {
     const res = await fetch(endpoint, {
       method: "POST",
@@ -167,15 +203,31 @@ export const fetchRoadGraph = async (bbox: BBox, options: FetchRoadGraphOptions 
       return { error: UI_LABELS.ROUTING.OVERPASS_HTTP_ERROR(res.status) };
     }
 
-    const data = (await res.json()) as OverpassResponse;
+    // Lê como texto para medir o TAMANHO da resposta (TASK-CHORE-006): é o que
+    // separa "payload grande" de "fila do servidor" — as duas correções diferem.
+    const body = await res.text();
+    const networkMs = performance.now() - startedAt;
+
+    const data = JSON.parse(body) as OverpassResponse;
     const graph = buildGraph(data.elements ?? []);
+    const edges = countEdges(graph);
+
+    const stats: GraphFetchStats = {
+      bboxKm2: Math.round(bboxAreaKm2(bbox) * 100) / 100,
+      networkMs: Math.round(networkMs),
+      totalMs: Math.round(performance.now() - startedAt),
+      responseKb: Math.round(body.length / 1024),
+      nodes: graph.coords.size,
+      edges,
+    };
 
     if (import.meta.env.DEV) {
-      const edges = [...graph.adj.values()].reduce((sum, list) => sum + list.length, 0);
-      console.info(`fetchRoadGraph: malha carregada — nós=${graph.coords.size}, arestas=${edges}`);
+      console.info(
+        `fetchRoadGraph: malha carregada — nós=${stats.nodes}, arestas=${stats.edges}, bbox=${stats.bboxKm2} km², rede=${stats.networkMs} ms, total=${stats.totalMs} ms, resposta=${stats.responseKb} KB`
+      );
     }
 
-    return { graph };
+    return { graph, stats };
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") {
       return { error: UI_LABELS.ROUTING.TIMEOUT };

@@ -46,6 +46,15 @@ export interface RoadGraph {
   adj: Map<NodeId, Edge[]>;
 }
 
+/**
+ * Total de arestas DIRIGIDAS do grafo (mão dupla conta 2). Métrica de tamanho
+ * usada pelo diagnóstico da malha (TASK-CHORE-006).
+ *
+ * @param graph - The graph to measure.
+ * @returns The number of directed edges.
+ */
+export const countEdges = (graph: RoadGraph): number => [...graph.adj.values()].reduce((sum, list) => sum + list.length, 0);
+
 /** OSM tags relevant to routing (others ignored). */
 export interface OsmTags {
   oneway?: string;

@@ -1,11 +1,71 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "../ui/dialog";
 import { useDeliverySettings } from "../../contexts/DeliverySettingsContext";
+import { clearGraphSamples, readGraphSamples } from "../../services/graphDiagnostics";
+import { clearGraphCache } from "../../services/graphCache";
 import { UI_LABELS } from "../../constants/uiLabels";
 
 const S = UI_LABELS.DELIVERY_SETTINGS;
+const D = UI_LABELS.GRAPH_DIAGNOSTICS;
+
+/**
+ * Painel de leitura das medições da malha (TASK-CHORE-006).
+ *
+ * Fica aqui, e não atrás de `import.meta.env.DEV`, porque o smoke acontece no
+ * **build de produção** (site de testes) — é o único lugar onde os números
+ * ficam legíveis justo depois de uma carga lenta acontecer. Recolhido por
+ * padrão: é ferramenta de diagnóstico, não configuração.
+ */
+const GraphDiagnostics = () => {
+  // Lido uma vez por abertura: o Radix desmonta o conteúdo ao fechar, então
+  // cada abertura já remonta com as amostras atuais.
+  const [samples, setSamples] = useState(readGraphSamples);
+  const [cacheCleared, setCacheCleared] = useState(false);
+
+  const handleClear = () => {
+    clearGraphSamples();
+    setSamples([]);
+  };
+
+  /** Sem isso não há como PROVOCAR uma carga de rede: o cache dura 7 dias. */
+  const handleClearCache = () => {
+    void clearGraphCache();
+    setCacheCleared(true);
+  };
+
+  return (
+    <details className="mt-4 border-t border-border pt-3">
+      <summary className="cursor-pointer text-sm font-medium text-muted-foreground">{D.TITLE}</summary>
+      {samples.length === 0 ? (
+        <p className="mt-2 text-xs text-muted-foreground">{D.EMPTY}</p>
+      ) : (
+        <>
+          <ul className="mt-2 space-y-1">
+            {samples.map((sample) => (
+              <li key={sample.at} className="text-xs tabular-nums text-muted-foreground">
+                {D.SAMPLE(sample)}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-muted-foreground">{D.HINT}</p>
+        </>
+      )}
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" onClick={handleClearCache}>
+          {D.CLEAR_CACHE}
+        </Button>
+        {samples.length > 0 && (
+          <Button variant="outline" size="sm" onClick={handleClear}>
+            {D.CLEAR}
+          </Button>
+        )}
+      </div>
+      {cacheCleared && <p className="mt-2 text-xs text-muted-foreground">{D.CACHE_CLEARED}</p>}
+    </details>
+  );
+};
 
 /** Non-negative seconds from a SECONDS input (empty/invalid → 0). */
 const toSeconds = (value: string): number => Math.max(0, Math.round(Number(value) || 0));
@@ -55,6 +115,7 @@ export const DeliverySettingsDialog = ({ open, onOpenChange }: { open: boolean; 
             </div>
           </label>
         </div>
+        <GraphDiagnostics />
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline">{S.CANCEL}</Button>

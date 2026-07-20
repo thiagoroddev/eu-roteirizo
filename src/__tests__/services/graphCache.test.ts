@@ -7,7 +7,12 @@ vi.mock("../../utils/routing/osm", async (importOriginal) => {
   return { ...actual, fetchRoadGraph: vi.fn() };
 });
 
+// Isola o diagnóstico (TASK-CHORE-006): aqui interessa QUE origem foi gravada,
+// não a persistência — essa tem teste próprio em graphDiagnostics.test.ts.
+vi.mock("../../services/graphDiagnostics", () => ({ recordGraphSample: vi.fn() }));
+
 import { bboxKey, getCachedGraph, putCachedGraph, clearGraphCache, loadRoadGraph } from "../../services/graphCache";
+import { recordGraphSample } from "../../services/graphDiagnostics";
 import { fetchRoadGraph } from "../../utils/routing/osm";
 import type { BBox } from "../../utils/routing/osm";
 import { buildGraph } from "../../utils/routing/graph";
@@ -31,6 +36,7 @@ const sampleGraph = () =>
 beforeEach(async () => {
   await clearGraphCache();
   vi.mocked(fetchRoadGraph).mockReset();
+  vi.mocked(recordGraphSample).mockClear();
   vi.spyOn(console, "info").mockImplementation(() => {});
 });
 
@@ -70,6 +76,39 @@ describe("graph cache (IndexedDB)", () => {
 
     await clearGraphCache();
     expect(await getCachedGraph(BB)).toBeNull();
+  });
+});
+
+describe("loadRoadGraph — diagnóstico (TASK-CHORE-006)", () => {
+  it("registra a carga de REDE com as métricas do fetch", async () => {
+    vi.mocked(fetchRoadGraph).mockResolvedValue({
+      graph: sampleGraph(),
+      stats: { bboxKm2: 2.1, networkMs: 3100, totalMs: 3400, responseKb: 820, nodes: 2, edges: 2 },
+    });
+
+    await loadRoadGraph(BB);
+
+    expect(recordGraphSample).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(recordGraphSample).mock.calls[0][0]).toMatchObject({ source: "rede", responseKb: 820, networkMs: 3100 });
+  });
+
+  it("registra o CACHE HIT — sem isso o painel fica vazio numa área já visitada", async () => {
+    await putCachedGraph(BB, sampleGraph());
+
+    await loadRoadGraph(BB);
+
+    expect(fetchRoadGraph).not.toHaveBeenCalled();
+    const sample = vi.mocked(recordGraphSample).mock.calls[0][0];
+    expect(sample).toMatchObject({ source: "cache", networkMs: 0, responseKb: 0, nodes: 2, edges: 2 });
+    expect(sample.bboxKm2).toBeGreaterThan(0);
+  });
+
+  it("registra a FALHA — 'às vezes nem carrega' só aparece se a carga morta deixar rastro", async () => {
+    vi.mocked(fetchRoadGraph).mockResolvedValue({ error: "boom" });
+
+    await loadRoadGraph(BB);
+
+    expect(vi.mocked(recordGraphSample).mock.calls[0][0]).toMatchObject({ source: "erro", nodes: 0 });
   });
 });
 

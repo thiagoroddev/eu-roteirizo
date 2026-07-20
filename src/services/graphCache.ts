@@ -13,8 +13,10 @@
 
 import { openDB, type IDBPDatabase } from "idb";
 import type { RoadGraph } from "../utils/routing/graph";
+import { countEdges } from "../utils/routing/graph";
 import type { BBox, FetchRoadGraphOptions, FetchRoadGraphResult } from "../utils/routing/osm";
-import { fetchRoadGraph } from "../utils/routing/osm";
+import { bboxAreaKm2, fetchRoadGraph } from "../utils/routing/osm";
+import { recordGraphSample } from "./graphDiagnostics";
 
 const DB_NAME = "danfo-routing";
 /** Bump to invalidate all cached graphs when the graph format changes (e.g. 005.5). */
@@ -115,13 +117,26 @@ export const clearGraphCache = async (): Promise<void> => {
  * @returns `{ graph }` on success (cache or network), or `{ error }` on a network failure.
  */
 export const loadRoadGraph = async (bbox: BBox, options: GraphCacheOptions & FetchRoadGraphOptions = {}): Promise<FetchRoadGraphResult> => {
+  const startedAt = performance.now();
+  /** Campos numéricos comuns às três origens (TASK-CHORE-006). */
+  const base = () => ({ at: new Date().toISOString(), bboxKm2: Math.round(bboxAreaKm2(bbox) * 100) / 100, totalMs: Math.round(performance.now() - startedAt) });
+
   const cached = await getCachedGraph(bbox, options);
   if (cached) {
     if (import.meta.env.DEV) console.info(`loadRoadGraph: cache hit — nós=${cached.coords.size}`);
+    // Cache hit TAMBÉM vira amostra: sem isso o painel fica vazio numa área já
+    // visitada e parece instrumento quebrado — foi o que aconteceu no 1º smoke.
+    recordGraphSample({ ...base(), source: "cache", networkMs: 0, responseKb: 0, nodes: cached.coords.size, edges: countEdges(cached) });
     return { graph: cached };
   }
 
   const result = await fetchRoadGraph(bbox, options);
   if (result.graph) await putCachedGraph(bbox, result.graph);
+
+  if (result.stats) recordGraphSample({ at: base().at, source: "rede", ...result.stats });
+  // Falha também é dado — e é a mais importante: "às vezes nem carrega" só
+  // aparece se a carga que morreu (timeout/429) deixar rastro.
+  else recordGraphSample({ ...base(), source: "erro", networkMs: 0, responseKb: 0, nodes: 0, edges: 0 });
+
   return result;
 };

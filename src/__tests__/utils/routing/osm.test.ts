@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { buildOverpassQuery, bboxFromBounds, bboxFromPoints, fetchRoadGraph } from "../../../utils/routing/osm";
+import { buildOverpassQuery, bboxFromBounds, bboxFromPoints, bboxAreaKm2, fetchRoadGraph } from "../../../utils/routing/osm";
 import type { BBox } from "../../../utils/routing/osm";
 import { UI_LABELS } from "../../../constants/uiLabels";
 
@@ -21,10 +21,14 @@ const oneWayResponse = {
   ],
 };
 
-/** Minimal Response-likes (the code only reads .ok/.status/.json). */
-const okJson = (body: unknown): Response => ({ ok: true, status: 200, json: () => Promise.resolve(body) }) as unknown as Response;
-const httpError = (status: number): Response => ({ ok: false, status, json: () => Promise.resolve({}) }) as unknown as Response;
-const unparsable = (): Response => ({ ok: true, status: 200, json: () => Promise.reject(new SyntaxError("Unexpected token")) }) as unknown as Response;
+/**
+ * Minimal Response-likes (the code only reads .ok/.status/.text).
+ * `.text()` and not `.json()` since TASK-CHORE-006: o tamanho da resposta é uma
+ * das métricas medidas, e só o corpo cru dá esse número.
+ */
+const okJson = (body: unknown): Response => ({ ok: true, status: 200, text: () => Promise.resolve(JSON.stringify(body)) }) as unknown as Response;
+const httpError = (status: number): Response => ({ ok: false, status, text: () => Promise.resolve("") }) as unknown as Response;
+const unparsable = (): Response => ({ ok: true, status: 200, text: () => Promise.resolve("{ não é json") }) as unknown as Response;
 
 beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn());
@@ -81,6 +85,44 @@ describe("bboxFromPoints", () => {
 
   it("returns null for an empty list (nothing to load)", () => {
     expect(bboxFromPoints([], 300)).toBeNull();
+  });
+});
+
+describe("bboxAreaKm2", () => {
+  it("measures the Ipanema bbox at roughly 2 km²", () => {
+    // ~1,11 km (0,01° de lat) × ~1,90 km (0,0185° de lng em -22,98°)
+    expect(bboxAreaKm2(IPANEMA)).toBeCloseTo(2.11, 1);
+  });
+
+  it("shrinks longitude with latitude (same degrees, smaller area near the pole)", () => {
+    const equator: BBox = { south: 0, west: 0, north: 0.1, east: 0.1 };
+    const north60: BBox = { south: 60, west: 0, north: 60.1, east: 0.1 };
+    expect(bboxAreaKm2(north60)).toBeLessThan(bboxAreaKm2(equator));
+  });
+
+  it("is zero for a degenerate bbox", () => {
+    expect(bboxAreaKm2({ south: -22.98, west: -43.2, north: -22.98, east: -43.2 })).toBe(0);
+  });
+});
+
+describe("fetchRoadGraph — medição (TASK-CHORE-006)", () => {
+  it("reports area, timing, payload size and graph size on success", async () => {
+    vi.mocked(fetch).mockResolvedValue(okJson(oneWayResponse));
+
+    const { stats } = await fetchRoadGraph(IPANEMA);
+
+    expect(stats).toBeDefined();
+    expect(stats?.bboxKm2).toBeCloseTo(2.11, 1);
+    expect(stats?.nodes).toBe(2);
+    expect(stats?.edges).toBe(2); // via de mão dupla ⇒ 2 arestas dirigidas
+    expect(stats?.responseKb).toBeGreaterThanOrEqual(0);
+    expect(stats?.totalMs).toBeGreaterThanOrEqual(stats!.networkMs);
+  });
+
+  it("omits stats when the request fails (nothing to measure)", async () => {
+    vi.mocked(fetch).mockResolvedValue(httpError(429));
+
+    expect((await fetchRoadGraph(IPANEMA)).stats).toBeUndefined();
   });
 });
 

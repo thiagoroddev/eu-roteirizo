@@ -109,6 +109,7 @@ Não revisar sem ADR explícita:
 - **Requisitos (RF/RN/RNF):** [`docs/requisitos/`](./requisitos/)
 - **Specs do roteirizador:** [`docs/rascunhos/fluxo-roteirizacao.md`](./rascunhos/fluxo-roteirizacao.md) e [`fluxo-modo-original.md`](./rascunhos/fluxo-modo-original.md) (vigentes) · [`docs/design/arvore-componentes-mapa.md`](./design/arvore-componentes-mapa.md) (árvore do MapPanel, matriz modo×slot)
 - **README (humanos):** [`docs/README.md`](./README.md) · **Boas práticas:** [`docs/BOAS_PRATICAS.md`](./BOAS_PRATICAS.md) · **Análise comercial:** [`docs/analise-comercial.md`](./analise-comercial.md)
+- **Infraestrutura e custos:** [`docs/plano-infraestrutura-e-custos.md`](./plano-infraestrutura-e-custos.md) — base **quantitativa** (preços datados + câmbio declarado, 20/07/26): cenários serverless × VPS, break-even do R$5 e as correções pendentes nos docs comerciais
 - **ADRs 001–009:** [`docs/arquitetura/ADR/`](./arquitetura/ADR/) — idioma/i18n · roteamento OSM local · app shell/router · shadcn · remoção Correios · identidade visual (rev. Neon Flux) · basemap/tiles · marcadores SVG · interop dos modos
 - **Revisões gerais:** [`REV-001.md`](./arquitetura/revisoes-gerais/REV-001.md) · **Dívida técnica:** [`docs/dominios/divida-tecnica.md`](./dominios/divida-tecnica.md)
 - **Tarefas:** [`docs/tarefas/`](./tarefas/) — a **fila recomendada** vive no topo de `pendentes.md`; histórico em `concluidas/0-indice-concluidas.md`

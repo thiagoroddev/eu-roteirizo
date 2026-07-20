@@ -62,6 +62,31 @@ export const UI_LABELS = {
     SAVE: "Salvar",
     CANCEL: "Cancelar",
   },
+  // Diagnóstico da malha viária (TASK-CHORE-006, ADR-010): números das últimas
+  // cargas de ruas, legíveis no aparelho (o smoke roda em build de produção).
+  GRAPH_DIAGNOSTICS: {
+    TITLE: "Diagnóstico da malha (últimas cargas)",
+    EMPTY: "Nenhuma carga de ruas registrada ainda neste aparelho.",
+    HINT: "Tempo alto com resposta pequena = fila do servidor. Tempo alto com resposta grande = área pedida grande.",
+    CLEAR: "Limpar histórico",
+    /** Apaga o cache de ruas para que a próxima abertura de mapa force uma carga de REDE. */
+    CLEAR_CACHE: "Limpar cache de ruas (forçar nova carga)",
+    CACHE_CLEARED: "Cache apagado. Abra um mapa: a próxima carga virá da rede.",
+    /**
+     * Uma linha de amostra, com detalhe proporcional ao que existe:
+     * - rede:  "rede · 4,2 km² · 3,4 s (rede 3,1 s) · 820 KB · 4.512 nós"
+     * - cache: "cache · 4,2 km² · 0,1 s · 4.512 nós"
+     * - erro:  "erro · 4,2 km² · 30 s"
+     */
+    SAMPLE: (s: { source: string; bboxKm2: number; totalMs: number; networkMs: number; responseKb: number; nodes: number }) => {
+      const seconds = (ms: number) => `${(ms / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} s`;
+      const head = `${s.source} · ${s.bboxKm2.toLocaleString("pt-BR")} km²`;
+      if (s.source === "erro") return `${head} · ${seconds(s.totalMs)}`;
+      const nodes = `${s.nodes.toLocaleString("pt-BR")} nós`;
+      if (s.source === "cache") return `${head} · ${seconds(s.totalMs)} · ${nodes}`;
+      return `${head} · ${seconds(s.totalMs)} (rede ${seconds(s.networkMs)}) · ${s.responseKb.toLocaleString("pt-BR")} KB · ${nodes}`;
+    },
+  },
   // Aba Rotas (TASK-RF-022.3): lista de romaneios salvos
   ROUTES_PAGE: {
     TITLE: "Romaneios salvos",
