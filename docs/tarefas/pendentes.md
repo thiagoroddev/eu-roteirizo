@@ -21,7 +21,7 @@
 | 7 | ~~**TASK-RF-006.5**~~ → ~~**.6**~~ → ~~**.7**~~ | `.5`/`.6`/**`.7`** ✅ **CONCLUÍDAS (15–17/07)** — âncora, ordem derivada, e o **traçado** (rota do veículo pela rua + circuito a pé + km real; **RF-29 fechado**; o retoque dos totais reais nos cards da `.8` já entrou junto). Série de smoke da **parada do veículo** ✅ **.15/.16/.17/.18** + **.19** (modo edição interativo: carro pegável + endereços da parada selecionáveis) — **.19 clicável CONFIRMADO no aparelho (L-9)**. ✅ **Smoke do TRAÇADO DESBLOQUEADO**: a **TASK-BG-006** (wedge do `useRoadGraph` prendia o grafo em "loading") foi **concluída (18/07, smoke no aparelho OK)** — traçado/sugestão seguem as ruas. |
 | 8 | ~~**RF-007 (.1+.2) · RF-006.20 · RF-006.21 · RF-006.10 · BG-007 · REF-017**~~ → **RF-006.9** → **RF-009** → **RF-012** → **RF-013** | **Melhoria do painel + tempo de entrega (pedido 18/07) — CONCLUÍDA (18–19/07, smokes L-9):** `RF-007.1` (motor de tempo realista) + `RF-007.2` (config GLOBAL no ⚙️: base em min/adicional em seg; regra por tipo+complemento) + `RF-006.20` (cards PARADAS/Duração/Distância com popup + Comercial + contagem) + `RF-006.21` (Google Maps no cabeçalho) + `RF-006.10` (distância a pé por perna no gutter) + `TASK-BG-007` (z-index dos dialogs). **RF-007 fechada.** Próximas: `RF-006.9` (geocoding da âncora), depois `RF-009/012/013`. |
 
-| 9 | **TASK-REF-018** — linhas agrupadas por rota (DT-007) | **Imediata (20/07).** Lentidão mais visível e repetida do fluxo principal: multi reprocessa o XLSX inteiro a cada entrada/saída de Sumário/Mapa. Saída (c) escolhida pelo humano. Bloco em "Imediatas" com plano pronto — falta aprovar para iniciar. |
+| 9 | ~~**TASK-REF-018**~~ — linhas agrupadas por rota (DT-007) | ✅ **CONCLUÍDA (20/07)** — `manifestStorage` v1→v2 grava linhas por rota; fast path sem SheetJS + fallback com backfill. 760/760; **smoke pendente**. |
 
 **Backlog sem urgência, encaixar em intervalos:** `TASK-RF-006.9` (geocoding da âncora; placeholder aceitável), `TASK-DOC-005`, `TASK-DOC-006` (7 correções listadas no plano de custos), `TASK-REF-014`, `TASK-TEST-002`.
 
@@ -60,34 +60,7 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 ---
 
-## TASK-REF-018 - Gravar linhas agrupadas por rota (fim do reprocessamento do romaneio)
-
-- **Status:** Pendente
-- **Modo:** Standard (com cuidado de Strict no ponto do schema — migração de IndexedDB sobre dados do usuário)
-- **Valor:** Importante
-- **Urgência:** IMEDIATA
-- **Esforço-H/IA:** M/G
-- **Data-hora origem:** 20/07/26 19:20
-- **Dependências:** -
-- **REQ/ADR/DT:** **DT-007** (esta tarefa é a sua resolução)
-- **Observações:** Notada pelo humano no smoke de 20/07: romaneio **multi** mostra "Carregando…" de >1 s **a cada** entrada/saída de Sumário/Mapa; rota única parece instantânea. Causa real (confirmada no código): o app guarda os **bytes crus** e roda `processExcelFile` **de novo** a cada montagem — parse SheetJS do arquivo inteiro + agrupamento das 153 rotas para exibir **uma**. O guard `loadedRef` é por instância do hook, por isso Sumário↔Mapa reprocessa. Rota única **não é otimizada**: é o mesmo caminho com arquivo pequeno. **Saída escolhida pelo humano: letra (c)** das três registradas na DT-007 — gravar linhas agrupadas por rota — por ser a única que escala se o romaneio crescer.
-
-**Plano (apresentado no chat em 20/07, aguardando aprovação para iniciar):**
-
-- `services/manifestStorage.ts` — DB `danfo-manifests` **v1 → v2**, novo store `routeRows` com chave composta `[manifestId, routeName]`. O `saveManifest` já itera `Object.entries(processed.routes)` para montar o meta: grava ali, sem custo extra.
-- `types/manifest.ts` — `ManifestMeta` ganha `availableCols`/`missingCols`/`isSingleRoute` (o Sumário precisa deles; hoje só existem no `ProcessedResult` em memória).
-- Novo `getRouteRows(manifestId, routeName)` — uma leitura por chave, sem SheetJS.
-- `hooks/useManifestFromUrl.ts` — usa o caminho novo; **fallback** para o parse atual quando não há linhas gravadas (romaneios anteriores à migração), **gravando o resultado** para as próximas vezes.
-- `pages/SummaryPage.tsx` / `MapPage.tsx` — o guard `routes &&` vira um `loaded` explícito (hoje é acidental: o `RoutesMap` completo só serve de booleano).
-- `deleteManifest` — apaga também as linhas das rotas. **Sem isso a migração vaza órfãos** a cada romaneio apagado.
-
-**Critérios de aceite:** entrar/sair de Sumário↔Mapa num multi deixa de mostrar "Carregando…" perceptível; romaneio salvo antes da mudança continua abrindo (fallback) e fica rápido na 2ª vez; apagar romaneio não deixa resto.
-
-**Riscos:** migração de schema sobre dados do usuário no aparelho. Mitigação: a v2 só **adiciona** store — nada é reescrito nem apagado, e o caminho antigo segue vivo como fallback.
-
-**Achado da exploração que sustenta o plano:** **ninguém consome as linhas de todas as rotas**. `RoutesPage`/`ManifestCard` usam só `ManifestMeta` (nomes/AT/contagem); `HomePage` usa `routes` como booleano; Sumário/Mapa usam `currentRows` (uma rota). Os `bytes` crus têm **um único** consumidor: o próprio reprocessamento.
-
-**Decisão adiada (fora do escopo):** manter ou não os `bytes` crus. Com (c) eles ficam quase sem uso e liberariam espaço, mas perderíamos reprocessar se o `excelProcessor` mudar (ex.: correção em coluna). **Recomendação: manter.**
+<!-- TASK-REF-018 movida para em-andamento.md em 20/07/26 (plano aprovado — "planeje e execute taks-018"). -->
 
 ---
 

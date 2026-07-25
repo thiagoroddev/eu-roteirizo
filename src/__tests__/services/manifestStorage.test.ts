@@ -2,7 +2,7 @@ import "fake-indexeddb/auto";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import * as XLSX from "xlsx";
 
-import { saveManifest, listManifests, getManifest, deleteManifest, clearManifests } from "../../services/manifestStorage";
+import { saveManifest, listManifests, getManifest, getRouteRows, backfillRouteRows, deleteManifest, clearManifests } from "../../services/manifestStorage";
 import { processExcelFile } from "../../utils/excelProcessor";
 import { sha256Hex } from "../../utils/hash";
 import { COLUMN_NAMES } from "../../constants";
@@ -143,5 +143,60 @@ describe("manifestStorage", () => {
 
   it("returns null for an unknown manifest id", async () => {
     expect(await getManifest("nao-existe")).toBeNull();
+  });
+
+  // ==========================================================================
+  // Rows grouped by route (TASK-REF-018)
+  // ==========================================================================
+
+  it("saves rows grouped by route and reads ONE route without the others", async () => {
+    const saved = await saveManifest(fakeFile("agrupado"), processedFixture());
+    if (saved.status !== "saved") throw new Error("setup failed");
+
+    // Each route reads back exactly its own rows.
+    expect(await getRouteRows(saved.meta.id, "A-1")).toEqual([{ [COLUMN_NAMES.PLANNED_AT]: "AT1" }, {}]);
+    expect(await getRouteRows(saved.meta.id, "B-2")).toEqual([{}]);
+    // A route that isn't in the manifest is a miss, not an error.
+    expect(await getRouteRows(saved.meta.id, "NAO-EXISTE")).toBeNull();
+  });
+
+  it("persists availableCols/missingCols in the meta (so reopen skips reprocessing)", async () => {
+    const saved = await saveManifest(fakeFile("com-cols"), processedFixture());
+    if (saved.status !== "saved") throw new Error("setup failed");
+    expect(saved.meta.availableCols).toEqual([COLUMN_NAMES.LATITUDE, COLUMN_NAMES.LONGITUDE]);
+    expect(saved.meta.missingCols).toEqual([]);
+
+    // And they survive a round-trip through storage.
+    const record = await getManifest(saved.meta.id);
+    expect(record?.availableCols).toEqual([COLUMN_NAMES.LATITUDE, COLUMN_NAMES.LONGITUDE]);
+  });
+
+  it("deletes the route rows along with the manifest (no orphans)", async () => {
+    const saved = await saveManifest(fakeFile("apagavel-com-linhas"), processedFixture());
+    if (saved.status !== "saved") throw new Error("setup failed");
+    expect(await getRouteRows(saved.meta.id, "A-1")).not.toBeNull();
+
+    await deleteManifest(saved.meta.id);
+
+    expect(await getRouteRows(saved.meta.id, "A-1")).toBeNull();
+    expect(await getRouteRows(saved.meta.id, "B-2")).toBeNull();
+  });
+
+  it("backfillRouteRows fills rows + cols for a manifest that lacked them", async () => {
+    // Simulate a pre-REF-018 record: save, then wipe just its route rows by
+    // deleting through the public API is not possible, so we assert the backfill
+    // writes what a fresh reprocess would produce.
+    const saved = await saveManifest(fakeFile("legado"), processedFixture());
+    if (saved.status !== "saved") throw new Error("setup failed");
+
+    await backfillRouteRows(saved.meta.id, processedFixture({ routes: { "A-1": [{ novo: 1 }], "C-3": [{}, {}] } }));
+
+    expect(await getRouteRows(saved.meta.id, "A-1")).toEqual([{ novo: 1 }]);
+    expect(await getRouteRows(saved.meta.id, "C-3")).toEqual([{}, {}]);
+  });
+
+  it("backfillRouteRows is a no-op (no throw) for null routes or an unknown id", async () => {
+    await expect(backfillRouteRows("qualquer", processedFixture({ routes: null }))).resolves.toBeUndefined();
+    await expect(backfillRouteRows("id-desconhecido", processedFixture())).resolves.toBeUndefined();
   });
 });

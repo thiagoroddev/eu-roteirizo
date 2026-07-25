@@ -17,7 +17,7 @@ import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useRouteUploader } from "../../hooks/useRouteUploader";
 import { processExcelFile } from "../../utils/excelProcessor";
-import { saveManifest, getManifest } from "../../services/manifestStorage";
+import { saveManifest, getManifest, getRouteRows, backfillRouteRows } from "../../services/manifestStorage";
 import { FILE_CONFIG, UI_LABELS } from "../../constants";
 import type { RoutesMap } from "../../types";
 import type { ManifestMeta } from "../../types/manifest";
@@ -31,15 +31,19 @@ vi.mock("../../utils/excelProcessor", () => ({
   processExcelFile: vi.fn(),
 }));
 
-// Mock the local persistence (RF-022.2/.3) — the hook only forwards its results
+// Mock the local persistence (RF-022.2/.3 · REF-018) — the hook only forwards its results
 vi.mock("../../services/manifestStorage", () => ({
   saveManifest: vi.fn(),
   getManifest: vi.fn(),
+  getRouteRows: vi.fn(),
+  backfillRouteRows: vi.fn().mockResolvedValue(undefined),
 }));
 
 const mockProcessExcel = processExcelFile as Mock;
 const mockSaveManifest = saveManifest as Mock;
 const mockGetManifest = getManifest as Mock;
+const mockGetRouteRows = getRouteRows as Mock;
+const mockBackfillRouteRows = backfillRouteRows as Mock;
 
 // =============================================================================
 // 2. TEST FIXTURES (Helpers & Data)
@@ -363,6 +367,7 @@ describe("useRouteUploader Hook", () => {
   it("loadManifest reopens a saved manifest through the same pipeline without re-saving", async () => {
     const { result } = renderHook(() => useRouteUploader());
 
+    // No availableCols on the record → pre-REF-018 manifest → fallback (reprocess).
     mockGetManifest.mockResolvedValue(mockRecord);
     mockProcessExcel.mockResolvedValue(mockSuccessResult);
 
@@ -380,6 +385,45 @@ describe("useRouteUploader Hook", () => {
     expect(result.current.routes).toEqual(mockSuccessResult.routes);
     expect(mockSaveManifest).not.toHaveBeenCalled(); // reopening never re-saves
     expect(result.current.manifestSave).toBeNull();
+  });
+
+  it("loadManifest fast path (REF-018): reads one route's stored rows WITHOUT reprocessing", async () => {
+    const { result } = renderHook(() => useRouteUploader());
+
+    // Post-REF-018 record: has availableCols; the route's rows are stored.
+    const storedRows = mockRoutes["A-1"];
+    mockGetManifest.mockResolvedValue({ ...mockRecord, availableCols: ["Corridor Cage", "Latitude"], missingCols: [], kind: "multi" });
+    mockGetRouteRows.mockResolvedValue(storedRows);
+
+    let ok = false;
+    await act(async () => {
+      ok = await result.current.loadManifest("hash-abc", "A-1");
+    });
+
+    expect(ok).toBe(true);
+    expect(mockGetRouteRows).toHaveBeenCalledWith("hash-abc", "A-1");
+    expect(mockProcessExcel).not.toHaveBeenCalled(); // the whole point: no SheetJS
+    expect(result.current.routes).toEqual({ "A-1": storedRows });
+    expect(result.current.availableCols).toEqual(["Corridor Cage", "Latitude"]);
+    expect(result.current.isSingleRoute).toBe(false);
+  });
+
+  it("loadManifest falls back to reprocessing + backfill when the route's rows are missing", async () => {
+    const { result } = renderHook(() => useRouteUploader());
+
+    // Record marked post-REF-018, but the specific route's rows aren't stored yet.
+    mockGetManifest.mockResolvedValue({ ...mockRecord, availableCols: ["Corridor Cage", "Latitude"], missingCols: [] });
+    mockGetRouteRows.mockResolvedValue(null);
+    mockProcessExcel.mockResolvedValue(mockSuccessResult);
+
+    let ok = false;
+    await act(async () => {
+      ok = await result.current.loadManifest("hash-abc", "A-1");
+    });
+
+    expect(ok).toBe(true);
+    expect(mockProcessExcel).toHaveBeenCalled(); // fell back
+    expect(mockBackfillRouteRows).toHaveBeenCalledWith("hash-abc", mockSuccessResult);
   });
 
   it("loadManifest fails gracefully for an unknown id", async () => {

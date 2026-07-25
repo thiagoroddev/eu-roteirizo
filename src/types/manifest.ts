@@ -36,6 +36,15 @@ export interface ManifestMeta {
   routes: ManifestRouteMeta[];
   /** ISO 8601 timestamp of the import. */
   importedAt: string;
+  /**
+   * Columns found in the file (per-manifest, same for every route). Persisted
+   * since TASK-REF-018 so a focus screen can gate the map / pick the vehicle type
+   * WITHOUT reprocessing the whole spreadsheet. Optional: records saved before
+   * REF-018 don't have it, and the reopen fallback backfills it.
+   */
+  availableCols?: string[];
+  /** Required columns missing from the file (companion to `availableCols`; same provenance). */
+  missingCols?: string[];
 }
 
 /** Full persisted record: metadata plus the raw file bytes (RF-46). */

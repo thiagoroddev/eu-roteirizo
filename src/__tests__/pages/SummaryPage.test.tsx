@@ -67,7 +67,7 @@ describe("SummaryPage (focus screen)", () => {
   it("loads the manifest from the URL and shows the summary of the requested route", () => {
     renderPage();
 
-    expect(uploaderState.loadManifest).toHaveBeenCalledWith("hash-1");
+    expect(uploaderState.loadManifest).toHaveBeenCalledWith("hash-1", "A-1");
     // REF-017: o título duplicado saiu (o header já mostra a rota); a tela é
     // identificada pelo toggle das duas seções, abrindo em "Info Original".
     expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.SECTION_ORIGINAL })).toHaveAttribute("aria-pressed", "true");

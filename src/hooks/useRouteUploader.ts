@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { processExcelFile } from "../utils/excelProcessor";
 import { hasValidFileExtension } from "../utils/validators";
-import { saveManifest, getManifest, type SaveManifestResult } from "../services/manifestStorage";
+import { saveManifest, getManifest, getRouteRows, backfillRouteRows, type SaveManifestResult } from "../services/manifestStorage";
 import type { RoutesMap } from "../types";
 import type { RouteUploaderReturn } from "../types/hooks";
 import { FILE_CONFIG, UI_LABELS } from "../constants";
@@ -142,14 +142,20 @@ export function useRouteUploader(): RouteUploaderReturn {
 
   /**
    * ============================================================================
-   * REOPEN A SAVED MANIFEST (TASK-RF-022.3 / RF-46)
+   * REOPEN A SAVED MANIFEST (TASK-RF-022.3 / RF-46 · fast path TASK-REF-018)
    * ============================================================================
-   * Loads the raw bytes persisted by saveManifest, rebuilds the original File
-   * and runs it through the SAME processing pipeline as a fresh upload — so
-   * reopened manifests automatically pick up parser improvements. Does NOT
-   * re-save (the record already exists); manifestSave stays null.
+   * FAST PATH (REF-018): when `routeName` is given and the manifest has stored
+   * rows, read that ONE route's rows straight from IndexedDB — no SheetJS. The
+   * cols come from the manifest's meta and `isSingleRoute` from its `kind`. The
+   * `routes` state then holds just `{ [routeName]: rows }` — a partial map, but
+   * nothing consumes other routes (the focus screens only read `currentRows`).
+   *
+   * FALLBACK: a manifest saved before REF-018 (no stored rows) rebuilds the File
+   * from the raw bytes and reprocesses — same pipeline as a fresh upload, so it
+   * still picks up parser improvements — then backfills row storage so the NEXT
+   * open is fast. Does NOT re-save the manifest; manifestSave stays null.
    */
-  const loadManifest = useCallback(async (id: string): Promise<boolean> => {
+  const loadManifest = useCallback(async (id: string, routeName?: string): Promise<boolean> => {
     setLoading(true);
     setError(null);
     setRoutes(null);
@@ -162,6 +168,21 @@ export function useRouteUploader(): RouteUploaderReturn {
       return false;
     }
 
+    // Fast path: rows already grouped (REF-018). `availableCols` present on the
+    // meta is the marker that this manifest was saved/backfilled post-REF-018.
+    if (routeName && record.availableCols) {
+      const rows = await getRouteRows(id, routeName);
+      if (rows) {
+        setRoutes({ [routeName]: rows });
+        setAvailableCols(record.availableCols);
+        setMissingCols(record.missingCols ?? []);
+        setIsSingleRoute(record.kind === "single");
+        setLoading(false);
+        return true;
+      }
+    }
+
+    // Fallback: reprocess the bytes, then persist grouped rows for next time.
     const file = new File([record.bytes], record.fileName, { type: record.fileType });
     const result = await processExcelFile(file);
 
@@ -176,6 +197,7 @@ export function useRouteUploader(): RouteUploaderReturn {
     setMissingCols(result.missingCols);
     setIsSingleRoute(!!result.isSingleRoute);
     setLoading(false);
+    await backfillRouteRows(id, result);
     return true;
   }, []);
 

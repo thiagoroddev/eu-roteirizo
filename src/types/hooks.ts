@@ -87,11 +87,13 @@ export interface RouteUploaderReturn {
   handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
 
   /**
-   * Reopens a SAVED manifest (TASK-RF-022.3/RF-46): loads its bytes from
-   * manifestStorage, rebuilds the File and processes it through the same
-   * pipeline as an upload (without re-saving). Resolves `true` on success,
-   * `false` when the id is unknown or processing fails (error state is set). */
-  loadManifest: (id: string) => Promise<boolean>;
+   * Reopens a SAVED manifest (TASK-RF-022.3/RF-46). With `routeName` (TASK-REF-018)
+   * it reads that one route's stored rows directly — no reprocessing; without it,
+   * or for a manifest saved before REF-018, it rebuilds the File from the raw
+   * bytes and reprocesses (same pipeline as an upload, without re-saving), then
+   * backfills row storage. Resolves `true` on success, `false` when the id is
+   * unknown or processing fails (error state is set). */
+  loadManifest: (id: string, routeName?: string) => Promise<boolean>;
 }
 
 /** ===================================================================================================================

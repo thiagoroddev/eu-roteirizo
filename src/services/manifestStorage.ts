@@ -11,6 +11,13 @@
  * the same logical content re-exported by Excel produces different bytes and
  * is therefore NOT a duplicate.
  *
+ * Rows grouped by route (TASK-REF-018): besides the raw bytes, the processed
+ * rows are stored PER ROUTE in a second store, keyed `[manifestId, routeName]`.
+ * A focus screen then reads only the route it shows (one keyed lookup) instead
+ * of reparsing the whole spreadsheet on every mount (DT-007). The bytes stay —
+ * they still let a reopen pick up parser improvements, and they feed the
+ * fallback that backfills row storage for manifests saved before REF-018.
+ *
  * Error policy (unlike graphCache, this is user data, not a disposable cache):
  * reads stay resilient (failure degrades to "no saved manifests"), but a write
  * failure is REPORTED via the discriminated result — the user must know the
@@ -18,28 +25,44 @@
  */
 
 import { openDB, type IDBPDatabase } from "idb";
-import type { ProcessedResult, RowData } from "../types";
+import type { ProcessedResult, RoutesMap, RowData } from "../types";
 import type { ManifestMeta, ManifestRecord, ManifestRouteMeta } from "../types/manifest";
 import { COLUMN_NAMES } from "../constants";
 import { sha256Hex } from "../utils/hash";
 
 const DB_NAME = "danfo-manifests";
-/** Bump (with an upgrade path) if the ManifestRecord shape ever changes. */
-const DB_VERSION = 1;
+/** v2 (TASK-REF-018): added the `routeRows` store. Bump again with an upgrade path if a shape changes. */
+const DB_VERSION = 2;
 const STORE = "manifests";
+/** Rows grouped by route, keyed `[manifestId, routeName]` (TASK-REF-018). */
+const ROUTE_ROWS_STORE = "routeRows";
 
 /** Lazily-opened DB connection, cached for the module's lifetime. */
 let dbPromise: Promise<IDBPDatabase> | null = null;
 
 const getDb = (): Promise<IDBPDatabase> => {
   if (!dbPromise) {
+    // upgrade runs for a fresh install AND for the v1→v2 bump; both paths only
+    // ADD what's missing, so no existing manifest record is touched.
     dbPromise = openDB(DB_NAME, DB_VERSION, {
       upgrade(db) {
         if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: "id" });
+        // Out-of-line keys: the value is a RowData[], so the key `[id, routeName]` is passed explicitly.
+        if (!db.objectStoreNames.contains(ROUTE_ROWS_STORE)) db.createObjectStore(ROUTE_ROWS_STORE);
       },
     });
   }
   return dbPromise;
+};
+
+/** Composite key for one route's rows — same idiom as routeStorage's roteiro key. */
+const routeRowsKey = (manifestId: string, routeName: string): [string, string] => [manifestId, routeName];
+
+/** Writes each route's rows under `[manifestId, routeName]`. Caller owns the try/catch. */
+const writeRouteRows = async (db: IDBPDatabase, manifestId: string, routes: RoutesMap): Promise<void> => {
+  for (const [name, rows] of Object.entries(routes)) {
+    await db.put(ROUTE_ROWS_STORE, rows, routeRowsKey(manifestId, name));
+  }
 };
 
 /** Outcome of a save: exactly one of saved / duplicate / invalid / error. */
@@ -63,8 +86,8 @@ const findRouteAt = (rows: RowData[]): string | undefined => {
 };
 
 const stripBytes = (record: ManifestRecord): ManifestMeta => {
-  const { id, fileName, fileType, fileSize, kind, routes, importedAt } = record;
-  return { id, fileName, fileType, fileSize, kind, routes, importedAt };
+  const { id, fileName, fileType, fileSize, kind, routes, importedAt, availableCols, missingCols } = record;
+  return { id, fileName, fileType, fileSize, kind, routes, importedAt, availableCols, missingCols };
 };
 
 /**
@@ -99,13 +122,60 @@ export const saveManifest = async (file: File, processed: ProcessedResult): Prom
       kind: processed.isSingleRoute ? "single" : "multi",
       routes,
       importedAt: new Date().toISOString(),
+      // Persisted so a focus screen skips reprocessing (TASK-REF-018).
+      availableCols: processed.availableCols ?? undefined,
+      missingCols: processed.missingCols,
       bytes,
     };
     await db.put(STORE, record);
+    // Grouped rows, so reopening reads one route instead of reparsing (TASK-REF-018).
+    await writeRouteRows(db, id, processed.routes);
     if (import.meta.env.DEV) console.info(`manifestStorage: romaneio salvo — rotas=${routes.length}`);
     return { status: "saved", meta: stripBytes(record) };
   } catch (err) {
     return { status: "error", reason: err instanceof Error ? err.message : String(err) };
+  }
+};
+
+/**
+ * Reads ONE route's rows without touching SheetJS (TASK-REF-018). Returns `null`
+ * on miss (route not stored / manifest saved before REF-018) or storage failure
+ * — the caller then falls back to reprocessing the bytes.
+ *
+ * @param manifestId - The manifest's id.
+ * @param routeName - The route to read.
+ * @returns The route's rows, or `null`.
+ */
+export const getRouteRows = async (manifestId: string, routeName: string): Promise<RowData[] | null> => {
+  try {
+    const db = await getDb();
+    return ((await db.get(ROUTE_ROWS_STORE, routeRowsKey(manifestId, routeName))) as RowData[] | undefined) ?? null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Backfills row storage + the `availableCols`/`missingCols` meta for a manifest
+ * saved before TASK-REF-018 (the reopen fallback calls this after reprocessing,
+ * so the NEXT open is fast). Best-effort: any failure is swallowed — the app
+ * already has what it needs from the reprocess. Never throws.
+ *
+ * @param manifestId - The manifest whose rows/meta to persist.
+ * @param processed - The successful ProcessedResult just computed from the bytes.
+ */
+export const backfillRouteRows = async (manifestId: string, processed: ProcessedResult): Promise<void> => {
+  if (!processed.routes) return;
+  try {
+    const db = await getDb();
+    const record = (await db.get(STORE, manifestId)) as ManifestRecord | undefined;
+    if (record) {
+      // Re-put the record with the cols merged in (bytes already in hand — no rewrite of file data).
+      await db.put(STORE, { ...record, availableCols: processed.availableCols ?? undefined, missingCols: processed.missingCols });
+    }
+    await writeRouteRows(db, manifestId, processed.routes);
+  } catch {
+    // best-effort: the current open already succeeded via reprocessing
   }
 };
 
@@ -136,21 +206,28 @@ export const getManifest = async (id: string): Promise<ManifestRecord | null> =>
   }
 };
 
-/** Deletes one manifest (best-effort; the list UI re-reads afterwards). Never throws. */
+/**
+ * Deletes one manifest AND its grouped rows (TASK-REF-018 — no orphaned rows).
+ * Best-effort; the list UI re-reads afterwards. Never throws. The roteiro
+ * cascade lives in the page (RoutesPage → deleteManifestRoteiros), a separate DB.
+ */
 export const deleteManifest = async (id: string): Promise<void> => {
   try {
     const db = await getDb();
     await db.delete(STORE, id);
+    // All `[id, *]` rows — same range idiom as routeStorage.deleteManifestRoteiros.
+    await db.delete(ROUTE_ROWS_STORE, IDBKeyRange.bound([id, ""], [id, "￿"]));
   } catch {
     // best-effort; the list reflects whatever actually happened
   }
 };
 
-/** Clears all saved manifests (maintenance / tests). Never throws. */
+/** Clears all saved manifests AND their grouped rows (maintenance / tests). Never throws. */
 export const clearManifests = async (): Promise<void> => {
   try {
     const db = await getDb();
     await db.clear(STORE);
+    await db.clear(ROUTE_ROWS_STORE);
   } catch {
     // ignore
   }

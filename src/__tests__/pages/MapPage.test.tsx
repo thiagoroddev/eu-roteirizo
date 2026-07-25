@@ -276,7 +276,7 @@ describe("MapPage (focus screen)", () => {
   it("loads the manifest from the URL and renders the CONTROLLED map", () => {
     renderPage();
 
-    expect(uploaderState.loadManifest).toHaveBeenCalledWith("hash-1");
+    expect(uploaderState.loadManifest).toHaveBeenCalledWith("hash-1", "A-1");
     expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-controlled", "true");
   });
 
