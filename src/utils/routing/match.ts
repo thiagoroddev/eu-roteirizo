@@ -93,6 +93,43 @@ export const nearestEdge = (graph: RoadGraph, target: LatLng): EdgeMatch | null 
 };
 
 /**
+ * OSM name of the directed edge `from→to`. Falls back to "via" when the edge
+ * isn't found — the same default `buildGraph` writes for a way with no name.
+ *
+ * @param graph - The road graph.
+ * @param from - Source node.
+ * @param to - Target node.
+ * @returns The edge's `wayName`, or "via".
+ */
+export const wayNameOfEdge = (graph: RoadGraph, from: NodeId, to: NodeId): string => (graph.adj.get(from) ?? []).find((e) => e.to === to)?.wayName ?? "via";
+
+/**
+ * Tokens `buildGraph` stores when a way has NO OSM `name` (it falls back to the
+ * highway class, else "via"). Showing one as an address ("residential") reads as
+ * a bug, so `nearestWayName` treats these as "no real name". Mirrors the highway
+ * classes of osm.ts NAVIGABLE_HIGHWAYS.
+ */
+const GENERIC_WAY_LABELS = new Set(["motorway", "trunk", "primary", "secondary", "tertiary", "residential", "unclassified", "living_street", "service", "via"]);
+
+/**
+ * Real street name of the road nearest to `target`, from the ALREADY-loaded graph
+ * (TASK-RF-006.9) — zero external geocoding (RNF-03/13). `null` when there is no
+ * graph, no edge, or the nearest way has no OSM name (a generic token): the caller
+ * then shows a neutral label, and navigation still works off the coordinate.
+ *
+ * @param graph - The road graph, or `null` when not loaded yet.
+ * @param target - The point to name (e.g. the vehicle anchor).
+ * @returns The street name, or `null`.
+ */
+export const nearestWayName = (graph: RoadGraph | null, target: LatLng): string | null => {
+  if (!graph) return null;
+  const match = nearestEdge(graph, target);
+  if (!match) return null;
+  const name = wayNameOfEdge(graph, match.from, match.to);
+  return GENERIC_WAY_LABELS.has(name) ? null : name;
+};
+
+/**
  * Inserts a synthetic node at the projection of `target` onto its nearest street
  * segment, splitting that edge (and its reverse, for two-way streets), so A* can
  * route to/from the matched point. The original graph is NOT mutated.
@@ -113,7 +150,7 @@ export const matchToGraph = (graph: RoadGraph, target: LatLng): GraphMatch | nul
   const synthetic: NodeId = `match:${from}-${to}`;
   const wFromS = haversine(a, point);
   const wSTo = haversine(point, b);
-  const wayName = (graph.adj.get(from) ?? []).find((e) => e.to === to)?.wayName ?? "via";
+  const wayName = wayNameOfEdge(graph, from, to);
 
   /** Clone coords + adjacency (copy the edge arrays so the original stays intact). */
   const coords = new Map<NodeId, LatLng>(graph.coords);

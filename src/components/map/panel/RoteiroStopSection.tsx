@@ -2,7 +2,7 @@ import { Pencil, Undo2 } from "lucide-react";
 import { Button } from "../../ui/button";
 import { PanelSection } from "./PanelSection";
 import { PanelTitle, type PanelMetric } from "./PanelTitle";
-import { StopItemRow, StopItemDetail } from "./StopItem";
+import { StopItemRow, StopItemDetail, VehicleNavLink } from "./StopItem";
 import type { StopItemData } from "../../../utils/markers/panelModels";
 import { UI_LABELS } from "../../../constants/uiLabels";
 
@@ -95,6 +95,8 @@ export const RoteiroStopSection = ({ stopOrder, neighborhoods, zipcodes, metrics
               <div className="min-w-0 flex-1">
                 <StopItemRow item={selectedItem} onTap={() => {}} highlighted neon markerGlyph="vehicle" vehicleStop />
               </div>
+              {/* "Como chegar" à âncora (RF-006.9): direções para a coordenada dela. */}
+              <VehicleNavLink mapsUrl={selectedItem.mapsUrl} />
               <Button type="button" variant="ghost" size="icon" className="mr-2 h-8 w-8 shrink-0" data-vaul-no-drag onClick={onEdit} title={STOP.EDIT_VEHICLE} aria-label={STOP.EDIT_VEHICLE}>
                 <Pencil aria-hidden className="h-4 w-4" />
               </Button>

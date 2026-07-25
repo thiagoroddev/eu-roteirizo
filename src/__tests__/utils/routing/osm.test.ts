@@ -27,8 +27,13 @@ const oneWayResponse = {
  * das métricas medidas, e só o corpo cru dá esse número.
  */
 const okJson = (body: unknown): Response => ({ ok: true, status: 200, text: () => Promise.resolve(JSON.stringify(body)) }) as unknown as Response;
-const httpError = (status: number): Response => ({ ok: false, status, text: () => Promise.resolve("") }) as unknown as Response;
+/** Non-ok response; `retryAfter` (seconds) populates the header the retry loop reads (TASK-BG-008). */
+const httpError = (status: number, retryAfter?: string): Response =>
+  ({ ok: false, status, headers: { get: (name: string) => (name === "Retry-After" ? (retryAfter ?? null) : null) }, text: () => Promise.resolve("") }) as unknown as Response;
 const unparsable = (): Response => ({ ok: true, status: 200, text: () => Promise.resolve("{ não é json") }) as unknown as Response;
+
+/** No-op sleep so retry tests don't wait on the real backoff clock. */
+const noSleep = () => Promise.resolve();
 
 beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn());
@@ -160,28 +165,28 @@ describe("fetchRoadGraph", () => {
     expect(vi.mocked(fetch).mock.calls[0][0]).toBe("https://mirror.test/api");
   });
 
-  it("returns an error message when Overpass responds non-ok", async () => {
+  it("returns an error message when Overpass keeps responding non-ok", async () => {
     vi.mocked(fetch).mockResolvedValue(httpError(504));
 
-    const result = await fetchRoadGraph(IPANEMA);
+    const result = await fetchRoadGraph(IPANEMA, { sleep: noSleep });
 
     expect(result.graph).toBeUndefined();
     expect(result.error).toBe(UI_LABELS.ROUTING.OVERPASS_HTTP_ERROR(504));
   });
 
-  it("returns the network error when fetch rejects", async () => {
+  it("returns the network error when fetch keeps rejecting", async () => {
     vi.mocked(fetch).mockRejectedValue(new TypeError("Failed to fetch"));
 
-    const result = await fetchRoadGraph(IPANEMA);
+    const result = await fetchRoadGraph(IPANEMA, { sleep: noSleep });
 
     expect(result.graph).toBeUndefined();
     expect(result.error).toBe(UI_LABELS.ROUTING.NETWORK_ERROR);
   });
 
-  it("returns the timeout error when the request is aborted", async () => {
+  it("returns the timeout error when the request keeps being aborted", async () => {
     vi.mocked(fetch).mockRejectedValue(new DOMException("The operation was aborted.", "AbortError"));
 
-    const result = await fetchRoadGraph(IPANEMA);
+    const result = await fetchRoadGraph(IPANEMA, { sleep: noSleep });
 
     expect(result.error).toBe(UI_LABELS.ROUTING.TIMEOUT);
   });
@@ -211,6 +216,47 @@ describe("fetchRoadGraph", () => {
 
     expect(result.error).toBeUndefined();
     expect(result.graph?.coords.size).toBe(0);
+  });
+
+  it("auto-retries a transient 429 and succeeds on a later attempt (TASK-BG-008)", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(httpError(429)).mockResolvedValueOnce(okJson(oneWayResponse));
+
+    const result = await fetchRoadGraph(IPANEMA, { sleep: noSleep });
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(result.error).toBeUndefined();
+    expect(result.graph?.coords.size).toBe(2);
+    expect(result.stats).toBeDefined();
+  });
+
+  it("does NOT retry a non-retryable status like 400 (bad query)", async () => {
+    vi.mocked(fetch).mockResolvedValue(httpError(400));
+
+    const result = await fetchRoadGraph(IPANEMA, { sleep: noSleep });
+
+    expect(fetch).toHaveBeenCalledTimes(1); // one shot, no retry
+    expect(result.error).toBe(UI_LABELS.ROUTING.OVERPASS_HTTP_ERROR(400));
+  });
+
+  it("stops after maxAttempts and returns the last error", async () => {
+    vi.mocked(fetch).mockResolvedValue(httpError(429));
+
+    const result = await fetchRoadGraph(IPANEMA, { sleep: noSleep, maxAttempts: 3 });
+
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(result.error).toBe(UI_LABELS.ROUTING.OVERPASS_HTTP_ERROR(429));
+  });
+
+  it("honors the Retry-After header for the backoff wait", async () => {
+    // 429 with "Retry-After: 3", then success — the wait must be >= 3 s (+ jitter).
+    vi.mocked(fetch).mockResolvedValueOnce(httpError(429, "3")).mockResolvedValueOnce(okJson(oneWayResponse));
+    const sleepSpy = vi.fn<(ms: number) => Promise<void>>(() => Promise.resolve());
+
+    await fetchRoadGraph(IPANEMA, { sleep: sleepSpy });
+
+    expect(sleepSpy).toHaveBeenCalledTimes(1);
+    expect(sleepSpy.mock.calls[0][0]).toBeGreaterThanOrEqual(3000);
+    expect(sleepSpy.mock.calls[0][0]).toBeLessThan(3500); // 3000 + jitter cap
   });
 
   it("logs only counts in DEV, never coordinates or addresses (no PII)", async () => {

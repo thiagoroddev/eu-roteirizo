@@ -30,8 +30,42 @@ const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter";
  */
 const NAVIGABLE_HIGHWAYS = "motorway|trunk|primary|secondary|tertiary|residential|unclassified|living_street|service";
 
-/** Default client-side timeout for the Overpass request (ms). */
+/** Default client-side timeout for ONE Overpass request (ms). */
 const OVERPASS_TIMEOUT_MS = 30_000;
+
+/**
+ * Auto-retry against the Overpass queue (TASK-BG-008, mitigating DT-005 until
+ * ADR-010's own tileset lands). Measured cause: Overpass queues a request for
+ * ~8 s and then returns 429 (rate limit); an immediate manual retry hits the
+ * same limit, so the loader waits and retries itself. ⚙️ MANUAL KNOB.
+ */
+const MAX_ATTEMPTS = 3;
+/** First backoff wait; doubles each retry (1.5 s → 3 s → …), capped by RETRY_MAX_MS. ⚙️ MANUAL KNOB. */
+const RETRY_BASE_MS = 1_500;
+/** Ceiling for a single wait — also caps a hostile `Retry-After` so the user is never frozen. ⚙️ MANUAL KNOB. */
+const RETRY_MAX_MS = 8_000;
+/** Random spread added to each wait, so parallel clients don't retry in lockstep. ⚙️ MANUAL KNOB. */
+const RETRY_JITTER_MS = 400;
+
+/** HTTP statuses worth retrying: rate limit + gateway/queue transients. A 4xx like 400 (bad query) is NOT here. */
+const isRetryableStatus = (status: number): boolean => status === 429 || status === 502 || status === 503 || status === 504;
+
+/** Parses `Retry-After` (delta-seconds form) to ms, capped at RETRY_MAX_MS; `null`/HTTP-date/garbage → undefined. */
+const parseRetryAfterMs = (header: string | null): number | undefined => {
+  if (!header) return undefined;
+  const seconds = Number(header.trim());
+  if (!Number.isFinite(seconds) || seconds < 0) return undefined;
+  return Math.min(RETRY_MAX_MS, seconds * 1000);
+};
+
+/** Wait before the next attempt: honor `Retry-After`, else exponential backoff; always + jitter. */
+const retryDelayMs = (attempt: number, retryAfterMs: number | undefined): number => {
+  const backoff = Math.min(RETRY_MAX_MS, RETRY_BASE_MS * 2 ** (attempt - 1));
+  return (retryAfterMs ?? backoff) + Math.random() * RETRY_JITTER_MS;
+};
+
+/** Real sleep; injectable so tests advance without wall-clock waits. */
+const realSleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * A geographic bounding box, in the order Overpass expects: south, west, north,
@@ -51,10 +85,14 @@ export interface BBox {
 
 /** Options for `fetchRoadGraph` (all optional; sensible module defaults). */
 export interface FetchRoadGraphOptions {
-  /** Abort the request after this many ms (default 30000). */
+  /** Abort ONE request after this many ms (default 30000). */
   timeoutMs?: number;
   /** Override the Overpass endpoint (default the public instance; for tests/mirror). */
   endpoint?: string;
+  /** Max attempts including the first (default MAX_ATTEMPTS; TASK-BG-008). */
+  maxAttempts?: number;
+  /** Sleep between retries — injected in tests to skip the real wait. */
+  sleep?: (ms: number) => Promise<void>;
 }
 
 /** Medição de UMA carga de malha (TASK-CHORE-006 / ADR-010). Só números. */
@@ -169,71 +207,94 @@ export const bboxAreaKm2 = (bbox: BBox): number => {
   return Math.abs(latKm * lngKm);
 };
 
+/** Outcome of ONE Overpass request: the raw body, or a failure the loop reads to decide a retry. */
+type AttemptOutcome = { kind: "ok"; body: string; networkMs: number } | { kind: "fail"; error: string; retryable: boolean; retryAfterMs?: number };
+
 /**
  * Fetches the navigable road network for a bbox from Overpass and builds the
- * directed RoadGraph.
+ * directed RoadGraph, auto-retrying the transient Overpass queue (TASK-BG-008).
  *
- * Never throws: network/HTTP/parse failures return `{ error }` with a UI_LABELS
- * message. An area with no mapped roads is NOT an error — it returns
- * `{ graph }` with an empty graph (the caller decides what that means).
+ * Never throws: HTTP/parse/network failures return `{ error }` with a UI_LABELS
+ * message. Transient failures (429/502/503/504, timeout, network) are retried
+ * with backoff (honoring `Retry-After`) up to `maxAttempts`; a non-retryable
+ * error (e.g. 400 bad query, unparsable body) returns immediately. An area with
+ * no mapped roads is NOT an error — it returns `{ graph }` with an empty graph.
+ * `stats.totalMs` spans ALL attempts + waits, so the diagnostic's total-vs-rede
+ * gap reveals the retry (TASK-CHORE-006).
  *
  * @param bbox - The bounding box to load.
- * @param options - Optional timeout / endpoint overrides.
- * @returns `{ graph }` on success, or `{ error }` on failure.
+ * @param options - Optional timeout / endpoint / attempts / sleep overrides.
+ * @returns `{ graph, stats }` on success, or `{ error }` after the last attempt.
  */
 export const fetchRoadGraph = async (bbox: BBox, options: FetchRoadGraphOptions = {}): Promise<FetchRoadGraphResult> => {
   const endpoint = options.endpoint ?? OVERPASS_ENDPOINT;
   const timeoutMs = options.timeoutMs ?? OVERPASS_TIMEOUT_MS;
+  const maxAttempts = options.maxAttempts ?? MAX_ATTEMPTS;
+  const sleep = options.sleep ?? realSleep;
   const query = buildOverpassQuery(bbox);
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  /** One request, its own AbortController/timer; classifies the failure for the loop. */
+  const attemptOnce = async (): Promise<AttemptOutcome> => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const attemptStart = performance.now();
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        body: "data=" + encodeURIComponent(query),
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        signal: controller.signal,
+      });
+      if (!res.ok) {
+        return { kind: "fail", error: UI_LABELS.ROUTING.OVERPASS_HTTP_ERROR(res.status), retryable: isRetryableStatus(res.status), retryAfterMs: parseRetryAfterMs(res.headers.get("Retry-After")) };
+      }
+      // Read as text to MEASURE the response size (TASK-CHORE-006): it's what
+      // separates "big payload" from "server queue" — opposite fixes.
+      return { kind: "ok", body: await res.text(), networkMs: performance.now() - attemptStart };
+    } catch (err) {
+      // Timeout and network drops are transient → retryable.
+      if (err instanceof DOMException && err.name === "AbortError") return { kind: "fail", error: UI_LABELS.ROUTING.TIMEOUT, retryable: true };
+      return { kind: "fail", error: UI_LABELS.ROUTING.NETWORK_ERROR, retryable: true };
+    } finally {
+      clearTimeout(timer);
+    }
+  };
 
   const startedAt = performance.now();
+  let lastError = UI_LABELS.ROUTING.NETWORK_ERROR;
 
-  try {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      body: "data=" + encodeURIComponent(query),
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      signal: controller.signal,
-    });
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const outcome = await attemptOnce();
 
-    if (!res.ok) {
-      return { error: UI_LABELS.ROUTING.OVERPASS_HTTP_ERROR(res.status) };
+    if (outcome.kind === "ok") {
+      try {
+        const data = JSON.parse(outcome.body) as OverpassResponse;
+        const graph = buildGraph(data.elements ?? []);
+        const stats: GraphFetchStats = {
+          bboxKm2: Math.round(bboxAreaKm2(bbox) * 100) / 100,
+          networkMs: Math.round(outcome.networkMs),
+          totalMs: Math.round(performance.now() - startedAt),
+          responseKb: Math.round(outcome.body.length / 1024),
+          nodes: graph.coords.size,
+          edges: countEdges(graph),
+        };
+        if (import.meta.env.DEV) {
+          console.info(
+            `fetchRoadGraph: malha carregada — tentativas=${attempt}, nós=${stats.nodes}, arestas=${stats.edges}, bbox=${stats.bboxKm2} km², rede=${stats.networkMs} ms, total=${stats.totalMs} ms, resposta=${stats.responseKb} KB`
+          );
+        }
+        return { graph, stats };
+      } catch {
+        // A 200 body that isn't valid JSON is a hard error, not a queue transient.
+        return { error: UI_LABELS.ROUTING.NETWORK_ERROR };
+      }
     }
 
-    // Lê como texto para medir o TAMANHO da resposta (TASK-CHORE-006): é o que
-    // separa "payload grande" de "fila do servidor" — as duas correções diferem.
-    const body = await res.text();
-    const networkMs = performance.now() - startedAt;
-
-    const data = JSON.parse(body) as OverpassResponse;
-    const graph = buildGraph(data.elements ?? []);
-    const edges = countEdges(graph);
-
-    const stats: GraphFetchStats = {
-      bboxKm2: Math.round(bboxAreaKm2(bbox) * 100) / 100,
-      networkMs: Math.round(networkMs),
-      totalMs: Math.round(performance.now() - startedAt),
-      responseKb: Math.round(body.length / 1024),
-      nodes: graph.coords.size,
-      edges,
-    };
-
-    if (import.meta.env.DEV) {
-      console.info(
-        `fetchRoadGraph: malha carregada — nós=${stats.nodes}, arestas=${stats.edges}, bbox=${stats.bboxKm2} km², rede=${stats.networkMs} ms, total=${stats.totalMs} ms, resposta=${stats.responseKb} KB`
-      );
-    }
-
-    return { graph, stats };
-  } catch (err) {
-    if (err instanceof DOMException && err.name === "AbortError") {
-      return { error: UI_LABELS.ROUTING.TIMEOUT };
-    }
-    return { error: UI_LABELS.ROUTING.NETWORK_ERROR };
-  } finally {
-    clearTimeout(timer);
+    lastError = outcome.error;
+    // Stop early on a non-retryable error or after the last attempt.
+    if (!outcome.retryable || attempt === maxAttempts) break;
+    await sleep(retryDelayMs(attempt, outcome.retryAfterMs));
   }
+
+  return { error: lastError };
 };

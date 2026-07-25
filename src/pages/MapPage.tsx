@@ -30,11 +30,12 @@ import type { RowData } from "../types";
 import type { DeliveryPoint, LatLng } from "../types/routing";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
 import { collapseInteraction, focusInteraction, regroupInteraction, type InteractionState, type MarkerModel } from "../utils/markers/markerModels";
-import { adjacentStopKey, buildPanelItems, panelMetrics, smallestStopKey, stopPlaceSummary, type PanelMetrics } from "../utils/markers/panelModels";
+import { adjacentStopKey, buildPanelItems, panelMetrics, smallestStopKey, stopPlaceSummary, type PanelMetrics, type StopItemData } from "../utils/markers/panelModels";
 import {
   computeRoteiroMarkerModels,
   pointToStopItemData,
   addressLineOf,
+  mapsDirectionsUrl,
   packagesByTypeFromPoints,
   stopPlaceSummaryFromPoints,
   walkEstimateLabel,
@@ -48,6 +49,7 @@ import { stopWalkEstimate, plannedRouteTotals, stopLegs } from "../utils/routing
 import { assignedPointIds, pointsWithinRadius } from "../utils/routing/selectors";
 import { indexPointsById, nearestStopTo } from "../utils/routing/selectors";
 import { suggestVehicleStop, defaultAnchorSeed } from "../utils/routing/vehicleStop";
+import { nearestWayName } from "../utils/routing/match";
 import { nearestFirstOrder } from "../utils/routing/walkOrder";
 import { pedestrianGraph } from "../utils/routing/pedestrian";
 import { suggestionPath } from "../utils/routing/suggestion";
@@ -797,10 +799,21 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   const chosenLegs = stopLegs(chosenPoints, pedGraph);
   const chosenItems = chosenPoints.map((point, index) => pointToStopItemData(point, { ordinal: index + 1, leg: chosenLegs[index] }));
   const candidateItems = candidatePoints.map((point) => pointToStopItemData(point));
-  /** The draft's ANCHOR row (RF-006.6) — the circuit's start AND end. Address is
-      a PLACEHOLDER (the first stop address) until the vehicle-stop geocoding
-      lands (RF-006.9), the same convention the firmed stop's row uses. */
-  const draftAnchorItem = chosenPoints[0] ? { ...pointToStopItemData(chosenPoints[0]), complement: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.NO_COMPLEMENT } : null;
+  /** The VEHICLE-ANCHOR row (RF-006.9): the vehicle is a point on the STREET, so
+      its row shows the street of ITS OWN coordinate (from the loaded graph, no
+      geocoding) and a "Como chegar" link to that coordinate — NOT the 1st
+      delivery's address/pin, which was wrong once the anchor is moved. Packages/
+      marker still come from the delivery it parks by (the 1st — RF-006.18); only
+      the address line + maps link reflect the anchor. Neutral label when the
+      street has no name / the graph isn't loaded (the link still works). */
+  const buildAnchorItem = (basePoint: DeliveryPoint, anchorCoord: LatLng): StopItemData => ({
+    ...pointToStopItemData(basePoint),
+    complement: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.NO_COMPLEMENT,
+    addressLine: nearestWayName(graph, anchorCoord) ?? UI_LABELS.MAP_PANEL.VEHICLE_STOP_STREET_FALLBACK,
+    mapsUrl: mapsDirectionsUrl(anchorCoord),
+  });
+  /** The draft's ANCHOR row (RF-006.6) — the circuit's start AND end. */
+  const draftAnchorItem = draft && chosenPoints[0] ? buildAnchorItem(chosenPoints[0], draft.vehicleStop) : null;
   const draftPackages = chosenPoints.reduce((sum, p) => sum + p.packageCount, 0);
   /** "~min · m a pé" of the draft's walking circuit (coarse — RF-007 refines). */
   const draftEstimate = draft && chosenPoints.length > 0 ? stopWalkEstimate(draft.vehicleStop, chosenPoints, estimateConfig) : null;
@@ -873,10 +886,10 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   /** The VEHICLE STOP is an INDEPENDENT entity per stop (RF-006.18): its own
       clickable map marker + its own panel row, whether or not it coincides with
       a delivery. The delivery it PARKS BY is the 1st (nearest to it — nearest-
-      first order), which carries the "Parada do veículo" badge. Address
-      placeholder = the 1st until geocoding (RF-006.9). */
+      first order), which carries the "Parada do veículo" badge. Its address line
+      + maps link come from the anchor's OWN coordinate now (RF-006.9). */
   const vehicleDeliveryPoint = stopPoints[0] ?? null;
-  const stopAnchorItem = vehicleDeliveryPoint ? { ...pointToStopItemData(vehicleDeliveryPoint), complement: UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.NO_COMPLEMENT } : null;
+  const stopAnchorItem = selectedStop && vehicleDeliveryPoint ? buildAnchorItem(vehicleDeliveryPoint, selectedStop.vehicleStop) : null;
   /** The stop's full address list ("Ver parada" — RF-006.4.7), ordinals in visit
       order, each with its walking leg from the previous (RF-006.10). */
   const stopListLegs = stopLegs(stopPoints, pedGraph);

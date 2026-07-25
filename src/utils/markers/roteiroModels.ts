@@ -24,7 +24,7 @@
  */
 
 import type { RowData } from "../../types";
-import type { DeliveryPoint, RouteStop, StopLeg } from "../../types/routing";
+import type { DeliveryPoint, LatLng, RouteStop, StopLeg } from "../../types/routing";
 import type { StopDraft } from "../routing/builder";
 import type { StopWalkEstimate } from "../routing/estimates";
 import type { MarkerModel } from "./markerModels";
@@ -209,6 +209,16 @@ export const computeRoteiroMarkerModels = (points: DeliveryPoint[], stops: Route
 };
 
 /* --------------------- pure helpers (TASK-RF-006.4.2) --------------------- */
+
+/**
+ * Google Maps DIRECTIONS URL to a coordinate (TASK-RF-006.9): the vehicle
+ * anchor's "how do I get there", vs the delivery points' `?q=` pin. Built from
+ * the coordinate itself — no geocoding, no external call (RNF-03/13).
+ *
+ * @param p - The destination coordinate (e.g. the vehicle anchor).
+ * @returns A Google Maps directions URL.
+ */
+export const mapsDirectionsUrl = (p: LatLng): string => `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`;
 
 /** Street + number: the first two comma terms of the raw address (display rule). */
 export const addressLineOf = (address: string): string => {

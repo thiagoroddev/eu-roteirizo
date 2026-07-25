@@ -131,6 +131,9 @@ export const UI_LABELS = {
         A informação "é parada do veículo" vive no endereço, não no rótulo da
         seção (que voltou a ser só "Endereço selecionado"). */
     VEHICLE_STOP_BADGE: "Parada do veículo",
+    /** Rótulo da row do veículo quando não há nome de via (grafo não carregado
+        ou rua sem nome no OSM) — RF-006.9. O link "Como chegar" ainda funciona. */
+    VEHICLE_STOP_STREET_FALLBACK: "Ponto na rua",
     /** Rótulo da perna a pé entre endereços no gutter (RF-006.10): "110 metros"
         (por extenso; o ícone de caminhada acompanha, decisão smoke 18/07). */
     LEG_METERS: (meters: number) => `${meters} metros`,
@@ -213,6 +216,9 @@ export const UI_LABELS = {
       /** Atalho na row da parada do veículo (RF-006.18): reabre a parada como
           rascunho (mesmo destino do "Editar parada"), já pronto p/ mover o carro. */
       EDIT_VEHICLE: "Editar local do veículo",
+      /** Link da row do veículo (RF-006.9): abre direções até a COORDENADA da
+          âncora — "como chegar lá" mesmo sem endereço; funciona sem grafo. */
+      NAVIGATE: "Como chegar",
       DISSOLVE: "Desfazer parada",
       // Gestos da âncora — SÓ no modo edição (TASK-RF-006.15 reverteu a .5:
       // a parada firmada é read-only; editar âncora = reabrir como rascunho).

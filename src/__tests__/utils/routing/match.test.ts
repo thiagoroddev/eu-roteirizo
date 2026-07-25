@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { projectPointOnSegment, nearestEdge, matchToGraph } from "../../../utils/routing/match";
+import { projectPointOnSegment, nearestEdge, matchToGraph, nearestWayName } from "../../../utils/routing/match";
 import { aStar } from "../../../utils/routing/aStar";
 import { buildGraph } from "../../../utils/routing/graph";
 import type { LatLng } from "../../../types/routing";
@@ -90,5 +90,60 @@ describe("matchToGraph", () => {
 
   it("returns null for an empty graph", () => {
     expect(matchToGraph(buildGraph([]), { lat: -22.98, lng: -43.2 })).toBeNull();
+  });
+});
+
+describe("nearestWayName", () => {
+  it("returns the OSM name of the nearest street", () => {
+    // A point just south of the named street snaps to it → its name.
+    expect(nearestWayName(street(), { lat: -22.9805, lng: -43.199 })).toBe("Rua Reta");
+  });
+
+  it("returns null when the graph is not loaded yet", () => {
+    expect(nearestWayName(null, { lat: -22.98, lng: -43.2 })).toBeNull();
+  });
+
+  it("returns null for an empty graph (no edge to name)", () => {
+    expect(nearestWayName(buildGraph([]), { lat: -22.98, lng: -43.2 })).toBeNull();
+  });
+
+  it("returns null when the nearest way has no OSM name (generic highway class, not an address)", () => {
+    // No `name` tag → buildGraph stores the highway class as wayName → treated as "no real name".
+    const unnamed = buildGraph([
+      {
+        type: "way",
+        nodes: [1, 2],
+        geometry: [
+          { lat: -22.98, lon: -43.2 },
+          { lat: -22.98, lon: -43.198 },
+        ],
+        tags: { highway: "residential" },
+      },
+    ]);
+    expect(nearestWayName(unnamed, { lat: -22.9805, lng: -43.199 })).toBeNull();
+  });
+
+  it("picks the nearer of two named streets", () => {
+    const two = buildGraph([
+      {
+        type: "way",
+        nodes: [1, 2],
+        geometry: [
+          { lat: -22.98, lon: -43.2 },
+          { lat: -22.98, lon: -43.198 },
+        ],
+        tags: { name: "Rua Norte" },
+      },
+      {
+        type: "way",
+        nodes: [3, 4],
+        geometry: [
+          { lat: -22.99, lon: -43.2 },
+          { lat: -22.99, lon: -43.198 },
+        ],
+        tags: { name: "Rua Sul" },
+      },
+    ]);
+    expect(nearestWayName(two, { lat: -22.9895, lng: -43.199 })).toBe("Rua Sul"); // closer to the southern street
   });
 });

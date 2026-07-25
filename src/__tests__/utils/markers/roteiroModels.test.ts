@@ -4,6 +4,7 @@ import {
   buildPointTooltipHtml,
   pointToStopItemData,
   addressLineOf,
+  mapsDirectionsUrl,
   packagesByTypeFromPoints,
   stopPlaceSummaryFromPoints,
   walkEstimateLabel,
@@ -337,5 +338,11 @@ describe("pure helpers (TASK-RF-006.4.2)", () => {
     };
     expect(packagesByTypeFromPoints([home, office, mixed])).toEqual({ commercial: 1, residential: 2, indefinite: 1 });
     expect(packagesByTypeFromPoints([])).toEqual({ commercial: 0, residential: 0, indefinite: 0 });
+  });
+});
+
+describe("mapsDirectionsUrl", () => {
+  it("builds a Google Maps DIRECTIONS url to the coordinate (RF-006.9)", () => {
+    expect(mapsDirectionsUrl({ lat: -22.95, lng: -43.19 })).toBe("https://www.google.com/maps/dir/?api=1&destination=-22.95,-43.19");
   });
 });

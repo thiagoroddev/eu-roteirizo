@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { ArrowDown, Car, Flag, Footprints } from "lucide-react";
+import { ArrowDown, Car, Flag, Footprints, Navigation } from "lucide-react";
 import { Badge } from "../../ui/badge";
 import { cn } from "@/lib/utils";
 import { UI_LABELS } from "../../../constants/uiLabels";
@@ -113,6 +113,27 @@ export const StopItemRow = ({ item, onTap, leading, highlighted = false, expande
     </button>
   );
 };
+
+/**
+ * VehicleNavLink - "Como chegar" for the VEHICLE anchor row (RF-006.9): opens
+ * directions to the anchor's OWN coordinate (its `mapsUrl`), so a moved vehicle
+ * can be navigated to even without a street number. A SIBLING of the row's
+ * `<button>` (an `<a>` can't nest inside a button) — the parent wraps both in a
+ * flex row. The delivery rows keep their Maps link inside `StopItemDetail`.
+ */
+export const VehicleNavLink = ({ mapsUrl }: { mapsUrl: string }) => (
+  <a
+    href={mapsUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    data-vaul-no-drag
+    title={UI_LABELS.MAP_PANEL.ROTEIRO_STOP.NAVIGATE}
+    aria-label={UI_LABELS.MAP_PANEL.ROTEIRO_STOP.NAVIGATE}
+    className="mr-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-primary hover:bg-accent"
+  >
+    <Navigation aria-hidden className="h-4 w-4" />
+  </a>
+);
 
 const PackageRow = ({ label, complement, spxTn, type, typeLabel }: StopItemData["packages"][number]) => {
   // Type badge colored by the FUNCTIONAL map palette (green residential / blue

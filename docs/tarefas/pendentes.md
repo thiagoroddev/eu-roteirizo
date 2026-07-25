@@ -23,7 +23,12 @@
 
 | 9 | ~~**TASK-REF-018**~~ — linhas agrupadas por rota (DT-007) | ✅ **CONCLUÍDA (20/07)** — `manifestStorage` v1→v2 grava linhas por rota; fast path sem SheetJS + fallback com backfill. 760/760; **smoke pendente**. |
 
-**Backlog sem urgência, encaixar em intervalos:** `TASK-RF-006.9` (geocoding da âncora; placeholder aceitável), `TASK-DOC-005`, `TASK-DOC-006` (7 correções listadas no plano de custos), `TASK-REF-014`, `TASK-TEST-002`.
+| 10 | ~~**TASK-BG-008**~~ — auto-retry no carregamento da malha (429) | ✅ **CONCLUÍDA (20/07)** — `fetchRoadGraph` retenta transitórios com backoff+jitter/`Retry-After`; mitiga a fila do Overpass até a ADR-010. 764/764; **smoke pendente**. |
+| 11 | ~~**TASK-RF-006.9**~~ — navegar até a âncora | ✅ **CONCLUÍDA (20/07) — FECHA o épico RF-006**. Rua do grafo como rótulo + "Como chegar" (direções à coordenada da âncora), zero geocoding. 770/770; **smoke pendente**. |
+
+**➡️ Próxima na fila: `RF-009` (execução da rota, XG/Strict) — considerar fatiar antes de iniciar.** Depois `RF-012` (auto-roteirizar), `RF-013` (export/import JSON). Backlog de docs: `TASK-DOC-006` (correções do plano de custos).
+
+**Backlog sem urgência, encaixar em intervalos:** `TASK-RF-006.9` (geocoding da âncora; placeholder aceitável), `TASK-DOC-005`, `TASK-DOC-006` (8 correções listadas no plano de custos), `TASK-REF-014`, `TASK-TEST-002`.
 
 ### 🔁 Onde eu posso estar errado
 
@@ -64,9 +69,11 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 
 ---
 
-## TASK-RF-006 - UI de construção da rota (Meu roteiro) [XG, dividir]
+## ~~TASK-RF-006~~ - UI de construção da rota (Meu roteiro) [XG] — ✅ ÉPICO FECHADO (20/07/26)
 
-- **Status:** Pendente (**.1 → .4.27, .5, .6, .7, .8, .11, .12, .13, .14, .15, .16, .17, .18 e .19 ✅** — ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md); resta só a **.9** (geocoding da âncora) — `.6` ✅ 17/07 e `.10`/`.20`/`.21` ✅ 18–19/07 (melhoria do painel). ✅ Smoke do traçado (.7/.12) desbloqueado — **TASK-BG-006** concluída (18/07))
+- **Status:** ✅ **CONCLUÍDO** — todas as subtarefas .1 → .9 (ver [`0-indice-concluidas.md`](./concluidas/0-indice-concluidas.md)). A **.9** (navegar até a âncora) fechou o épico em 20/07. Fluxo de construção da rota a pé completo ponta a ponta: início, sugestão, rascunho por raio, âncora móvel, firmar/editar, traçado, painel por contexto, tempo/distância por perna, navegação à âncora. **Smokes por subtarefa pendentes** onde anotado. Próximos: RF-009 (execução) → RF-012 → RF-013.
+- *(bloco histórico abaixo mantido para rastreabilidade)*
+- **Status anterior:** Pendente (**.1 → .4.27, .5, .6, .7, .8, .11, .12, .13, .14, .15, .16, .17, .18, .19 ✅**; a **.9** foi a última)
 - **Modo:** Strict
 - **Valor:** Crítico
 - **Urgência:** IMEDIATA

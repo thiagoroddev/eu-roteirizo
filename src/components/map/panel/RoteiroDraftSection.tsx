@@ -5,7 +5,7 @@ import { PanelModeBar } from "./PanelModeBar";
 import { PanelSection } from "./PanelSection";
 import { PanelMetricsRow, type PanelMetric } from "./PanelTitle";
 import { StopItemList } from "./StopItemList";
-import { StopItemRow } from "./StopItem";
+import { StopItemRow, VehicleNavLink } from "./StopItem";
 import type { StopItemData } from "../../../utils/markers/panelModels";
 import { UI_LABELS } from "../../../constants/uiLabels";
 
@@ -207,7 +207,13 @@ export const RoteiroDraftBody = ({ chosen, candidates, onTogglePoint, anchorItem
               hint says moving = drag the car (edit is the only place it moves). */}
           {anchorItem && (
             <div className="border-b border-input">
-              <StopItemRow item={anchorItem} onTap={() => {}} markerGlyph="vehicle" neon vehicleStop />
+              <div className="flex items-center">
+                <div className="min-w-0 flex-1">
+                  <StopItemRow item={anchorItem} onTap={() => {}} markerGlyph="vehicle" neon vehicleStop />
+                </div>
+                {/* "Como chegar" à âncora enquanto edita (RF-006.9): direções para onde o carro está. */}
+                <VehicleNavLink mapsUrl={anchorItem.mapsUrl} />
+              </div>
               <p className="px-4 pb-2 text-xs text-muted-foreground">{STOP.MOVE_ANCHOR_HINT}</p>
             </div>
           )}
