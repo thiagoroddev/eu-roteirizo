@@ -26,7 +26,7 @@
 | 10 | ~~**TASK-BG-008**~~ — auto-retry no carregamento da malha (429) | ✅ **CONCLUÍDA (20/07)** — `fetchRoadGraph` retenta transitórios com backoff+jitter/`Retry-After`; mitiga a fila do Overpass até a ADR-010. 764/764; **smoke pendente**. |
 | 11 | ~~**TASK-RF-006.9**~~ — navegar até a âncora | ✅ **CONCLUÍDA (20/07) — FECHA o épico RF-006**. Rua do grafo como rótulo + "Como chegar" (direções à coordenada da âncora), zero geocoding. 770/770; **smoke pendente**. |
 
-**➡️ Próxima na fila: `RF-009` (execução da rota, XG/Strict) — considerar fatiar antes de iniciar.** Depois `RF-012` (auto-roteirizar), `RF-013` (export/import JSON). Backlog de docs: `TASK-DOC-006` (correções do plano de custos).
+**➡️ Próxima na fila: `RF-009` (execução da rota, XG/Strict) — ✅ PLANO DO ÉPICO APROVADO (20/07), fatiado em `.1`→`.5` (bloco em "Imediatas"). Começar pela `.1` (modelo+persistência+ADR-011).** Depois `RF-012` (auto-roteirizar), `RF-013` (export/import JSON). Backlog de docs: `TASK-DOC-006` (correções do plano de custos).
 
 **Backlog sem urgência, encaixar em intervalos:** `TASK-RF-006.9` (geocoding da âncora; placeholder aceitável), `TASK-DOC-005`, `TASK-DOC-006` (8 correções listadas no plano de custos), `TASK-REF-014`, `TASK-TEST-002`.
 
@@ -66,6 +66,29 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 ---
 
 <!-- TASK-REF-018 movida para em-andamento.md em 20/07/26 (plano aprovado — "planeje e execute taks-018"). -->
+
+---
+
+## TASK-RF-009 - Modo Execução do "Meu roteiro" [XG, Strict, fatiado] — PLANO APROVADO 20/07
+
+- **Status:** Pendente (plano do épico aprovado; **começar pela .1**)
+- **Modo:** Strict (novo store de persistência + novo conceito de domínio + novo sub-modo → **ADR-011** na .1 + análise de impacto)
+- **Valor:** Crítico (muda a proposta: de "planejar" para "executar")
+- **Urgência:** IMEDIATA
+- **Esforço-H/IA:** XG/XG (executar pelas sub-fatias, uma por vez)
+- **Data-hora origem:** 20/07/26 23:10 (plano aprovado)
+- **Dependências:** épico RF-006 ✅ (fechado 20/07), RF-008 ✅ (persistência do roteiro), REF-017 ✅ (label de status)
+- **REQ/ADR/DT:** RF-009, RF-33; **ADR-011 (a criar)**, ADR-008 (status é camada visual, sem recolorir), ADR-009; DT-007 (lição da cascata). Plano completo: `.claude/plans/quero-melhorar-as-informa-es-rustling-snowflake.md`
+- **Decisões travadas (humano 20/07):** (1) marcação **por endereço**, exceção por pacote; (2) 3 estados `pendente|entregue|insucesso` — insucesso é marca visual, **segue sem recalcular**, conta como *resolvido*; (3) **sub-modo focado** `?exec=1` (não toca `MapMode`).
+
+**Fatias (cada uma roda o ciclo + gates):**
+- **RF-009.1** — modelo + persistência (puro + service, SEM UI) · **keystone + ADR-011**. `utils/routing/execution.ts` (estado, seletores `addressStatus`/`stopStatus`/`resolvedRatio`/`nextDestination`, updates imutáveis) + `services/executionStorage.ts` (idb `[manifestId,routeName]`, cascata). Fecha o risco antes da UI.
+- **RF-009.2** — shell `?exec=1` (entrar/sair, "Iniciar rota" a 100%), cabeçalho "Próximo destino: PN-Kº" + barra de % resolvido, navegação `‹ ›` no Meu roteiro (traz do Original), status read-only na lista.
+- **RF-009.3** — marcar entrega (endereço/pacote) + insucesso + desfazer; `PackageRow` togglável (propaga `DeliveryPackage.id`); auto-advance do cursor; auto-save no `executionStorage`.
+- **RF-009.4** — status visual no mapa: campo `completion` no `MarkerSvgProps` (+`cacheKey`), check/dim/insucesso sobrepostos, paleta por tipo intocada.
+- **RF-009.5** — Sumário reflete execução (`deliveredRatio`→`plannedRouteStatus`: "em execução X%"/"finalizado") + "Retomar execução".
+
+**Fora de escopo:** re-otimização ao desviar (é RF-012), motivo/foto do insucesso, GPS ao vivo, export do resultado (RF-013).
 
 ---
 
