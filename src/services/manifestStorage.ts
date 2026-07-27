@@ -30,7 +30,7 @@ import type { ManifestMeta, ManifestRecord, ManifestRouteMeta } from "../types/m
 import { COLUMN_NAMES } from "../constants";
 import { sha256Hex } from "../utils/hash";
 
-const DB_NAME = "danfo-manifests";
+const DB_NAME = "eu-roteirizo-manifests";
 /** v2 (TASK-REF-018): added the `routeRows` store. Bump again with an upgrade path if a shape changes. */
 const DB_VERSION = 2;
 const STORE = "manifests";

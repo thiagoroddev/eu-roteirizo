@@ -18,7 +18,7 @@ import type { BBox, FetchRoadGraphOptions, FetchRoadGraphResult } from "../utils
 import { bboxAreaKm2, fetchRoadGraph } from "../utils/routing/osm";
 import { recordGraphSample } from "./graphDiagnostics";
 
-const DB_NAME = "danfo-routing";
+const DB_NAME = "eu-roteirizo-routing";
 /** Bump to invalidate all cached graphs when the graph format changes (e.g. 005.5). */
 const DB_VERSION = 1;
 const STORE = "graphs";

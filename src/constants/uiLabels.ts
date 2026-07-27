@@ -38,13 +38,13 @@ export const UI_LABELS = {
     NOT_FOUND: "🚫 Rota não encontrada.",
   },
   ROUTE_VIEWER: {
-    TITLE: "Pré-Rota",
+    TITLE: "Eu Roteirizo",
   },
   // App shell (header + bottom nav) — ADR-003 / fluxo §11 (rev. 26/06)
   SHELL: {
-    APP_TITLE: "Pré-Rota",
+    APP_TITLE: "Eu Roteirizo",
     /** Focus screens (Sumário/mapa) append the current route (rev. 07/07). */
-    APP_TITLE_WITH_ROUTE: (route: string) => `Pré-Rota · ${route}`,
+    APP_TITLE_WITH_ROUTE: (route: string) => `Eu Roteirizo · ${route}`,
     NAV_ARIA: "Navegação principal",
     NAV_HOME: "Início",
     NAV_ROUTES: "Rotas",

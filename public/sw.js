@@ -1,6 +1,6 @@
 // Service Worker for caching assets
 
-const CACHE_NAME = "pre-rota-cache-v1"; // Versioned cache name
+const CACHE_NAME = "eu-roteirizo-cache-v1"; // Versioned cache name
 // Install event to cache essential assets
 self.addEventListener("install", (event) => {
   self.skipWaiting(); // Activate worker immediately

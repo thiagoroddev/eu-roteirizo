@@ -1,151 +1,78 @@
-# 🚚 Sistema de Visualização de Rotas de Entrega
+# Guia técnico — Eu Roteirizo
 
-Aplicação React + TypeScript para visualização e análise de rotas de entrega com mapas interativos.
+> Documentação **operacional** para quem mexe no código. A apresentação do projeto
+> (o que é, estado atual, telas) vive no [README da raiz](../README.md).
 
-## 🚀 Tecnologias
+## Índice da documentação
 
-- **React 18** + **TypeScript** + **Vite**
-- **Leaflet** - Mapas interativos
-- **Tailwind CSS** - Estilização
-- **Vitest** - Testes
-- **Cloudflare Workers** - Proxy de tiles do mapa
+| Documento | Para quê |
+|---|---|
+| [`contexto-projeto-ai.md`](./contexto-projeto-ai.md) | Retrato do projeto: stack real, estrutura de pastas, decisões inegociáveis. **Comece por aqui.** |
+| [`arquitetura/ADR/`](./arquitetura/ADR/) | Decisões arquiteturais registradas (001–010) |
+| [`requisitos/`](./requisitos/) | Requisitos funcionais, regras de negócio e não-funcionais |
+| [`tarefas/`](./tarefas/) | Ciclo de tarefas: pendentes → em andamento → concluídas |
+| [`dominios/divida-tecnica.md`](./dominios/divida-tecnica.md) | Dívidas assumidas, cada uma com gatilho de revisão |
+| [`design/`](./design/) | Árvore de componentes do mapa, matriz modo × slot |
+| [`CODIGO_COMENTADO.md`](./CODIGO_COMENTADO.md) | Passeio pelo código para quem está chegando |
+| [`BOAS_PRATICAS.md`](./BOAS_PRATICAS.md) | Padrões adotados no projeto |
+| [`plano-infraestrutura-e-custos.md`](./plano-infraestrutura-e-custos.md) | Base quantitativa de custos (preços datados) |
 
-## 🗺️ Cloudflare Worker - Proxy de Tiles
-
-### O que é?
-
-Worker que funciona como proxy/cache para tiles do OpenStreetMap, melhorando performance e reduzindo requisições.
-
-### Recursos:
-
-- ✅ **Cache de 7 dias** nos servidores do Cloudflare
-- ✅ **Bloqueio de zoom < 14** para economia
-- ✅ **CORS habilitado** para requisições do navegador
-- ✅ **100k requisições/dia grátis** (plano free)
-
-### Deploy do Worker:
+## Comandos
 
 ```bash
-# 1. Instalar Wrangler CLI
-npm install -g wrangler
-
-# 2. Login no Cloudflare
-wrangler login
-
-# 3. Criar worker.js com o código (veja CODIGO_COMENTADO.md)
-
-# 4. Deploy
-wrangler deploy worker.js
-```
-
-### Configuração no projeto:
-
-```typescript
-// src/components/RouteMap.tsx
-const TILE_URL = "https://seu-worker.workers.dev/tiles/{z}/{x}/{y}.png";
-```
-
-### Código completo do Worker:
-
-Veja seção detalhada em **CODIGO_COMENTADO.md**
-
-## 📚 Documentação
-
-- **CODIGO_COMENTADO.md** - Guia completo do código para iniciantes
-- **BOAS_PRATICAS.md** - Padrões e boas práticas do projeto
-- **REFACTORING_REPORT.md** - Histórico de refatorações
-
-## 🛠️ Instalação e Desenvolvimento
-
-```bash
-# Instalar dependências
 npm install
-
-# Desenvolvimento
-npm run dev
-
-# Build produção
-npm run build
-
-# Testes
-npm test
-
-# Preview da build
-npm run preview
-
-# Deploy de TESTES (Cloudflare Pages) — smoke no celular
-npm run deploy:test
+npm run dev          # servidor de desenvolvimento (http://localhost:5173)
+npm run build        # build de produção
+npm run test         # Vitest
+npm run lint         # ESLint
+npx tsc --noEmit     # checagem de tipos
+npm run preview      # serve a build local
+npm run deploy:test  # publica o ambiente de TESTES (Cloudflare Pages)
 ```
 
-### Testar no celular (TASK-CHORE-005)
+Toda tarefa fecha com os quatro gates verdes: `tsc --noEmit`, `eslint`, `vitest` e `build`.
 
-`npm run deploy:test` builda e publica em **https://pre-rota-teste.pages.dev** — URL fixa,
-HTTPS (GPS/PWA funcionam), com `X-Robots-Tag: noindex` (`public/_headers`). É ambiente de
-**testes**, não o lançamento: a URL não é divulgada. Após o deploy, recarregue a página
-**2×** no celular (o service worker `autoUpdate` instala a versão nova na 1ª carga e a
-ativa na 2ª). Requer `npx wrangler login` uma única vez por máquina.
+## Testar no celular
 
-## React Compiler
+`npm run deploy:test` builda e publica em **https://pre-rota-teste.pages.dev** — URL fixa, HTTPS
+(GPS e instalação de PWA só funcionam sob HTTPS), com `X-Robots-Tag: noindex` via
+[`public/_headers`](../public/_headers).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+É **ambiente de testes, não lançamento**: a URL não é divulgada. Após o deploy, recarregue a página
+**2×** no aparelho — o service worker `autoUpdate` instala a versão nova na primeira carga e a ativa
+na segunda. Requer `npx wrangler login` uma vez por máquina.
 
-## Expanding the ESLint configuration
+> O projeto no Cloudflare ainda se chama `pre-rota-teste`, nome anterior ao renome para
+> "Eu Roteirizo". Projeto do Pages não pode ser renomeado — mudar a URL significa criar projeto
+> novo e aposentar o antigo.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Cloudflare Worker — proxy de tiles
 
-```js
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
+O mapa não consome os tiles do OpenStreetMap direto: passa por um Worker que faz proxy e cache,
+versionado em [`infra/cloudflare-tile-worker/`](../infra/cloudflare-tile-worker/).
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- Cache de 7 dias na borda do Cloudflare
+- Bloqueio de zoom < 14 (economia de requisições)
+- CORS habilitado
+- 100 mil requisições/dia no plano gratuito
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```bash
+npx wrangler login
+npx wrangler deploy infra/cloudflare-tile-worker/worker.js
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+A URL do Worker é consumida em `src/components/RouteMap.tsx`. Trocá-la sem republicar o app quebra
+o mapa — a ordem segura é: criar o Worker novo → atualizar o código → publicar → aposentar o antigo.
 
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
+> ⚠️ Os tiles hoje vêm dos servidores públicos do OSM, o que **não** atende à política de uso deles
+> em cenário comercial. Está registrado como **DT-004** em [`dominios/divida-tecnica.md`](./dominios/divida-tecnica.md),
+> com a migração desenhada na [ADR-007](./arquitetura/ADR/ADR-007.md).
 
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+## Convenções que pegam quem chega
+
+- **Idioma:** código e identificadores em inglês; texto de usuário em português, sempre via `UI_LABELS` — nunca hardcoded ([ADR-001](./arquitetura/ADR/ADR-001.md))
+- **`utils/` é lógica pura** (testável sem mock); **`services/` é IO/persistência** (IndexedDB, tema)
+- **Sem `any`** sem justificativa escrita
+- **`⚙️ MANUAL KNOB`** marca constantes de calibração visual/gesto — ajuste no ponto marcado, não espalhe números
+- **Testes espelham `src/`** em `src/__tests__/`; serviços de IndexedDB usam `fake-indexeddb`
+- **Smoke no aparelho é gate de interface:** suíte verde não prova conforto visual ou de gesto

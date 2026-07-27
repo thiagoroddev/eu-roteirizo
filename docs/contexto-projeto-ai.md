@@ -1,4 +1,4 @@
-# Contexto do Projeto: Roteirizador (Pré-Rota)
+# Contexto do Projeto: Eu Roteirizo
 
 > PWA client-side que lê um romaneio de entregas (XLSX/CSV) — **multi-rota** (agrupado por `Corridor Cage`) ou **rota única** (planilha sem essa coluna) — e o transforma em duas coisas: o **modo Original** (visualização: mapa Leaflet com marcadores SVG por parada + painel inferior persistente + tabelas/sumário) e o **modo Meu roteiro** (construção de rota a pé sobre grafo OSM local: início, paradas por raio, âncora do veículo — **em andamento**, épico RF-006). Navegação multi-tela (HOME → Rotas → Sumário → Mapa), romaneios persistidos no aparelho (IndexedDB). Mobile-first.
 
@@ -130,6 +130,6 @@ Não revisar sem ADR explícita:
 
 ## Última Atualização
 
-- **Data:** 10/07/26
-- **Por:** **TASK-DOC-003** — sincronização completa com o código (router/shells, `services/`, `utils/routing|markers`, épico RF-006, ADRs 002–009, tema Neon Flux, vaul/idb/lucide, deploy de testes, contagem real de testes, `docs/design/` e `divida-tecnica.md` existentes, nota `.md.md` removida). Anterior: nota do deploy de testes (CHORE-005, 10/07) e TASK-DOC-004 (24/06).
+- **Data:** 27/07/26
+- **Por:** **TASK-CHORE-007** — o projeto ganhou nome: **Eu Roteirizo** (slug `eu-roteirizo`). Renomeados `package.json`, `<title>`, manifest do PWA, `UI_LABELS` (era "Pré-Rota") e os três bancos IndexedDB (`eu-roteirizo-manifests|routing|roteiros`, **sem migração** — dados de aparelhos antigos ficaram órfãos por decisão do humano). O projeto Cloudflare Pages de testes segue `pre-rota-teste` (URL real, não renomeada). "Roteirizador" como substantivo comum permanece no texto. Anterior: **TASK-DOC-003** (10/07/26) — sincronização completa com o código (router/shells, `services/`, `utils/routing|markers`, épico RF-006, ADRs 002–009, tema Neon Flux, vaul/idb/lucide, deploy de testes, contagem real de testes, `docs/design/` e `divida-tecnica.md` existentes, nota `.md.md` removida). Anterior: nota do deploy de testes (CHORE-005, 10/07) e TASK-DOC-004 (24/06).
 - **Próxima revisão sugerida:** ao concluir a **RF-008** (persistência do roteiro — muda "o que o app guarda") ou a **RF-009** (execução — muda a proposta do produto), ou em ~2 meses.

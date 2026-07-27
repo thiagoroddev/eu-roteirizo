@@ -21,7 +21,7 @@ import { openDB, type IDBPDatabase } from "idb";
 import type { PlannedRoute } from "../types/routing";
 import { normalizeRoutingConfig } from "../types/routing";
 
-const DB_NAME = "danfo-roteiros";
+const DB_NAME = "eu-roteirizo-roteiros";
 /** Bump (with an upgrade path) if the RoteiroRecord shape ever changes. */
 const DB_VERSION = 1;
 const STORE = "roteiros";

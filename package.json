@@ -1,7 +1,24 @@
 {
-  "name": "danfo-test",
+  "name": "eu-roteirizo",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "PWA que transforma o romaneio de entregas numa rota a pé, montada sobre o grafo de ruas do OpenStreetMap — sem backend e sem API de roteirização paga. Protótipo em desenvolvimento.",
+  "author": "Thiago Silva <thiagorod.dev@gmail.com>",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thiagoroddev/eu-roteirizo.git"
+  },
+  "keywords": [
+    "pwa",
+    "react",
+    "typescript",
+    "leaflet",
+    "openstreetmap",
+    "roteirizacao",
+    "last-mile",
+    "a-star"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
