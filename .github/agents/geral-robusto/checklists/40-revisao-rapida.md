@@ -63,6 +63,7 @@ Se algum desses falha, **pare**. Não é momento de revisar - é momento de cons
 ### Convenções Críticas
 
 - [ ] Idioma consistente com o projeto (PT ou EN, sem mistura)?
+- [ ] **Zero travessão (`—`) ou meia-risca (`–`)** em comentário, doc ou texto de UI (núcleo §6.4)?
 - [ ] Nomenclatura segue o padrão (camelCase para funções, PascalCase para componentes)?
 - [ ] Nenhum `any` sem comentário justificando?
 - [ ] Imports usam o padrão configurado (`@/` absoluto, se for o caso)?
@@ -104,6 +105,7 @@ Aplique os grupos relevantes para a mudança. Nem todos se aplicam a toda revis�
 Detalhes: [módulo 10](../padroes/10-codigo-e-convencoes.md).
 
 - [ ] Idioma 100% consistente (variáveis, funções, comentários, testes)
+- [ ] Zero travessão (`—`) ou meia-risca (`–`) como pontuação, em qualquer texto escrito (núcleo §6.4). Verificação: `grep -rn "—\|–" <arquivos alterados>`
 - [ ] Booleans com prefixo `is`/`has`/`tem`/`eh` conforme convenção do projeto
 - [ ] Funções com 5+ parâmetros usam objeto de opções
 - [ ] Sem números mágicos (`* 52`, `+ 0.05`) - constantes nomeadas

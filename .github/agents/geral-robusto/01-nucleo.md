@@ -213,6 +213,35 @@ Lista curta dos mais perigosos. Lista completa em [`referencias/50-anti-padroes.
 O que você decide?
 ```
 
+### 6.4 Pontuação: travessão é proibido
+
+**Nunca use travessão (`—`, em dash) nem meia-risca (`–`, en dash) como pontuação de frase.** A proibição vale para **tudo que você escreve**: resposta no chat, documentação, comentário de código, texto de UI, mensagem de commit e registro de tarefa.
+
+**Por quê:** o travessão é a assinatura mais reconhecível de texto gerado por IA. Usado à vontade, ele também piora a escrita: transforma todo parágrafo numa corrente de apostos empilhados, em que nenhuma ideia recebe frase própria e o leitor perde a hierarquia entre o principal e o incidental.
+
+**O que usar no lugar.** O travessão quase sempre está escondendo uma escolha que você não fez:
+
+|Se a intenção era|Use|
+|---|---|
+|Separar um aposto ou explicação leve|Vírgula|
+|Anunciar o que vem depois (lista, causa, definição)|Dois-pontos|
+|Isolar um comentário lateral, dispensável|Parênteses|
+|Emendar duas ideias que se sustentam sozinhas|Ponto final e duas frases|
+|Contrastar|Conector explícito: `mas`, `porém`, `enquanto`, `só que`|
+
+**Continua permitido:** hífen em palavra composta (`mão-de-obra`, `back-office`), hífen em identificador ou nome de arquivo (`TASK-BG-010`, `eu-roteirizo`), e o traço dentro de bloco de código, onde é sintaxe.
+
+❌ `Sem backend — tudo é local`
+✅ `Sem backend: tudo é local`
+
+❌ `O grafo é cacheado — a segunda entrada é instantânea`
+✅ `O grafo é cacheado, então a segunda entrada é instantânea`
+
+❌ `A URL carrega o modo — F5 preserva o estado`
+✅ `A URL carrega o modo. F5 preserva o estado.`
+
+> Ao **reescrever** texto que já tem travessão, não apague o caractere e siga: a frase quebra. Resolva ocorrência por ocorrência escolhendo o substituto da tabela acima.
+
 ---
 
 ## 7. Convenções Não-Negociáveis (resumo rápido)
@@ -285,12 +314,12 @@ npm run dev          # servidor de desenvolvimento
 npm run build        # build de produção
 npm run test         # rodar testes
 npm run lint         # rodar linter
-npm run typecheck    # checar tipos (script do projeto — ver aviso abaixo)
+npm run typecheck    # checar tipos (script do projeto, ver aviso abaixo)
 ```
 
 > ⚠️ **Use o script do projeto, não `npx tsc --noEmit` de cabeça.** Em projeto com
 > `tsconfig.json` *solution-style* (`"files": []` + só `references`), `tsc --noEmit`
-> **não segue as references** e sai com código 0 tendo lido **zero arquivos** — um gate
+> **não segue as references** e sai com código 0 tendo lido **zero arquivos**: um gate
 > verde que não checou nada. Quem conhece o layout do `tsconfig` é o projeto; por isso a
 > instrução canônica é `npm run typecheck`. Se o script não existir, crie-o antes de
 > rotular o gate (detalhes em [`referencias/51-comandos.md`](./referencias/51-comandos.md#-typescript)).
@@ -301,7 +330,8 @@ npm run typecheck    # checar tipos (script do projeto — ver aviso abaixo)
 
 |Versão|Data|Mudança|
 |---|---|---|
-|4.1|2026-07-27|**Gate de typecheck passa a ser `npm run typecheck`, não `npx tsc --noEmit`** (§10, `processos/20` §5.2, `padroes/10`, `referencias/51`). Motivo: com `tsconfig.json` *solution-style* (`"files": []` + só `references`, o padrão do scaffold do Vite), `tsc --noEmit` **não segue as references** e sai com código 0 tendo lido **zero arquivos** — gate verde que nunca checou nada, inclusive com erro de sintaxe no código. Só `tsc -b` segue. Como o comando correto depende do layout do `tsconfig`, o pacote deixa de prescrevê-lo e delega ao script do projeto. Armadilha documentada em `referencias/51-comandos.md` §TypeScript, com o diagnóstico `tsc --noEmit --listFiles \| wc -l`. Origem: TASK-BG-010 / TASK-CHORE-010.|
+|4.2|2026-07-27|**Travessão (`—`) e meia-risca (`–`) proibidos como pontuação** (§6.4, novo). Vale para chat, docs, comentário de código, texto de UI, commit e registro de tarefa. Motivo duplo: é a assinatura mais reconhecível de texto gerado por IA, e o uso à vontade empilha apostos até o leitor perder a hierarquia da frase. A seção traz tabela de substitutos (vírgula, dois-pontos, parênteses, ponto final, conector explícito) porque proibição sem alternativa piora a escrita. Hífen em palavra composta, identificador e código segue permitido. Item somado ao `checklists/40` nas duas versões. Limpeza do texto legado é a TASK-DOC-010, à parte.|
+|4.1|2026-07-27|**Gate de typecheck passa a ser `npm run typecheck`, não `npx tsc --noEmit`** (§10, `processos/20` §5.2, `padroes/10`, `referencias/51`). Motivo: com `tsconfig.json` *solution-style* (`"files": []` + só `references`, o padrão do scaffold do Vite), `tsc --noEmit` **não segue as references** e sai com código 0 tendo lido **zero arquivos**: gate verde que nunca checou nada, inclusive com erro de sintaxe no código. Só `tsc -b` segue. Como o comando correto depende do layout do `tsconfig`, o pacote deixa de prescrevê-lo e delega ao script do projeto. Armadilha documentada em `referencias/51-comandos.md` §TypeScript, com o diagnóstico `tsc --noEmit --listFiles \| wc -l`. Origem: TASK-BG-010 / TASK-CHORE-010.|
 |4.0|2026-06-26|Reestruturação multi-ferramenta + saneamento. Entry points `CLAUDE.md`/`AGENTS.md`/`.github/copilot-instructions.md`; 9 Skills em `.claude/skills/`; 7 `.github/instructions/*.instructions.md` (`applyTo`). Renome `.md.md`→`.md`, frontmatter YAML válido, 489 links `claude.ai` corrigidos; `geral-leve` arquivado. Ver `referencias/53-changelog.md`.|
 |3.4|2026-06-24|Template `38-requisitos.md` (novo): formato único de `docs/requisitos/` (RF/RN/RNF) com prioridade, status e rastreabilidade requisito↔tarefa↔ADR; módulo 26 §6.3 passa a referenciá-lo (antes "ver templates" não tinha alvo).|
 |3.3|2026-06-09|Regra de numeração de IDs de tarefa (§4.4): próximo número após o maior do prefixo no índice de concluídas (`0-indice-concluidas.md`); gaps ignorados, nunca reaproveitados.|
