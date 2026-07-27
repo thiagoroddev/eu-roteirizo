@@ -18,7 +18,7 @@ import { useRouteUploader } from "../hooks/useRouteUploader";
  */
 function HomePage() {
   const navigate = useNavigate();
-  const { routes, loading, error, missingCols, manifestSave, handleFileUpload } = useRouteUploader();
+  const { routes, loading, error, missingCols, manifestSave, handleFileUpload, loadExampleManifest } = useRouteUploader();
 
   useEffect(() => {
     if (!manifestSave) return;
@@ -36,7 +36,7 @@ function HomePage() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col items-center justify-center px-4 py-3">
-      <FileUploader onFileUpload={handleFileUpload} loading={loading} hasRoutes={!!routes} error={error} missingCols={missingCols} manifestSave={manifestSave} />
+      <FileUploader onFileUpload={handleFileUpload} onTryExample={loadExampleManifest} loading={loading} hasRoutes={!!routes} error={error} missingCols={missingCols} manifestSave={manifestSave} />
     </div>
   );
 }

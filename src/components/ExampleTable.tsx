@@ -12,8 +12,11 @@ import { UI_LABELS } from "../constants/uiLabels";
  * @returns {JSX.Element} The rendered ExampleTable component
  */
 export const ExampleTable: React.FC = () => {
+  // w-full, NÃO w-screen: 100vw dentro do container com padding da HOME é mais largo
+  // que a área útil do pai e empurra a página inteira na horizontal (TASK-BG-010).
+  // A rolagem da tabela é do quadro interno (overflow-auto), nunca do body.
   return (
-    <div className="mt-8 w-screen max-w-6xl">
+    <div className="mt-8 w-full max-w-6xl">
       <h6 className="text-base font-semibold mb-1">{UI_LABELS.EXAMPLE_TABLE.TITLE}</h6>
 
       <div className="overflow-auto rounded-xl shadow-sm border border-border bg-primary/5 m-4">

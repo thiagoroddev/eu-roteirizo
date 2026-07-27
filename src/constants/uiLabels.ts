@@ -26,6 +26,9 @@ export const UI_LABELS = {
     INSTRUCTIONS_SUMMARY: "Instruções e exemplo de planilha",
     INSTRUCTIONS_MULTI_TITLE: "Romaneio completo (multi-rota)",
     INSTRUCTIONS_SINGLE_TITLE: "Rota única (exportada do app oficial)",
+    // Romaneio de exemplo embutido (TASK-RF-014): quem chega pelo link não tem planilha.
+    TRY_EXAMPLE: "Testar com romaneio de exemplo",
+    TRY_EXAMPLE_HINT: "20 entregas fictícias em Copacabana e Ipanema — não precisa de arquivo",
     IMPORT_JSON: "Importar roteiro (.json)",
     IMPORT_JSON_SOON: "Em breve — importar um roteiro pronto (JSON)",
     MANIFEST_SAVED: "Romaneio salvo neste aparelho.",
@@ -464,6 +467,8 @@ export const UI_LABELS = {
     FILE_TOO_LARGE: "Arquivo muito grande. Tamanho máximo: 10MB.",
     EMPTY_FILE: "O arquivo parece estar vazio ou não pôde ser lido.",
     PROCESSING_FAILED: "Falha ao processar o arquivo.",
+    /** Example manifest could not be fetched — offline on a first visit, or missing from the build (RF-014). */
+    EXAMPLE_UNAVAILABLE: "Não foi possível carregar o romaneio de exemplo. Verifique sua conexão e tente de novo.",
   },
   SUCCESS: {
     ROUTES_FOUND: (count: number) => `${count} rota${count !== 1 ? "s" : ""} identificada${count !== 1 ? "s" : ""}.`,

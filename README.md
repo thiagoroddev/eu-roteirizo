@@ -116,15 +116,16 @@ Números de **27/07/2026**.
 
 | | |
 |---|---|
-| Testes | **770** automatizados em 72 arquivos |
+| Testes | **774** automatizados em 72 arquivos |
 | Código | ~13.500 linhas em `src/` + ~10.600 de teste |
-| Gates por tarefa | `tsc --noEmit` · `eslint` · `vitest` · `build` |
+| Gates por tarefa | `tsc -b` · `eslint` · `vitest` · `build` |
 | Decisões registradas | 10 ADRs |
 | Requisitos rastreados | 44 de 49 funcionais entregues |
 
-> Transparência: **1 dos 770 testes está vermelho** hoje — um teste de retry que espera em relógio de
-> parede e estoura o timeout padrão. Está rastreado como `TASK-BG-009` no backlog, não escondido.
-> Correção conhecida, ainda não aplicada.
+> Transparência: **1 dos 774 testes é instável.** Ele exercita o retry do Overpass e espera em
+> relógio de parede; o backoff soma ~4,5 s contra um timeout de 5 s, então passa ou falha conforme
+> a carga da máquina — nas duas últimas execuções aqui deu verde e vermelho, nessa ordem. A causa
+> está entendida e a correção é injetar o relógio no teste; está rastreado como `TASK-BG-009`.
 
 ---
 
@@ -135,15 +136,26 @@ npm install
 npm run dev          # http://localhost:5173
 ```
 
-Para ver algo na tela é preciso um romaneio: um `.xlsx`/`.csv` com, no mínimo, as colunas
-`Latitude` e `Longitude`. A coluna `Corridor Cage`, se existir, agrupa as entregas em rotas;
-sem ela, o arquivo é tratado como rota única. A tela inicial traz um exemplo do formato
-esperado em "Instruções e exemplo de planilha".
+**Não precisa de romaneio próprio para testar.** A pasta [`romaneios/`](romaneios/) traz duas
+planilhas de exemplo prontas — basta enviá-las na tela inicial:
+
+| Arquivo | Conteúdo |
+|---|---|
+| [`exemplo-multi-rota.xlsx`](romaneios/exemplo-multi-rota.xlsx) | 20 entregas em 2 rotas (Copacabana e Ipanema) — é o caminho completo |
+| [`exemplo-rota-unica.xlsx`](romaneios/exemplo-rota-unica.xlsx) | 12 entregas sem a coluna de agrupamento — o caminho de rota única |
+
+São os mesmos dados das capturas acima, e são **fictícios**: as vias são reais (o mapa precisa
+disso), o resto é inventado. Para ver o modo Meu roteiro no seu melhor caso, use o multi-rota e
+abra a **L-29** — quadras curtas, muitos endereços perto uns dos outros.
+
+Se quiser usar um arquivo seu: o mínimo são as colunas `Latitude` e `Longitude`; a coluna
+`Corridor Cage`, se existir, agrupa as entregas em rotas. Detalhes em
+[`romaneios/README.md`](romaneios/README.md).
 
 ```bash
 npm run test         # suíte
 npm run lint         # eslint
-npx tsc --noEmit     # tipos
+npx tsc -b           # tipos (o tsconfig da raiz usa project references)
 npm run build        # build de produção
 ```
 

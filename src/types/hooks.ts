@@ -87,6 +87,14 @@ export interface RouteUploaderReturn {
   handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
 
   /**
+   * Loads the example manifest bundled in `public/romaneios/` (TASK-RF-014), so a
+   * visitor with no spreadsheet of their own can try the app. Goes through the
+   * SAME pipeline as an upload — validation, parsing, dedup, persistence — so it
+   * is a real import, not a demo mode. Sets `error` if the asset cannot be fetched.
+   */
+  loadExampleManifest: () => Promise<void>;
+
+  /**
    * Reopens a SAVED manifest (TASK-RF-022.3/RF-46). With `routeName` (TASK-REF-018)
    * it reads that one route's stored rows directly — no reprocessing; without it,
    * or for a manifest saved before REF-018, it rebuilds the File from the raw

@@ -70,6 +70,25 @@ export const FILE_CONFIG = {
   ENCODING: "UTF-8",
 } as const;
 
+/**
+ * Example manifest bundled with the app (TASK-RF-014).
+ *
+ * Lets a visitor try the app without a spreadsheet of their own — the case of
+ * anyone opening the published URL from a link. Lives in `public/romaneios/`,
+ * so it is a served asset (no bundle cost) that is also directly downloadable.
+ *
+ * The multi-route file is the one wired to the button: it exercises the fuller
+ * path (route picker → summary → map). Fictional data over real Copacabana and
+ * Ipanema streets — the coordinates must exist in the OSM graph for the map and
+ * the walking router to make sense. See `romaneios/README.md`.
+ */
+export const EXAMPLE_MANIFEST = {
+  /** Served path. Must match a file in `public/` and the Workbox glob in vite.config.ts. */
+  PATH: "/romaneios/exemplo-multi-rota.xlsx",
+  /** Name the manifest is saved under, shown on the card in the Rotas tab. */
+  FILE_NAME: "exemplo-multi-rota.xlsx",
+} as const;
+
 // ========================================
 // UI TIMING
 // ========================================

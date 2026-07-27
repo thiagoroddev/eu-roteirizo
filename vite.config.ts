@@ -13,7 +13,9 @@ const config = {
       registerType: "autoUpdate",
       manifest: manifest as Partial<ManifestOptions>, // Cast to Partial to avoid type issues
       workbox: {
-        globPatterns: ["**/*.{js,css,html,png,svg,ico,json}"],
+        // `xlsx` está aqui por causa do romaneio de exemplo (TASK-RF-014): sem ele o
+        // botão "Testar com romaneio de exemplo" quebra quando o app roda offline.
+        globPatterns: ["**/*.{js,css,html,png,svg,ico,json,xlsx}"],
         // Otimização para o cache não estourar com arquivos grandes
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // Aumenta limite do SW para 5MB
       },

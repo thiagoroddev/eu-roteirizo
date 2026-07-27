@@ -25,12 +25,19 @@ npm run dev          # servidor de desenvolvimento (http://localhost:5173)
 npm run build        # build de produção
 npm run test         # Vitest
 npm run lint         # ESLint
-npx tsc --noEmit     # checagem de tipos
+npx tsc -b           # checagem de tipos — ver aviso abaixo
 npm run preview      # serve a build local
 npm run deploy:test  # publica o ambiente de TESTES (Cloudflare Pages)
 ```
 
-Toda tarefa fecha com os quatro gates verdes: `tsc --noEmit`, `eslint`, `vitest` e `build`.
+Toda tarefa fecha com os quatro gates verdes: `tsc -b`, `eslint`, `vitest` e `build`.
+
+> ⚠️ **`npx tsc --noEmit` NÃO checa nada neste projeto** (descoberto na TASK-BG-010, 27/07/26).
+> O `tsconfig.json` da raiz é *solution-style* — `"files": []` + só `references` — e o `tsc` não
+> segue project references sem `-b`. O comando sai com código 0 tendo lido **zero arquivos**, e por
+> isso passou verde com um erro de sintaxe no código. O gate real é **`tsc -b`**, que é o que o
+> `npm run build` já roda. Registros de tarefas anteriores a 27/07/26 rotularam `tsc --noEmit` como
+> APROVADO — essa marcação não significava nada; quem sustentou a checagem foi o `build`.
 
 ## Testar no celular
 

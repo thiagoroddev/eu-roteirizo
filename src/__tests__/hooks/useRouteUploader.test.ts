@@ -13,12 +13,12 @@
  * to ensure state updates are flushed before assertions.
  */
 
-import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useRouteUploader } from "../../hooks/useRouteUploader";
 import { processExcelFile } from "../../utils/excelProcessor";
 import { saveManifest, getManifest, getRouteRows, backfillRouteRows } from "../../services/manifestStorage";
-import { FILE_CONFIG, UI_LABELS } from "../../constants";
+import { EXAMPLE_MANIFEST, FILE_CONFIG, UI_LABELS } from "../../constants";
 import type { RoutesMap } from "../../types";
 import type { ManifestMeta } from "../../types/manifest";
 
@@ -467,5 +467,88 @@ describe("useRouteUploader Hook", () => {
 
     // The function reference should be identical (stable identity)
     expect(result.current.handleFileUpload).toBe(firstHandler);
+  });
+
+  // ==========================================================================
+  // BUNDLED EXAMPLE MANIFEST (TASK-RF-014)
+  // ==========================================================================
+  // A visitor arriving from a link has no spreadsheet. The example must go
+  // through the SAME pipeline as a real upload — the point is that it is a real
+  // import, not a demo mode with its own code path.
+  describe("loadExampleManifest", () => {
+    /** Stubs global fetch with a successful .xlsx response. */
+    const mockFetchOk = () =>
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          blob: async () => new Blob(["conteudo-xlsx-falso"], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+        })
+      );
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("fetches the bundled manifest and feeds it through the upload pipeline", async () => {
+      mockFetchOk();
+      mockProcessExcel.mockResolvedValue(mockSuccessResult);
+
+      const { result } = renderHook(() => useRouteUploader());
+      await act(async () => {
+        await result.current.loadExampleManifest();
+      });
+
+      // Fetched from the served path, not imported into the bundle
+      expect(fetch).toHaveBeenCalledWith(EXAMPLE_MANIFEST.PATH);
+
+      // Same processor as a real upload, receiving a real File
+      const processed = mockProcessExcel.mock.calls[0][0] as File;
+      expect(processed).toBeInstanceOf(File);
+      expect(processed.name).toBe(EXAMPLE_MANIFEST.FILE_NAME);
+
+      expect(result.current.routes).toEqual(mockRoutes);
+      expect(result.current.error).toBeNull();
+      expect(result.current.loading).toBe(false);
+    });
+
+    it("persists the example like any other manifest (so dedup and the Rotas tab work)", async () => {
+      mockFetchOk();
+      mockProcessExcel.mockResolvedValue(mockSuccessResult);
+
+      const { result } = renderHook(() => useRouteUploader());
+      await act(async () => {
+        await result.current.loadExampleManifest();
+      });
+
+      expect(mockSaveManifest).toHaveBeenCalledTimes(1);
+      expect(result.current.manifestSave).toEqual({ status: "saved", meta: mockMeta });
+    });
+
+    it("surfaces an error when the asset cannot be fetched (offline first visit)", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+
+      const { result } = renderHook(() => useRouteUploader());
+      await act(async () => {
+        await result.current.loadExampleManifest();
+      });
+
+      expect(result.current.error).toBe(UI_LABELS.ERRORS.EXAMPLE_UNAVAILABLE);
+      expect(result.current.loading).toBe(false);
+      expect(mockProcessExcel).not.toHaveBeenCalled();
+    });
+
+    it("surfaces an error on a non-OK response instead of parsing the error page", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 404, blob: async () => new Blob([]) }));
+
+      const { result } = renderHook(() => useRouteUploader());
+      await act(async () => {
+        await result.current.loadExampleManifest();
+      });
+
+      expect(result.current.error).toBe(UI_LABELS.ERRORS.EXAMPLE_UNAVAILABLE);
+      expect(mockProcessExcel).not.toHaveBeenCalled();
+    });
   });
 });

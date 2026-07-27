@@ -4,6 +4,7 @@ import type { SaveManifestResult } from "../services/manifestStorage";
 
 interface Props {
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void; // Handler from useRouteUploader hook
+  onTryExample?: () => void; // Loads the bundled example manifest (TASK-RF-014)
   loading: boolean; // Shows spinner when true
   hasRoutes: boolean; // Hides instructions after successful upload
   error: string | null; // Error message to display
@@ -29,7 +30,7 @@ import { Button } from "./ui/button";
  * @param {string | null} error - Error message to display, null if no error
  * @returns {JSX.Element} The rendered FileUploader component
  */
-export const FileUploader: React.FC<Props> = ({ onFileUpload, loading, hasRoutes, error, missingCols = [], manifestSave = null }) => {
+export const FileUploader: React.FC<Props> = ({ onFileUpload, onTryExample, loading, hasRoutes, error, missingCols = [], manifestSave = null }) => {
   // State to track selected file name
   const [fileName, setFileName] = useState<string | null>(null);
 
@@ -43,8 +44,12 @@ export const FileUploader: React.FC<Props> = ({ onFileUpload, loading, hasRoutes
     onFileUpload(e);
   };
 
+  // `w-full min-w-0` no container raiz (TASK-BG-010): ele é FLEX ITEM da HomePage e nasce
+  // com `min-width: auto`, então se recusava a encolher abaixo do conteúdo mínimo da
+  // ExampleTable — esticava para 1152px e arrastava a página inteira na horizontal.
+  // Zerar o min-width aqui é o que faz o `overflow-auto` da tabela finalmente agir.
   return (
-    <div className="flex flex-col items-center text-center py-2">
+    <div className="flex w-full min-w-0 flex-col items-center text-center py-2">
       {/* Hidden file input - triggered by clicking the label below */}
       <input
         id="file-input"
@@ -63,6 +68,17 @@ export const FileUploader: React.FC<Props> = ({ onFileUpload, loading, hasRoutes
 
       {/* Show selected file name or format instructions */}
       <div className="text-sm text-muted-foreground pt-1 pb-2">{fileName ? UI_LABELS.FILE_UPLOADER.FILE_SELECTED(fileName) : UI_LABELS.FILE_UPLOADER.SELECT_FILE}</div>
+
+      {/* Bundled example manifest (TASK-RF-014): whoever arrives from a link has no
+          spreadsheet. Hidden once a manifest is loaded — there is nothing to try anymore. */}
+      {onTryExample && !hasRoutes && (
+        <div className="flex flex-col items-center pb-3">
+          <Button variant="secondary" size="sm" onClick={onTryExample} disabled={loading}>
+            {UI_LABELS.FILE_UPLOADER.TRY_EXAMPLE}
+          </Button>
+          <span className="text-xs text-muted-foreground pt-1">{UI_LABELS.FILE_UPLOADER.TRY_EXAMPLE_HINT}</span>
+        </div>
+      )}
 
       {/* Import a ready-made roteiro (JSON) — disabled stub until TASK-RF-013 wires it */}
       <Button variant="outline" size="sm" disabled title={UI_LABELS.FILE_UPLOADER.IMPORT_JSON_SOON} aria-label={UI_LABELS.FILE_UPLOADER.IMPORT_JSON_SOON} className="mb-4">
@@ -92,9 +108,14 @@ export const FileUploader: React.FC<Props> = ({ onFileUpload, loading, hasRoutes
 
       {/* Instructions spoiler (closed by default) — only before a file is uploaded.
           Native <details>/<summary>: the exact primitive for a spoiler, accessible,
-          zero new dependency (fluxo §15.2, TASK-RF-022.2). */}
+          zero new dependency (fluxo §15.2, TASK-RF-022.2).
+          w-full, NÃO w-screen (TASK-BG-010): 100vw aqui estourava a largura útil da
+          HOME e arrastava a página inteira na horizontal.
+          `min-w-0` é obrigatório junto: este div é FLEX ITEM do container acima, e flex
+          item tem `min-width: auto` — sem zerar isso ele se recusa a encolher abaixo do
+          conteúdo mínimo da ExampleTable e o `overflow-auto` de dentro nunca chega a agir. */}
       {!loading && !hasRoutes && (
-        <div className="items-center w-screen max-w-6xl">
+        <div className="items-center w-full min-w-0 max-w-6xl">
           <details className="mt-3 m-4 border rounded-lg bg-muted text-left">
             <summary className="cursor-pointer select-none p-4 font-semibold text-lg text-primary">{UI_LABELS.FILE_UPLOADER.INSTRUCTIONS_SUMMARY}</summary>
 

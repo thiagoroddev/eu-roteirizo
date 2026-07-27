@@ -4,7 +4,7 @@ import { hasValidFileExtension } from "../utils/validators";
 import { saveManifest, getManifest, getRouteRows, backfillRouteRows, type SaveManifestResult } from "../services/manifestStorage";
 import type { RoutesMap } from "../types";
 import type { RouteUploaderReturn } from "../types/hooks";
-import { FILE_CONFIG, UI_LABELS } from "../constants";
+import { EXAMPLE_MANIFEST, FILE_CONFIG, UI_LABELS } from "../constants";
 
 /**
  * ===============================================================================================================
@@ -73,12 +73,7 @@ export function useRouteUploader(): RouteUploaderReturn {
    * useCallback memoizes this function so it doesn't get recreated on every render
    * This is important for performance, especially when passed as a prop
    */
-  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    /** Get the selected file from the input event */
-    const file = e.target.files?.[0];
-    /** User cancelled file selection */
-    if (!file) return;
-
+  const processAndSave = useCallback(async (file: File) => {
     /**
      * ===== VALIDATION 1: File Extension =====
      * Check if file ends with .xlsx or .csv
@@ -139,6 +134,54 @@ export function useRouteUploader(): RouteUploaderReturn {
     setLoading(false);
     /** Empty dependency array = function never changes */
   }, []);
+
+  /**
+   * ============================================================================
+   * FILE UPLOAD HANDLER (adapter)
+   * ============================================================================
+   * Thin adapter over `processAndSave`: pulls the File out of the input event.
+   * The processing itself lives in `processAndSave` so other entry points — the
+   * example manifest below (TASK-RF-014) — reuse the SAME pipeline (validation,
+   * parsing, hashing, dedup, persistence) instead of a parallel one.
+   */
+  const handleFileUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      /** User cancelled file selection */
+      if (!file) return;
+      await processAndSave(file);
+    },
+    [processAndSave]
+  );
+
+  /**
+   * ============================================================================
+   * LOAD THE BUNDLED EXAMPLE MANIFEST (TASK-RF-014)
+   * ============================================================================
+   * Lets a visitor try the app with no spreadsheet of their own — the case of
+   * anyone opening the published URL from a link.
+   *
+   * Fetches the manifest shipped in `public/romaneios/` and feeds it through the
+   * exact same path as a real upload, so what the visitor sees is the real
+   * pipeline, not a demo mode. Re-clicking is harmless: the SHA-256 dedup
+   * (RN-23) recognises it and reopens the saved manifest.
+   */
+  const loadExampleManifest = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(EXAMPLE_MANIFEST.PATH);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const blob = await response.blob();
+      await processAndSave(new File([blob], EXAMPLE_MANIFEST.FILE_NAME, { type: blob.type }));
+    } catch {
+      // Offline on a first visit (service worker has not cached it yet) or the
+      // asset is missing from the build. Say so instead of failing silently.
+      setError(UI_LABELS.ERRORS.EXAMPLE_UNAVAILABLE);
+      setLoading(false);
+    }
+  }, [processAndSave]);
 
   /**
    * ============================================================================
@@ -216,6 +259,7 @@ export function useRouteUploader(): RouteUploaderReturn {
     isSingleRoute,
     manifestSave,
     handleFileUpload,
+    loadExampleManifest,
     loadManifest,
   };
 }

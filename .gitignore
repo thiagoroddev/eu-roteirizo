@@ -30,6 +30,13 @@ arquivos-testes/
 *.csv
 *.pdf
 
+# EXCEÇÃO estreita (TASK-RF-014): os romaneios de EXEMPLO são fictícios e PRECISAM ser
+# versionados — é deles que o app se serve no botão "Testar com romaneio de exemplo",
+# e sem isso o deploy responde 404. A regra ampla acima continua valendo para todo o
+# resto, que é o que impede um romaneio REAL (com dados de entrega de cliente) de
+# entrar no repositório por descuido. Não alargue esta exceção.
+!public/romaneios/*.xlsx
+
 # Se você tiver uma pasta só para dados brutos, ignore ela toda:
 # /data/
 
