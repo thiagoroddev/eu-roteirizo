@@ -285,8 +285,15 @@ npm run dev          # servidor de desenvolvimento
 npm run build        # build de produção
 npm run test         # rodar testes
 npm run lint         # rodar linter
-npx tsc --noEmit     # checar tipos sem emitir arquivos
+npm run typecheck    # checar tipos (script do projeto — ver aviso abaixo)
 ```
+
+> ⚠️ **Use o script do projeto, não `npx tsc --noEmit` de cabeça.** Em projeto com
+> `tsconfig.json` *solution-style* (`"files": []` + só `references`), `tsc --noEmit`
+> **não segue as references** e sai com código 0 tendo lido **zero arquivos** — um gate
+> verde que não checou nada. Quem conhece o layout do `tsconfig` é o projeto; por isso a
+> instrução canônica é `npm run typecheck`. Se o script não existir, crie-o antes de
+> rotular o gate (detalhes em [`referencias/51-comandos.md`](./referencias/51-comandos.md#-typescript)).
 
 ---
 
@@ -294,6 +301,7 @@ npx tsc --noEmit     # checar tipos sem emitir arquivos
 
 |Versão|Data|Mudança|
 |---|---|---|
+|4.1|2026-07-27|**Gate de typecheck passa a ser `npm run typecheck`, não `npx tsc --noEmit`** (§10, `processos/20` §5.2, `padroes/10`, `referencias/51`). Motivo: com `tsconfig.json` *solution-style* (`"files": []` + só `references`, o padrão do scaffold do Vite), `tsc --noEmit` **não segue as references** e sai com código 0 tendo lido **zero arquivos** — gate verde que nunca checou nada, inclusive com erro de sintaxe no código. Só `tsc -b` segue. Como o comando correto depende do layout do `tsconfig`, o pacote deixa de prescrevê-lo e delega ao script do projeto. Armadilha documentada em `referencias/51-comandos.md` §TypeScript, com o diagnóstico `tsc --noEmit --listFiles \| wc -l`. Origem: TASK-BG-010 / TASK-CHORE-010.|
 |4.0|2026-06-26|Reestruturação multi-ferramenta + saneamento. Entry points `CLAUDE.md`/`AGENTS.md`/`.github/copilot-instructions.md`; 9 Skills em `.claude/skills/`; 7 `.github/instructions/*.instructions.md` (`applyTo`). Renome `.md.md`→`.md`, frontmatter YAML válido, 489 links `claude.ai` corrigidos; `geral-leve` arquivado. Ver `referencias/53-changelog.md`.|
 |3.4|2026-06-24|Template `38-requisitos.md` (novo): formato único de `docs/requisitos/` (RF/RN/RNF) com prioridade, status e rastreabilidade requisito↔tarefa↔ADR; módulo 26 §6.3 passa a referenciá-lo (antes "ver templates" não tinha alvo).|
 |3.3|2026-06-09|Regra de numeração de IDs de tarefa (§4.4): próximo número após o maior do prefixo no índice de concluídas (`0-indice-concluidas.md`); gaps ignorados, nunca reaproveitados.|

@@ -124,7 +124,7 @@ Não revisar sem ADR explícita:
 
 - **Fase:** visualizador (modo Original) **estável e polido**; **Meu roteiro em construção** — épico RF-006 com `.1 → .4.27` concluídas (entrar no modo, início por GPS/toque/endereço, grafo OSM lazy, criar/editar parada por raio + adição por toque, zoom por contexto, painel por modo); restam `.5` (gestos da âncora), `.6` (edição plena), `.7` (traçado), `.8` (visão geral), `.9` (geocoding da âncora).
 - **Fila:** `REF-016 (espaçamento) → RF-008 (persistência do roteiro) → TEST-003 → RF-006.8 → .5 → .6 → .7 → RF-007 → RF-009 → RF-012 → RF-013` — detalhe no topo de [`pendentes.md`](./tarefas/pendentes.md).
-- **Testes:** **639/639** em 63 arquivos (10/07/26); gates por tarefa: `tsc --noEmit` + `eslint` + `vitest` + `build`, rotulados no registro.
+- **Testes:** **639/639** em 63 arquivos (10/07/26); gates por tarefa: `npm run typecheck` + `eslint` + `vitest` + `build`, rotulados no registro. ⚠️ **`npx tsc --noEmit` não serve como gate aqui** — o `tsconfig.json` da raiz é solution-style e o comando sai 0 sem ler arquivo nenhum (TASK-BG-010); o script `typecheck` roda `tsc -b`, que é o que de fato checa.
 - **Segurança:** última checagem (24/06) `npm audit` = 1 low (esbuild dev-server, fixado pela faixa do Vite).
 - **Dívida técnica:** [`docs/dominios/divida-tecnica.md`](./dominios/divida-tecnica.md) (DT-001 TWA, DT-002 billing × sem-backend).
 

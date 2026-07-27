@@ -44,7 +44,7 @@ Scripts padrão esperados em projeto que segue este pacote:
     "test:coverage": "vitest run --coverage",
     "lint": "eslint . --ext ts,tsx",
     "lint:fix": "eslint . --ext ts,tsx --fix",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",  // ⚠️ solution-style? use "tsc -b" — ver §TypeScript
     "format": "prettier --write ."
   }
 }
@@ -217,18 +217,39 @@ npx vitest --changed
 ## 📘 TypeScript
 
 ```bash
-# Typecheck sem gerar JS (mais rápido)
-npx tsc --noEmit
-
-# Typecheck com watch (re-checa ao mudar)
-npx tsc --noEmit --watch
-
-# Listar erros em arquivo específico
-npx tsc --noEmit src/components/Botao.tsx
+# Typecheck — SEMPRE pelo script do projeto (ver armadilha abaixo)
+npm run typecheck
 
 # Mostrar opções de compilação efetivas
 npx tsc --showConfig
+
+# Quantos arquivos o comando REALMENTE checou (diagnóstico)
+npx tsc --noEmit --listFiles | wc -l
 ```
+
+### ⚠️ Armadilha: `tsc --noEmit` pode não checar nada
+
+Em projeto com `tsconfig.json` **solution-style** — `"files": []` e apenas `"references"`,
+layout padrão do scaffold do Vite — o `tsc --noEmit` **não segue as project references**.
+Ele sai com **código 0 tendo lido zero arquivos**: um gate verde que nunca checou coisa
+alguma, e que continua verde com erro de sintaxe no código.
+
+Só `tsc -b` (build mode) segue references. Como o comando correto depende do layout do
+`tsconfig`, **a instrução canônica é `npm run typecheck`** — o projeto define o script,
+o agente apenas o executa.
+
+```bash
+# Diagnóstico: se isto imprimir 0, seu gate de tipos é decorativo
+npx tsc --noEmit --listFiles | wc -l
+
+# Em projeto solution-style, o script correto é:
+#   "typecheck": "tsc -b"
+# Em projeto com tsconfig único, o usual serve:
+#   "typecheck": "tsc --noEmit"
+```
+
+Caso real: neste repositório o gate ficou meses sendo rotulado APROVADO sem checar nada
+(TASK-BG-010, 27/07/26). Quem sustentava a checagem era o `npm run build`, que roda `tsc -b`.
 
 ---
 

@@ -315,7 +315,7 @@ A hora usa `HHhMM` (ex: `17h30`). Sem `:` para evitar problema em alguns sistema
 Uma tarefa **só pode** ser marcada como concluída quando:
 
 1. **Testes passam.** Se quebrou algum, conserte ou registre por que está OK quebrado
-2. **Typecheck passa.** `npx tsc --noEmit` (ou `npm run typecheck`) verde. Vale para qualquer tarefa que toque `.ts`/`.tsx`, mesmo que só o teste mude — `tsc` enxerga `src` inteiro.
+2. **Typecheck passa.** `npm run typecheck` verde. Vale para qualquer tarefa que toque `.ts`/`.tsx`, mesmo que só o teste mude — o typecheck enxerga `src` inteiro. ⚠️ **Rode o script do projeto, não `npx tsc --noEmit` de cabeça:** com `tsconfig` *solution-style*, `--noEmit` sai 0 sem ler arquivo nenhum (ver [`01-nucleo.md`](../01-nucleo.md#10-comandos-rápidos)). Se o script não existir, crie-o antes de rotular este gate.
 3. **Código revisado.** Pelo menos auto-revisão usando [`21-revisao-codigo.md`](./21-revisao-codigo.md) (ou `N/A` para Light)
 4. **Critérios de aceite cumpridos.** Aqueles definidos no plano
 5. **Documentação atualizada.** Se afeta `docs/`, atualize antes de concluir

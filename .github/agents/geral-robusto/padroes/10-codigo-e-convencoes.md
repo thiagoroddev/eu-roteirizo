@@ -344,7 +344,7 @@ const servico = exigir(
 ```
 
 **Sinal de alerta:** sempre que um `.find()`/`.get()` seguido de guard for usado dentro de uma
-função aninhada. Rode `npx tsc --noEmit` logo após escrever — não deixe para o fechamento.
+função aninhada. Rode `npm run typecheck` logo após escrever — não deixe para o fechamento.
 
 ---
 
