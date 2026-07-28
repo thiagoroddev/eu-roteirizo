@@ -242,7 +242,7 @@ Para terminar uma, **remova o bloco inteiro** (com o `---` anterior se for o cas
 
 **6. E se eu cancelar a tarefa antes de concluir?** Mova o bloco para `concluidas/` com `**Status: CANCELADA**` e documente o motivo na seção "O que NÃO foi feito". Veja [módulo 20, seção 10.4](../processos/20-ciclo-tarefa.md#104-tarefa-cancelada).
 
-**7. O que escrevo em "Planejamento Aprovado"?** **O mesmo plano que você apresentou ao humano no chat e que ele aprovou** — texto integral (O que muda / Critérios de aceite / Impacto / Riscos / Dependências novas), **não um resumo**. Esse bloco é o contrato aprovado e depois é copiado, sem alteração, para o arquivo da tarefa concluída. Se o plano mudar durante a execução, volte ao passo PLANEJAR, reaprove com o humano e atualize este bloco (registrando a mudança em `## Execução`).
+**7. O que escrevo em "Planejamento Aprovado"?** **O mesmo plano que você apresentou ao humano no chat e que ele aprovou**, em texto integral (O que muda / Critérios de aceite / Impacto / Riscos / Dependências novas), **não um resumo**. Esse bloco é o contrato aprovado e depois é copiado, sem alteração, para o arquivo da tarefa concluída. Se o plano mudar durante a execução, volte ao passo PLANEJAR, reaprove com o humano e atualize este bloco (registrando a mudança em `## Execução`).
 
 ---
 

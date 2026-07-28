@@ -16,5 +16,5 @@ Roteador para o processo canônico. **Leia e siga:**
 - Apoio: `.github/agents/geral-robusto/padroes/10-codigo-e-convencoes.md` e `11-arquitetura-e-pastas.md`
 
 Lembretes-chave:
-- Refatoração **não muda comportamento** — exige rede de testes verde antes e depois.
+- Refatoração **não muda comportamento**, o que exige rede de testes verde antes e depois.
 - Se a "refatoração" estiver fora do escopo da tarefa atual, **anote e proponha tarefa separada**.

@@ -16,5 +16,5 @@ Roteador para o processo canônico. **Leia e siga:**
 - Apoio: `.github/agents/geral-robusto/checklists/40-revisao-rapida.md`
 
 Lembretes-chave:
-- **Não inicie por conta própria** — só sob pedido explícito do humano. Pode *sugerir*.
+- **Não inicie por conta própria**: só sob pedido explícito do humano. Pode *sugerir*.
 - Registro em `docs/arquitetura/revisoes-gerais/REV-<NNN>.md`; achados geram `REV-NNN-Axx` citados nas tarefas.

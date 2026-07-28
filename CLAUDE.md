@@ -1,4 +1,4 @@
-# Guia do Agente — Claude Code
+# Guia do Agente: Claude Code
 
 > Entry point do Claude Code para este repositório. O conteúdo canônico do agente vive
 > em [`.github/agents/geral-robusto/`](.github/agents/geral-robusto/) (fonte única da verdade).

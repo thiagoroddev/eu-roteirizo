@@ -27,7 +27,7 @@
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy:test": "npm run build && npx wrangler pages deploy dist --project-name=pre-rota-teste",
+    "deploy:test": "npm run build && npx wrangler pages deploy dist --project-name=eu-roteirizo-prototipo",
     "analise-risco": "ts-node --esm __utilidades-back-office__/consultaRiscoCorreios.ts",
     "extrair-complementos": "ts-node --esm __utilidades-back-office__/extrairComplementos.ts"
   },

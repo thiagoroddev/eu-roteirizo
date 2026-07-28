@@ -1,6 +1,6 @@
-> ⚠️ **DRAFT — planejamento de funcionalidade futura, NÃO implementada.** Este documento descreve a evolução do PWA atual (visualizador de rotas) para um **roteirizador interativo de paradas a pé/veículo, com cálculo local de caminhos**. Reflete uma *intenção de produto* discutida em 22/06/26, não o código atual. Para o estado real, ver `docs/contexto-projeto-ai.md` e `docs/CODIGO_COMENTADO.md`. Nada aqui vira tarefa até ser quebrado em `docs/tarefas/pendentes.md`.
+> ⚠️ **DRAFT: planejamento de funcionalidade futura, NÃO implementada.** Este documento descreve a evolução do PWA atual (visualizador de rotas) para um **roteirizador interativo de paradas a pé/veículo, com cálculo local de caminhos**. Reflete uma *intenção de produto* discutida em 22/06/26, não o código atual. Para o estado real, ver `docs/contexto-projeto-ai.md` e `docs/CODIGO_COMENTADO.md`. Nada aqui vira tarefa até ser quebrado em `docs/tarefas/pendentes.md`.
 
-# 🧭 Roteirizador a Pé — Planejamento Conceitual
+# 🧭 Roteirizador a Pé: Planejamento Conceitual
 
 > Transformar o visualizador atual num **planejador de rota com paradas personalizadas**, pensado para a realidade de quem entrega a com veículo mas precisa andar partes a pé (caso de uso: entregador Shopee). O diferencial é não depender de API paga de roteirização: os cálculos são funções locais sobre dados de via abertos (OpenStreetMap).
 
@@ -43,12 +43,12 @@ A ausência das colunas de agrupamento, somada a validações, identifica que se
 | Romaneio multi-rota (atual) | Sim | Agrupa por cage, modo visualizador |
 | Planilha de rota única (novo) | Não | Todas as linhas = uma rota só |
 
-O que **continua obrigatório** em qualquer cenário é o par de coordenadas (`Latitude`/`Longitude`) — sem isso não há o que plotar. O `Corridor Cage` migra de *obrigatório* para *condicional*: sua ausência não é erro, é um sinal.
+O que **continua obrigatório** em qualquer cenário é o par de coordenadas (`Latitude`/`Longitude`): sem isso não há o que plotar. O `Corridor Cage` migra de *obrigatório* para *condicional*: sua ausência não é erro, é um sinal.
 
-> 🔍 **Análise Profunda — onde mexer:**
+> 🔍 **Análise Profunda: onde mexer:**
 > A lógica vive em `src/utils/excelProcessor.ts` e nas constantes `MANDATORY_COLUMNS`/`OPTIONAL_COLUMNS` (`src/constants/index.ts`). A refatoração é separar "colunas que validam coordenada" (sempre obrigatórias) de "colunas que definem agrupamento" (opcionais, mudam o modo). É a mudança de **menor risco** do projeto inteiro e a porta de entrada para tudo o que vem depois. Deve ser a primeira tarefa.
 
-⚠️ **Atenção:** essa mudança mexe num ponto coberto por testes (`excelProcessor.test.ts`). Atualizar os testes faz parte da tarefa — o projeto preza "código é a verdade primária" e tem 235 testes passando.
+⚠️ **Atenção:** essa mudança mexe num ponto coberto por testes (`excelProcessor.test.ts`). Atualizar os testes faz parte da tarefa: o projeto preza "código é a verdade primária" e tem 235 testes passando.
 
 ---
 
@@ -56,22 +56,22 @@ O que **continua obrigatório** em qualquer cenário é o par de coordenadas (`L
 
 O "traçar caminhos respeitando o sentido das vias" tem dois níveis de ambição. **Decisão tomada: começar pelo A e evoluir para o B.** Documentado aqui porque essa escolha governa todo o roadmap.
 
-### Nível A — Sugestão por proximidade + navegação delegada
+### Nível A: Sugestão por proximidade + navegação delegada
 
-O app ordena/sugere paradas pela **distância** (inicialmente em linha reta — *haversine*) e desenha linhas simples no mapa. A navegação *real*, com mão de direção, é **delegada ao Google Maps / Waze** via deep links. Esses apps já fazem roteamento perfeito e de graça.
+O app ordena/sugere paradas pela **distância** (inicialmente em linha reta: *haversine*) e desenha linhas simples no mapa. A navegação *real*, com mão de direção, é **delegada ao Google Maps / Waze** via deep links. Esses apps já fazem roteamento perfeito e de graça.
 
 - **Custo:** ~zero. **Esforço:** médio. **Risco:** baixo.
 - Entrega valor de cara: o usuário já monta paradas, vê estimativas e navega.
-- É o que a maioria dos apps baratos faz — e já seria melhor que o roteirizador da Shopee para o caso a pé.
+- É o que a maioria dos apps baratos faz: e já seria melhor que o roteirizador da Shopee para o caso a pé.
 
-### Nível B — Roteamento local real (o diferencial)
+### Nível B: Roteamento local real (o diferencial)
 
 O próprio app calcula e desenha o traçado que **respeita as mãos de direção**, sobre um grafo de ruas do OpenStreetMap, com algoritmo de menor caminho local (sem API de roteirização). Detalhado na seção 7.
 
 - **Custo:** ~zero (dados OSM são abertos). **Esforço:** alto. **Risco:** médio.
 - É o diferencial técnico, mas só vale atacar depois que o fluxo de paradas estiver de pé.
 
-> ✅ **Viabilidade CONFIRMADA (22/06/26).** Decisão: ir direto para o Nível B — o usuário precisa, já no planejamento, ver a rua traçada com a quilometragem real e comparar destinos pelas ruas percorridas, o que o Nível A não entrega. Um protótipo descartável foi construído em [`prototipos/roteamento-osm/`](../../prototipos/roteamento-osm/) e validado em campo (Ipanema): o A* sobre grafo direcionado **respeita a mão de direção** (contramão vira desvio), exibe a quilometragem pelas ruas e os nomes das vias percorridas, recalculando ao trocar o destino. O núcleo (grafo + A*) também passou em testes automatizados em Node antes da tela. Próximo passo deixa de ser "provar" e passa a ser "migrar para o projeto".
+> ✅ **Viabilidade CONFIRMADA (22/06/26).** Decisão: ir direto para o Nível B, o usuário precisa, já no planejamento, ver a rua traçada com a quilometragem real e comparar destinos pelas ruas percorridas, o que o Nível A não entrega. Um protótipo descartável foi construído em [`prototipos/roteamento-osm/`](../../prototipos/roteamento-osm/) e validado em campo (Ipanema): o A* sobre grafo direcionado **respeita a mão de direção** (contramão vira desvio), exibe a quilometragem pelas ruas e os nomes das vias percorridas, recalculando ao trocar o destino. O núcleo (grafo + A*) também passou em testes automatizados em Node antes da tela. Próximo passo deixa de ser "provar" e passa a ser "migrar para o projeto".
 
 > 💡 **Por que A antes de B (raciocínio de mentor):** a parte difícil (roteamento) é independente da parte que define o produto (paradas, estimativas, modo execução). Construir o caro primeiro é arriscar semanas no motor e descobrir tarde que a UX de paradas precisava ser diferente. Validar o A garante que, quando o B chegar, ele se encaixa num app que você já sabe que funciona. Os dois **coexistem**: o B só troca o "como a linha é desenhada", sem reescrever o resto.
 
@@ -98,7 +98,7 @@ interface DeliveryPoint {
 
 /**
  * Parada (Stop) = agrupamento de Pontos próximos, atendidos a pé.
- * É a UNIDADE de planejamento — a abstração nova que o app introduz.
+ * É a UNIDADE de planejamento: a abstração nova que o app introduz.
  */
 interface RouteStop {
   order: number;            // número ordinal exibido no mapa (1, 2, 3...)
@@ -123,8 +123,8 @@ interface PlannedRoute {
 }
 ```
 
-> 🔍 **Análise Profunda — por que separar `DeliveryPoint` de `RouteStop`?**
-> Porque eles têm ciclos de vida diferentes. O `DeliveryPoint` é *imutável* (veio da planilha). A `RouteStop` é *construída e editada* pelo usuário — pontos entram e saem dela. Misturar os dois (ex.: marcar `isInStop` direto no ponto) embaralharia "o que é dado" com "o que é decisão", e tornaria difícil desfazer/refazer. Essa separação é a diferença entre um código que um humano mantém e um emaranhado.
+> 🔍 **Análise Profunda: por que separar `DeliveryPoint` de `RouteStop`?**
+> Porque eles têm ciclos de vida diferentes. O `DeliveryPoint` é *imutável* (veio da planilha). A `RouteStop` é *construída e editada* pelo usuário: pontos entram e saem dela. Misturar os dois (ex.: marcar `isInStop` direto no ponto) embaralharia "o que é dado" com "o que é decisão", e tornaria difícil desfazer/refazer. Essa separação é a diferença entre um código que um humano mantém e um emaranhado.
 
 Repare numa correspondência com o que você já conhece: é a mesma lógica de **estado derivado** do React. `DeliveryPoint[]` é a fonte da verdade (como `props`); `RouteStop[]` é a decisão do usuário sobre essa fonte (como `state`); os contadores ("X pontos definidos, Y pacotes faltando") são *derivados* dos dois (como um `useMemo`), nunca armazenados em duplicidade.
 
@@ -142,7 +142,7 @@ A sequência que você descreveu, traduzida em estados:
 6. **Repetir** até todos os pontos estarem em alguma parada.
 7. **Salvar a rota** → só é permitido quando **todos os pacotes/pontos foram atribuídos** (validação de completude).
 
-> 💡 **Dica de implementação:** o estado dessa construção é bem mais complexo que o `useState` espalhado de hoje. Recomendação: um `useReducer` dedicado (`routeBuilderReducer`) com ações explícitas (`SELECT_START`, `CREATE_STOP`, `ADD_POINT_TO_STOP`, `REMOVE_POINT`, `COMMIT_STOP`). Isso dá histórico de ações legível e abre caminho natural para *desfazer/refazer*. É também a forma como um humano experiente organizaria — não um componentão de 800 linhas com vinte `useState`.
+> 💡 **Dica de implementação:** o estado dessa construção é bem mais complexo que o `useState` espalhado de hoje. Recomendação: um `useReducer` dedicado (`routeBuilderReducer`) com ações explícitas (`SELECT_START`, `CREATE_STOP`, `ADD_POINT_TO_STOP`, `REMOVE_POINT`, `COMMIT_STOP`). Isso dá histórico de ações legível e abre caminho natural para *desfazer/refazer*. É também a forma como um humano experiente organizaria: não um componentão de 800 linhas com vinte `useState`.
 
 ### Vizinho mais próximo ≠ TSP
 
@@ -156,34 +156,34 @@ Esta seção existe para quando o Nível B for atacado. É o tema que mais merec
 
 ### 7.1 Por que "respeitar o sentido da via" é um problema de grafo
 
-Uma rua, para o computador, não é um traço no mapa — precisa virar um **grafo direcionado**:
+Uma rua, para o computador, não é um traço no mapa: precisa virar um **grafo direcionado**:
 
 - **Nós (vértices):** os cruzamentos.
 - **Arestas (edges):** os trechos de rua entre cruzamentos. Cada aresta tem um *peso* (distância ou tempo) e uma *direção permitida*.
 
 Numa rua de mão dupla, há aresta nos dois sentidos entre dois nós. Numa rua de mão única (`oneway`), só existe a aresta no sentido permitido. Essa é a sacada:
 
-> 🔍 **Análise Profunda:** a restrição de mão de direção não é uma regra que você programa "à parte" — ela **emerge da estrutura de dados**. Se a aresta da contramão simplesmente não existe no grafo, nenhum algoritmo de busca vai te mandar por ela. A mão única vira "ausência de caminho", e não "caminho proibido a checar". Modelar bem o dado elimina a necessidade de lógica defensiva. Esse é um princípio que se repete em programação: *estruturas de dados corretas tornam algoritmos triviais*.
+> 🔍 **Análise Profunda:** a restrição de mão de direção não é uma regra que você programa "à parte", ela **emerge da estrutura de dados**. Se a aresta da contramão simplesmente não existe no grafo, nenhum algoritmo de busca vai te mandar por ela. A mão única vira "ausência de caminho", e não "caminho proibido a checar". Modelar bem o dado elimina a necessidade de lógica defensiva. Esse é um princípio que se repete em programação: *estruturas de dados corretas tornam algoritmos triviais*.
 
 **Analogia:** pense num tabuleiro onde cada casa tem setas de saída pintadas no chão. Você só pode mover seguindo setas. Mão única = a casa só tem seta num sentido. O algoritmo nunca "decide" ir na contramão; ele simplesmente não tem por onde.
 
 ### 7.2 De onde vêm os dados das vias
 
-Do **OpenStreetMap (OSM)** — base cartográfica aberta e gratuita. As vias vêm como *ways* com tags, incluindo `highway` (tipo da via) e `oneway=yes/no/-1` (mão de direção). Formas de obter:
+Do **OpenStreetMap (OSM)**: base cartográfica aberta e gratuita. As vias vêm como *ways* com tags, incluindo `highway` (tipo da via) e `oneway=yes/no/-1` (mão de direção). Formas de obter:
 
-- **Overpass API** — consulta sob demanda um recorte geográfico ("me dê todas as ruas neste retângulo"). Boa para começar.
-- **Extract `.osm.pbf`** — arquivo pré-baixado de uma região (ex.: Rio de Janeiro), processado uma vez. Melhor para offline/PWA.
+- **Overpass API**: consulta sob demanda um recorte geográfico ("me dê todas as ruas neste retângulo"). Boa para começar.
+- **Extract `.osm.pbf`**: arquivo pré-baixado de uma região (ex.: Rio de Janeiro), processado uma vez. Melhor para offline/PWA.
 
-> ⚠️ **Atenção — isto NÃO viola a regra de "sem API de roteirização".** A regra é não usar API que *calcula a rota* (Google Directions, Mapbox Directions — pagas/limitadas). Pegar o *dado bruto* das vias do OSM é o equivalente a baixar um mapa: o cálculo continua 100% local. São coisas diferentes, e a distinção é o que torna a sua ideia viável e barata.
+> ⚠️ **Atenção: isto NÃO viola a regra de "sem API de roteirização".** A regra é não usar API que *calcula a rota* (Google Directions, Mapbox Directions: pagas/limitadas). Pegar o *dado bruto* das vias do OSM é o equivalente a baixar um mapa: o cálculo continua 100% local. São coisas diferentes, e a distinção é o que torna a sua ideia viável e barata.
 
 ### 7.3 O algoritmo: Dijkstra / A*
 
 Com o grafo montado, achar o menor caminho entre dois nós é um problema clássico e resolvido:
 
 - **Dijkstra:** explora o grafo em ondas a partir da origem, sempre expandindo o nó de menor custo acumulado, até alcançar o destino. Garante o caminho ótimo.
-- **A\* (A-estrela):** um Dijkstra "esperto" — usa uma *heurística* (a distância em linha reta até o destino) para priorizar a exploração na direção certa, achando o ótimo muito mais rápido. É o padrão para roteamento em mapas.
+- **A\* (A-estrela):** um Dijkstra "esperto", usa uma *heurística* (a distância em linha reta até o destino) para priorizar a exploração na direção certa, achando o ótimo muito mais rápido. É o padrão para roteamento em mapas.
 
-Em JavaScript, bibliotecas como `ngraph.graph` (estrutura) + `ngraph.path` (A\*) fazem a busca. **Seu trabalho** é o pipeline: OSM → grafo `ngraph` com pesos e direção corretos. Implementar Dijkstra na mão também é um excelente exercício didático, se o objetivo for aprender — vale como estudo paralelo.
+Em JavaScript, bibliotecas como `ngraph.graph` (estrutura) + `ngraph.path` (A\*) fazem a busca. **Seu trabalho** é o pipeline: OSM → grafo `ngraph` com pesos e direção corretos. Implementar Dijkstra na mão também é um excelente exercício didático, se o objetivo for aprender: vale como estudo paralelo.
 
 ### 7.4 Onde mora a dificuldade real
 
@@ -201,13 +201,13 @@ Não é o algoritmo (as libs resolvem). É o **pipeline de dados**:
 
 ## 8. Modo Execução
 
-Sem GPS em tempo real (decisão consciente — mantém simples e barato). A execução é **manual e guiada**:
+Sem GPS em tempo real (decisão consciente: mantém simples e barato). A execução é **manual e guiada**:
 
 - Iniciar rota → no ponto inicial, o app destaca a **primeira parada** com endereço e botões "Abrir no Google Maps" / "Abrir no Waze".
 - O usuário chega, toca **"Cheguei"** → app revela o próximo ponto/parada.
 - Dentro de uma parada (pontos do mesmo agrupamento), os links abrem em **modo caminhada** no Google Maps quando possível.
 
-> 🔍 **Como funcionam os deep links (fundamento):** são apenas URLs com parâmetros que o sistema operacional reconhece e abre no app correspondente. Ex.: `https://www.google.com/maps/dir/?api=1&destination=LAT,LNG&travelmode=walking` abre o Maps já em modo a pé; o Waze usa `https://waze.com/ul?ll=LAT,LNG&navigate=yes`. É a forma mais barata de ter navegação turn-by-turn real sem reimplementar nada — você delega para quem já faz bem. No Nível A, é *a* estratégia de navegação; no Nível B, convive com o traçado próprio.
+> 🔍 **Como funcionam os deep links (fundamento):** são apenas URLs com parâmetros que o sistema operacional reconhece e abre no app correspondente. Ex.: `https://www.google.com/maps/dir/?api=1&destination=LAT,LNG&travelmode=walking` abre o Maps já em modo a pé; o Waze usa `https://waze.com/ul?ll=LAT,LNG&navigate=yes`. É a forma mais barata de ter navegação turn-by-turn real sem reimplementar nada: você delega para quem já faz bem. No Nível A, é *a* estratégia de navegação; no Nível B, convive com o traçado próprio.
 
 ---
 
@@ -240,14 +240,14 @@ Além do que o projeto já tem (React, Leaflet, SheetJS, Vite/PWA):
 | Modo execução + deep links | **Média** | Máquina de estados + URLs. |
 | **Roteamento local (Nível B)** | **Alta** | 80% do esforço total; pipeline OSM→grafo→A\*. |
 
-**Conclusão:** o projeto é viável e a maior parte é acessível ao seu nível. O Nível A entrega um app útil e diferenciado com baixo risco. O Nível B é a fronteira técnica — concentre o estudo ali, mas só depois que o A estiver de pé.
+**Conclusão:** o projeto é viável e a maior parte é acessível ao seu nível. O Nível A entrega um app útil e diferenciado com baixo risco. O Nível B é a fronteira técnica: concentre o estudo ali, mas só depois que o A estiver de pé.
 
 ---
 
 ## 11. Próximos Passos Sugeridos (não são tarefas ainda)
 
 1. Quebrar o **Nível A** em tarefas em `docs/tarefas/pendentes.md`, começando por `TASK-RF` da leitura de rota única.
-2. Validar o modelo de dados (seção 5) — é a decisão mais barata de mudar agora e mais cara de mudar depois.
+2. Validar o modelo de dados (seção 5): é a decisão mais barata de mudar agora e mais cara de mudar depois.
 3. Prototipar o agrupamento por raio com dados reais de um romaneio seu, para sentir se 2 m / N metros faz sentido na prática.
 4. Só então abrir uma frente de estudo dedicada ao roteamento (Nível B).
 

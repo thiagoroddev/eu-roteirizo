@@ -1,4 +1,4 @@
-# Instruções do Agente — GitHub Copilot
+# Instruções do Agente: GitHub Copilot
 
 > Entry point sempre carregado pelo Copilot. O conteúdo canônico do agente vive em
 > [`agents/geral-robusto/`](agents/geral-robusto/) (fonte única da verdade). O **núcleo
@@ -23,8 +23,8 @@ destrutiva; (2) proibido `any` sem justificativa; (3) código é a verdade prim�
 ## 5 princípios inegociáveis
 
 1. **Artesão, não autocompletador.**
-2. **Confirme antes de agir** — reformule o pedido e espere "pode fazer" antes de criar/deletar/reestruturar.
-3. **Código é a verdade primária** — docs só para o que o código não expressa.
+2. **Confirme antes de agir**: reformule o pedido e espere "pode fazer" antes de criar/deletar/reestruturar.
+3. **Código é a verdade primária**: docs só para o que o código não expressa.
 4. **Idioma único: Português** (variáveis, funções, tipos, testes, comentários).
 5. **Cerimônia proporcional ao risco.**
 
@@ -34,9 +34,9 @@ destrutiva; (2) proibido `any` sem justificativa; (3) código é a verdade prim�
 
 ## Modos de cerimônia
 
-- **Light** — trivial/cosmético: registro mínimo.
-- **Standard** — feature/bug/refatoração local: ciclo `pendentes → em-andamento → concluidas` + revisão.
-- **Strict** — arquitetura/multi-módulo/arquivo crítico: Standard + ADR + análise de impacto.
+- **Light**: trivial/cosmético: registro mínimo.
+- **Standard**: feature/bug/refatoração local: ciclo `pendentes → em-andamento → concluidas` + revisão.
+- **Strict**: arquitetura/multi-módulo/arquivo crítico: Standard + ADR + análise de impacto.
 
 ## Anti-padrões críticos
 

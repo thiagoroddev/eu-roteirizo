@@ -208,7 +208,7 @@ Estrutura mínima:
 
 ## Planejamento Aprovado
 
-[O MESMO plano apresentado ao humano no chat e por ele aprovado — texto integral, não um resumo]
+[O MESMO plano apresentado ao humano no chat e por ele aprovado, em texto integral, não um resumo]
 
 ## Execução
 
@@ -228,7 +228,7 @@ Estrutura mínima:
 
 | Regra                                         | Detalhe                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`Planejamento Aprovado` = o plano do chat** | A seção `## Planejamento Aprovado` reproduz **o mesmo plano que foi apresentado ao humano no chat e por ele aprovado** — texto integral (O que muda / Critérios de aceite / Impacto / Riscos / Dependências novas), **nunca um resumo**. É o contrato do que foi combinado; reproduzi-lo no registro garante rastreabilidade entre o que foi aprovado e o que foi feito. Vale tanto em `em-andamento.md` quanto no arquivo de `concluidas/` (copiado sem alteração). |
+| **`Planejamento Aprovado` = o plano do chat** | A seção `## Planejamento Aprovado` reproduz **o mesmo plano que foi apresentado ao humano no chat e por ele aprovado**, em texto integral (O que muda / Critérios de aceite / Impacto / Riscos / Dependências novas), **nunca um resumo**. É o contrato do que foi combinado; reproduzi-lo no registro garante rastreabilidade entre o que foi aprovado e o que foi feito. Vale tanto em `em-andamento.md` quanto no arquivo de `concluidas/` (copiado sem alteração). |
 | **Máximo 3 em andamento ao mesmo tempo**      | Mais que isso, foco é diluído. Termine uma antes de iniciar outra                                                                                                                                                                                                                                                                                                                                                                                                    |
 | **Log com timestamp**                         | Cada entrada anota a hora. Permite reconstruir a sequência                                                                                                                                                                                                                                                                                                                                                                                                           |
 | **Bloqueios documentados**                    | Quando empaca, anota o que tentou e o que faltou                                                                                                                                                                                                                                                                                                                                                                                                                     |
@@ -315,14 +315,14 @@ A hora usa `HHhMM` (ex: `17h30`). Sem `:` para evitar problema em alguns sistema
 Uma tarefa **só pode** ser marcada como concluída quando:
 
 1. **Testes passam.** Se quebrou algum, conserte ou registre por que está OK quebrado
-2. **Typecheck passa.** `npm run typecheck` verde. Vale para qualquer tarefa que toque `.ts`/`.tsx`, mesmo que só o teste mude — o typecheck enxerga `src` inteiro. ⚠️ **Rode o script do projeto, não `npx tsc --noEmit` de cabeça:** com `tsconfig` *solution-style*, `--noEmit` sai 0 sem ler arquivo nenhum (ver [`01-nucleo.md`](../01-nucleo.md#10-comandos-rápidos)). Se o script não existir, crie-o antes de rotular este gate.
+2. **Typecheck passa.** `npm run typecheck` verde. Vale para qualquer tarefa que toque `.ts`/`.tsx`, mesmo que só o teste mude: o typecheck enxerga `src` inteiro. ⚠️ **Rode o script do projeto, não `npx tsc --noEmit` de cabeça:** com `tsconfig` *solution-style*, `--noEmit` sai 0 sem ler arquivo nenhum (ver [`01-nucleo.md`](../01-nucleo.md#10-comandos-rápidos)). Se o script não existir, crie-o antes de rotular este gate.
 3. **Código revisado.** Pelo menos auto-revisão usando [`21-revisao-codigo.md`](./21-revisao-codigo.md) (ou `N/A` para Light)
 4. **Critérios de aceite cumpridos.** Aqueles definidos no plano
 5. **Documentação atualizada.** Se afeta `docs/`, atualize antes de concluir
 
 Se algum desses falha, a tarefa **continua em andamento**.
 
-**Tarefa Strict não conclui com typecheck por executar.** Se o ambiente local bloqueia (`tsc`/`build` não roda), rode o gate por outro caminho — CI, Windows nativo, outra shell — antes de fechar. Um gate `NÃO EXECUTADO` não é o mesmo que `APROVADO` e não pode sustentar a conclusão (ver [`01-nucleo.md`](../01-nucleo.md#5-anti-padrões-críticos)).
+**Tarefa Strict não conclui com typecheck por executar.** Se o ambiente local bloqueia (`tsc`/`build` não roda), rode o gate por outro caminho (CI, Windows nativo, outra shell) antes de fechar. Um gate `NÃO EXECUTADO` não é o mesmo que `APROVADO` e não pode sustentar a conclusão (ver [`01-nucleo.md`](../01-nucleo.md#5-anti-padrões-críticos)).
 
 ### 5.3 O Que Vai no Arquivo Concluída
 

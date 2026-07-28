@@ -1,4 +1,4 @@
-# Protótipo — roteamento local (Ipanema)
+# Protótipo: roteamento local (Ipanema)
 
 > ⚠️ **Descartável e isolado do projeto.** Não faz parte do app. Existe só pra validar a viabilidade do Nível B (traçar a rua respeitando mão de direção, sem API de roteirização) antes de mexer no código de verdade.
 
@@ -30,13 +30,13 @@ e acesse o endereço que aparecer.
 
 1. Defina a **partida** (1º clique) numa esquina.
 2. Clique num **destino** do outro lado de uma rua de mão única.
-3. Repare: o traço **contorna** — ele não corta na contramão. Compare clicando destinos em sentidos opostos na mesma rua e veja a quilometragem mudar.
+3. Repare: o traço **contorna**, ele não corta na contramão. Compare clicando destinos em sentidos opostos na mesma rua e veja a quilometragem mudar.
 
-Ipanema tem várias transversais de mão única alternada entre a Visconde de Pirajá e a praia — bom lugar pra conferir a olho.
+Ipanema tem várias transversais de mão única alternada entre a Visconde de Pirajá e a praia: bom lugar pra conferir a olho.
 
 ## Limites conhecidos (é protótipo)
 
 - A* didático (varredura linear da fronteira). Para o app, trocar por fila de prioridade (heap) deixa mais rápido.
 - Sem cache: rebaixa a malha a cada abertura. No app, guardar no IndexedDB resolve (e habilita offline).
 - Map matching simples (nó mais próximo). Suficiente pra validar; refinável depois.
-- Velocidade/tempo de entrega ainda não entram aqui — o foco é só provar o traçado + distância.
+- Velocidade/tempo de entrega ainda não entram aqui: o foco é só provar o traçado + distância.

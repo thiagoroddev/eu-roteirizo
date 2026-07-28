@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { buildOverpassQuery, bboxFromBounds, bboxFromPoints, bboxAreaKm2, fetchRoadGraph } from "../../../utils/routing/osm";
-import type { BBox } from "../../../utils/routing/osm";
+import type { BBox, FetchRoadGraphOptions } from "../../../utils/routing/osm";
 import { UI_LABELS } from "../../../constants/uiLabels";
 
 /** Ipanema bbox from the prototype: south, west, north, east. */
@@ -34,6 +34,21 @@ const unparsable = (): Response => ({ ok: true, status: 200, text: () => Promise
 
 /** No-op sleep so retry tests don't wait on the real backoff clock. */
 const noSleep = () => Promise.resolve();
+
+/**
+ * SEMPRE chame o grafo por aqui, nunca `fetchRoadGraph` direto (TASK-BG-009).
+ *
+ * Qualquer caminho de falha atravessa o backoff REAL da TASK-BG-008: com
+ * `MAX_ATTEMPTS = 3` a espera soma 4,5 s a 5,3 s contra o timeout padrão de 5 s do
+ * Vitest, então o teste passa ou falha conforme a carga da máquina. Foi assim que o
+ * "omits stats when the request fails" ficou instável: a BG-008 criou o `noSleep` e o
+ * injetou em sete testes, mas esqueceu o do bloco de medição.
+ *
+ * Este wrapper injeta `noSleep` por padrão para que esquecer deixe de ser possível.
+ * O spread no fim mantém o override: quem precisa espionar o relógio passa o próprio
+ * `sleep` e ele vence.
+ */
+const buscarGrafo = (opts: FetchRoadGraphOptions = {}) => fetchRoadGraph(IPANEMA, { sleep: noSleep, ...opts });
 
 beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn());
@@ -114,7 +129,7 @@ describe("fetchRoadGraph — medição (TASK-CHORE-006)", () => {
   it("reports area, timing, payload size and graph size on success", async () => {
     vi.mocked(fetch).mockResolvedValue(okJson(oneWayResponse));
 
-    const { stats } = await fetchRoadGraph(IPANEMA);
+    const { stats } = await buscarGrafo();
 
     expect(stats).toBeDefined();
     expect(stats?.bboxKm2).toBeCloseTo(2.11, 1);
@@ -127,7 +142,7 @@ describe("fetchRoadGraph — medição (TASK-CHORE-006)", () => {
   it("omits stats when the request fails (nothing to measure)", async () => {
     vi.mocked(fetch).mockResolvedValue(httpError(429));
 
-    expect((await fetchRoadGraph(IPANEMA)).stats).toBeUndefined();
+    expect((await buscarGrafo()).stats).toBeUndefined();
   });
 });
 
@@ -135,7 +150,7 @@ describe("fetchRoadGraph", () => {
   it("builds a graph from the Overpass elements on success", async () => {
     vi.mocked(fetch).mockResolvedValue(okJson(oneWayResponse));
 
-    const result = await fetchRoadGraph(IPANEMA);
+    const result = await buscarGrafo();
 
     expect(result.error).toBeUndefined();
     expect(result.graph?.coords.size).toBe(2);
@@ -147,7 +162,7 @@ describe("fetchRoadGraph", () => {
   it("posts the encoded query to the default Overpass endpoint", async () => {
     vi.mocked(fetch).mockResolvedValue(okJson(oneWayResponse));
 
-    await fetchRoadGraph(IPANEMA);
+    await buscarGrafo();
 
     expect(fetch).toHaveBeenCalledTimes(1);
     const [url, init] = vi.mocked(fetch).mock.calls[0];
@@ -160,7 +175,7 @@ describe("fetchRoadGraph", () => {
   it("honors a custom endpoint from options", async () => {
     vi.mocked(fetch).mockResolvedValue(okJson(oneWayResponse));
 
-    await fetchRoadGraph(IPANEMA, { endpoint: "https://mirror.test/api" });
+    await buscarGrafo({ endpoint: "https://mirror.test/api" });
 
     expect(vi.mocked(fetch).mock.calls[0][0]).toBe("https://mirror.test/api");
   });
@@ -168,7 +183,7 @@ describe("fetchRoadGraph", () => {
   it("returns an error message when Overpass keeps responding non-ok", async () => {
     vi.mocked(fetch).mockResolvedValue(httpError(504));
 
-    const result = await fetchRoadGraph(IPANEMA, { sleep: noSleep });
+    const result = await buscarGrafo();
 
     expect(result.graph).toBeUndefined();
     expect(result.error).toBe(UI_LABELS.ROUTING.OVERPASS_HTTP_ERROR(504));
@@ -177,7 +192,7 @@ describe("fetchRoadGraph", () => {
   it("returns the network error when fetch keeps rejecting", async () => {
     vi.mocked(fetch).mockRejectedValue(new TypeError("Failed to fetch"));
 
-    const result = await fetchRoadGraph(IPANEMA, { sleep: noSleep });
+    const result = await buscarGrafo();
 
     expect(result.graph).toBeUndefined();
     expect(result.error).toBe(UI_LABELS.ROUTING.NETWORK_ERROR);
@@ -186,7 +201,7 @@ describe("fetchRoadGraph", () => {
   it("returns the timeout error when the request keeps being aborted", async () => {
     vi.mocked(fetch).mockRejectedValue(new DOMException("The operation was aborted.", "AbortError"));
 
-    const result = await fetchRoadGraph(IPANEMA, { sleep: noSleep });
+    const result = await buscarGrafo();
 
     expect(result.error).toBe(UI_LABELS.ROUTING.TIMEOUT);
   });
@@ -194,7 +209,7 @@ describe("fetchRoadGraph", () => {
   it("returns an empty graph (not an error) for an area with no roads", async () => {
     vi.mocked(fetch).mockResolvedValue(okJson({ elements: [] }));
 
-    const result = await fetchRoadGraph(IPANEMA);
+    const result = await buscarGrafo();
 
     expect(result.error).toBeUndefined();
     expect(result.graph?.coords.size).toBe(0);
@@ -204,7 +219,7 @@ describe("fetchRoadGraph", () => {
   it("returns the network error when the body cannot be parsed as JSON", async () => {
     vi.mocked(fetch).mockResolvedValue(unparsable());
 
-    const result = await fetchRoadGraph(IPANEMA);
+    const result = await buscarGrafo();
 
     expect(result.error).toBe(UI_LABELS.ROUTING.NETWORK_ERROR);
   });
@@ -212,7 +227,7 @@ describe("fetchRoadGraph", () => {
   it("treats a response without an elements field as an empty graph", async () => {
     vi.mocked(fetch).mockResolvedValue(okJson({}));
 
-    const result = await fetchRoadGraph(IPANEMA);
+    const result = await buscarGrafo();
 
     expect(result.error).toBeUndefined();
     expect(result.graph?.coords.size).toBe(0);
@@ -221,7 +236,7 @@ describe("fetchRoadGraph", () => {
   it("auto-retries a transient 429 and succeeds on a later attempt (TASK-BG-008)", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(httpError(429)).mockResolvedValueOnce(okJson(oneWayResponse));
 
-    const result = await fetchRoadGraph(IPANEMA, { sleep: noSleep });
+    const result = await buscarGrafo();
 
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(result.error).toBeUndefined();
@@ -232,7 +247,7 @@ describe("fetchRoadGraph", () => {
   it("does NOT retry a non-retryable status like 400 (bad query)", async () => {
     vi.mocked(fetch).mockResolvedValue(httpError(400));
 
-    const result = await fetchRoadGraph(IPANEMA, { sleep: noSleep });
+    const result = await buscarGrafo();
 
     expect(fetch).toHaveBeenCalledTimes(1); // one shot, no retry
     expect(result.error).toBe(UI_LABELS.ROUTING.OVERPASS_HTTP_ERROR(400));
@@ -241,7 +256,7 @@ describe("fetchRoadGraph", () => {
   it("stops after maxAttempts and returns the last error", async () => {
     vi.mocked(fetch).mockResolvedValue(httpError(429));
 
-    const result = await fetchRoadGraph(IPANEMA, { sleep: noSleep, maxAttempts: 3 });
+    const result = await buscarGrafo({ maxAttempts: 3 });
 
     expect(fetch).toHaveBeenCalledTimes(3);
     expect(result.error).toBe(UI_LABELS.ROUTING.OVERPASS_HTTP_ERROR(429));
@@ -252,7 +267,7 @@ describe("fetchRoadGraph", () => {
     vi.mocked(fetch).mockResolvedValueOnce(httpError(429, "3")).mockResolvedValueOnce(okJson(oneWayResponse));
     const sleepSpy = vi.fn<(ms: number) => Promise<void>>(() => Promise.resolve());
 
-    await fetchRoadGraph(IPANEMA, { sleep: sleepSpy });
+    await buscarGrafo({ sleep: sleepSpy });
 
     expect(sleepSpy).toHaveBeenCalledTimes(1);
     expect(sleepSpy.mock.calls[0][0]).toBeGreaterThanOrEqual(3000);
@@ -262,7 +277,7 @@ describe("fetchRoadGraph", () => {
   it("logs only counts in DEV, never coordinates or addresses (no PII)", async () => {
     vi.mocked(fetch).mockResolvedValue(okJson(oneWayResponse));
 
-    await fetchRoadGraph(IPANEMA);
+    await buscarGrafo();
 
     const logged = vi
       .mocked(console.info)

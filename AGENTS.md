@@ -1,9 +1,9 @@
-# Guia do Agente — Codex (e agentes compatíveis com AGENTS.md)
+# Guia do Agente: Codex (e agentes compatíveis com AGENTS.md)
 
 > Entry point sempre carregado. O conteúdo canônico do agente vive em
 > [`.github/agents/geral-robusto/`](.github/agents/geral-robusto/) (fonte única da verdade).
 > Como o Codex não resolve imports, o **núcleo inegociável** está espelhado abaixo (bloco
-> sincronizado). O conteúdo extenso (padrões, processos, templates) fica **só por ponteiro** —
+> sincronizado). O conteúdo extenso (padrões, processos, templates) fica **só por ponteiro**:
 > abra o módulo indicado quando a tarefa pedir.
 
 > ⚠️ **Antes de tudo:** leia [`docs/contexto-projeto-ai.md`](docs/contexto-projeto-ai.md).
@@ -18,16 +18,16 @@
 2. `.github/agents/geral-robusto/01-nucleo.md` (este núcleo)
 3. Demais módulos do pacote
 
-**Exceções inegociáveis** — o contexto do projeto **não** pode anular: (1) confirmar antes de
+**Exceções inegociáveis**: o contexto do projeto **não** pode anular: (1) confirmar antes de
 ação destrutiva; (2) proibido `any` sem justificativa explícita; (3) código é a verdade primária.
 
 ## Os 5 princípios inegociáveis
 
-1. **Artesão, não autocompletador** — entenda o propósito antes de tocar no código.
-2. **Confirme antes de agir (Regra de Ouro)** — antes de criar/deletar/reestruturar, reformule o pedido e espere "pode fazer".
-3. **Código é a verdade primária** — não duplique em docs o que o código já expressa; docs guardam decisões/contexto/trade-offs.
-4. **Idioma único** — neste projeto: **Português** (variáveis, funções, tipos, testes, comentários). APIs externas em inglês podem coexistir.
-5. **Cerimônia proporcional ao risco** — use o modo apropriado (abaixo).
+1. **Artesão, não autocompletador**: entenda o propósito antes de tocar no código.
+2. **Confirme antes de agir (Regra de Ouro)**: antes de criar/deletar/reestruturar, reformule o pedido e espere "pode fazer".
+3. **Código é a verdade primária**: não duplique em docs o que o código já expressa; docs guardam decisões/contexto/trade-offs.
+4. **Idioma único**: neste projeto: **Português** (variáveis, funções, tipos, testes, comentários). APIs externas em inglês podem coexistir.
+5. **Cerimônia proporcional ao risco**: use o modo apropriado (abaixo).
 
 ## Processo de trabalho
 
@@ -38,9 +38,9 @@ durante a execução, volte a PLANEJAR.
 
 ## Modos de cerimônia
 
-- **Light** — typo, formatação, doc isolada, renomear arquivo, ajuste de linter. Registro mínimo no chat.
-- **Standard** — feature, bug não-trivial, refatoração local. Ciclo completo `pendentes → em-andamento → concluidas` + revisão.
-- **Strict** — decisão arquitetural, mudança multi-módulo, troca de tecnologia, arquivo crítico. Standard + ADR + análise de impacto.
+- **Light**: typo, formatação, doc isolada, renomear arquivo, ajuste de linter. Registro mínimo no chat.
+- **Standard**: feature, bug não-trivial, refatoração local. Ciclo completo `pendentes → em-andamento → concluidas` + revisão.
+- **Strict**: decisão arquitetural, mudança multi-módulo, troca de tecnologia, arquivo crítico. Standard + ADR + análise de impacto.
 
 ## Anti-padrões críticos (bloqueiam entrega)
 

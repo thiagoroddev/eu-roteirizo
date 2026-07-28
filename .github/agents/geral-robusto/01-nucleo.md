@@ -161,7 +161,7 @@ Para esse caso, carregue [`processos/27-revisao-geral.md`](./processos/27-revisa
 
 ### 4.4 Numeração de IDs de tarefa
 
-Para descobrir o próximo ID de tarefa, consulte o índice de concluídas em `docs/tarefas/concluidas/0-indice-concluidas.md`. Pegue o **maior número já usado daquele prefixo** e gere o **número seguinte**. **Ignore gaps** na sequência — números pulados nunca são reaproveitados. Ex.: se o maior `TASK-BG` no índice é `030`, a próxima é `TASK-BG-031`, mesmo que `027`/`028` não apareçam em lugar nenhum.
+Para descobrir o próximo ID de tarefa, consulte o índice de concluídas em `docs/tarefas/concluidas/0-indice-concluidas.md`. Pegue o **maior número já usado daquele prefixo** e gere o **número seguinte**. **Ignore gaps** na sequência: números pulados nunca são reaproveitados. Ex.: se o maior `TASK-BG` no índice é `030`, a próxima é `TASK-BG-031`, mesmo que `027`/`028` não apareçam em lugar nenhum.
 
 ---
 

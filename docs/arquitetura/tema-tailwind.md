@@ -2,15 +2,15 @@
 
 > Fonte da verdade dos **design tokens**. Consumidos por [`src/styles/theme.css`](../../src/styles/theme.css) + [`tailwind.config.js`](../../tailwind.config.js). Implementação via shadcn/ui ([ADR-004](./ADR/ADR-004.md) + [ADR-006](./ADR/ADR-006.md)).
 >
-> **Status:** ✅ **Revisada (05/07/26, TASK-REF-012)** — identidade **"Neon Flux"** (`prototipos/telas-media-fidelidade/neonflux.md`): **DARK é o PADRÃO** (decisão do humano; claro segue no toggle p/ uso ao sol), marca **verde `#00FF9D` → azul `#00D1FF`** (gradiente `bg-brand-gradient`), destructive coral `#FF2E63` no escuro. **Cores provisórias por design: personalizar a paleta = editar apenas `src/styles/theme.css`** (todo o chrome via tokens; `accent2` incluído). As tabelas §2 abaixo descrevem a identidade Cyanide anterior — **os valores vigentes são os do `theme.css`** (fonte da verdade executável); atualizar as tabelas quando a paleta estabilizar. Paleta funcional do mapa (§3/ADR-008) **intocada**.
+> **Status:** ✅ **Revisada (05/07/26, TASK-REF-012)**: identidade **"Neon Flux"** (`prototipos/telas-media-fidelidade/neonflux.md`): **DARK é o PADRÃO** (decisão do humano; claro segue no toggle p/ uso ao sol), marca **verde `#00FF9D` → azul `#00D1FF`** (gradiente `bg-brand-gradient`), destructive coral `#FF2E63` no escuro. **Cores provisórias por design: personalizar a paleta = editar apenas `src/styles/theme.css`** (todo o chrome via tokens; `accent2` incluído). As tabelas §2 abaixo descrevem a identidade Cyanide anterior, mas **os valores vigentes são os do `theme.css`** (fonte da verdade executável); atualizar as tabelas quando a paleta estabilizar. Paleta funcional do mapa (§3/ADR-008) **intocada**.
 >
-> *(Anterior: ✅ Aceita 24/06/26 — "Cyanide Precision", ciano `#0DC2D6`, claro padrão — ADR-006 original.)*
+> *(Anterior: ✅ Aceita 24/06/26, "Cyanide Precision", ciano `#0DC2D6`, claro padrão, ADR-006 original.)*
 
 ---
 
 ## 0. Relação com a ADR-004
 
-A [ADR-004](./ADR/ADR-004.md) fixou shadcn/ui + `--primary` laranja (provisório). Esta identidade troca a **cor/identidade** para **ciano "Cyanide Precision"** — registrada na **[ADR-006](./ADR/ADR-006.md)** (supersede parcial: só cor/identidade; shadcn/ui permanece).
+A [ADR-004](./ADR/ADR-004.md) fixou shadcn/ui + `--primary` laranja (provisório). Esta identidade troca a **cor/identidade** para **ciano "Cyanide Precision"**, registrada na **[ADR-006](./ADR/ADR-006.md)** (supersede parcial: só cor/identidade; shadcn/ui permanece).
 
 **Cascata implementada:** `theme.css` (tokens claro+escuro), `tailwind.config.js` (Hanken Grotesk + `accent2` + `--radius` via CSS), `button.tsx` (pill), `index.html` (anti-flash + fonte), `themeService`/`useTheme`/`ThemeToggle` (troca), `setupTests` (mock matchMedia), `prompt-prototipacao-ui.md` §2.
 
@@ -18,11 +18,11 @@ A [ADR-004](./ADR/ADR-004.md) fixou shadcn/ui + `--primary` laranja (provisório
 
 ## 1. Identidade
 
-**Cyanide Precision · Precision Minimalism.** Técnico, frio, alto contraste, denso. **Escuro** (slate/navy) é o visual preferido, para pouca luz/noite; **claro** existe para **uso ao sol** (campo) — tema escuro lava sob luz forte. Marca **ciano** vibrante; formato **arredondado/pill** (contraponto amigável ao escuro técnico).
+**Cyanide Precision · Precision Minimalism.** Técnico, frio, alto contraste, denso. **Escuro** (slate/navy) é o visual preferido, para pouca luz/noite; **claro** existe para **uso ao sol** (campo), porque tema escuro lava sob luz forte. Marca **ciano** vibrante; formato **arredondado/pill** (contraponto amigável ao escuro técnico).
 
 ---
 
-## 2. Cores — chrome do app (tokens shadcn)
+## 2. Cores: chrome do app (tokens shadcn)
 
 Em `src/styles/theme.css`. **HSL** (formato shadcn) + hex ref. Ciano é a marca nos dois temas; o **texto do botão é escuro** (`--primary-foreground`).
 
@@ -47,7 +47,7 @@ Em `src/styles/theme.css`. **HSL** (formato shadcn) + hex ref. Ciano é a marca 
 
 ---
 
-## 3. Cores — paleta funcional do **mapa** (independente da marca)
+## 3. Cores: paleta funcional do **mapa** (independente da marca)
 
 O sistema de marcadores (`prompt-prototipacao-ui.md` §3 / `fluxo-roteirizacao.md` §3) é **funcional** e **não muda** com a marca nem com o tema. Cada **Parada** recebe **uma** cor de uma paleta **categórica**; há semânticas **fixas**.
 
@@ -59,15 +59,15 @@ O sistema de marcadores (`prompt-prototipacao-ui.md` §3 / `fluxo-roteirizacao.m
 
 ---
 
-## 4. Tipografia — **Hanken Grotesk** (Google Fonts)
+## 4. Tipografia: **Hanken Grotesk** (Google Fonts)
 
 | Estilo | Tam/Linha | Peso | Tracking |
 |---|---|---|---|
 | `headline-xl` | 48/56 | 700 | -0.02em |
 | `headline-lg` | 32/40 | 600 | -0.01em |
-| `headline-lg-mobile` | 24/32 | 600 | — |
-| `title-md` | 20/28 | 600 | — |
-| `body-lg` / `body-md` | 18/28 · 16/24 | 400 | — |
+| `headline-lg-mobile` | 24/32 | 600 | n/a |
+| `title-md` | 20/28 | 600 | n/a |
+| `body-lg` / `body-md` | 18/28 · 16/24 | 400 | n/a |
 | `label-md` / `label-sm` | 14/20 · 12/16 | 600/500 | 0.02em |
 
 ---
@@ -75,7 +75,7 @@ O sistema de marcadores (`prompt-prototipacao-ui.md` §3 / `fluxo-roteirizacao.m
 ## 5. Raio, espaçamento, elevação
 
 - **Raio (pill):** `--radius` = **1rem**; **botões `rounded-full`** (pill); cards `rounded-lg` (1rem); pills `rounded-full`.
-- **Espaçamento:** base 4–8px; progressão 8/16/24/48.
+- **Espaçamento:** base de 4 a 8 px; progressão 8/16/24/48.
 - **Elevação (flat):** camadas tonais + borda 1px (`--border`); foco = borda/anel 2px ciano. No escuro, "subir" = ficar mais claro; opcional **glow** ciano sutil em elementos primários.
 
 ---
@@ -93,13 +93,13 @@ O sistema de marcadores (`prompt-prototipacao-ui.md` §3 / `fluxo-roteirizacao.m
 
 - **Padrão = automático** (segue `prefers-color-scheme`); override manual persistido em `localStorage` (`theme`).
 - **Anti-flash:** script inline no `index.html` aplica `data-theme` no 1º paint.
-- **Código:** `services/themeService.ts` (storage/DOM, defensivo) · `hooks/useTheme.ts` · `components/ThemeToggle.tsx` (toggle **provisório** — ganha lugar definitivo no app shell, RF-011/RF-038).
+- **Código:** `services/themeService.ts` (storage/DOM, defensivo) · `hooks/useTheme.ts` · `components/ThemeToggle.tsx` (toggle **provisório**, que ganha lugar definitivo no app shell, RF-011/RF-038).
 
 ---
 
 ## 7. Pendências / a confirmar
 
-- [x] Marca **ciano `#0DC2D6`** + claro/escuro auto + pill — implementado (ADR-006, REF-009).
+- [x] Marca **ciano `#0DC2D6`** + claro/escuro auto + pill, implementado (ADR-006, REF-009).
 - [ ] **Self-host** da fonte Hanken Grotesk (offline pleno do PWA).
 - [ ] Validar a **paleta categórica do mapa** (§3) ao sol com ≥ 8 paradas.
 - [ ] Toggle de tema no **app shell** (lugar/rótulos via `UI_LABELS`).
@@ -109,4 +109,4 @@ O sistema de marcadores (`prompt-prototipacao-ui.md` §3 / `fluxo-roteirizacao.m
 
 ## Última Atualização
 - **Data:** 24/06/26
-- **Por:** identidade **"Cyanide Precision"** (ciano, claro+escuro automático, pill) implementada — ADR-006 / TASK-REF-009. Paleta funcional do mapa preservada.
+- **Por:** identidade **"Cyanide Precision"** (ciano, claro+escuro automático, pill) implementada, ADR-006 / TASK-REF-009. Paleta funcional do mapa preservada.

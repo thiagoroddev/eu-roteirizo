@@ -376,7 +376,7 @@ Exemplo para `requisitos/funcionais.md`:
 - Existem requisitos não-implementados? (não dá para saber pelo código)
 ```
 
-> ℹ️ O formato canônico dos requisitos (RF/RN/RNF — com prioridade, status, origem e rastreabilidade) está em [`templates/38-requisitos.md`](../templates/38-requisitos.md). O exemplo acima é só ilustrativo.
+> ℹ️ O formato canônico dos requisitos (RF/RN/RNF, com prioridade, status, origem e rastreabilidade) está em [`templates/38-requisitos.md`](../templates/38-requisitos.md). O exemplo acima é só ilustrativo.
 
 ### 6.4 ADRs Para Decisões Encontradas
 

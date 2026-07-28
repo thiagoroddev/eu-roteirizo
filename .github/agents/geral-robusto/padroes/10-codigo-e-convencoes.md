@@ -318,7 +318,7 @@ i++
 ### 3.11 Confiar em narrowing através de closures
 
 O TypeScript estreita o tipo após um guard no escopo onde ele aparece, mas **não propaga esse
-narrowing para dentro de funções/closures definidas depois** — elas podem ser chamadas em outro
+narrowing para dentro de funções/closures definidas depois**, porque elas podem ser chamadas em outro
 momento, então o tipo volta a incluir `undefined`. Isso passa no runtime mas quebra `tsc`.
 
 ```typescript
@@ -344,7 +344,7 @@ const servico = exigir(
 ```
 
 **Sinal de alerta:** sempre que um `.find()`/`.get()` seguido de guard for usado dentro de uma
-função aninhada. Rode `npm run typecheck` logo após escrever — não deixe para o fechamento.
+função aninhada. Rode `npm run typecheck` logo após escrever, não deixe para o fechamento.
 
 ---
 

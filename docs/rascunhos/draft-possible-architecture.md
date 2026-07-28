@@ -1,4 +1,4 @@
-> ⚠️ **DRAFT — visão de arquitetura futura, NÃO implementada.** Este documento descreve um produto-alvo hipotético ("HubFlow Logistics": Next.js, Prisma, Supabase, NextAuth etc.) e **não corresponde ao código atual**, que é um PWA Vite + React (SPA, frontend-only) de visualização de rotas. Mantido como rascunho de caminhos possíveis. Para o estado real, ver `docs/CODIGO_COMENTADO.md`. (Origem: REV-001-A01.)
+> ⚠️ **DRAFT: visão de arquitetura futura, NÃO implementada.** Este documento descreve um produto-alvo hipotético ("HubFlow Logistics": Next.js, Prisma, Supabase, NextAuth etc.) e **não corresponde ao código atual**, que é um PWA Vite + React (SPA, frontend-only) de visualização de rotas. Mantido como rascunho de caminhos possíveis. Para o estado real, ver `docs/CODIGO_COMENTADO.md`. (Origem: REV-001-A01.)
 
 # 🏗️ Arquitetura Técnica - HubFlow Logistics
 

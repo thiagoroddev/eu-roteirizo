@@ -157,7 +157,7 @@ The shape language is **Technical-Modern**.
   - *Primary:* Full gradient background (`#00FF9D` to `#00D1FF`) with black text (`#0A0C10`) for maximum legibility.
   - *Secondary:* 1px gradient border with transparent background and white text.
 - **Inputs:** Dark backgrounds (`#161B22`) with a subtle bottom border. Upon focus, the border transitions to the primary gradient with a soft glow.
-- **Cards:** Use a "Glassmorphism" hint—semi-opaque backgrounds with a 1px stroke. Content should be padded with `md` (16px).
+- **Cards:** Use a "Glassmorphism" hint,semi-opaque backgrounds with a 1px stroke. Content should be padded with `md` (16px).
 - **Chips/Tags:** Monospaced font (**JetBrains Mono**) at `label-sm` size, housed in a pill-shaped container with a low-opacity version of the primary color.
 - **Bottom Navigation:** Fixed at the bottom, using a subtle blur and top-border highlight to separate it from the content scroll area.
 - **Progress Indicators:** Use the primary-to-secondary gradient for the fill, with a glow effect on the leading edge to simulate a "laser" movement.

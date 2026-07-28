@@ -1,6 +1,6 @@
-# 🚚 Eu Roteirizo
+# 🚚 Eu Roteirizo - https://eu-roteirizo-prototipo.pages.dev/
 
-**PWA que transforma o romaneio de entregas numa rota comparadas de entregas a pé, montada sobre o grafo de ruas do OpenStreetMap sem backend, sem conta e sem API de roteirização paga.**
+**PWA que transforma romaneios de entregas em rotas otimizadas que possuem paradas com circuitos de entregas a pé, montada sobre o grafo de ruas do OpenStreetMap sem backend, sem conta e sem API de roteirização paga.**
 
 > ### ⚠️ Protótipo em desenvolvimento
 >
@@ -34,7 +34,7 @@ cobram por requisição, ou assumem que cada parada é uma movimentação com ve
 ## 📱 Telas
 
 Capturas do app **em execução**, processando um romaneio fictício de Copacabana.
-Nenhuma é mockup — são o que o código faz hoje.
+Nenhuma é mockup. São o que o código faz hoje.
 
 <table>
   <tr>
@@ -53,10 +53,10 @@ Nenhuma é mockup — são o que o código faz hoje.
 
 ## 🧭 O que tem de interessante aqui
 
-O que me fez escolher este projeto como estudo não foi a tela — foi o que está atrás dela.
+O que me fez escolher este projeto como estudo não foi a tela, foi o que está atrás dela.
 
 **Roteirização própria, sem API paga.** O app baixa a malha viária do OpenStreetMap (via Overpass),
-monta um **grafo dirigido** em memória — mão única vira aresta ausente, não penalidade — e roda um
+monta um **grafo dirigido** em memória (mão única vira aresta ausente, não penalidade) e roda um
 **A\* próprio** sobre ele. Nenhuma chamada ao Google Directions ou similar. Isso não foi capricho
 técnico: a proposta só fecha se o custo por usuário for perto de zero. A decisão está registrada na
 [ADR-002](docs/arquitetura/ADR/ADR-002.md).
@@ -67,7 +67,7 @@ roteiros e o cache do grafo vivem em **IndexedDB no aparelho**. O único compone
 
 **Grafo com cache offline.** Baixar a malha de ruas é a operação mais cara do fluxo; ela é cacheada
 por região, então a segunda entrada no modo roteiro é instantânea. O Overpass é um serviço público
-com fila — quando ele devolve `429`/`504`, o app **retenta sozinho com backoff exponencial** em vez
+com fila. Quando ele devolve `429`/`504`, o app **retenta sozinho com backoff exponencial** em vez
 de mostrar erro. (As capturas acima foram feitas com o Overpass retornando `504` três vezes seguidas;
 o retry recuperou sem intervenção.)
 
@@ -101,16 +101,16 @@ Números de **27/07/2026**.
 **Funciona hoje**
 - ✅ Leitura de romaneio XLSX/CSV, multi-rota (agrupado por corredor) ou rota única
 - ✅ Persistência local dos romaneios, com deduplicação por hash SHA-256
-- ✅ Navegação multi-tela com deep link (a URL carrega o modo — F5 e link compartilhado preservam o estado)
+- ✅ Navegação multi-tela com deep link (a URL carrega o modo, então F5 e link compartilhado preservam o estado)
 - ✅ Modo Original completo: mapa, marcadores por tipo de local, painel de parada, tabelas e sumário
 - ✅ Modo Meu roteiro: ponto inicial por GPS/toque, paradas por raio de caminhada, âncora do veículo, ordem derivada, traçado real pelas ruas e estimativas de tempo
 - ✅ PWA instalável, com o grafo de ruas cacheado para uso offline
 
 **Ainda não existe**
-- ❌ **Execução da rota** — marcar entrega como concluída, acompanhar progresso em campo (é a próxima fronteira)
-- ❌ **Auto-roteirizar** — hoje o agrupamento de paradas é manual
+- ❌ **Execução da rota**: marcar entrega como concluída, acompanhar progresso em campo (é a próxima fronteira)
+- ❌ **Auto-roteirizar**: hoje o agrupamento de paradas é manual
 - ❌ **Exportar/importar roteiro** em JSON (o botão na tela inicial é stub declarado)
-- ❌ Backend, contas, sincronização entre aparelhos — fora do escopo por decisão de projeto
+- ❌ Backend, contas, sincronização entre aparelhos, todos fora do escopo por decisão de projeto
 
 **Qualidade**
 
@@ -122,10 +122,11 @@ Números de **27/07/2026**.
 | Decisões registradas | 10 ADRs |
 | Requisitos rastreados | 44 de 49 funcionais entregues |
 
-> Transparência: **1 dos 774 testes é instável.** Ele exercita o retry do Overpass e espera em
-> relógio de parede; o backoff soma ~4,5 s contra um timeout de 5 s, então passa ou falha conforme
-> a carga da máquina — nas duas últimas execuções aqui deu verde e vermelho, nessa ordem. A causa
-> está entendida e a correção é injetar o relógio no teste; está rastreado como `TASK-BG-009`.
+> A suíte inteira está verde. Até 27/07 um teste era **instável**: ele exercitava o retry do
+> Overpass esperando em relógio de parede, e o backoff somava ~4,5 s contra um timeout de 5 s,
+> então passava ou falhava conforme a carga da máquina. Corrigido na `TASK-BG-009` injetando o
+> relógio, e verificado em 10 execuções seguidas em vez de uma, porque teste instável passa
+> sozinho com frequência.
 
 ---
 
@@ -136,17 +137,21 @@ npm install
 npm run dev          # http://localhost:5173
 ```
 
-**Não precisa de romaneio próprio para testar.** A pasta [`romaneios/`](romaneios/) traz duas
-planilhas de exemplo prontas — basta enviá-las na tela inicial:
+**Não precisa de romaneio próprio para testar.** A tela inicial tem o botão **"Testar com romaneio
+de exemplo"**, que carrega um romaneio fictício direto, sem baixar nem enviar arquivo. Ele passa
+pelo mesmo caminho de um upload real: validação, leitura da planilha, hash, deduplicação e
+persistência local.
+
+Se preferir enviar o arquivo à mão, as duas planilhas estão em [`public/romaneios/`](public/romaneios/):
 
 | Arquivo | Conteúdo |
 |---|---|
-| [`exemplo-multi-rota.xlsx`](romaneios/exemplo-multi-rota.xlsx) | 20 entregas em 2 rotas (Copacabana e Ipanema) — é o caminho completo |
-| [`exemplo-rota-unica.xlsx`](romaneios/exemplo-rota-unica.xlsx) | 12 entregas sem a coluna de agrupamento — o caminho de rota única |
+| [`exemplo-multi-rota.xlsx`](public/romaneios/exemplo-multi-rota.xlsx) | 20 entregas em 2 rotas (Copacabana e Ipanema). É o caminho completo, e o que o botão carrega |
+| [`exemplo-rota-unica.xlsx`](public/romaneios/exemplo-rota-unica.xlsx) | 12 entregas sem a coluna de agrupamento. É o caminho de rota única |
 
 São os mesmos dados das capturas acima, e são **fictícios**: as vias são reais (o mapa precisa
 disso), o resto é inventado. Para ver o modo Meu roteiro no seu melhor caso, use o multi-rota e
-abra a **L-29** — quadras curtas, muitos endereços perto uns dos outros.
+abra a **L-29**: quadras curtas, muitos endereços perto uns dos outros.
 
 Se quiser usar um arquivo seu: o mínimo são as colunas `Latitude` e `Longitude`; a coluna
 `Corridor Cage`, se existir, agrupa as entregas em rotas. Detalhes em
@@ -163,14 +168,14 @@ npm run build        # build de produção
 
 ## 📚 Documentação
 
-O repositório carrega mais documentação do que o normal para um projeto deste tamanho — foi
+O repositório carrega mais documentação do que o normal para um projeto deste tamanho. Foi
 deliberado, e é metade do experimento:
 
-- **[`docs/contexto-projeto-ai.md`](docs/contexto-projeto-ai.md)** — o retrato do projeto: stack real, estrutura, decisões inegociáveis
-- **[`docs/arquitetura/ADR/`](docs/arquitetura/ADR/)** — 10 decisões arquiteturais com contexto e alternativas descartadas
-- **[`docs/requisitos/`](docs/requisitos/)** — requisitos funcionais, regras de negócio e não-funcionais, rastreados até a tarefa que os implementou
-- **[`docs/tarefas/`](docs/tarefas/)** — o histórico completo: toda tarefa registrada com plano aprovado, log de execução, decisões, gates e aprendizados
-- **[`docs/dominios/divida-tecnica.md`](docs/dominios/divida-tecnica.md)** — dívidas assumidas, cada uma com o gatilho que manda revisitá-la
+- **[`docs/contexto-projeto-ai.md`](docs/contexto-projeto-ai.md)**: o retrato do projeto, com stack real, estrutura e decisões inegociáveis
+- **[`docs/arquitetura/ADR/`](docs/arquitetura/ADR/)**: 10 decisões arquiteturais com contexto e alternativas descartadas
+- **[`docs/requisitos/`](docs/requisitos/)**: requisitos funcionais, regras de negócio e não-funcionais, rastreados até a tarefa que os implementou
+- **[`docs/tarefas/`](docs/tarefas/)**: o histórico completo, com cada tarefa registrada com plano aprovado, log de execução, decisões, gates e aprendizados
+- **[`docs/dominios/divida-tecnica.md`](docs/dominios/divida-tecnica.md)**: dívidas assumidas, cada uma com o gatilho que manda revisitá-la
 
 ---
 
@@ -179,15 +184,15 @@ deliberado, e é metade do experimento:
 Este projeto foi construído com **auxílio intensivo de IA** (Claude), e acho mais interessante ser
 explícito sobre isso do que fingir o contrário.
 
-A IA escreveu a maior parte do código. O que eu trouxe foi o **problema** — conheço a dor de quem
-entrega —, as **decisões** de produto e arquitetura, e o **critério de aceite**: nenhuma tarefa fecha
+A IA escreveu a maior parte do código. O que eu trouxe foi o **problema** (conheço a dor de quem
+entrega), as **decisões** de produto e arquitetura, e o **critério de aceite**: nenhuma tarefa fecha
 sem `tsc`, `eslint`, `vitest` e `build` verdes, e funcionalidade de interface só é considerada pronta
 depois de teste no aparelho real, porque suíte verde não prova conforto de uso na rua.
 
 Para que isso não virasse geração de código sem rumo, o repositório inclui um **manual de operação do
 agente** em [`.github/agents/`](.github/agents/): princípios, ciclo de tarefa, padrões de código,
 checklists de revisão e modos de cerimônia proporcionais ao risco da mudança. Os registros em
-`docs/tarefas/concluidas/` são a saída desse processo — dá para auditar como cada decisão foi tomada,
+`docs/tarefas/concluidas/` são a saída desse processo. Dá para auditar como cada decisão foi tomada,
 o que foi deliberadamente **não** feito, e onde o plano mudou no meio do caminho.
 
 Boa parte do que aprendi aqui foi menos sobre React e mais sobre **como conduzir e revisar** trabalho

@@ -1,7 +1,7 @@
 ---
 name: requisitos
 description: >-
-  Use ao levantar, documentar ou atualizar requisitos do sistema — funcionais
+  Use ao levantar, documentar ou atualizar requisitos do sistema: funcionais
   (RF), regras de negócio (RN) e não-funcionais (RNF). Gatilhos: "documentar
   requisitos", "criar RF/RN/RNF", "atualizar status de requisito", "rastrear
   requisito ↔ tarefa ↔ ADR", "o que o sistema precisa fazer". Define o formato

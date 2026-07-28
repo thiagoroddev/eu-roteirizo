@@ -41,7 +41,7 @@ Cada versão organiza mudanças em até 6 categorias (omitir as não usadas):
 
 ---
 
-> **Nota de versão (reconciliação):** a versão canônica do pacote é a registrada no núcleo (§11) e no `00-INDICE` — atualmente a **linha 3.x**. As entradas `1.0.x` abaixo são o histórico inicial *deste arquivo* e correspondem à fundação (≈ 3.0); a numeração seguiu adiante no núcleo (3.1 → 3.4). Daqui em diante, este changelog acompanha a linha **3.x**.
+> **Nota de versão (reconciliação):** a versão canônica do pacote é a registrada no núcleo (§11) e no `00-INDICE`, atualmente a **linha 3.x**. As entradas `1.0.x` abaixo são o histórico inicial *deste arquivo* e correspondem à fundação (≈ 3.0); a numeração seguiu adiante no núcleo (3.1 → 3.4). Daqui em diante, este changelog acompanha a linha **3.x**.
 
 ## [4.0] - 2026-06-26
 
@@ -50,10 +50,10 @@ Reestruturação para consumo **multi-ferramenta** (Claude Code, Codex, GitHub C
 ### Adicionado
 
 - **Entry points nativos** (sempre carregados, apontando para este pacote como fonte única):
-  - `CLAUDE.md` (raiz) — importa o núcleo via `@import` + mapa de Skills/módulos.
-  - `AGENTS.md` (raiz) + `__utilidades-back-office__/AGENTS.md` (aninhado) — Codex.
-  - `.github/copilot-instructions.md` — Copilot.
-- **Auto-carregamento por intenção:** 9 Skills do Claude em `.claude/skills/` (ciclo-tarefa, revisao-codigo, refatoracao, modelagem-dominio, figma-para-codigo, analise-impacto-adr, inicializacao-projeto, requisitos, revisao-geral) — roteadores finos que abrem o módulo canônico sozinhos.
+  - `CLAUDE.md` (raiz): importa o núcleo via `@import` + mapa de Skills/módulos.
+  - `AGENTS.md` (raiz) + `__utilidades-back-office__/AGENTS.md` (aninhado): Codex.
+  - `.github/copilot-instructions.md`: Copilot.
+- **Auto-carregamento por intenção:** 9 Skills do Claude em `.claude/skills/` (ciclo-tarefa, revisao-codigo, refatoracao, modelagem-dominio, figma-para-codigo, analise-impacto-adr, inicializacao-projeto, requisitos, revisao-geral), roteadores finos que abrem o módulo canônico sozinhos.
 - **Auto-carregamento por tipo de arquivo:** 7 `.github/instructions/*.instructions.md` com `applyTo` (codigo, react, formularios, testes, performance-a11y, backend, seguranca).
 - Marcadores `BEGIN/END:nucleo-sync` nos espelhos do núcleo, para sincronização controlada (anti-drift).
 
@@ -78,7 +78,7 @@ Reestruturação para consumo **multi-ferramenta** (Claude Code, Codex, GitHub C
 
 - `processos/Sem título.md` (rascunho; conteúdo já coberto em `20-ciclo-tarefa.md` e templates 30/31).
 
-**Origem:** solicitação do humano — tornar o pacote profissional e auto-carregável nas três ferramentas, sem referência manual a módulos. Registrado também em `docs/tarefas/concluidas/` (TASK-REF-010).
+**Origem:** solicitação do humano para tornar o pacote profissional e auto-carregável nas três ferramentas, sem referência manual a módulos. Registrado também em `docs/tarefas/concluidas/` (TASK-REF-010).
 
 ---
 
@@ -88,14 +88,14 @@ Novo template de requisitos e correção da referência pendurada no módulo 26.
 
 ### Adicionado
 
-- `templates/38-requisitos.md` — formato único dos 3 arquivos de `docs/requisitos/` (RF funcionais, RN regras-negócio, RNF não-funcionais): IDs `RF/RN/RNF-NN`, prioridade MoSCoW, status (✅/🟡/🔭/🚫), origem e **rastreabilidade requisito↔tarefa↔ADR**. Distingue requisito (`RF-NN`) de tarefa (`TASK-RF-xxx`).
+- `templates/38-requisitos.md`: formato único dos 3 arquivos de `docs/requisitos/` (RF funcionais, RN regras-negócio, RNF não-funcionais): IDs `RF/RN/RNF-NN`, prioridade MoSCoW, status (✅/🟡/🔭/🚫), origem e **rastreabilidade requisito↔tarefa↔ADR**. Distingue requisito (`RF-NN`) de tarefa (`TASK-RF-xxx`).
 
 ### Mudado
 
 - `processos/26-inicializacao-projeto.md` (§6.3): a estratégia de preenchimento dos requisitos agora referencia o `templates/38-requisitos.md` (antes a referência "ver templates" não tinha alvo; o formato vivia só como exemplo inline).
 - `00-INDICE.md` e `01-nucleo.md` (§9 tabela de carregamento; §11 changelog): catalogam o template 38.
 
-**Origem:** solicitação do humano — dar ao agente um ativo durável sobre requisitos, sem duplicar o método de extração já ensinado no módulo 26.
+**Origem:** solicitação do humano para dar ao agente um ativo durável sobre requisitos, sem duplicar o método de extração já ensinado no módulo 26.
 
 ---
 
@@ -105,7 +105,7 @@ Reforço de regra: o planejamento apresentado ao humano no chat deve ser sempre 
 
 ### Mudado
 
-- `processos/20-ciclo-tarefa.md` (§4.2): nova regra explícita na tabela de Regras — a seção `## Planejamento Aprovado` reproduz **o mesmo plano apresentado ao humano no chat e por ele aprovado** (texto integral: O que muda / Critérios de aceite / Impacto / Riscos / Dependências novas), **nunca um resumo**; vale em `em-andamento.md` e no arquivo de `concluidas/` (copiado sem alteração). Exemplo de §4.1 ajustado no mesmo sentido.
+- `processos/20-ciclo-tarefa.md` (§4.2): nova regra explícita na tabela de Regras. A seção `## Planejamento Aprovado` reproduz **o mesmo plano apresentado ao humano no chat e por ele aprovado** (texto integral: O que muda / Critérios de aceite / Impacto / Riscos / Dependências novas), **nunca um resumo**; vale em `em-andamento.md` e no arquivo de `concluidas/` (copiado sem alteração). Exemplo de §4.1 ajustado no mesmo sentido.
 - `templates/30-task-em-andamento.md`: Mini-FAQ #7 detalhando o que escrever em "Planejamento Aprovado" (plano integral do chat; se mudar durante a execução, voltar ao passo PLANEJAR, reaprovar e registrar a mudança em `## Execução`).
 - `templates/31-task-concluida.md`: placeholder de "Planejamento Aprovado" reforçado (o mesmo plano do chat, copiado de em-andamento sem alteração).
 

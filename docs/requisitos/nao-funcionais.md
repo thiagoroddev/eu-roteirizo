@@ -23,9 +23,9 @@
 
 ## Pendente de Validação
 
-- (nada pendente — RNF-01/RNF-12 esclarecidos pelo humano em 24/06: shell via PWA SW; tiles via Cloudflare Worker, agora versionado em `infra/`)
+- (nada pendente; RNF-01/RNF-12 esclarecidos pelo humano em 24/06: shell via PWA SW; tiles via Cloudflare Worker, agora versionado em `infra/`)
 
-## Planejados (🔭) — Roteirizador a pé
+## Planejados (🔭): Roteirizador a pé
 
 > Derivados de ADR-002/003, `fluxo-roteirizacao.md`, `analise-comercial-2.0.md` e `docs/dominios/divida-tecnica.md` (DT-001/002).
 

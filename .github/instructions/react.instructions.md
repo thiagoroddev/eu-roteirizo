@@ -4,7 +4,7 @@ applyTo: "**/*.tsx"
 
 # React, estado e UI
 
-- Não use `useEffect` para **derivar** estado — `useMemo` ou cálculo direto.
+- Não use `useEffect` para **derivar** estado: `useMemo` ou cálculo direto.
 - `key` estável da entidade em listas; nunca `key={i}` em lista reordenável.
 - Lógica de feature em hook (`use...`), componente/página fino; evite prop drilling profundo (composição/contexto).
 - UI: reuse o design system/wrappers; acessibilidade visual (foco, contraste, alvo de toque).
