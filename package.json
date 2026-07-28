@@ -2,12 +2,16 @@
   "name": "eu-roteirizo",
   "private": true,
   "version": "0.1.0",
-  "description": "PWA que transforma o romaneio de entregas numa rota a pé, montada sobre o grafo de ruas do OpenStreetMap — sem backend e sem API de roteirização paga. Protótipo em desenvolvimento.",
+  "description": "PWA que transforma o romaneio de entregas numa rota a pé, montada sobre o grafo de ruas do OpenStreetMap: sem backend e sem API de roteirização paga. Protótipo em desenvolvimento.",
   "author": "Thiago Silva <thiagorod.dev@gmail.com>",
-  "license": "UNLICENSED",
+  "license": "SEE LICENSE IN LICENSE",
+  "homepage": "https://eu-roteirizo-prototipo.pages.dev/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/thiagoroddev/eu-roteirizo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thiagoroddev/eu-roteirizo/issues"
   },
   "keywords": [
     "pwa",

@@ -28,6 +28,8 @@
 
 **➡️ Próxima na fila: `RF-009` (execução da rota, XG/Strict), ✅ PLANO DO ÉPICO APROVADO (20/07), fatiado em `.1`→`.5` (bloco em "Imediatas"). Começar pela `.1` (modelo+persistência+ADR-011).** Depois `RF-012` (auto-roteirizar), `RF-013` (export/import JSON). Backlog de docs: `TASK-DOC-006` (correções do plano de custos).
 
+**Entrou e saiu fora dessa fila (28/07): `TASK-REF-019`** (app centralizado em tela larga), pedido do humano no rastro da CHORE-011. ✅ **CONCLUÍDA em 28/07 04h19**, 777/777, **smoke no aparelho pendente**. Não mexeu no épico: a fila segue intacta na `RF-009.1`.
+
 **Backlog sem urgência, encaixar em intervalos:** `TASK-RF-006.9` (geocoding da âncora; placeholder aceitável), `TASK-DOC-005`, `TASK-DOC-006` (8 correções listadas no plano de custos), `TASK-REF-014`, `TASK-TEST-002`.
 
 ### 🔁 Onde eu posso estar errado
@@ -66,6 +68,10 @@ Adiantar a `RF-006.8` para antes da `.5`/`.6` é a única aposta real. Se a `.6`
 ---
 
 <!-- TASK-REF-018 movida para em-andamento.md em 20/07/26 (plano aprovado: "planeje e execute taks-018"). -->
+
+---
+
+<!-- TASK-REF-019 iniciada em 28/07/26 02:41 (plano aprovado: "sim"; quadro de ~900px e escopo "todas as telas via shell" decididos pelo humano antes do plano) e CONCLUÍDA às 04h19. Ver 0-indice-concluidas.md → 2026-07-28--04h19--TASK-REF-019.md. -->
 
 ---
 

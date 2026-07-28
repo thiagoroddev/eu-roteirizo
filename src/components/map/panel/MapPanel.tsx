@@ -236,7 +236,11 @@ export const MapPanel = ({ header, children, footer, snap, onSnapChange, sizing 
             spans the viewport — capping it (e.g. max-h-[85%]) shifts EVERY snap down by
             the capped amount (collapsed ends up cut). FULL_FRACTION already limits how
             far up the panel goes. */}
-        <Drawer.Content aria-describedby={undefined} className="fixed inset-x-0 bottom-0 z-[1200] flex h-full flex-col rounded-t-2xl border-t border-input bg-background outline-none">
+        {/* app-frame (TASK-REF-019): this Content is fixed AND lives in a portal
+            outside the shell tree, so no ancestor can constrain it. On a wide
+            screen it spanned the whole monitor as a near-empty band. The class
+            only limits WIDTH; the snaps below are vertical and untouched. */}
+        <Drawer.Content aria-describedby={undefined} className="app-frame fixed inset-x-0 bottom-0 z-[1200] flex h-full flex-col rounded-t-2xl border-t border-input bg-background outline-none">
           <Drawer.Title className="sr-only">{UI_LABELS.MAP_PANEL.ARIA}</Drawer.Title>
           {/* Grabber + header = the collapsed-snap content, measured to fit it exactly. */}
           <div ref={headerRef}>

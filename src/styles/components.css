@@ -1,5 +1,51 @@
 /**
- * Reserved for project-wide @layer component classes.
- * Currently empty — prefer composable components in src/components/ui/ (ADR-004),
- * not global utility classes. The previous `.btn-primary`/`.card` were unused and removed.
+ * Project-wide @layer component classes. Keep this file for CHROME that no
+ * single component can own; UI pieces belong in src/components/ui/ (ADR-004).
+ *
+ * Today it holds one class: `.app-frame` (TASK-REF-019).
  */
+
+/**
+ * ⚙️ MANUAL KNOB: the width of the app's centred column, the only number to
+ * tune by eye. Declared OUTSIDE @layer components on purpose: Tailwind drops
+ * layer content whose selector it cannot match to a used class, and `:root` has
+ * no class to match. The media query below repeats the value because CSS cannot
+ * read a custom property inside a media condition: change BOTH together.
+ */
+:root {
+  --app-frame-max-w: 900px;
+}
+
+@layer components {
+  /**
+   * .app-frame - the app's centred column on wide screens.
+   *
+   * The app is mobile-first: on a desktop monitor it used to stretch the phone
+   * UI across ~1900px, and the map panel (fixed, full-bleed) became an almost
+   * empty band with its text glued to the left edge.
+   *
+   * This is ONLY a max-width plus auto side margins, so below the frame width
+   * it is a no-op: the phone layout is untouched BY CONSTRUCTION, with no
+   * breakpoint to keep in sync.
+   *
+   * Applied to three places, because each escapes the normal flow in its own
+   * way: the shell wrapper (regular flow), the bottom nav (`fixed inset-x-0`)
+   * and the map panel (`fixed`, rendered through a PORTAL outside the shell
+   * tree, so no ancestor could ever constrain it). `margin-inline: auto`
+   * centres a fixed element as long as it has `inset-x-0`.
+   *
+   * Width knob: `--app-frame-max-w`, declared above this layer.
+   */
+  .app-frame {
+    max-inline-size: var(--app-frame-max-w);
+    margin-inline: auto;
+  }
+
+  /* The side borders only make sense once there IS a surround to separate from;
+     on a phone they would draw two stray lines at the screen edges. */
+  @media (min-width: 901px) {
+    .app-frame {
+      border-inline: 1px solid hsl(var(--border));
+    }
+  }
+}

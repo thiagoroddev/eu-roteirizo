@@ -79,6 +79,17 @@ describe("MapPanel", () => {
     expect(screen.getByText(UI_LABELS.MAP_PANEL.ARIA)).toBeInTheDocument(); // sr-only title
   });
 
+  /**
+   * TASK-REF-019. The Content is `fixed` AND lives in a portal outside the
+   * shell tree: no ancestor can constrain it, so losing this class is invisible
+   * in every other test and only shows up as a panel spanning a whole monitor.
+   */
+  it("stays inside the app's centred column on wide screens (REF-019)", () => {
+    renderPanel();
+
+    expect(screen.getByTestId("vaul-content")).toHaveClass("app-frame");
+  });
+
   it("is configured as a persistent non-modal sheet (always open, never dismissible)", () => {
     renderPanel();
 

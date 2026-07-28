@@ -16,7 +16,9 @@ const TABS = [
 ];
 
 export const BottomNav = () => (
-  <nav aria-label={UI_LABELS.SHELL.NAV_ARIA} className="fixed inset-x-0 bottom-0 z-40 flex h-16 border-t border-input bg-background">
+  // app-frame: fixed + inset-x-0 would span the whole monitor, so the bar must
+  // be constrained to the shell's centred column on its own (TASK-REF-019).
+  <nav aria-label={UI_LABELS.SHELL.NAV_ARIA} className="app-frame fixed inset-x-0 bottom-0 z-40 flex h-16 border-t border-input bg-background">
     {TABS.map(({ to, label, icon: Icon, end }) => (
       <NavLink
         key={to}

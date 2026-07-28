@@ -20,6 +20,7 @@
 | RNF-10 | Upload limitado a 10 MB; cache do SW até 5 MB por arquivo | Robustez | `FILE_CONFIG.MAX_FILE_SIZE`; `maximumFileSizeToCacheInBytes` | ✅ | `constants/index.ts`, `vite.config.ts` | - |
 | RNF-11 | Build com code splitting (chunk `vendor`) para conter o tamanho | Desempenho | `chunkSizeWarningLimit` 500 kB | ✅ | `vite.config.ts` | - |
 | RNF-12 | Os tiles do mapa vêm de um proxy **Cloudflare Worker** com cache e economia de zoom | Desempenho/Custo | cache 7 dias (Cache API `tile-cache-v1` + edge CF `cacheTtl`); **zoom < 14 bloqueado** (403); CORS | ✅ | `infra/cloudflare-tile-worker/worker.js`; consumido por `components/RouteMap.tsx` | - |
+| RNF-22 | Em tela larga o app é uma **coluna centralizada** de largura máxima, não a UI de celular esticada | Usabilidade | quadro de 900px centrado em 1900px: shell, bottom-nav e painel do mapa alinhados no mesmo eixo; abaixo da largura do quadro o layout de celular é idêntico ao anterior | ✅ | `styles/components.css` (`.app-frame`, knob `--app-frame-max-w`); aplicado em `shell/AppShell.tsx`, `shell/BottomNav.tsx`, `map/panel/MapPanel.tsx` | TASK-REF-019 |
 
 ## Pendente de Validação
 

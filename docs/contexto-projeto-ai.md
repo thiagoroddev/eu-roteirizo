@@ -91,7 +91,7 @@ Não revisar sem ADR explícita:
 - **Logging de diagnóstico** atrás de `import.meta.env.DEV` e **sem PII** (TASK-BG-002).
 - **HTML dinâmico** escapado via `utils/escapeHtml.ts` (TASK-BG-003); **coordenadas** validadas contra `MAP_CONFIG.RIO_BOUNDS` (TASK-BG-004).
 - **⚙️ MANUAL KNOB:** valores de calibração visual/gesto são constantes nomeadas e comentadas com esse marcador (ex.: `FOCUS_ZOOM_OFFSET`, `COLLAPSED_MAX_FRACTION`, `FLICK_VELOCITY_PX_MS`, `ROTEIRO_PANEL_SIZING`). Calibrar = editar a constante, nunca espalhar números.
-- **Smoke no aparelho é gate de UI:** suíte verde não prova conforto visual/gesto (lição das RF-006.4.19/.4.20). Deploy de testes: `npm run deploy:test` → `https://pre-rota-teste.pages.dev` (recarregar 2×).
+- **Smoke no aparelho é gate de UI:** suíte verde não prova conforto visual/gesto (lição das RF-006.4.19/.4.20). Deploy do protótipo: `npm run deploy:test` → `https://eu-roteirizo-prototipo.pages.dev` (recarregar 2×).
 - Testes espelham `src/` em `__tests__/`; serviços de IndexedDB testam com `fake-indexeddb`.
 
 ## O Que Este Projeto NÃO Faz (hoje)
@@ -102,7 +102,7 @@ Não revisar sem ADR explícita:
 - ✅ **Estimativa configurável de tempo** (RF-007) concluída em 19/07/26; a config global vive no ⚙️.
 - ❌ **Não usa biblioteca de formulários**; i18n **não está ativa** (só PT, camada pronta); experimentos `danfojs` desligados do app.
 - ✅ **É PWA** (instalável, service worker), com tiles via Cloudflare Worker (proxy + cache + bloqueio de zoom < 14), em [`infra/cloudflare-tile-worker/`](../infra/cloudflare-tile-worker/).
-- ✅ **Deploy de TESTES no Cloudflare Pages** (TASK-CHORE-005, 10/07/26): `npm run deploy:test` publica em **https://pre-rota-teste.pages.dev**, URL fixa p/ smokes no celular (HTTPS → GPS/PWA funcionam; recarregar **2×** p/ o SW `autoUpdate` assumir). ⚠️ **É ambiente de teste, NÃO o lançamento**: URL não divulgada, `X-Robots-Tag: noindex` via `public/_headers` (remover esse arquivo quando existir deploy de produção, que é outra decisão). Mesma conta Cloudflare do tile worker. Instruções em [`docs/README.md`](./README.md) §"Testar no celular".
+- ✅ **Deploy de PROTÓTIPO no Cloudflare Pages** (TASK-CHORE-005, 10/07/26; projeto renomeado p/ `eu-roteirizo-prototipo`): `npm run deploy:test` publica em **https://eu-roteirizo-prototipo.pages.dev**, URL fixa p/ smokes no celular (HTTPS → GPS/PWA funcionam; recarregar **2×** p/ o SW `autoUpdate` assumir). ⚠️ **É protótipo, NÃO o lançamento**: `X-Robots-Tag: noindex` via `public/_headers` (remover esse arquivo quando existir deploy de produção, que é outra decisão). Desde a TASK-CHORE-011 (28/07/26) a **URL é divulgada** no README e em portfólio, só não é indexada. Mesma conta Cloudflare do tile worker. Instruções em [`docs/README.md`](./README.md) §"Testar no celular".
 
 ## Documentação de Referência
 
@@ -130,6 +130,6 @@ Não revisar sem ADR explícita:
 
 ## Última Atualização
 
-- **Data:** 27/07/26
-- **Por:** **TASK-CHORE-007**, quando o projeto ganhou nome: **Eu Roteirizo** (slug `eu-roteirizo`). Renomeados `package.json`, `<title>`, manifest do PWA, `UI_LABELS` (era "Pré-Rota") e os três bancos IndexedDB (`eu-roteirizo-manifests|routing|roteiros`), **sem migração**: dados de aparelhos antigos ficaram órfãos por decisão do humano. O projeto Cloudflare Pages de testes segue `pre-rota-teste` (URL real, não renomeada). "Roteirizador" como substantivo comum permanece no texto. Anterior: **TASK-DOC-003** (10/07/26), sincronização completa com o código.
+- **Data:** 28/07/26
+- **Por:** **TASK-CHORE-011**, que deixou o repositório apresentável como projeto de portfólio: ícone e manifest próprios (o favicon e o ícone do PWA ainda eram o logo do Vite), `LICENSE` proprietária, meta tags e Open Graph no `index.html`, remoção de `public/sw.js` (service worker morto que colidia com o do Workbox) e de `public/vite.svg`, README com bloco "Avaliando em 5 minutos" e ponteiros auditáveis sobre o uso de IA. Também corrigiu a URL do deploy nesta doc, que ainda apontava para `pre-rota-teste`. Anterior: **TASK-CHORE-007**, quando o projeto ganhou nome: **Eu Roteirizo** (slug `eu-roteirizo`). Renomeados `package.json`, `<title>`, manifest do PWA, `UI_LABELS` (era "Pré-Rota") e os três bancos IndexedDB (`eu-roteirizo-manifests|routing|roteiros`), **sem migração**: dados de aparelhos antigos ficaram órfãos por decisão do humano. O projeto Cloudflare Pages de testes segue `pre-rota-teste` (URL real, não renomeada). "Roteirizador" como substantivo comum permanece no texto. Antes disso: **TASK-DOC-003** (10/07/26), sincronização completa com o código.
 - **Próxima revisão sugerida:** ao concluir a **RF-009** (execução, que muda a proposta do produto), ou em ~2 meses.

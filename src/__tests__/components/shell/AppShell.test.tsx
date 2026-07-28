@@ -80,6 +80,35 @@ describe("AppShell (integration)", () => {
     expect(screen.getByText(UI_LABELS.SHELL.APP_TITLE_WITH_ROUTE("L-23"))).toBeInTheDocument();
   });
 
+  /**
+   * TASK-REF-019: on a wide screen the app is a centred column of fixed max
+   * width. The contract is ONE class shared by every full-bleed piece of
+   * chrome: the bottom nav is `fixed`, so it does not inherit the wrapper's
+   * width and has to carry the class itself.
+   */
+  it("enquadra conteúdo e bottom-nav na mesma coluna centralizada (REF-019)", () => {
+    const { container } = renderApp();
+
+    const frame = container.querySelector(".app-frame");
+    expect(frame).not.toBeNull();
+    expect(frame).toContainElement(screen.getByText(UI_LABELS.SHELL.APP_TITLE));
+    expect(screen.getByRole("navigation", { name: UI_LABELS.SHELL.NAV_ARIA })).toHaveClass("app-frame");
+  });
+
+  it("FocusShell usa o mesmo enquadramento das telas com abas (REF-019)", () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={["/foco"]}>
+        <Routes>
+          <Route element={<FocusShell />}>
+            <Route path="/foco" element={<div>conteúdo de foco</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(container.querySelector(".app-frame")).toContainElement(screen.getByText("conteúdo de foco"));
+  });
+
   it("abre as Configurações de entrega pelo ⚙️ (RF-007.2)", () => {
     renderApp();
 

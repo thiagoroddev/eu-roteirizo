@@ -1,0 +1,26 @@
+Copyright (c) 2026 Thiago Silva. Todos os direitos reservados.
+All rights reserved.
+
+Este repositório é público para fins de **avaliação e portfólio**. O código está
+visível de propósito, para que qualquer pessoa possa lê-lo, estudá-lo e julgar o
+trabalho. Isso não o torna software livre.
+
+PERMITIDO
+- Ler, navegar e estudar o código.
+- Executar localmente para avaliar o projeto.
+- Citar trechos, com atribuição, em análise, resenha ou entrevista.
+
+NÃO PERMITIDO sem autorização escrita do autor
+- Usar o código, no todo ou em parte, em qualquer produto ou serviço.
+- Copiar, modificar, mesclar, publicar, distribuir, sublicenciar ou vender.
+- Treinar modelos ou sistemas comerciais sobre este código.
+
+O software é fornecido "COMO ESTÁ", sem garantia de qualquer natureza, expressa ou
+implícita, incluindo mas não se limitando a garantias de comercialização, adequação
+a uma finalidade específica e não violação. Em nenhuma hipótese o autor responde por
+qualquer reclamação, dano ou responsabilidade decorrente do software ou de seu uso.
+
+Bibliotecas de terceiros e dados de mapa mantêm suas próprias licenças. Os dados de
+malha viária vêm do OpenStreetMap, sob ODbL (https://www.openstreetmap.org/copyright).
+
+Para usar isto em algo, é só falar comigo: thiagorod.dev@gmail.com

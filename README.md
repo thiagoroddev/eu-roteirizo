@@ -1,11 +1,19 @@
-# 🚚 Eu Roteirizo - https://eu-roteirizo-prototipo.pages.dev/
+# 🚚 Eu Roteirizo
 
-**PWA que transforma romaneios de entregas em rotas otimizadas que possuem paradas com circuitos de entregas a pé, montada sobre o grafo de ruas do OpenStreetMap sem backend, sem conta e sem API de roteirização paga.**
+**PWA que transforma o romaneio de entregas em paradas de veículo com circuitos de entrega a pé,
+traçados sobre o grafo de ruas do OpenStreetMap. Sem backend, sem conta e sem API de roteirização paga.**
+
+**[▶️ Abrir o protótipo](https://eu-roteirizo-prototipo.pages.dev/)** ·
+[Avaliando em 5 minutos](#-avaliando-em-5-minutos) ·
+[Estado atual](#-estado-atual) ·
+[Documentação](#-documentação) ·
+[Sobre o uso de IA](#-sobre-o-uso-de-ia)
 
 > ### ⚠️ Protótipo em desenvolvimento
 >
 > Este é um **projeto pessoal de aprendizado, em construção ativa**. Não é um produto lançado: não tem
-> versão estável, não está em loja de aplicativos e o único ambiente publicado é de **testes**.
+> versão estável, não está em loja de aplicativos, e o ambiente publicado no link acima é um
+> **protótipo**, mantido para demonstração e para os testes no aparelho.
 > O modo de visualização está maduro; o construtor de roteiro é recente; a execução da rota
 > **ainda não existe**. O estado real, funcionalidade por funcionalidade, está em
 > [Estado atual](#-estado-atual).
@@ -27,7 +35,7 @@ cobram por requisição, ou assumem que cada parada é uma movimentação com ve
 | Modo | O que faz |
 |---|---|
 | **Original** | Mostra a planilha como ela é: mapa com marcador por endereço, painel com detalhe da parada, tabelas e sumário. |
-| **Meu roteiro** | Deixa você **construir a rota manualmente parada por parada**: define onde o veículo para (por padrão no mesmo endereço de entrega, permitindo alteração), agrupa endereços por raio de caminhada e calcula o percurso real pelas ruas mostrando tempo e distância. O local onde o veículo estaciona em cada parada é ponto de partida para a próxima, e o app sugere a próxima parada com base na posição que é independente dos endereços de entrega.
+| **Meu roteiro** | Deixa você **construir a rota manualmente parada por parada**: define onde o veículo para (por padrão no mesmo endereço de entrega, permitindo alteração), agrupa endereços por raio de caminhada e calcula o percurso real pelas ruas mostrando tempo e distância. O local onde o veículo estaciona em cada parada é ponto de partida para a próxima, e o app sugere a próxima parada com base na posição que é independente dos endereços de entrega. |
 
 ---
 
@@ -48,6 +56,33 @@ Nenhuma é mockup. São o que o código faz hoje.
     <td align="center"><img src="docs/imagens/07-roteiro-montado.png" width="185"><br><sub><b>Parada do veículo</b><br>com próxima parada sugerida</sub></td>
   </tr>
 </table>
+
+---
+
+## ⏱️ Avaliando em 5 minutos
+
+Se você chegou aqui para julgar o trabalho e tem pouco tempo, este é o caminho curto.
+
+**No app** ([protótipo ao vivo](https://eu-roteirizo-prototipo.pages.dev/), ou `npm run dev`):
+
+1. Toque em **"Testar com romaneio de exemplo"**. Não precisa de arquivo nenhum: um romaneio
+   fictício de Copacabana entra pelo mesmo caminho de um upload real.
+2. Abra a rota **L-29** e veja o **modo Original**: marcadores por tipo de local, painel da parada,
+   sumário.
+3. Troque para **Meu roteiro**, marque um ponto de início no mapa e adicione uma parada. O app
+   baixa a malha de ruas, agrupa os endereços por raio de caminhada e traça o percurso real.
+   A primeira parada demora alguns segundos, porque é quando o grafo é baixado. A partir dali é
+   instantâneo, porque fica em cache.
+
+**No código**, se quiser ir direto à parte difícil sem caçar arquivo:
+
+| Onde | O que tem |
+|---|---|
+| [`src/utils/routing/aStar.ts`](src/utils/routing/aStar.ts) + [`graph.ts`](src/utils/routing/graph.ts) | O A\* e o grafo dirigido sobre dados do OpenStreetMap, escritos aqui. É o núcleo técnico do projeto |
+| [`src/utils/routing/builder.ts`](src/utils/routing/builder.ts) | O reducer que constrói o roteiro. Domínio inteiro isolado da UI, testável sem renderizar nada |
+| [`src/utils/excelProcessor.ts`](src/utils/excelProcessor.ts) | Leitura da planilha, o ponto de entrada de todo dado do app |
+| [`docs/arquitetura/ADR/ADR-002.md`](docs/arquitetura/ADR/ADR-002.md) | Por que roteirização própria em vez de API paga, com as alternativas que foram descartadas |
+| [`docs/tarefas/concluidas/2026-07-18--18h07--TASK-BG-006.md`](docs/tarefas/concluidas/2026-07-18--18h07--TASK-BG-006.md) | Um registro de caça a bug do começo ao fim: sintoma, hipóteses erradas, causa raiz e correção |
 
 ---
 
@@ -96,7 +131,7 @@ com o marcador `⚙️ MANUAL KNOB`, para ajustar num lugar só.
 
 ## 📊 Estado atual
 
-Números de **27/07/2026**.
+Números de **28/07/2026**, conferidos no repositório.
 
 **Funciona hoje**
 - ✅ Leitura de romaneio XLSX/CSV, multi-rota (agrupado por corredor) ou rota única
@@ -160,7 +195,7 @@ Se quiser usar um arquivo seu: o mínimo são as colunas `Latitude` e `Longitude
 ```bash
 npm run test         # suíte
 npm run lint         # eslint
-npx tsc -b           # tipos (o tsconfig da raiz usa project references)
+npm run typecheck    # tipos, roda `tsc -b` (o tsconfig da raiz usa project references)
 npm run build        # build de produção
 ```
 
@@ -192,8 +227,20 @@ depois de teste no aparelho real, porque suíte verde não prova conforto de uso
 Para que isso não virasse geração de código sem rumo, o repositório inclui um **manual de operação do
 agente** em [`.github/agents/`](.github/agents/): princípios, ciclo de tarefa, padrões de código,
 checklists de revisão e modos de cerimônia proporcionais ao risco da mudança. Os registros em
-`docs/tarefas/concluidas/` são a saída desse processo. Dá para auditar como cada decisão foi tomada,
-o que foi deliberadamente **não** feito, e onde o plano mudou no meio do caminho.
+`docs/tarefas/concluidas/` são a saída desse processo.
+
+Se quiser conferir em vez de acreditar, três pontos de entrada:
+
+- **As regras que o agente segue**: [`01-nucleo.md`](.github/agents/geral-robusto/01-nucleo.md),
+  o arquivo carregado em toda interação, com os princípios e o que exige aprovação explícita minha.
+- **Uma tarefa em que o plano mudou no meio**:
+  [`TASK-DOC-010`](docs/tarefas/concluidas/2026-07-27--22h05--TASK-DOC-010.md) trocou de método duas
+  vezes durante a execução, e registra por quê, o que ficou de fora e o que a revisão ressalvou.
+- **Um gate que passou verde sem checar nada**:
+  [`TASK-BG-010`](docs/tarefas/concluidas/2026-07-27--18h30--TASK-BG-010.md). O `tsc --noEmit` saía
+  com código 0 sem ler arquivo nenhum, então dezenas de registros anteriores tinham rotulado como
+  APROVADO uma checagem que nunca rodou. Está documentado justamente porque é o tipo de coisa que
+  um processo assim precisa admitir para valer alguma coisa.
 
 Boa parte do que aprendi aqui foi menos sobre React e mais sobre **como conduzir e revisar** trabalho
 que não foi minha mão que digitou.
@@ -203,7 +250,9 @@ que não foi minha mão que digitou.
 ## 📄 Licença
 
 Sem licença de código aberto. O código está público para **avaliação e portfólio**; todos os direitos
-reservados. Se quiser usá-lo para algo, é só me chamar.
+reservados. Termos completos em [`LICENSE`](LICENSE). Se quiser usá-lo para algo, é só me chamar.
+
+Os dados de malha viária vêm do [OpenStreetMap](https://www.openstreetmap.org/copyright), sob ODbL.
 
 ---
 

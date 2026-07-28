@@ -25,7 +25,7 @@ npm run dev          # servidor de desenvolvimento (http://localhost:5173)
 npm run build        # build de produção
 npm run test         # Vitest
 npm run lint         # ESLint
-npx tsc -b           # checagem de tipos (ver aviso abaixo)
+npm run typecheck    # checagem de tipos, roda `tsc -b` (ver aviso abaixo)
 npm run preview      # serve a build local
 npm run deploy:test  # publica o ambiente de TESTES (Cloudflare Pages)
 ```
@@ -41,17 +41,18 @@ Toda tarefa fecha com os quatro gates verdes: `tsc -b`, `eslint`, `vitest` e `bu
 
 ## Testar no celular
 
-`npm run deploy:test` builda e publica em **https://pre-rota-teste.pages.dev**. URL fixa, HTTPS
-(GPS e instalação de PWA só funcionam sob HTTPS), com `X-Robots-Tag: noindex` via
-[`public/_headers`](../public/_headers).
+`npm run deploy:test` builda e publica no projeto Cloudflare Pages `eu-roteirizo-prototipo`, ou seja
+em **https://eu-roteirizo-prototipo.pages.dev**. URL fixa, HTTPS (GPS e instalação de PWA só
+funcionam sob HTTPS), com `X-Robots-Tag: noindex` via [`public/_headers`](../public/_headers).
 
-É **ambiente de testes, não lançamento**: a URL não é divulgada. Após o deploy, recarregue a página
-**2×** no aparelho: o service worker `autoUpdate` instala a versão nova na primeira carga e a ativa
-na segunda. Requer `npx wrangler login` uma vez por máquina.
+É **protótipo, não lançamento**. A URL é divulgada no README e em portfólio, mas segue fora dos
+buscadores de propósito (ver o comentário no `_headers`). Após o deploy, recarregue a página **2×**
+no aparelho: o service worker `autoUpdate` instala a versão nova na primeira carga e a ativa na
+segunda. Requer `npx wrangler login` uma vez por máquina.
 
-> O projeto no Cloudflare ainda se chama `pre-rota-teste`, nome anterior ao renome para
-> "Eu Roteirizo". Projeto do Pages não pode ser renomeado: mudar a URL significa criar projeto
-> novo e aposentar o antigo.
+> O projeto anterior no Pages se chamava `pre-rota-teste`, nome de antes do renome para
+> "Eu Roteirizo". Projeto do Pages não pode ser renomeado, então mudar a URL significou criar
+> projeto novo. Registros de tarefas anteriores a 28/07/26 ainda citam a URL antiga.
 
 ## Cloudflare Worker: proxy de tiles
 
