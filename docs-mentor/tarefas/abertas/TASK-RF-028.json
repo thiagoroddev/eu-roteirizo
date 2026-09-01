@@ -1,0 +1,59 @@
+{
+  "id": "TASK-RF-028",
+  "tipo": "RF",
+  "titulo": "[fatia de TASK-RF-009] Sumario, retomada e modo lista da execucao",
+  "fatia_de": "TASK-RF-009",
+  "estado": "aberta",
+  "cerimonia": "Strict",
+  "valor": "critico",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "M"
+  },
+  "depende_de": [
+    "TASK-RF-027"
+  ],
+  "ordem": null,
+  "fila": "reserva",
+  "origem": "RF-37, RF-47, RF-49",
+  "requisitos": [
+    "RF-37",
+    "RF-47",
+    "RF-48",
+    "RF-49",
+    "RF-44"
+  ],
+  "criada_em": "20/07/26 23:10",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Atualizar resumo com status de execucao.",
+      "Permitir retomar execucao existente.",
+      "Expor lista compacta de execucao com acoes sincronizadas."
+    ],
+    "criterios_aceite": [
+      "Resumo mostra razao entregue/planejado e estado do roteiro.",
+      "Retomar volta ao proximo destino correto.",
+      "Modo lista sincroniza acoes com mapa e progresso."
+    ],
+    "impacto": "Entrega a superficie de acompanhamento e retomada para uso real.",
+    "riscos": [],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

@@ -5,7 +5,7 @@
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-01T02:58:12.971Z",
+    "atualizado_em": "2026-09-01T19:30:17.256Z",
     "gerado_por": "script"
   },
   "projeto": {
@@ -602,13 +602,13 @@
   "contagens": {
     "_gerado_por_script": true,
     "tarefas_concluidas": 0,
-    "tarefas_abertas": 0,
-    "tarefas_no_ciclo": 0,
-    "tarefas_na_reserva": 0,
+    "tarefas_abertas": 15,
+    "tarefas_no_ciclo": 1,
+    "tarefas_na_reserva": 14,
     "validacoes_pendentes": 0,
-    "requisitos_total": 0,
+    "requisitos_total": 22,
     "requisitos_implementados": 0,
-    "requisitos_pendentes": 0,
+    "requisitos_pendentes": 22,
     "divida_tecnica_aberta": 0,
     "riscos_aceitos_ativos": 0,
     "riscos_aceitos_vencidos": 0,
@@ -668,9 +668,17 @@
   },
   "lembretes": [
     "5 configuracao(oes) de plataforma nao declarada(s): protecao_do_ramo_principal, apagar_ramo_apos_merge, alertas_de_vulnerabilidade, atualizacoes_de_seguranca, segredos_do_ambiente_de_esteira. Nenhum script alcanca isso",
-    "nenhum requisito registrado: o que guia o trabalho nao esta escrito",
     "1 arquivo(s) acima do teto de texto: docs-mentor/contexto.md",
+    "TASK-RF-024 e critica+imediata e esta aberta ha 43 dias",
     "versionamento incompleto: protecao_do_ramo_principal, uma_tarefa_por_ramo, apaga_ramo_no_merge"
   ],
-  "_lembretes_nota": "GERADO pelo doctor a cada execucao. Nao digite aqui: campo livre acumula prosa como qualquer outro."
+  "_lembretes_nota": "GERADO pelo doctor a cada execucao. Nao digite aqui: campo livre acumula prosa como qualquer outro.",
+  "offsets_de_id": {
+    "RF": 28,
+    "DOC": 10,
+    "REF": 19,
+    "CHORE": 11,
+    "TEST": 3,
+    "BG": 10
+  }
 }

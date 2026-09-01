@@ -1,0 +1,58 @@
+{
+  "id": "TASK-RF-025",
+  "tipo": "RF",
+  "titulo": "[fatia de TASK-RF-009] Shell de execucao e roteiro somente leitura",
+  "fatia_de": "TASK-RF-009",
+  "estado": "aberta",
+  "cerimonia": "Strict",
+  "valor": "critico",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "M"
+  },
+  "depende_de": [
+    "TASK-RF-024"
+  ],
+  "ordem": null,
+  "fila": "reserva",
+  "origem": "RF-37, RF-33, RN-22",
+  "requisitos": [
+    "RF-37",
+    "RF-33",
+    "RN-14",
+    "RN-22"
+  ],
+  "criada_em": "20/07/26 23:10",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Adicionar entrada do modo execucao por parametro ou acao Iniciar rota.",
+      "Mostrar cabecalho com destino atual e progresso de resolucao.",
+      "Bloquear edicao do roteiro durante execucao."
+    ],
+    "criterios_aceite": [
+      "Iniciar rota aparece somente com 100% de resolucao.",
+      "Modo execucao pode ser aberto e fechado sem perder o roteiro.",
+      "Lista de paradas fica somente leitura no shell inicial."
+    ],
+    "impacto": "Transforma o modelo em fluxo navegavel sem ainda registrar entregas.",
+    "riscos": [],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

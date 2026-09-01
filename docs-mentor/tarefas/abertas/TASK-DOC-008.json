@@ -1,0 +1,49 @@
+{
+  "id": "TASK-DOC-008",
+  "tipo": "DOC",
+  "titulo": "Resolver divergencia entre UI_LABELS.SUMMARY.VIEW_MAP e texto renderizado",
+  "fatia_de": null,
+  "estado": "aberta",
+  "cerimonia": "Light",
+  "valor": "desejavel",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "ordem": null,
+  "fila": "reserva",
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "criada_em": "27/07/26 16:14",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Investigar se Ver Original e constante morta ou se Ver no Mapa esta hardcoded.",
+      "Alinhar documentacao, constante e teste conforme ADR-001."
+    ],
+    "criterios_aceite": [
+      "Nao ha divergencia silenciosa entre UI_LABELS e texto renderizado.",
+      "Teste ou verificacao cobre o texto esperado se ele continuar relevante."
+    ],
+    "impacto": "Reduz risco de regressao por label fora do sistema centralizado.",
+    "riscos": [],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

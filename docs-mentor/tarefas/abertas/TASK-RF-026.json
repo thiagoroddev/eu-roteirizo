@@ -1,0 +1,58 @@
+{
+  "id": "TASK-RF-026",
+  "tipo": "RF",
+  "titulo": "[fatia de TASK-RF-009] Marcacao de entrega, insucesso e desfazer",
+  "fatia_de": "TASK-RF-009",
+  "estado": "aberta",
+  "cerimonia": "Strict",
+  "valor": "critico",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "M"
+  },
+  "depende_de": [
+    "TASK-RF-025"
+  ],
+  "ordem": null,
+  "fila": "reserva",
+  "origem": "RF-37, RF-48, RN-22",
+  "requisitos": [
+    "RF-37",
+    "RF-48",
+    "RF-49",
+    "RN-22"
+  ],
+  "criada_em": "20/07/26 23:10",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Permitir marcar entrega concluida por pacote/endereco.",
+      "Permitir marcar insucesso dentro do escopo sem motivo/foto.",
+      "Adicionar desfazer e autoavanco com autosave."
+    ],
+    "criterios_aceite": [
+      "Marcacoes alteram status, progresso e proximo destino de forma consistente.",
+      "Desfazer restaura a ultima alteracao suportada.",
+      "Recarregar a pagina preserva progresso salvo."
+    ],
+    "impacto": "Torna a execucao operacional para o registro principal em campo.",
+    "riscos": [],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

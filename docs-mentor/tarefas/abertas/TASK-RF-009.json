@@ -1,0 +1,56 @@
+{
+  "id": "TASK-RF-009",
+  "tipo": "RF",
+  "titulo": "Modo execucao do Meu roteiro",
+  "fatia_de": null,
+  "estado": "aberta",
+  "cerimonia": "Strict",
+  "valor": "critico",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "XG",
+    "ia": "XG"
+  },
+  "depende_de": [],
+  "ordem": null,
+  "fila": "reserva",
+  "origem": "RF-37, RF-47, RF-48, RF-49, RN-22",
+  "requisitos": [
+    "RF-37",
+    "RF-47",
+    "RF-48",
+    "RF-49",
+    "RN-22"
+  ],
+  "criada_em": "20/07/26 23:10",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Implementar o epico em fatias antes de permitir execucao completa em campo."
+    ],
+    "criterios_aceite": [
+      "Todas as fatias TASK-RF-024 a TASK-RF-028 concluidas e validadas.",
+      "Modo execucao cobre modelo, UI, mapa, resumo, pausa/retomada e desfazer."
+    ],
+    "impacto": "Entrega o modo de execucao ponta a ponta para roteiro salvo.",
+    "riscos": [
+      "Escopo XG: nao deve ser puxado diretamente; executar somente pelas fatias."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

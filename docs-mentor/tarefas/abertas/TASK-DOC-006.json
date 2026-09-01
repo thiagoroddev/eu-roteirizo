@@ -1,0 +1,49 @@
+{
+  "id": "TASK-DOC-006",
+  "tipo": "DOC",
+  "titulo": "Aplicar correcoes de custo e backend do plano de infraestrutura",
+  "fatia_de": null,
+  "estado": "aberta",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "ordem": null,
+  "fila": "reserva",
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "criada_em": "20/07/26 20:10",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Aplicar as 8 correcoes listadas no plano de infraestrutura e custos, secao 13.",
+      "Reconciliar divergencias ADR-007 x ADR-010, roteamento zero, RNF-02 e geocoding."
+    ],
+    "criterios_aceite": [
+      "Plano e documentos relacionados deixam de contradizer decisoes atuais.",
+      "Divergencias de custo/backend ficam resolvidas ou convertidas em divida tecnica explicita."
+    ],
+    "impacto": "Evita que documentacao antiga guie decisoes de infraestrutura erradas.",
+    "riscos": [],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

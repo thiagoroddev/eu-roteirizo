@@ -3,7 +3,7 @@
 <!-- Gerado por `node mentor.mjs gerar`. Nao edite a mao: a proxima geracao sobrescreve. -->
 
 **Fase:** construcao · **Rigor:** N2
-**Respondido por voce:** 129 · **Padrao do pacote:** 25 · **Em aberto:** 39
+**Respondido por voce:** 135 · **Padrao do pacote:** 25 · **Em aberto:** 39
 
 Todos os portoes foram respondidos ou dispensados com motivo.
 
@@ -137,7 +137,13 @@ Todos os portoes foram respondidos ou dispensados com motivo.
 - `versionamento.esteira_barra`: 5 item(s)
 - `revisao_geral.ultima_em`: 2026-06-22
 - `revisao_geral.ultima_na_tarefa`: REV-001
-- `lembretes`: 7 item(s)
+- `lembretes`: 4 item(s)
+- `offsets_de_id.RF`: 28
+- `offsets_de_id.DOC`: 10
+- `offsets_de_id.REF`: 19
+- `offsets_de_id.CHORE`: 11
+- `offsets_de_id.TEST`: 3
+- `offsets_de_id.BG`: 10
 25 campo(s) vieram preenchidos pelo pacote e ainda nao foram olhados.
 Valem enquanto ninguem decidir outra coisa.
 

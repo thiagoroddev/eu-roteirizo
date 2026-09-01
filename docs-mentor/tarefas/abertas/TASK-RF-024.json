@@ -1,0 +1,59 @@
+{
+  "id": "TASK-RF-024",
+  "tipo": "RF",
+  "titulo": "[fatia de TASK-RF-009] Modelo e persistencia da execucao",
+  "fatia_de": "TASK-RF-009",
+  "estado": "aberta",
+  "cerimonia": "Strict",
+  "valor": "critico",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "G"
+  },
+  "depende_de": [],
+  "ordem": 1,
+  "fila": "ciclo",
+  "origem": "RF-37, RN-22",
+  "requisitos": [
+    "RF-37",
+    "RF-47",
+    "RN-14",
+    "RN-15",
+    "RN-22"
+  ],
+  "criada_em": "20/07/26 23:10",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Criar modelo puro de estado de execucao.",
+      "Persistir progresso local em service dedicado.",
+      "Adicionar seletores de status por endereco/parada e proximo destino."
+    ],
+    "criterios_aceite": [
+      "Estado de execucao calcula addressStatus, stopStatus, resolvedRatio e nextDestination sem depender da UI.",
+      "Persistencia suporta autosave e restauracao por roteiro.",
+      "Atualizacoes sao imutaveis e cobertas por testes unitarios."
+    ],
+    "impacto": "Baseia todo o modo execucao sem expor ainda a experiencia visual.",
+    "riscos": [
+      "Modelagem errada nesta fatia contamina as telas seguintes."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

@@ -1,0 +1,52 @@
+{
+  "id": "TASK-TEST-002",
+  "tipo": "TEST",
+  "titulo": "Testar zoom minimo do mapa para detalhe de rua a pe",
+  "fatia_de": null,
+  "estado": "aberta",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "ordem": null,
+  "fila": "reserva",
+  "origem": "RNF-15",
+  "requisitos": [
+    "RNF-15"
+  ],
+  "criada_em": "24/06/26 14:50",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Medir limite minimo de zoom que ainda permite roteirizacao a pe.",
+      "Alinhar MAP_CONFIG.ZOOM.MIN com bloqueio do tile worker para z menor que 14."
+    ],
+    "criterios_aceite": [
+      "Existe evidencia do zoom minimo escolhido.",
+      "Configuracao e bloqueio do worker nao entram em contradicao.",
+      "Resultado fica documentado em gate, teste ou nota de decisao."
+    ],
+    "impacto": "Evita configuracao de mapa que pareca funcionar mas nao carregue grafo suficiente.",
+    "riscos": [],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

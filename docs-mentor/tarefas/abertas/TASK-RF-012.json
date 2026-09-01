@@ -1,0 +1,52 @@
+{
+  "id": "TASK-RF-012",
+  "tipo": "RF",
+  "titulo": "Auto-roteirizar por agrupamento de proximidade",
+  "fatia_de": null,
+  "estado": "aberta",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "ordem": null,
+  "fila": "reserva",
+  "origem": "RF-34",
+  "requisitos": [
+    "RF-34"
+  ],
+  "criada_em": "22/06/26 23:50",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Criar fluxo de auto-roteirizacao apos a base manual estar estavel.",
+      "Gerar sugestao inicial por raio mantendo revisao manual."
+    ],
+    "criterios_aceite": [
+      "Acao Auto-roteirizar produz ordem inicial para pontos resolvidos.",
+      "Resultado permanece editavel antes de salvar ou executar.",
+      "Logica principal tem teste automatizado."
+    ],
+    "impacto": "Reduz trabalho manual de ordenar paradas.",
+    "riscos": [],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

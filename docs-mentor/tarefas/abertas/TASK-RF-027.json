@@ -1,0 +1,57 @@
+{
+  "id": "TASK-RF-027",
+  "tipo": "RF",
+  "titulo": "[fatia de TASK-RF-009] Status visual da execucao no mapa",
+  "fatia_de": "TASK-RF-009",
+  "estado": "aberta",
+  "cerimonia": "Strict",
+  "valor": "critico",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "P",
+    "ia": "M"
+  },
+  "depende_de": [
+    "TASK-RF-026"
+  ],
+  "ordem": null,
+  "fila": "reserva",
+  "origem": "RF-37",
+  "requisitos": [
+    "RF-37",
+    "RF-48",
+    "RF-40"
+  ],
+  "criada_em": "20/07/26 23:10",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Refletir entregue, pendente e insucesso nos marcadores do mapa.",
+      "Evitar colisao com cacheKey e paleta existente.",
+      "Manter contraste e leitura mobile."
+    ],
+    "criterios_aceite": [
+      "Marcadores mudam visualmente conforme status de execucao.",
+      "Cache de icone considera estado de completion.",
+      "Mapa continua legivel e sem regressao visual nos estados existentes."
+    ],
+    "impacto": "Fecha a leitura espacial do progresso da rota.",
+    "riscos": [],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

@@ -1,0 +1,57 @@
+{
+  "id": "TASK-RF-013",
+  "tipo": "RF",
+  "titulo": "Exportar e importar roteiro JSON",
+  "fatia_de": null,
+  "estado": "aberta",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "ordem": null,
+  "fila": "reserva",
+  "origem": "RF-36, RF-20, RF-44",
+  "requisitos": [
+    "RF-36",
+    "RF-20",
+    "RF-44",
+    "RN-21",
+    "RN-15"
+  ],
+  "criada_em": "22/06/26 23:50",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Habilitar exportacao de roteiro salvo em JSON.",
+      "Implementar importacao que reconstrua roteiro vinculado ou standalone.",
+      "Conectar atalho da home para Meu roteiro quando aplicavel."
+    ],
+    "criterios_aceite": [
+      "Exportar gera arquivo versionado e reimportavel.",
+      "Importar sem romaneio abre roteiro standalone sem modo Original.",
+      "Importar com vinculo preserva relacionamento com romaneio salvo."
+    ],
+    "impacto": "Permite continuidade entre dispositivos e compartilhamento sem backend.",
+    "riscos": [],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

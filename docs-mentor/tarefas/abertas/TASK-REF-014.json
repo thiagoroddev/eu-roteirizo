@@ -1,0 +1,48 @@
+{
+  "id": "TASK-REF-014",
+  "tipo": "REF",
+  "titulo": "Ajustar radius do tema para 0.5rem conforme neonflux",
+  "fatia_de": null,
+  "estado": "aberta",
+  "cerimonia": "Light",
+  "valor": "desejavel",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "ordem": null,
+  "fila": "reserva",
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "criada_em": "09/07/26 17:00",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Trocar radius visual pendente de 1rem/pill para 0.5rem onde o tema exigir."
+    ],
+    "criterios_aceite": [
+      "Componentes afetados seguem neonflux.md.",
+      "Mudanca visual nao quebra layout mobile ou estados existentes."
+    ],
+    "impacto": "Fecha pendencia estetica anotada na refatoracao visual.",
+    "riscos": [],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

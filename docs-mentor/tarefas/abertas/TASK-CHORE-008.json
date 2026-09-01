@@ -1,0 +1,50 @@
+{
+  "id": "TASK-CHORE-008",
+  "tipo": "CHORE",
+  "titulo": "Remover service worker legado public/sw.js",
+  "fatia_de": null,
+  "estado": "aberta",
+  "cerimonia": "Light",
+  "valor": "desejavel",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "ordem": null,
+  "fila": "reserva",
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "criada_em": "27/07/26 11:27",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Remover public/sw.js se confirmado que nao e registrado.",
+      "Garantir que Workbox/dist/sw.js continua sendo a fonte ativa."
+    ],
+    "criterios_aceite": [
+      "Nenhuma referencia ativa depende de public/sw.js.",
+      "Build PWA continua gerando service worker esperado.",
+      "Documentacao nao aponta mais para arquivo fantasma."
+    ],
+    "impacto": "Elimina artefato morto que confunde manutencao PWA.",
+    "riscos": [],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

@@ -1,0 +1,50 @@
+{
+  "id": "TASK-CHORE-009",
+  "tipo": "CHORE",
+  "titulo": "Comprimir capturas de docs/imagens",
+  "fatia_de": null,
+  "estado": "aberta",
+  "cerimonia": "Light",
+  "valor": "desejavel",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "ordem": null,
+  "fila": "reserva",
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "criada_em": "27/07/26 16:14",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Reduzir peso das capturas PNG em docs/imagens.",
+      "Avaliar oxipng, pngquant ou menor deviceScaleFactor para novas capturas."
+    ],
+    "criterios_aceite": [
+      "Capturas permanecem legiveis apos compressao.",
+      "Peso total das imagens e reduzido de forma perceptivel.",
+      "README e clone ficam menos pesados sem remover evidencias uteis."
+    ],
+    "impacto": "Melhora custo de clone e leitura em conexao ruim.",
+    "riscos": [],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

@@ -1,1 +1,524 @@
-[]
+[
+  {
+    "id": "RF-11",
+    "tipo": "RF",
+    "enunciado": "Diferenciar visualmente tipos de parada no mapa e na lista, reduzindo ambiguidades de apartamentos, casas, lojas e indefinidos.",
+    "historia": "Como entregador, quero reconhecer rapidamente o tipo de cada parada para planejar abordagem e prioridade sem reler o endereco inteiro.",
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Paradas com tipo conhecido exibem icone ou indicador distinto no mapa e na lista.",
+      "Casos sem inferencia segura permanecem como indefinidos sem mascarar a incerteza.",
+      "A regra de inferencia e coberta por teste unitario com exemplos reais de endereco."
+    ],
+    "regras_aplicaveis": [],
+    "requisitos_relacionados": [],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-20",
+    "tipo": "RF",
+    "enunciado": "Permitir alternar entre a sequencia Original e Meu roteiro; quando o roteiro for importado sem romaneio, Original fica indisponivel.",
+    "historia": "Como entregador, quero comparar a ordem original com a rota planejada para entender o impacto do roteiro antes de executar.",
+    "prioridade": "essencial",
+    "status": "pendente",
+    "criterios_aceite": [
+      "A alternancia Original/Meu roteiro funciona quando ha romaneio vinculado.",
+      "Roteiro importado de forma avulsa abre diretamente em Meu roteiro e comunica que Original nao existe.",
+      "A decisao nao altera a ordem Shopee Stop/Sequence armazenada como referencia."
+    ],
+    "regras_aplicaveis": [
+      "RN-15",
+      "RN-21"
+    ],
+    "requisitos_relacionados": [
+      "RF-36",
+      "RF-44"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-33",
+    "tipo": "RF",
+    "enunciado": "Permitir salvar roteiro incompleto gratuitamente e liberar execucao somente quando todos os enderecos estiverem resolvidos.",
+    "historia": "Como entregador, quero salvar meu trabalho mesmo antes de resolver todos os pontos, mas so iniciar a rota quando ela estiver segura para execucao.",
+    "prioridade": "essencial",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Salvar permanece disponivel mesmo com enderecos pendentes ou indefinidos.",
+      "Iniciar rota fica bloqueado enquanto houver endereco nao resolvido.",
+      "A interface mostra progresso de resolucao ate atingir 100%."
+    ],
+    "regras_aplicaveis": [
+      "RN-14"
+    ],
+    "requisitos_relacionados": [
+      "RF-37"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-34",
+    "tipo": "RF",
+    "enunciado": "Oferecer Auto-roteirizar para agrupar enderecos proximos por logica de raio, sem substituir a revisao manual.",
+    "historia": "Como entregador, quero uma sugestao automatica inicial para ganhar tempo antes de revisar a rota.",
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Auto-roteirizar gera uma ordem inicial para todos os pontos resolvidos.",
+      "A sugestao continua editavel antes de salvar ou executar.",
+      "A logica principal e testada sem depender da interface."
+    ],
+    "regras_aplicaveis": [],
+    "requisitos_relacionados": [
+      "RF-37"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-36",
+    "tipo": "RF",
+    "enunciado": "Exportar e importar Roteiro em JSON para compartilhar ou continuar em outro dispositivo.",
+    "historia": "Como entregador, quero levar um roteiro salvo para outro aparelho sem depender de conta ou servidor.",
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Exportar gera JSON versionado com dados suficientes para reconstruir o roteiro.",
+      "Importar reconstrui o roteiro em Meu roteiro mantendo ordem, paradas e metadados relevantes.",
+      "Importacao avulsa sem romaneio respeita RF-20 e RN-21."
+    ],
+    "regras_aplicaveis": [
+      "RN-21"
+    ],
+    "requisitos_relacionados": [
+      "RF-20",
+      "RF-44"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-37",
+    "tipo": "RF",
+    "enunciado": "Executar o roteiro entrega a entrega, com destino atual, progresso, conclusao, insucesso e integracao por deeplink/GPS externo.",
+    "historia": "Como entregador em campo, quero seguir o roteiro salvo ponto a ponto para registrar o que ja foi feito e saber o proximo destino.",
+    "prioridade": "essencial",
+    "status": "pendente",
+    "criterios_aceite": [
+      "A execucao abre somente para roteiro completo e salvo.",
+      "O destino atual e o progresso geral ficam visiveis durante a execucao.",
+      "Concluir ou marcar insucesso atualiza estado local e avanca conforme regra definida.",
+      "A navegacao externa abre por deeplink sem exigir GPS ao vivo dentro do app."
+    ],
+    "regras_aplicaveis": [
+      "RN-14",
+      "RN-22"
+    ],
+    "requisitos_relacionados": [
+      "RF-47",
+      "RF-48",
+      "RF-49"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-40",
+    "tipo": "RF",
+    "enunciado": "Exibir legenda recolhivel do mapa usando o mesmo sistema visual de icones das paradas.",
+    "historia": "Como entregador, quero consultar rapidamente o significado dos marcadores sem perder area util do mapa.",
+    "prioridade": "desejavel",
+    "status": "pendente",
+    "criterios_aceite": [
+      "A legenda pode ser aberta e recolhida sem cobrir controles essenciais.",
+      "Os itens da legenda espelham os icones ou estados realmente usados no mapa.",
+      "A legenda permanece legivel em tela mobile."
+    ],
+    "regras_aplicaveis": [],
+    "requisitos_relacionados": [
+      "RF-11",
+      "RF-37"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-41",
+    "tipo": "RF",
+    "enunciado": "Aplicar modelo freemium com anuncio recompensado por importacao, mantendo consentimento explicito antes de carregar SDK de anuncios.",
+    "historia": "Como responsavel pelo produto, quero monetizar o uso gratuito sem cobrar antes de entregar valor e respeitando consentimento.",
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Cada importacao gratuita pode exigir opt-in claro para anuncio recompensado.",
+      "Usuario premium nao passa pelo fluxo de anuncio.",
+      "Nenhum SDK de anuncio e carregado antes da escolha de consentimento aplicavel."
+    ],
+    "regras_aplicaveis": [
+      "RNF-20"
+    ],
+    "requisitos_relacionados": [
+      "RF-42"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-42",
+    "tipo": "RF",
+    "enunciado": "Oferecer assinatura premium via Play Billing para remover anuncios e liberar uso premium.",
+    "historia": "Como entregador frequente, quero assinar o premium para evitar anuncios e manter fluxo de trabalho continuo.",
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Fluxo premium consulta entitlement antes de exigir anuncio.",
+      "A decisao de validacao de compra para MVP fica documentada antes de publicar cobranca real.",
+      "Estados de assinatura ativa, ausente e erro sao representados de forma testavel."
+    ],
+    "regras_aplicaveis": [
+      "RNF-17"
+    ],
+    "requisitos_relacionados": [
+      "RF-41"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-44",
+    "tipo": "RF",
+    "enunciado": "A tela inicial deve listar romaneios salvos com cards tipados, roteiros vinculados e atalho para abrir o mapa em Meu roteiro.",
+    "historia": "Como entregador, quero retomar rapidamente um romaneio ou roteiro salvo sem precisar importar tudo de novo.",
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Cards mostram diferenca entre Romaneio e Roteiro de forma escaneavel.",
+      "Roteiros vinculados aparecem junto do romaneio correspondente.",
+      "Atalho abre o mapa diretamente em Meu roteiro quando aplicavel."
+    ],
+    "regras_aplicaveis": [
+      "RN-21"
+    ],
+    "requisitos_relacionados": [
+      "RF-36",
+      "RF-20"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-45",
+    "tipo": "RF",
+    "enunciado": "Resolver bairro por CEP quando a planilha nao informar bairro, ampliando cobertura alem do recorte RJ/Ilha documentado.",
+    "historia": "Como entregador, quero que o app complete bairro a partir do CEP para reduzir edicao manual e melhorar roteirizacao.",
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [
+      "CEP sem bairro tenta resolucao por base local ou servico definido.",
+      "Limites de cobertura ficam claros para o usuario e para testes.",
+      "Falhas de resolucao preservam o endereco como pendente sem inventar bairro."
+    ],
+    "regras_aplicaveis": [],
+    "requisitos_relacionados": [
+      "RF-34"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-47",
+    "tipo": "RF",
+    "enunciado": "Permitir pausar e retomar a execucao de um roteiro preservando progresso local.",
+    "historia": "Como entregador, quero interromper a rota e voltar depois sem perder o que ja foi entregue.",
+    "prioridade": "essencial",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Pausar grava progresso local e sai do modo execucao sem perda de estado.",
+      "Retomar reabre no proximo destino pendente correto.",
+      "O estado pausado libera edicao somente conforme RN-22."
+    ],
+    "regras_aplicaveis": [
+      "RN-22"
+    ],
+    "requisitos_relacionados": [
+      "RF-37",
+      "RF-48"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-48",
+    "tipo": "RF",
+    "enunciado": "Durante a execucao, permitir avancar, voltar e desfazer a ultima marcacao mantendo historico consistente.",
+    "historia": "Como entregador, quero corrigir um toque errado ou revisar entregas anteriores sem corromper o progresso da rota.",
+    "prioridade": "essencial",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Avancar e voltar navegam entre destinos sem alterar indevidamente status de entrega.",
+      "Desfazer reverte a ultima alteracao de status permitida.",
+      "Historico e autosave preservam consistencia apos recarregar a pagina."
+    ],
+    "regras_aplicaveis": [
+      "RN-22"
+    ],
+    "requisitos_relacionados": [
+      "RF-37",
+      "RF-47",
+      "RF-49"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-49",
+    "tipo": "RF",
+    "enunciado": "Fornecer modo lista na execucao, com status por pacote/endereco e acao direta sobre cada item.",
+    "historia": "Como entregador, quero operar a rota tambem por lista para conferir pacotes quando o mapa nao for o melhor contexto.",
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Lista mostra pacotes, enderecos e status de execucao de forma compacta.",
+      "Acoes na lista sincronizam com mapa, progresso e destino atual.",
+      "A interface permanece usavel em celular e em ambiente de rua."
+    ],
+    "regras_aplicaveis": [
+      "RN-22"
+    ],
+    "requisitos_relacionados": [
+      "RF-37",
+      "RF-48"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RN-14",
+    "tipo": "RN",
+    "enunciado": "Salvar roteiro e gratuito e pode ocorrer com pendencias; executar roteiro exige completude de enderecos resolvidos.",
+    "historia": "Como responsavel pelo produto, quero separar salvamento de execucao para nao travar planejamento parcial e ainda manter seguranca em campo.",
+    "prioridade": "essencial",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Fluxos de salvamento nao exigem 100% de resolucao.",
+      "Fluxos de execucao exigem 100% de resolucao.",
+      "Mensagens e testes distinguem claramente salvar de executar."
+    ],
+    "regras_aplicaveis": [],
+    "requisitos_relacionados": [
+      "RF-33",
+      "RF-37"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RN-15",
+    "tipo": "RN",
+    "enunciado": "Pn/En representa a nova ordem do Meu roteiro; Shopee Stop/Sequence permanece como identidade historica da planilha original.",
+    "historia": "Como entregador, quero ver a ordem planejada sem perder a referencia original da Shopee para conferencia.",
+    "prioridade": "essencial",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Pn/En muda conforme a ordem do roteiro salvo ou executado.",
+      "Stop/Sequence original permanece disponivel como referencia imutavel.",
+      "Exportacao e importacao preservam as duas referencias quando existirem."
+    ],
+    "regras_aplicaveis": [],
+    "requisitos_relacionados": [
+      "RF-20",
+      "RF-36",
+      "RF-37"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RN-21",
+    "tipo": "RN",
+    "enunciado": "Cada rota pode ter no maximo um Roteiro vinculado; roteiro importado sem romaneio vira standalone.",
+    "historia": "Como usuario que salva e compartilha rotas, quero evitar duplicidade ambigua entre romaneio e roteiro.",
+    "prioridade": "essencial",
+    "status": "pendente",
+    "criterios_aceite": [
+      "O app impede criar multiplos roteiros ativos para a mesma rota.",
+      "Importacao com vinculo reconhecido associa ao romaneio correto.",
+      "Importacao sem vinculo cria roteiro standalone sem modo Original."
+    ],
+    "regras_aplicaveis": [],
+    "requisitos_relacionados": [
+      "RF-20",
+      "RF-36",
+      "RF-44"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RN-22",
+    "tipo": "RN",
+    "enunciado": "Durante a execucao, o roteiro nao e editavel; pausar salva progresso e libera a edicao conforme o estado do roteiro.",
+    "historia": "Como entregador, quero que a rota em execucao nao mude acidentalmente enquanto registro entregas.",
+    "prioridade": "essencial",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Controles de edicao ficam indisponiveis no modo execucao.",
+      "Pausar persiste progresso antes de sair do modo execucao.",
+      "Retomar nao perde historico nem altera ordem planejada sem acao explicita."
+    ],
+    "regras_aplicaveis": [],
+    "requisitos_relacionados": [
+      "RF-37",
+      "RF-47",
+      "RF-48",
+      "RF-49"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RNF-15",
+    "tipo": "RNF",
+    "enunciado": "A roteirizacao local deve manter desempenho aceitavel em bairros-alvo, com meta documentada de aproximadamente 150 ms para A* local.",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Existe afericao reprodutivel para o tempo de roteirizacao em cenario de bairro-alvo.",
+      "Resultado registrado indica conformidade, ressalva ou reprova contra a meta definida.",
+      "Regressao relevante de desempenho fica visivel em teste, benchmark ou gate documentado."
+    ],
+    "regras_aplicaveis": [],
+    "requisitos_relacionados": [
+      "RF-34"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RNF-16",
+    "tipo": "RNF",
+    "enunciado": "Preparar empacotamento TWA para distribuicao Android/Play Store mantendo origem web/PWA como base.",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Fluxo de build TWA gera artefato Android instalavel.",
+      "Asset Links e origem web ficam documentados e verificaveis.",
+      "Limitacoes entre PWA web e TWA ficam registradas antes de publicacao."
+    ],
+    "regras_aplicaveis": [],
+    "requisitos_relacionados": [],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RNF-17",
+    "tipo": "RNF",
+    "enunciado": "Integrar Play Billing e entitlement premium com estrategia de validacao adequada ao MVP e ao risco de cobranca real.",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [
+      "A estrategia de entitlement premium esta documentada antes de liberar cobranca.",
+      "O app diferencia usuario premium, gratuito e estado de erro.",
+      "Riscos de validacao client-side no MVP ficam explicitados ou mitigados."
+    ],
+    "regras_aplicaveis": [],
+    "requisitos_relacionados": [
+      "RF-42",
+      "RF-41"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RNF-20",
+    "tipo": "RNF",
+    "enunciado": "Cumprir LGPD e consentimento de anuncios: dados de terceiros ficam locais e UMP/consentimento ocorre antes de carregar SDK de ads.",
+    "historia": null,
+    "prioridade": "essencial",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Dados de destinatarios nao sao enviados a backend proprio ou logs de producao.",
+      "Consentimento para anuncios e coletado antes de inicializar SDK aplicavel.",
+      "A documentacao registra o tratamento de dados e a decisao de LGPD aprovada."
+    ],
+    "regras_aplicaveis": [],
+    "requisitos_relacionados": [
+      "RF-41"
+    ],
+    "tarefas": [],
+    "adr": [],
+    "criado_em": "01/09/26 15:27",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  }
+]

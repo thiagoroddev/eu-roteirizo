@@ -1,0 +1,48 @@
+{
+  "id": "TASK-DOC-005",
+  "tipo": "DOC",
+  "titulo": "Decidir destino do status Carregando ruas do grafo OSM",
+  "fatia_de": null,
+  "estado": "aberta",
+  "cerimonia": "Light",
+  "valor": "desejavel",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "ordem": null,
+  "fila": "reserva",
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "criada_em": "09/07/26 17:00",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Formalizar se o status Carregando ruas vira requisito, muda de apresentacao ou permanece como esta."
+    ],
+    "criterios_aceite": [
+      "Decisao registrada sem deixar status ambiguo na documentacao.",
+      "Se virar requisito, criar ou atualizar requisito correspondente."
+    ],
+    "impacto": "Remove pendencia documental herdada do fluxo de grafo OSM.",
+    "riscos": [],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}
