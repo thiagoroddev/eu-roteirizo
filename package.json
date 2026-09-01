@@ -78,7 +78,7 @@
     "mentor-agent": "github:thiagoroddev/mentor-agent#v0.2.2",
     "postcss": "^8.4.47",
     "prettier": "^3.6.2",
-    "puppeteer": "^24.31.0",
+    "puppeteer": "^25.9.0",
     "react-select-event": "^5.5.1",
     "tailwindcss": "^3.4.13",
     "tailwindcss-animate": "^1.0.7",
