@@ -2,15 +2,142 @@
 
 <!-- Gerado por `node mentor.mjs gerar`. Nao edite a mao: a proxima geracao sobrescreve. -->
 
-**Fase:** nao definida · **Rigor:** nao definido
-**Respondido por voce:** 0 · **Padrao do pacote:** 25 · **Em aberto:** 168
+**Fase:** construcao · **Rigor:** N2
+**Respondido por voce:** 129 · **Padrao do pacote:** 25 · **Em aberto:** 39
 
-⚠️ **Portoes ainda abertos:** V_negocio · C_obrigacoes · 0_rigor · P_problema · I_uso · A_arquitetura · N_persistencia · S_ameacas · O_automacao. Cada um tem arquivo em `.mentor/guia/00-indice.md`.
+Todos os portoes foram respondidos ou dispensados com motivo.
 
 ## Respondido por voce
 
-Nenhum campo ainda. Tudo o que esta preenchido veio pronto do pacote.
-
+- `projeto.nome`: Eu Roteirizo
+- `projeto.uma_frase`: PWA que transforma romaneio XLSX/CSV em paradas de veiculo e circuitos a pe sobre OSM.
+- `projeto.repositorio`: https://github.com/thiagoroddev/eu-roteirizo.git
+- `projeto.idioma_do_codigo`: ingles; UI em portugues via UI_LABELS
+- `projeto.licenca`: Proprietaria: todos os direitos reservados; publico so para avaliacao/portfolio. OSM sob ODbL.
+- `estado.fase`: construcao
+- `rigor.nivel`: N2
+- `rigor.promovido_por.dado_pessoal`: true
+- `rigor.promovido_por.cobranca_ou_dinheiro`: true
+- `rigor.promovido_por.uso_por_terceiros`: true
+- `rigor.promovido_por.decisao_automatizada_sobre_pessoa`: false
+- `rigor.tamanho_do_time`: 1 humano mantenedor, com apoio de IA.
+- `negocio.problema`: A rota recebida e de veiculo, mas a entrega urbana agrupa pacotes atendidos a pe.
+- `negocio.de_quem`: Entregadores de ultima milha, inicialmente parceiros MEI/Shopee.
+- `negocio.como_resolvem_hoje`: App da plataforma, Google Maps/Waze, planilha/manual ou apps pagos de roteirizacao.
+- `negocio.por_que_nao_serve`: Nao modela parada do veiculo com circuito a pe; apps pagos cobram e otimizam como ponto isolado.
+- `negocio.diferencial`: Parada a pe com ancora de veiculo, raio manual, grafo OSM local e baixo custo operacional.
+- `negocio.publico_real`: Entregador Android-first, em rua, com romaneio XLSX/CSV e conexao instavel.
+- `negocio.como_se_paga`: Planejado: freemium + assinatura Play Billing barata; anuncio recompensado em avaliacao.
+- `negocio.custo_mensal_estimado`: Arquitetura serverless visa caber em assinatura baixa; geocoding/ads ainda incertos.
+- `conformidade.jurisdicao_dos_usuarios`: Brasil, com uso inicial documentado no Rio de Janeiro.
+- `conformidade.jurisdicao_de_operacao`: Brasil; hospedagem/provedores podem operar fora do pais.
+- `conformidade.relacao`: B2C direto ao entregador legalmente apto a trabalhar e receber por entregas.
+- `conformidade.setor_regulado`: Nao declarado como setor regulado; logistica, mapa e app de produtividade.
+- `conformidade.norma_aplicavel`: LGPD; CDC/Marco Civil/Google Play quando houver lancamento; ODbL para OSM.
+- `conformidade.medidas_para_menores`: Uso e contratacao restritos a pessoas legalmente aptas a trabalhar como entregador e receber por isso.
+- `conformidade.dado_pessoal`: true
+- `conformidade.dado_sensivel`: false
+- `conformidade.fundamentos_por_finalidade`: Planejamento local da rota: tratamento solicitado pelo usuario para executar/planejar entrega; minimizacao, sem sync remoto no escopo atual. Cobranca/ads/geocoding exigem revisao antes do lancamento.
+- `conformidade.conteudo_de_terceiros`: Romaneio importado pelo usuario; dados OSM; links de navegacao por acao do usuario.
+- `conformidade.processo_de_moderacao`: Nao se aplica ao escopo atual: nao ha publicacao de conteudo por usuarios.
+- `conformidade.cobranca.modelo`: Nao implementada; plano de assinatura pela loja e possivel freemium/ad recompensado.
+- `conformidade.cobranca.arrependimento`: Antes de cobranca real, prever arrependimento/estorno conforme lei aplicavel e politica da loja.
+- `conformidade.cobranca.cancelamento`: Cancelamento pela propria loja/canal de contratacao, com fluxo tao facil quanto contratar.
+- `conformidade.decisao_automatizada.onde`: Sugestoes de rota e inferencia de tipo de local; sem decisao sobre direito/oportunidade.
+- `conformidade.decisao_automatizada.explicabilidade`: O app mostra sugestoes, contagens, distancias e origem planilha/OSM.
+- `conformidade.decisao_automatizada.contestacao`: Usuario controla rota manualmente; fluxo formal nao documentado.
+- `conformidade.terceiros_que_recebem_dados`: 4 item(s)
+- `conformidade.licencas_verificadas_em`: 2026-07-20 para infra/mapas; LICENSE declara codigo proprietario e OSM ODbL.
+- `conformidade.revisar_em`: Antes de publicar com cobranca, ads, geocoding, sync remoto ou Play Store.
+- `qualidade.metas_nao_funcionais.adequacao_funcional.meta`: RFs em docs/requisitos guiam aceite; 44/49 entregues em 28/07, pendentes declarados.
+- `qualidade.metas_nao_funcionais.desempenho.meta`: Upload max 10MB; A* bairro alvo ~150ms; grafo cacheado 7d; chunk warning 500k.
+- `qualidade.metas_nao_funcionais.compatibilidade.meta`: PWA mobile-first em navegador moderno/Android; XLSX/CSV; Cloudflare Pages com SPA fallback.
+- `qualidade.metas_nao_funcionais.usabilidade.meta`: Uso em rua/sol/celular; UI em portugues; smoke real obrigatorio para UI/gestos.
+- `qualidade.metas_nao_funcionais.confiabilidade.meta`: Shell PWA offline; dados locais; grafo em IndexedDB 7d; retry/backoff para Overpass.
+- `qualidade.metas_nao_funcionais.seguranca.meta`: Sem PII em log de producao; HTML escapado; xlsx fixo; dados no dispositivo.
+- `qualidade.metas_nao_funcionais.manutenibilidade.meta`: TypeScript strict, UI_LABELS, utils puras, servicos IO, reducer puro e testes espelhando src.
+- `qualidade.metas_nao_funcionais.portabilidade.meta`: PWA web hoje; TWA/Capacitor possiveis; sem DB remoto/auth; mapas isolados por servico.
+- `qualidade.estrategia_de_testes`: TDD; testes unitarios, servicos IDB, componentes/paginas e gates locais.
+- `qualidade.quadrantes_cobertos`: 4 item(s)
+- `qualidade.riscos_de_qualidade`: 4 item(s)
+- `qualidade.definicao_de_pronto_para_comecar`: Plano aprovado, origem citada, teste vermelho quando TDD/BDD couber e dependencias aprovadas.
+- `qualidade.definicao_de_pronto`: typecheck, lint, test e build verdes; smoke quando UI; registro com evidencias.
+- `qualidade.perfil.avaliadas`: 0
+- `qualidade.perfil.conformes`: 0
+- `qualidade.perfil.ressalvas`: 0
+- `qualidade.perfil.reprovadas`: 0
+- `qualidade.perfil.sem_meta`: 0
+- `qualidade.perfil.sem_afericao`: 8
+- `problema.processos`: 6 item(s)
+- `problema.atores`: 4 item(s)
+- `problema.fora_de_escopo`: 5 item(s)
+- `uso.perfis`: 3 item(s)
+- `uso.tarefa_principal`: Importar romaneio e montar paradas de entrega a pe ao redor do veiculo.
+- `uso.ambiente`: Rua, sol, pressa, uma mao livre e possibilidade de conectividade ruim.
+- `uso.dispositivo`: Celular Android como alvo primario; desktop serve para avaliacao e desenvolvimento.
+- `uso.conexao`: Precisa rede para primeiro mapa/grafo; depois usa cache local quando disponivel.
+- `uso.atencao_disponivel`: Baixa: fluxo deve ser escaneavel e operavel em poucos toques.
+- `uso.contexto_mais_dificil`: Recarregar grafo na rua com Overpass lento/rate-limit e tela pequena sob sol.
+- `uso.necessidades_de_acessibilidade`: Radix/shadcn oferecem base; necessidades especificas nao foram documentadas.
+- `arquitetura.forma`: SPA/PWA React+Vite; dados no dispositivo; Leaflet; grafo OSM/A* local; Worker de tiles.
+- `arquitetura.estabilidade_dos_requisitos`: Nucleo estavel; execucao, auto-rota e export/import ainda mudam o dominio.
+- `arquitetura.processo_de_trabalho`: Mentor por tarefas: entender, planejar, aprovar, executar, registrar; TDD por padrao.
+- `arquitetura.camadas`: 7 item(s)
+- `arquitetura.decisoes_irreversiveis`: 6 item(s)
+- `arquitetura.adrs`: 10 item(s)
+- `persistencia.paradigma`: Local-first no navegador: IndexedDB para romaneios/roteiros/grafo e localStorage para ajustes.
+- `persistencia.justificativa_se_nao_relacional`: Sem backend/auth por decisao; app trabalha por dispositivo e cache local.
+- `persistencia.entidades_principais`: 6 item(s)
+- `persistencia.politica_de_remocao`: Apagar romaneio remove linhas e roteiros locais; apagar roteiro remove so o roteiro.
+- `persistencia.retencao`: Dados ficam no dispositivo ate exclusao do usuario/browser; grafo expira em 7 dias.
+- `persistencia.copia_de_seguranca.configurada`: false
+- `persistencia.migracoes.versionadas`: true
+- `persistencia.migracoes.caminho_de_volta_declarado`: false
+- `seguranca.ativos_protegidos`: 4 item(s)
+- `seguranca.ameacas_mapeadas`: 6 item(s)
+- `seguranca.matriz_de_autorizacao`: Sem auth/papeis no app atual; posse e por dispositivo/localStorage/IndexedDB.
+- `seguranca.regra_de_posse`: Cada dispositivo acessa apenas os dados importados nele.
+- `seguranca.inventario_de_dado_pessoal`: Endereco, complemento, CEP, coordenada, codigo de pacote e possivel rota de entrega.
+- `seguranca.segredos.onde_moram`: Cliente nao deve conter segredo; Cloudflare/Play/AdMob futuros ficam fora do repositorio.
+- `operacao.ambientes`: 5 item(s)
+- `operacao.esteira.existe`: true
+- `operacao.esteira.barreiras_ativas`: 5 item(s)
+- `operacao.analise_de_dependencias.automatica`: true
+- `operacao.analise_de_dependencias.ferramenta`: Dependabot semanal + GitHub Actions com npm audit --audit-level=high.
+- `operacao.analise_de_dependencias.cadencia`: Dependabot semanal; audit em push, pull_request e workflow_dispatch.
+- `operacao.analise_estatica.automatica`: true
+- `operacao.analise_estatica.ferramenta`: GitHub Actions com npm run lint; ESLint 9 + Prettier.
+- `operacao.deploy.destino`: Cloudflare Pages projeto eu-roteirizo-prototipo; comando deploy:test.
+- `operacao.deploy.gradual`: false
+- `operacao.deploy.registro_de_publicacao`: Workflow de qualidade em GitHub Actions; deploy/teste continua manual por tarefa.
+- `operacao.observabilidade.registro`: Sem observabilidade externa; diagnosticos locais de grafo ficam no aparelho.
+- `operacao.observabilidade.metrica`: graphDiagnostics registra area, tempo, KB, nos/arestas e fonte rede/cache/erro.
+- `operacao.alvos.tempo_de_resposta`: A* bairro ~150ms; Overpass medido e ainda risco antes de PMTiles.
+- `operacao.teto_de_custo_mensal`: Produto mira assinatura baixa; serverless escolhido para custo fixo minimo.
+- `ferramentas`: 14 item(s)
+- `gates.tipos.comando`: npm run typecheck
+- `gates.tipos.declarado_em`: 2026-09-01
+- `gates.lint.comando`: npm run lint
+- `gates.lint.declarado_em`: 2026-09-01
+- `gates.testes.comando`: npm run test
+- `gates.testes.declarado_em`: 2026-09-01
+- `gates.build.comando`: npm run build
+- `gates.build.declarado_em`: 2026-09-01
+- `gates.validacao_manual.existe`: true
+- `gates.validacao_manual.o_que`: Smoke em aparelho/navegador real para UI, gestos, PWA, mapa e deploy.
+- `convencoes.idioma`: Codigo/comentarios em ingles; interface em portugues via UI_LABELS.
+- `convencoes.commit`: <tipo>(<ID da tarefa>): <descricao>; sem ID quando nao houver tarefa.
+- `convencoes.nomes_de_arquivo`: src em ingles/kebab/camel conforme padrao existente; docs em portugues.
+- `versionamento.ramo_principal`: main
+- `versionamento.estrategia_de_ramos`: Trabalho por tarefa; politica de ramos nao totalmente documentada.
+- `versionamento.revisao_antes_do_merge`: Autorizacao humana por ato e exigida; regra de PR/merge nao documentada.
+- `versionamento.quem_aprova`: Thiago Silva / humano dono do projeto.
+- `versionamento.esquema_de_versao`: package.json 0.1.0; sem release publico estavel.
+- `versionamento.release_automatizado`: false
+- `versionamento.esteira_barra`: 5 item(s)
+- `revisao_geral.ultima_em`: 2026-06-22
+- `revisao_geral.ultima_na_tarefa`: REV-001
+- `lembretes`: 7 item(s)
 25 campo(s) vieram preenchidos pelo pacote e ainda nao foram olhados.
 Valem enquanto ninguem decidir outra coisa.
 

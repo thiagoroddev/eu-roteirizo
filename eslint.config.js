@@ -8,7 +8,7 @@ import prettierConfig from "eslint-config-prettier"; // ⬅️ Disables ESLint r
 import { defineConfig, globalIgnores } from "eslint/config"; // ⬅️ ESLint configuration helpers
 
 export default defineConfig([
-  globalIgnores(["dist"]),
+  globalIgnores(["dist", ".mentor"]),
 
   {
     files: ["**/*.{ts,tsx}"],

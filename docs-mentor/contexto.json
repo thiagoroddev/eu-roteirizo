@@ -5,18 +5,18 @@
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-01T01:32:23.714Z",
+    "atualizado_em": "2026-09-01T02:58:12.971Z",
     "gerado_por": "script"
   },
   "projeto": {
-    "nome": null,
-    "uma_frase": null,
-    "repositorio": null,
-    "idioma_do_codigo": null,
-    "licenca": null
+    "nome": "Eu Roteirizo",
+    "uma_frase": "PWA que transforma romaneio XLSX/CSV em paradas de veiculo e circuitos a pe sobre OSM.",
+    "repositorio": "https://github.com/thiagoroddev/eu-roteirizo.git",
+    "idioma_do_codigo": "ingles; UI em portugues via UI_LABELS",
+    "licenca": "Proprietaria: todos os direitos reservados; publico so para avaliacao/portfolio. OSM sob ODbL."
   },
   "estado": {
-    "fase": null,
+    "fase": "construcao",
     "fases_possiveis": [
       "ideia",
       "descoberta",
@@ -27,57 +27,57 @@
     ],
     "portoes": {
       "V_negocio": {
-        "status": "aberto",
+        "status": "respondido",
         "guia": "GUIA §1",
-        "decidido_em": null,
+        "decidido_em": "2026-09-01",
         "dispensa_motivo": null
       },
       "C_obrigacoes": {
-        "status": "aberto",
+        "status": "respondido",
         "guia": "GUIA §2",
-        "decidido_em": null,
+        "decidido_em": "2026-09-01",
         "dispensa_motivo": null
       },
       "0_rigor": {
-        "status": "aberto",
+        "status": "respondido",
         "guia": "GUIA §10",
-        "decidido_em": null,
+        "decidido_em": "2026-09-01",
         "dispensa_motivo": null
       },
       "P_problema": {
-        "status": "aberto",
+        "status": "respondido",
         "guia": "GUIA §3",
-        "decidido_em": null,
+        "decidido_em": "2026-09-01",
         "dispensa_motivo": null
       },
       "I_uso": {
-        "status": "aberto",
+        "status": "respondido",
         "guia": "GUIA §8",
-        "decidido_em": null,
+        "decidido_em": "2026-09-01",
         "dispensa_motivo": null
       },
       "A_arquitetura": {
-        "status": "aberto",
+        "status": "respondido",
         "guia": "GUIA §4-5",
-        "decidido_em": null,
+        "decidido_em": "2026-09-01",
         "dispensa_motivo": null
       },
       "N_persistencia": {
-        "status": "aberto",
+        "status": "respondido",
         "guia": "GUIA §6",
-        "decidido_em": null,
+        "decidido_em": "2026-09-01",
         "dispensa_motivo": null
       },
       "S_ameacas": {
-        "status": "aberto",
+        "status": "respondido",
         "guia": "GUIA §9",
-        "decidido_em": null,
+        "decidido_em": "2026-09-01",
         "dispensa_motivo": null
       },
       "O_automacao": {
-        "status": "aberto",
+        "status": "respondido",
         "guia": "GUIA §11",
-        "decidido_em": null,
+        "decidido_em": "2026-09-01",
         "dispensa_motivo": null
       }
     },
@@ -88,60 +88,65 @@
     ]
   },
   "rigor": {
-    "nivel": null,
+    "nivel": "N2",
     "niveis_possiveis": [
       "N1",
       "N2",
       "N3"
     ],
     "promovido_por": {
-      "dado_pessoal": null,
-      "cobranca_ou_dinheiro": null,
-      "uso_por_terceiros": null,
-      "decisao_automatizada_sobre_pessoa": null
+      "dado_pessoal": true,
+      "cobranca_ou_dinheiro": true,
+      "uso_por_terceiros": true,
+      "decisao_automatizada_sobre_pessoa": false
     },
-    "tamanho_do_time": null,
+    "tamanho_do_time": "1 humano mantenedor, com apoio de IA.",
     "revisar_em": null
   },
   "negocio": {
-    "problema": null,
-    "de_quem": null,
-    "como_resolvem_hoje": null,
-    "por_que_nao_serve": null,
-    "diferencial": null,
-    "publico_real": null,
-    "como_se_paga": null,
-    "custo_mensal_estimado": null,
+    "problema": "A rota recebida e de veiculo, mas a entrega urbana agrupa pacotes atendidos a pe.",
+    "de_quem": "Entregadores de ultima milha, inicialmente parceiros MEI/Shopee.",
+    "como_resolvem_hoje": "App da plataforma, Google Maps/Waze, planilha/manual ou apps pagos de roteirizacao.",
+    "por_que_nao_serve": "Nao modela parada do veiculo com circuito a pe; apps pagos cobram e otimizam como ponto isolado.",
+    "diferencial": "Parada a pe com ancora de veiculo, raio manual, grafo OSM local e baixo custo operacional.",
+    "publico_real": "Entregador Android-first, em rua, com romaneio XLSX/CSV e conexao instavel.",
+    "como_se_paga": "Planejado: freemium + assinatura Play Billing barata; anuncio recompensado em avaliacao.",
+    "custo_mensal_estimado": "Arquitetura serverless visa caber em assinatura baixa; geocoding/ads ainda incertos.",
     "folego_disponivel": null,
     "criterio_de_sucesso": null,
     "prazo_do_criterio": null
   },
   "conformidade": {
-    "jurisdicao_dos_usuarios": null,
-    "jurisdicao_de_operacao": null,
-    "relacao": null,
-    "setor_regulado": null,
-    "norma_aplicavel": null,
-    "menores_possiveis": null,
-    "medidas_para_menores": null,
-    "dado_pessoal": null,
-    "dado_sensivel": null,
-    "fundamentos_por_finalidade": null,
-    "conteudo_de_terceiros": null,
-    "processo_de_moderacao": null,
+    "jurisdicao_dos_usuarios": "Brasil, com uso inicial documentado no Rio de Janeiro.",
+    "jurisdicao_de_operacao": "Brasil; hospedagem/provedores podem operar fora do pais.",
+    "relacao": "B2C direto ao entregador legalmente apto a trabalhar e receber por entregas.",
+    "setor_regulado": "Nao declarado como setor regulado; logistica, mapa e app de produtividade.",
+    "norma_aplicavel": "LGPD; CDC/Marco Civil/Google Play quando houver lancamento; ODbL para OSM.",
+    "menores_possiveis": false,
+    "medidas_para_menores": "Uso e contratacao restritos a pessoas legalmente aptas a trabalhar como entregador e receber por isso.",
+    "dado_pessoal": true,
+    "dado_sensivel": false,
+    "fundamentos_por_finalidade": "Planejamento local da rota: tratamento solicitado pelo usuario para executar/planejar entrega; minimizacao, sem sync remoto no escopo atual. Cobranca/ads/geocoding exigem revisao antes do lancamento.",
+    "conteudo_de_terceiros": "Romaneio importado pelo usuario; dados OSM; links de navegacao por acao do usuario.",
+    "processo_de_moderacao": "Nao se aplica ao escopo atual: nao ha publicacao de conteudo por usuarios.",
     "cobranca": {
-      "modelo": null,
-      "arrependimento": null,
-      "cancelamento": null
+      "modelo": "Nao implementada; plano de assinatura pela loja e possivel freemium/ad recompensado.",
+      "arrependimento": "Antes de cobranca real, prever arrependimento/estorno conforme lei aplicavel e politica da loja.",
+      "cancelamento": "Cancelamento pela propria loja/canal de contratacao, com fluxo tao facil quanto contratar."
     },
     "decisao_automatizada": {
-      "onde": null,
-      "explicabilidade": null,
-      "contestacao": null
+      "onde": "Sugestoes de rota e inferencia de tipo de local; sem decisao sobre direito/oportunidade.",
+      "explicabilidade": "O app mostra sugestoes, contagens, distancias e origem planilha/OSM.",
+      "contestacao": "Usuario controla rota manualmente; fluxo formal nao documentado."
     },
-    "terceiros_que_recebem_dados": [],
-    "licencas_verificadas_em": null,
-    "revisar_em": null
+    "terceiros_que_recebem_dados": [
+      "Cloudflare Pages/Workers: hospedagem, tiles e requisicoes tecnicas.",
+      "OpenStreetMap/Overpass: mapa e malha viaria consultada.",
+      "Google Maps/Waze: coordenadas quando o usuario abre deep link.",
+      "Google Play Billing/AdMob/OpenCage: planejados, nao implementados."
+    ],
+    "licencas_verificadas_em": "2026-07-20 para infra/mapas; LICENSE declara codigo proprietario e OSM ODbL.",
+    "revisar_em": "Antes de publicar com cobranca, ads, geocoding, sync remoto ou Play Store."
   },
   "qualidade": {
     "metas_nao_funcionais": {
@@ -149,7 +154,7 @@
       "adequacao_funcional": {
         "pergunta": "Faz tudo o que foi combinado, e certo?",
         "vira_meta_como": "cenarios de aceite aprovados",
-        "meta": null,
+        "meta": "RFs em docs/requisitos guiam aceite; 44/49 entregues em 28/07, pendentes declarados.",
         "aferida_em": null,
         "resultado": null,
         "resultados_possiveis": [
@@ -157,12 +162,12 @@
           "ressalva",
           "reprovada"
         ],
-        "nota": null
+        "nota": "RF-009/RF-012/RF-013 ainda fora do produto atual."
       },
       "desempenho": {
         "pergunta": "Quanto tempo o usuario tolera esperar?",
         "vira_meta_como": "tempo de resposta, simultaneos",
-        "meta": null,
+        "meta": "Upload max 10MB; A* bairro alvo ~150ms; grafo cacheado 7d; chunk warning 500k.",
         "aferida_em": null,
         "resultado": null,
         "resultados_possiveis": [
@@ -170,12 +175,12 @@
           "ressalva",
           "reprovada"
         ],
-        "nota": null
+        "nota": "Medicoes de Overpass existem, mas resultado ISO deve ser aferido pelo doctor/gates."
       },
       "compatibilidade": {
         "pergunta": "Precisa conversar com o que? Rodar onde?",
         "vira_meta_como": "versoes, navegadores, contratos",
-        "meta": null,
+        "meta": "PWA mobile-first em navegador moderno/Android; XLSX/CSV; Cloudflare Pages com SPA fallback.",
         "aferida_em": null,
         "resultado": null,
         "resultados_possiveis": [
@@ -183,12 +188,12 @@
           "ressalva",
           "reprovada"
         ],
-        "nota": null
+        "nota": "TWA/Play Store planejados, nao entregues."
       },
       "usabilidade": {
         "pergunta": "Alguem sem treinamento consegue usar?",
         "vira_meta_como": "taxa de conclusao da tarefa",
-        "meta": null,
+        "meta": "Uso em rua/sol/celular; UI em portugues; smoke real obrigatorio para UI/gestos.",
         "aferida_em": null,
         "resultado": null,
         "resultados_possiveis": [
@@ -196,12 +201,12 @@
           "ressalva",
           "reprovada"
         ],
-        "nota": null
+        "nota": "Acessibilidade especifica alem de Radix/shadcn nao foi medida."
       },
       "confiabilidade": {
         "pergunta": "O que acontece se cair? Quanto tempo fora e tolerav[e]l?",
         "vira_meta_como": "disponibilidade, tempo de recuperacao",
-        "meta": null,
+        "meta": "Shell PWA offline; dados locais; grafo em IndexedDB 7d; retry/backoff para Overpass.",
         "aferida_em": null,
         "resultado": null,
         "resultados_possiveis": [
@@ -209,12 +214,12 @@
           "ressalva",
           "reprovada"
         ],
-        "nota": null
+        "nota": "Sem backup/sync remoto por decisao."
       },
       "seguranca": {
         "pergunta": "Quem pode ver e fazer o que?",
         "vira_meta_como": "matriz de papeis e permissoes",
-        "meta": null,
+        "meta": "Sem PII em log de producao; HTML escapado; xlsx fixo; dados no dispositivo.",
         "aferida_em": null,
         "resultado": null,
         "resultados_possiveis": [
@@ -222,12 +227,12 @@
           "ressalva",
           "reprovada"
         ],
-        "nota": null
+        "nota": "Protecoes de plataforma e plano de incidente estao abertos."
       },
       "manutenibilidade": {
         "pergunta": "Outra pessoa mexe nisso em 6 meses?",
         "vira_meta_como": "modularidade, testabilidade, documentacao",
-        "meta": null,
+        "meta": "TypeScript strict, UI_LABELS, utils puras, servicos IO, reducer puro e testes espelhando src.",
         "aferida_em": null,
         "resultado": null,
         "resultados_possiveis": [
@@ -235,12 +240,12 @@
           "ressalva",
           "reprovada"
         ],
-        "nota": null
+        "nota": "Docs antigas tem rascunhos obsoletos sinalizados."
       },
       "portabilidade": {
         "pergunta": "Precisa mudar de servidor, banco ou nuvem?",
         "vira_meta_como": "dependencias isolaveis",
-        "meta": null,
+        "meta": "PWA web hoje; TWA/Capacitor possiveis; sem DB remoto/auth; mapas isolados por servico.",
         "aferida_em": null,
         "resultado": null,
         "resultados_possiveis": [
@@ -248,7 +253,7 @@
           "ressalva",
           "reprovada"
         ],
-        "nota": null
+        "nota": "PMTiles/R2 planejado antes de publico maior."
       }
     },
     "metodo_de_teste": "tdd",
@@ -260,136 +265,338 @@
     ],
     "metodo_nota": "Padrao 'tdd'. Trocar exige 'metodo_motivo' escrito. O metodo diz QUANDO o teste nasce; o vinculo criterio->teste vale em todos eles.",
     "metodo_motivo": null,
-    "estrategia_de_testes": null,
-    "quadrantes_cobertos": [],
+    "estrategia_de_testes": "TDD; testes unitarios, servicos IDB, componentes/paginas e gates locais.",
+    "quadrantes_cobertos": [
+      "unitarios de logica pura",
+      "integracao de componentes e paginas",
+      "servicos IndexedDB com fake-indexeddb",
+      "smoke manual em aparelho para UI"
+    ],
     "limiar_de_cobertura": null,
-    "riscos_de_qualidade": [],
+    "riscos_de_qualidade": [
+      "RF-009 execucao, RF-012 auto-rota e RF-013 export/import seguem pendentes.",
+      "Overpass e tiles OSM publicos sao dividas antes de lancamento publico.",
+      "docs antigas tem rascunhos HubFlow que nao representam o app atual.",
+      "CI/configuracoes de plataforma nao foram confirmadas no repositorio."
+    ],
     "dispensas_aceitas": [],
-    "definicao_de_pronto_para_comecar": null,
-    "definicao_de_pronto": null,
+    "definicao_de_pronto_para_comecar": "Plano aprovado, origem citada, teste vermelho quando TDD/BDD couber e dependencias aprovadas.",
+    "definicao_de_pronto": "typecheck, lint, test e build verdes; smoke quando UI; registro com evidencias.",
     "perfil": {
       "_gerado_por_doctor": true,
-      "avaliadas": null,
       "de": 8,
-      "conformes": null,
-      "ressalvas": null,
-      "reprovadas": null,
-      "sem_meta": null,
-      "sem_afericao": null
+      "avaliadas": 0,
+      "conformes": 0,
+      "ressalvas": 0,
+      "reprovadas": 0,
+      "sem_meta": 0,
+      "sem_afericao": 8
     }
   },
   "problema": {
-    "processos": [],
-    "atores": [],
-    "fora_de_escopo": []
+    "processos": [
+      "Importar romaneio XLSX/CSV.",
+      "Agrupar por Corridor Cage ou tratar como rota unica.",
+      "Escolher rota e revisar sumario.",
+      "Ver modo Original no mapa.",
+      "Criar Meu roteiro com inicio, paradas, raio e ancora de veiculo.",
+      "Salvar/reabrir roteiro localmente; execucao ainda pendente."
+    ],
+    "atores": [
+      "Entregador parceiro MEI",
+      "Destinatario cujos dados aparecem no romaneio",
+      "Mantenedor/desenvolvedor",
+      "Plataformas externas: Shopee, OSM, Cloudflare, Google/Waze"
+    ],
+    "fora_de_escopo": [
+      "HubFlow/B2B, IAM, filas, marketplace e operacao de hub.",
+      "Backend com conta, banco remoto, sincronizacao e autenticacao.",
+      "API paga de roteirizacao e base Google como mapa principal.",
+      "GPS em tempo real/segundo plano e contato com destinatario.",
+      "Otimizar TSP completo; auto-rota so em RF-012 futura."
+    ]
   },
   "uso": {
-    "perfis": [],
-    "tarefa_principal": null,
-    "ambiente": null,
-    "dispositivo": null,
-    "conexao": null,
-    "atencao_disponivel": null,
-    "contexto_mais_dificil": null,
-    "necessidades_de_acessibilidade": null
+    "perfis": [
+      "Entregador em celular Android durante a rota.",
+      "Avaliador ou recrutador testando o prototipo de portfolio.",
+      "Mantenedor rodando exemplos locais."
+    ],
+    "tarefa_principal": "Importar romaneio e montar paradas de entrega a pe ao redor do veiculo.",
+    "ambiente": "Rua, sol, pressa, uma mao livre e possibilidade de conectividade ruim.",
+    "dispositivo": "Celular Android como alvo primario; desktop serve para avaliacao e desenvolvimento.",
+    "conexao": "Precisa rede para primeiro mapa/grafo; depois usa cache local quando disponivel.",
+    "atencao_disponivel": "Baixa: fluxo deve ser escaneavel e operavel em poucos toques.",
+    "contexto_mais_dificil": "Recarregar grafo na rua com Overpass lento/rate-limit e tela pequena sob sol.",
+    "necessidades_de_acessibilidade": "Radix/shadcn oferecem base; necessidades especificas nao foram documentadas."
   },
   "arquitetura": {
-    "forma": null,
-    "estabilidade_dos_requisitos": null,
-    "processo_de_trabalho": null,
-    "camadas": [],
-    "decisoes_irreversiveis": [],
-    "adrs": []
+    "forma": "SPA/PWA React+Vite; dados no dispositivo; Leaflet; grafo OSM/A* local; Worker de tiles.",
+    "estabilidade_dos_requisitos": "Nucleo estavel; execucao, auto-rota e export/import ainda mudam o dominio.",
+    "processo_de_trabalho": "Mentor por tarefas: entender, planejar, aprovar, executar, registrar; TDD por padrao.",
+    "camadas": [
+      "src/pages: rotas HOME, Rotas, Sumario e Mapa.",
+      "src/components: UI, mapa, painel, tabelas e uploader.",
+      "src/hooks: orquestracao de upload, URL, mapa, tema e roteiro.",
+      "src/services: IndexedDB, localStorage, diagnosticos e settings.",
+      "src/utils: parsing, validacao, coordenadas, roteamento e HTML seguro.",
+      "src/types/constants/styles: contratos, textos e tema.",
+      "infra/cloudflare-tile-worker: proxy/cache de tiles."
+    ],
+    "decisoes_irreversiveis": [
+      "Codigo/comentarios em ingles; UI em portugues centralizada.",
+      "Sem backend de estado, auth ou banco remoto no produto atual.",
+      "Roteamento local sobre OSM, sem API paga de direcoes.",
+      "Modos Original e Meu roteiro separados por modelos de dominio.",
+      "Dados do usuario ficam locais em IndexedDB/localStorage.",
+      "Worker de tiles e futura troca para provedor/PMTiles antes de publico maior."
+    ],
+    "adrs": [
+      "ADR-001: idioma unico do codigo e UI_LABELS.",
+      "ADR-002: roteamento local OSM com A*/Dijkstra.",
+      "ADR-003: React Router mobile-first e Cloudflare Pages.",
+      "ADR-004: shadcn/ui, Radix, Tailwind, cva/cn.",
+      "ADR-005: remocao de ESEDC/Correios como risco.",
+      "ADR-006: identidade Neon Flux e tema centralizado.",
+      "ADR-007: Worker/cache de tiles com substituicao antes do publico.",
+      "ADR-008: marcadores SVG por tipo/parada.",
+      "ADR-009: interoperabilidade Original x Meu roteiro.",
+      "ADR-010: grafo viario PMTiles/R2 futuro, substituindo Overpass."
+    ]
   },
   "persistencia": {
-    "paradigma": null,
-    "justificativa_se_nao_relacional": null,
-    "entidades_principais": [],
-    "politica_de_remocao": null,
-    "retencao": null,
+    "paradigma": "Local-first no navegador: IndexedDB para romaneios/roteiros/grafo e localStorage para ajustes.",
+    "justificativa_se_nao_relacional": "Sem backend/auth por decisao; app trabalha por dispositivo e cache local.",
+    "entidades_principais": [
+      "Manifest/Romaneio",
+      "RouteRows por romaneio e rota",
+      "DeliveryPoint e DeliveryPackage",
+      "RouteStop e PlannedRoute",
+      "GraphCache por bbox",
+      "DeliverySettings e tema"
+    ],
+    "politica_de_remocao": "Apagar romaneio remove linhas e roteiros locais; apagar roteiro remove so o roteiro.",
+    "retencao": "Dados ficam no dispositivo ate exclusao do usuario/browser; grafo expira em 7 dias.",
     "copia_de_seguranca": {
-      "configurada": null,
+      "configurada": false,
       "restauracao_testada_em": null
     },
     "migracoes": {
-      "versionadas": null,
-      "caminho_de_volta_declarado": null
+      "versionadas": true,
+      "caminho_de_volta_declarado": false
     }
   },
   "seguranca": {
-    "ativos_protegidos": [],
-    "ameacas_mapeadas": [],
-    "matriz_de_autorizacao": null,
-    "regra_de_posse": null,
-    "inventario_de_dado_pessoal": null,
+    "ativos_protegidos": [
+      "Enderecos, CEPs, complementos e coordenadas do romaneio.",
+      "Codigos de pacote/SPX/AT e progresso de roteiro.",
+      "Entitlement/cobranca futura e configuracoes do usuario.",
+      "Infra de mapa, Worker e segredos de deploy fora do cliente."
+    ],
+    "ameacas_mapeadas": [
+      "PII em logs de producao: mitigado com logs DEV-only.",
+      "XSS via campos de planilha: mitigado por escapeHtml.",
+      "Uso abusivo de tiles/OSM publico: DT-004/ADR-007.",
+      "Rate-limit/falha do Overpass: retry/backoff e ADR-010.",
+      "Bypass de premium client-side: DT-002 antes de cobranca real.",
+      "Perda de dados locais por limpeza do navegador: sem backup remoto."
+    ],
+    "matriz_de_autorizacao": "Sem auth/papeis no app atual; posse e por dispositivo/localStorage/IndexedDB.",
+    "regra_de_posse": "Cada dispositivo acessa apenas os dados importados nele.",
+    "inventario_de_dado_pessoal": "Endereco, complemento, CEP, coordenada, codigo de pacote e possivel rota de entrega.",
     "plano_de_incidente": null,
     "segredos": {
-      "onde_moram": null,
+      "onde_moram": "Cliente nao deve conter segredo; Cloudflare/Play/AdMob futuros ficam fora do repositorio.",
       "rotacao": null
     }
   },
   "operacao": {
-    "ambientes": [],
+    "ambientes": [
+      "local Vite dev server",
+      "build/preview local",
+      "Cloudflare Pages: eu-roteirizo-prototipo",
+      "Cloudflare Worker de tiles",
+      "TWA/Google Play planejado"
+    ],
     "esteira": {
-      "existe": null,
-      "barreiras_ativas": []
+      "existe": true,
+      "barreiras_ativas": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run test",
+        "npm run build",
+        "npm audit --audit-level=high"
+      ]
     },
     "analise_de_dependencias": {
-      "automatica": null,
-      "ferramenta": null,
-      "cadencia": null
+      "automatica": true,
+      "ferramenta": "Dependabot semanal + GitHub Actions com npm audit --audit-level=high.",
+      "cadencia": "Dependabot semanal; audit em push, pull_request e workflow_dispatch."
     },
     "analise_estatica": {
-      "automatica": null,
-      "ferramenta": null
+      "automatica": true,
+      "ferramenta": "GitHub Actions com npm run lint; ESLint 9 + Prettier."
     },
     "deploy": {
-      "destino": null,
-      "gradual": null,
-      "registro_de_publicacao": null
+      "destino": "Cloudflare Pages projeto eu-roteirizo-prototipo; comando deploy:test.",
+      "gradual": false,
+      "registro_de_publicacao": "Workflow de qualidade em GitHub Actions; deploy/teste continua manual por tarefa."
     },
     "reversao": {
       "testada_em": null
     },
     "observabilidade": {
-      "registro": null,
-      "metrica": null,
+      "registro": "Sem observabilidade externa; diagnosticos locais de grafo ficam no aparelho.",
+      "metrica": "graphDiagnostics registra area, tempo, KB, nos/arestas e fonte rede/cache/erro.",
       "rastro": null,
       "alerta": null
     },
     "alvos": {
       "disponibilidade": null,
-      "tempo_de_resposta": null
+      "tempo_de_resposta": "A* bairro ~150ms; Overpass medido e ainda risco antes de PMTiles."
     },
-    "teto_de_custo_mensal": null
+    "teto_de_custo_mensal": "Produto mira assinatura baixa; serverless escolhido para custo fixo minimo."
   },
-  "ferramentas": [],
+  "ferramentas": [
+    {
+      "nome": "React",
+      "papel": "UI SPA",
+      "versao": "^18.2.0",
+      "padrao": "componentes + hooks",
+      "adotada_em": null,
+      "adr": null
+    },
+    {
+      "nome": "Vite",
+      "papel": "dev/build",
+      "versao": "^7.2.4",
+      "padrao": "scripts npm",
+      "adotada_em": null,
+      "adr": null
+    },
+    {
+      "nome": "TypeScript",
+      "papel": "tipagem estrita",
+      "versao": "~5.9.3",
+      "padrao": "tsc -b",
+      "adotada_em": null,
+      "adr": null
+    },
+    {
+      "nome": "React Router",
+      "papel": "rotas SPA",
+      "versao": "^7.18.1",
+      "padrao": "BrowserRouter",
+      "adotada_em": "2026-07-05",
+      "adr": "ADR-003"
+    },
+    {
+      "nome": "Tailwind + shadcn/Radix",
+      "papel": "design system",
+      "versao": "Tailwind ^3.4.13",
+      "padrao": "tokens e UI primitives",
+      "adotada_em": "2026-06-24",
+      "adr": "ADR-004"
+    },
+    {
+      "nome": "Leaflet/react-leaflet",
+      "papel": "mapa",
+      "versao": "Leaflet ^1.9.4",
+      "padrao": "RouteMap embedded",
+      "adotada_em": null,
+      "adr": "ADR-008"
+    },
+    {
+      "nome": "SheetJS xlsx",
+      "papel": "ler XLSX/CSV",
+      "versao": "0.20.3 CDN",
+      "padrao": "processExcelFile",
+      "adotada_em": null,
+      "adr": null
+    },
+    {
+      "nome": "idb",
+      "papel": "IndexedDB",
+      "versao": "^8.0.3",
+      "padrao": "servicos locais",
+      "adotada_em": "2026-07-05",
+      "adr": null
+    },
+    {
+      "nome": "Vitest + Testing Library",
+      "papel": "testes",
+      "versao": "Vitest ^4.1.9",
+      "padrao": "npm run test",
+      "adotada_em": null,
+      "adr": null
+    },
+    {
+      "nome": "ESLint + Prettier",
+      "papel": "lint/formato",
+      "versao": "ESLint ^9.39.1",
+      "padrao": "npm run lint",
+      "adotada_em": null,
+      "adr": null
+    },
+    {
+      "nome": "vite-plugin-pwa",
+      "papel": "PWA/Workbox",
+      "versao": "^1.2.0",
+      "padrao": "autoUpdate",
+      "adotada_em": null,
+      "adr": null
+    },
+    {
+      "nome": "Cloudflare Pages/Workers",
+      "papel": "hosting e tiles",
+      "versao": "wrangler via npx",
+      "padrao": "deploy:test",
+      "adotada_em": null,
+      "adr": "ADR-007"
+    },
+    {
+      "nome": "OpenStreetMap/Overpass",
+      "papel": "mapa e grafo viario",
+      "versao": "API publica",
+      "padrao": "cache local + retry",
+      "adotada_em": "2026-06-25",
+      "adr": "ADR-002"
+    },
+    {
+      "nome": "mentor-agent",
+      "papel": "processo e contexto",
+      "versao": "v0.2.2",
+      "padrao": "docs-mentor/.mentor",
+      "adotada_em": "2026-09-01",
+      "adr": null
+    }
+  ],
   "gates": {
     "tipos": {
-      "comando": null,
-      "declarado_em": null
+      "comando": "npm run typecheck",
+      "declarado_em": "2026-09-01"
     },
     "lint": {
-      "comando": null,
-      "declarado_em": null
+      "comando": "npm run lint",
+      "declarado_em": "2026-09-01"
     },
     "testes": {
-      "comando": null,
-      "declarado_em": null
+      "comando": "npm run test",
+      "declarado_em": "2026-09-01"
     },
     "build": {
-      "comando": null,
-      "declarado_em": null
+      "comando": "npm run build",
+      "declarado_em": "2026-09-01"
     },
     "validacao_manual": {
-      "existe": null,
-      "o_que": null
+      "existe": true,
+      "o_que": "Smoke em aparelho/navegador real para UI, gestos, PWA, mapa e deploy."
     }
   },
   "convencoes": {
-    "idioma": null,
-    "commit": null,
-    "nomes_de_arquivo": null,
+    "idioma": "Codigo/comentarios em ingles; interface em portugues via UI_LABELS.",
+    "commit": "<tipo>(<ID da tarefa>): <descricao>; sem ID quando nao houver tarefa.",
+    "nomes_de_arquivo": "src em ingles/kebab/camel conforme padrao existente; docs em portugues.",
     "onde_ficam_as_de_stack": "docs-mentor/padroes-de-stack/"
   },
   "contagens": {
@@ -405,10 +612,10 @@
     "divida_tecnica_aberta": 0,
     "riscos_aceitos_ativos": 0,
     "riscos_aceitos_vencidos": 0,
-    "tarefas_desde_revisao_geral": 0,
+    "tarefas_desde_revisao_geral": null,
     "adrs": 0,
     "ferramentas_sem_padrao": 0,
-    "campos_nulos_do_contexto": 168,
+    "campos_nulos_do_contexto": 39,
     "divida_tecnica_com_gatilho_vencido": null
   },
   "auditoria": {
@@ -421,14 +628,20 @@
     "pendencias_reportadas": []
   },
   "versionamento": {
-    "ramo_principal": null,
-    "estrategia_de_ramos": null,
-    "revisao_antes_do_merge": null,
-    "quem_aprova": null,
+    "ramo_principal": "main",
+    "estrategia_de_ramos": "Trabalho por tarefa; politica de ramos nao totalmente documentada.",
+    "revisao_antes_do_merge": "Autorizacao humana por ato e exigida; regra de PR/merge nao documentada.",
+    "quem_aprova": "Thiago Silva / humano dono do projeto.",
     "protecao_do_ramo_principal": null,
-    "esquema_de_versao": null,
-    "release_automatizado": null,
-    "esteira_barra": [],
+    "esquema_de_versao": "package.json 0.1.0; sem release publico estavel.",
+    "release_automatizado": false,
+    "esteira_barra": [
+      "typecheck",
+      "lint",
+      "testes",
+      "build",
+      "audit-high"
+    ],
     "uma_tarefa_por_ramo": null,
     "apaga_ramo_no_merge": null
   },
@@ -447,12 +660,17 @@
   },
   "revisao_geral": {
     "_leia": "O doctor e' script e roda sempre, sem custo. Quem precisa de lembrete e' a revisao geral, que custa uma sessao inteira.",
-    "ultima_em": null,
-    "ultima_na_tarefa": null,
+    "ultima_em": "2026-06-22",
+    "ultima_na_tarefa": "REV-001",
     "aviso_em_tarefas": 20,
     "atraso_em_tarefas": 30,
     "bloqueio_em_tarefas": 40
   },
-  "lembretes": [],
+  "lembretes": [
+    "5 configuracao(oes) de plataforma nao declarada(s): protecao_do_ramo_principal, apagar_ramo_apos_merge, alertas_de_vulnerabilidade, atualizacoes_de_seguranca, segredos_do_ambiente_de_esteira. Nenhum script alcanca isso",
+    "nenhum requisito registrado: o que guia o trabalho nao esta escrito",
+    "1 arquivo(s) acima do teto de texto: docs-mentor/contexto.md",
+    "versionamento incompleto: protecao_do_ramo_principal, uma_tarefa_por_ramo, apaga_ramo_no_merge"
+  ],
   "_lembretes_nota": "GERADO pelo doctor a cada execucao. Nao digite aqui: campo livre acumula prosa como qualquer outro."
 }
