@@ -1,0 +1,59 @@
+{
+  "_leia": "Tetos em caracteres, nao em linhas. Teto de linha se burla juntando paragrafos; caracteres nao. Tolerancia de 10%: acima disso bloqueia ate' reescrever mais curto ou declarar excecao com motivo. Nunca ate' cortar conteudo. ESTE ARQUIVO E DO PACOTE e o instalar sobrescreve: excecao do SEU projeto vai em docs-mentor/tetos.json, que sobrepoe este e sobrevive a atualizacao. Caminho de excecao aceita glob, igual a regra: um docs-mentor/arquitetura/ADR/ADR-0*.md cobre todas.",
+  "tolerancia": 0.1,
+  "fator_linha": 60,
+  "excecoes": [
+    {
+      "caminho": ".mentor/guia/06-persistencia.md",
+      "teto": 20000,
+      "motivo": "Unica secao que cobre dois paradigmas de persistencia (relacional BD e nao-relacional NS), em dez subsecoes. Dividir quebraria o mapeamento 1:1 entre secao do guia e portao, que o contexto.json usa para enderecar lacuna."
+    }
+  ],
+  "regras": [
+    {
+      "padrao": ".mentor/nucleo.md",
+      "teto": 7200
+    },
+    {
+      "padrao": ".mentor/guia/00-indice.md",
+      "teto": 4800
+    },
+    {
+      "padrao": ".mentor/guia/*.md",
+      "teto": 15000
+    },
+    {
+      "padrao": ".mentor/processos/*.md",
+      "teto": 4800
+    },
+    {
+      "padrao": ".mentor/modelos/*.md",
+      "teto": 15000
+    },
+    {
+      "padrao": "docs-mentor/tarefas/backlog.md",
+      "teto": 2400
+    },
+    {
+      "padrao": "docs-mentor/contexto.md",
+      "teto": 8000,
+      "_motivo": "Calibrado em projeto vazio o teto era 2400. Medido em projeto real com os oito portoes respondidos: 7.633 caracteres, 88 campos. O conteudo e GERADO por script, nao prosa que se possa enxugar, entao teto sobre esta vista e teto sobre o gerador. Sobe para 8000, e cresce com o projeto: se estourar de novo, o que precisa mudar e o que a vista lista, nunca o numero."
+    },
+    {
+      "padrao": "docs-mentor/padroes-de-stack/*.md",
+      "teto": 3600
+    },
+    {
+      "padrao": "docs-mentor/tarefas/concluidas/*.md",
+      "teto": 2400
+    },
+    {
+      "padrao": "docs-mentor/arquitetura/ADR/*.md",
+      "teto": 1800
+    },
+    {
+      "padrao": "docs-mentor/glossario.md",
+      "teto": 4000
+    }
+  ]
+}

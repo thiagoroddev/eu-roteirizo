@@ -75,6 +75,7 @@
     "fast-xml-parser": "^5.3.2",
     "globals": "^16.5.0",
     "jsdom": "^27.3.0",
+    "mentor-agent": "github:thiagoroddev/mentor-agent#v0.2.2",
     "postcss": "^8.4.47",
     "prettier": "^3.6.2",
     "puppeteer": "^24.31.0",
