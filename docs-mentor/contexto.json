@@ -5,7 +5,7 @@
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-01T19:30:17.256Z",
+    "atualizado_em": "2026-09-02T08:47:42.443Z",
     "gerado_por": "script"
   },
   "projeto": {
@@ -462,7 +462,8 @@
       "nome": "React",
       "papel": "UI SPA",
       "versao": "^18.2.0",
-      "padrao": "componentes + hooks",
+      "padrao": null,
+      "dispensa_motivo": "Uso padrao configurado via package.json/vite",
       "adotada_em": null,
       "adr": null
     },
@@ -470,7 +471,8 @@
       "nome": "Vite",
       "papel": "dev/build",
       "versao": "^7.2.4",
-      "padrao": "scripts npm",
+      "padrao": null,
+      "dispensa_motivo": "Uso padrao configurado via package.json/vite",
       "adotada_em": null,
       "adr": null
     },
@@ -478,7 +480,8 @@
       "nome": "TypeScript",
       "papel": "tipagem estrita",
       "versao": "~5.9.3",
-      "padrao": "tsc -b",
+      "padrao": null,
+      "dispensa_motivo": "Uso padrao configurado via package.json/vite",
       "adotada_em": null,
       "adr": null
     },
@@ -486,7 +489,8 @@
       "nome": "React Router",
       "papel": "rotas SPA",
       "versao": "^7.18.1",
-      "padrao": "BrowserRouter",
+      "padrao": null,
+      "dispensa_motivo": "Uso padrao configurado via package.json/vite",
       "adotada_em": "2026-07-05",
       "adr": "ADR-003"
     },
@@ -494,7 +498,8 @@
       "nome": "Tailwind + shadcn/Radix",
       "papel": "design system",
       "versao": "Tailwind ^3.4.13",
-      "padrao": "tokens e UI primitives",
+      "padrao": null,
+      "dispensa_motivo": "Uso padrao configurado via package.json/vite",
       "adotada_em": "2026-06-24",
       "adr": "ADR-004"
     },
@@ -502,7 +507,8 @@
       "nome": "Leaflet/react-leaflet",
       "papel": "mapa",
       "versao": "Leaflet ^1.9.4",
-      "padrao": "RouteMap embedded",
+      "padrao": null,
+      "dispensa_motivo": "Uso padrao configurado via package.json/vite",
       "adotada_em": null,
       "adr": "ADR-008"
     },
@@ -510,7 +516,8 @@
       "nome": "SheetJS xlsx",
       "papel": "ler XLSX/CSV",
       "versao": "0.20.3 CDN",
-      "padrao": "processExcelFile",
+      "padrao": null,
+      "dispensa_motivo": "Uso padrao configurado via package.json/vite",
       "adotada_em": null,
       "adr": null
     },
@@ -518,7 +525,8 @@
       "nome": "idb",
       "papel": "IndexedDB",
       "versao": "^8.0.3",
-      "padrao": "servicos locais",
+      "padrao": null,
+      "dispensa_motivo": "Uso padrao configurado via package.json/vite",
       "adotada_em": "2026-07-05",
       "adr": null
     },
@@ -526,7 +534,8 @@
       "nome": "Vitest + Testing Library",
       "papel": "testes",
       "versao": "Vitest ^4.1.9",
-      "padrao": "npm run test",
+      "padrao": null,
+      "dispensa_motivo": "Uso padrao configurado via package.json/vite",
       "adotada_em": null,
       "adr": null
     },
@@ -534,7 +543,8 @@
       "nome": "ESLint + Prettier",
       "papel": "lint/formato",
       "versao": "ESLint ^9.39.1",
-      "padrao": "npm run lint",
+      "padrao": null,
+      "dispensa_motivo": "Uso padrao configurado via package.json/vite",
       "adotada_em": null,
       "adr": null
     },
@@ -542,7 +552,8 @@
       "nome": "vite-plugin-pwa",
       "papel": "PWA/Workbox",
       "versao": "^1.2.0",
-      "padrao": "autoUpdate",
+      "padrao": null,
+      "dispensa_motivo": "Uso padrao configurado via package.json/vite",
       "adotada_em": null,
       "adr": null
     },
@@ -550,7 +561,8 @@
       "nome": "Cloudflare Pages/Workers",
       "papel": "hosting e tiles",
       "versao": "wrangler via npx",
-      "padrao": "deploy:test",
+      "padrao": null,
+      "dispensa_motivo": "Uso padrao configurado via wrangler e infra/cloudflare-tile-worker; ver ADR-007",
       "adotada_em": null,
       "adr": "ADR-007"
     },
@@ -558,7 +570,8 @@
       "nome": "OpenStreetMap/Overpass",
       "papel": "mapa e grafo viario",
       "versao": "API publica",
-      "padrao": "cache local + retry",
+      "padrao": null,
+      "dispensa_motivo": "Uso padrao definido pela ADR-002 e pelos modulos de src/utils/routing; sem configuracao de build",
       "adotada_em": "2026-06-25",
       "adr": "ADR-002"
     },
@@ -566,7 +579,8 @@
       "nome": "mentor-agent",
       "papel": "processo e contexto",
       "versao": "v0.2.2",
-      "padrao": "docs-mentor/.mentor",
+      "padrao": null,
+      "dispensa_motivo": "Ferramenta de processo, nao de build: o padrao de uso sao os proprios .mentor/ e docs-mentor/",
       "adotada_em": "2026-09-01",
       "adr": null
     }
@@ -602,8 +616,8 @@
   "contagens": {
     "_gerado_por_script": true,
     "tarefas_concluidas": 0,
-    "tarefas_abertas": 15,
-    "tarefas_no_ciclo": 1,
+    "tarefas_abertas": 16,
+    "tarefas_no_ciclo": 2,
     "tarefas_na_reserva": 14,
     "validacoes_pendentes": 0,
     "requisitos_total": 22,
@@ -668,8 +682,7 @@
   },
   "lembretes": [
     "5 configuracao(oes) de plataforma nao declarada(s): protecao_do_ramo_principal, apagar_ramo_apos_merge, alertas_de_vulnerabilidade, atualizacoes_de_seguranca, segredos_do_ambiente_de_esteira. Nenhum script alcanca isso",
-    "1 arquivo(s) acima do teto de texto: docs-mentor/contexto.md",
-    "TASK-RF-024 e critica+imediata e esta aberta ha 43 dias",
+    "TASK-RF-024 e critica+imediata e esta aberta ha 44 dias",
     "versionamento incompleto: protecao_do_ramo_principal, uma_tarefa_por_ramo, apaga_ramo_no_merge"
   ],
   "_lembretes_nota": "GERADO pelo doctor a cada execucao. Nao digite aqui: campo livre acumula prosa como qualquer outro.",

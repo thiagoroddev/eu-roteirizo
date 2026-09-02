@@ -1,38 +1,31 @@
 {
-  "id": "TASK-RF-012",
+  "id": "TASK-RF-029",
   "tipo": "RF",
-  "titulo": "Auto-roteirizar por agrupamento de proximidade",
+  "titulo": "Auto-roteirizacao por menor numero de conversoes",
   "fatia_de": null,
   "estado": "aberta",
-  "cerimonia": "Standard",
+  "cerimonia": "Strict",
   "valor": "importante",
   "urgencia": "imediata",
   "esforco": {
-    "humano": "M",
-    "ia": "M"
+    "humano": "XG",
+    "ia": "XG"
   },
   "depende_de": [],
-  "ordem": null,
   "fila": "reserva",
+  "ordem": null,
   "origem": "RF-34",
   "requisitos": [
     "RF-34"
   ],
-  "criada_em": "22/06/26 23:50",
+  "criada_em": "01/09/26 21:31",
   "iniciada_em": null,
   "commit_base": null,
   "concluida_em": null,
   "plano": {
-    "muda": [
-      "Criar fluxo de auto-roteirizacao apos a base manual estar estavel.",
-      "Gerar sugestao inicial por raio mantendo revisao manual."
-    ],
-    "criterios_aceite": [
-      "Acao Auto-roteirizar produz ordem inicial para pontos resolvidos.",
-      "Resultado permanece editavel antes de salvar ou executar.",
-      "Logica principal tem teste automatizado."
-    ],
-    "impacto": "Reduz trabalho manual de ordenar paradas.",
+    "muda": [],
+    "criterios_aceite": [],
+    "impacto": null,
     "riscos": [],
     "dependencias_novas": [],
     "proporcionalidade": null
