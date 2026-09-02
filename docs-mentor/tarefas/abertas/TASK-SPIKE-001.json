@@ -1,0 +1,45 @@
+{
+  "id": "TASK-SPIKE-001",
+  "tipo": "SPIKE",
+  "titulo": "Definir e medir conversao, e a busca que a minimiza",
+  "fatia_de": null,
+  "estado": "aberta",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "P",
+    "ia": "G"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": 1,
+  "origem": "RF-34",
+  "requisitos": [
+    "RF-34"
+  ],
+  "criada_em": "01/09/26 21:31",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [],
+    "criterios_aceite": [],
+    "impacto": null,
+    "riscos": [],
+    "dependencias_novas": [],
+    "proporcionalidade": null
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

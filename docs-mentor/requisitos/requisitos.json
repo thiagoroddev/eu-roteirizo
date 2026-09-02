@@ -72,16 +72,21 @@
   {
     "id": "RF-34",
     "tipo": "RF",
-    "enunciado": "Oferecer Auto-roteirizar para agrupar enderecos proximos por logica de raio, sem substituir a revisao manual.",
-    "historia": "Como entregador, quero uma sugestao automatica inicial para ganhar tempo antes de revisar a rota.",
+    "enunciado": "Oferecer Auto-roteirizar, que monta o roteiro inteiro minimizando conversoes: escolhe paradas do veiculo em pontos livres das ruas adjacentes, cobre todos os enderecos resolvidos dentro do limite de caminhada, e entrega resultado editavel antes de salvar ou executar.",
+    "historia": "Como entregador, quero que o app monte a rota sozinha preferindo caminho reto, para dirigir menos convertendo e resolver mais enderecos a pe a cada parada.",
     "prioridade": "importante",
     "status": "pendente",
     "criterios_aceite": [
-      "Auto-roteirizar gera uma ordem inicial para todos os pontos resolvidos.",
-      "A sugestao continua editavel antes de salvar ou executar.",
+      "O resultado cobre 100% dos enderecos resolvidos, cada um em exatamente uma parada.",
+      "Nenhuma parada excede o limite de caminhada configurado.",
+      "A parada do veiculo pode cair em qualquer ponto de rua adjacente, nao apenas sobre um endereco de entrega.",
+      "O resultado permanece editavel pelo fluxo manual existente antes de salvar ou executar.",
+      "A metrica de conversoes do roteiro gerado e melhor que a do guloso por distancia sobre o romaneio de referencia.",
       "A logica principal e testada sem depender da interface."
     ],
-    "regras_aplicaveis": [],
+    "regras_aplicaveis": [
+      "RN-14"
+    ],
     "requisitos_relacionados": [
       "RF-37"
     ],
