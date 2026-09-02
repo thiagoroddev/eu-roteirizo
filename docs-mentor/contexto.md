@@ -3,7 +3,7 @@
 <!-- Gerado por `node mentor.mjs gerar`. Nao edite a mao: a proxima geracao sobrescreve. -->
 
 **Fase:** construcao · **Rigor:** N2
-**Respondido por voce:** 135 · **Padrao do pacote:** 25 · **Em aberto:** 39
+**Respondido por voce:** 139 · **Padrao do pacote:** 25 · **Em aberto:** 35
 
 Todos os portoes foram respondidos ou dispensados com motivo.
 
@@ -129,15 +129,19 @@ Todos os portoes foram respondidos ou dispensados com motivo.
 - `convencoes.commit`: <tipo>(<ID da tarefa>): <descricao>; sem ID quando nao houver tarefa.
 - `convencoes.nomes_de_arquivo`: src em ingles/kebab/camel conforme padrao existente; docs em portugues.
 - `versionamento.ramo_principal`: main
-- `versionamento.estrategia_de_ramos`: Trabalho por tarefa; politica de ramos nao totalmente documentada.
-- `versionamento.revisao_antes_do_merge`: Autorizacao humana por ato e exigida; regra de PR/merge nao documentada.
+- `versionamento.estrategia_de_ramos`: Integracao por PR: a main nao aceita envio direto. Ramo nomeado pelo ID da tarefa (entrega.md). Quantas tarefas cabem num ramo ainda nao foi declarado.
+- `versionamento.revisao_antes_do_merge`: PR obrigatorio, 0 aprovacoes exigidas, merge so por squash. A autorizacao humana por ato do nucleo continua valendo por cima disso.
 - `versionamento.quem_aprova`: Thiago Silva / humano dono do projeto.
+- `versionamento.protecao_do_ramo_principal`: Ruleset 'protect-main' ativo: PR obrigatorio, status check 'Typecheck, lint, test, build, and audit', delete e force-push bloqueados.
 - `versionamento.esquema_de_versao`: package.json 0.1.0; sem release publico estavel.
 - `versionamento.release_automatizado`: false
 - `versionamento.esteira_barra`: 5 item(s)
+- `versionamento.apaga_ramo_no_merge`: false
+- `configuracoes_de_plataforma.protecao_do_ramo_principal`: GitHub ruleset 'protect-main' (id 22049629), ativo em refs/heads/main desde 01/09/26. Conferido por gh api em 02/09/26.
+- `configuracoes_de_plataforma.apagar_ramo_apos_merge`: Desligado no repositorio (delete_branch_on_merge=false). Conferido por gh api em 02/09/26.
 - `revisao_geral.ultima_em`: 2026-06-22
 - `revisao_geral.ultima_na_tarefa`: REV-001
-- `lembretes`: 4 item(s)
+- `lembretes`: 3 item(s)
 - `offsets_de_id.RF`: 28
 - `offsets_de_id.DOC`: 10
 - `offsets_de_id.REF`: 19

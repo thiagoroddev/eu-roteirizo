@@ -5,7 +5,7 @@
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-02T08:47:42.443Z",
+    "atualizado_em": "2026-09-02T12:24:37.428Z",
     "gerado_por": "script"
   },
   "projeto": {
@@ -629,7 +629,7 @@
     "tarefas_desde_revisao_geral": null,
     "adrs": 0,
     "ferramentas_sem_padrao": 0,
-    "campos_nulos_do_contexto": 39,
+    "campos_nulos_do_contexto": 35,
     "divida_tecnica_com_gatilho_vencido": null
   },
   "auditoria": {
@@ -643,10 +643,10 @@
   },
   "versionamento": {
     "ramo_principal": "main",
-    "estrategia_de_ramos": "Trabalho por tarefa; politica de ramos nao totalmente documentada.",
-    "revisao_antes_do_merge": "Autorizacao humana por ato e exigida; regra de PR/merge nao documentada.",
+    "estrategia_de_ramos": "Integracao por PR: a main nao aceita envio direto. Ramo nomeado pelo ID da tarefa (entrega.md). Quantas tarefas cabem num ramo ainda nao foi declarado.",
+    "revisao_antes_do_merge": "PR obrigatorio, 0 aprovacoes exigidas, merge so por squash. A autorizacao humana por ato do nucleo continua valendo por cima disso.",
     "quem_aprova": "Thiago Silva / humano dono do projeto.",
-    "protecao_do_ramo_principal": null,
+    "protecao_do_ramo_principal": "Ruleset 'protect-main' ativo: PR obrigatorio, status check 'Typecheck, lint, test, build, and audit', delete e force-push bloqueados.",
     "esquema_de_versao": "package.json 0.1.0; sem release publico estavel.",
     "release_automatizado": false,
     "esteira_barra": [
@@ -657,12 +657,12 @@
       "audit-high"
     ],
     "uma_tarefa_por_ramo": null,
-    "apaga_ramo_no_merge": null
+    "apaga_ramo_no_merge": false
   },
   "configuracoes_de_plataforma": {
     "_leia": "Configuracao que NAO e' codigo e nenhum script alcanca: vive na web da plataforma. Por isso e' esquecida, e por isso a auditoria cobra.",
-    "protecao_do_ramo_principal": null,
-    "apagar_ramo_apos_merge": null,
+    "protecao_do_ramo_principal": "GitHub ruleset 'protect-main' (id 22049629), ativo em refs/heads/main desde 01/09/26. Conferido por gh api em 02/09/26.",
+    "apagar_ramo_apos_merge": "Desligado no repositorio (delete_branch_on_merge=false). Conferido por gh api em 02/09/26.",
     "alertas_de_vulnerabilidade": null,
     "atualizacoes_de_seguranca": null,
     "segredos_do_ambiente_de_esteira": null,
