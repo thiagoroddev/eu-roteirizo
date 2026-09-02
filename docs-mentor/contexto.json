@@ -5,7 +5,7 @@
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-02T12:24:37.428Z",
+    "atualizado_em": "2026-09-02T13:23:55.651Z",
     "gerado_por": "script"
   },
   "projeto": {
@@ -657,12 +657,12 @@
       "audit-high"
     ],
     "uma_tarefa_por_ramo": null,
-    "apaga_ramo_no_merge": false
+    "apaga_ramo_no_merge": true
   },
   "configuracoes_de_plataforma": {
     "_leia": "Configuracao que NAO e' codigo e nenhum script alcanca: vive na web da plataforma. Por isso e' esquecida, e por isso a auditoria cobra.",
     "protecao_do_ramo_principal": "GitHub ruleset 'protect-main' (id 22049629), ativo em refs/heads/main desde 01/09/26. Conferido por gh api em 02/09/26.",
-    "apagar_ramo_apos_merge": "Desligado no repositorio (delete_branch_on_merge=false). Conferido por gh api em 02/09/26.",
+    "apagar_ramo_apos_merge": "Ligado em 02/09/26 (delete_branch_on_merge=true): o ramo de origem de um PR e apagado quando o PR e mergeado. Nao toca em main, ramo sem PR, PR fechado sem merge nem fork. Os commits seguem alcancaveis por refs/pull/<n>/head.",
     "alertas_de_vulnerabilidade": null,
     "atualizacoes_de_seguranca": null,
     "segredos_do_ambiente_de_esteira": null,

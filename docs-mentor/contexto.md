@@ -136,9 +136,9 @@ Todos os portoes foram respondidos ou dispensados com motivo.
 - `versionamento.esquema_de_versao`: package.json 0.1.0; sem release publico estavel.
 - `versionamento.release_automatizado`: false
 - `versionamento.esteira_barra`: 5 item(s)
-- `versionamento.apaga_ramo_no_merge`: false
+- `versionamento.apaga_ramo_no_merge`: true
 - `configuracoes_de_plataforma.protecao_do_ramo_principal`: GitHub ruleset 'protect-main' (id 22049629), ativo em refs/heads/main desde 01/09/26. Conferido por gh api em 02/09/26.
-- `configuracoes_de_plataforma.apagar_ramo_apos_merge`: Desligado no repositorio (delete_branch_on_merge=false). Conferido por gh api em 02/09/26.
+- `configuracoes_de_plataforma.apagar_ramo_apos_merge`: Ligado em 02/09/26 (delete_branch_on_merge=true): o ramo de origem de um PR e apagado quando o PR e mergeado. Nao toca em main, ramo sem PR, PR fechado sem merge nem fork. Os commits seguem alcancaveis por refs/pull/<n>/head.
 - `revisao_geral.ultima_em`: 2026-06-22
 - `revisao_geral.ultima_na_tarefa`: REV-001
 - `lembretes`: 3 item(s)
