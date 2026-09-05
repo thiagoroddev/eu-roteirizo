@@ -17,5 +17,4 @@
 
 | # | ID | Titulo | Fatia | Valor | Urgencia | Esforco H/IA | Bloqueada por | Origem |
 |--:|---|---|---|---|---|---|---|---|
-| 1📌 | `TASK-SPIKE-001` | Definir e medir conversao, e a busca que a minimiza | - | importante | imediata | P/G | - | RF-34 |
-| 2📌 | `TASK-RF-024` | [fatia de TASK-RF-009] Modelo e persistencia da execucao | 1/5 de TASK-RF-009 | critico | imediata | M/G | - | RF-37, RN-22 |
+| 1📌 | `TASK-RF-024` | [fatia de TASK-RF-009] Modelo e persistencia da execucao | 1/5 de TASK-RF-009 | critico | imediata | M/G | - | RF-37, RN-22 |

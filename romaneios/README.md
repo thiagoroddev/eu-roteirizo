@@ -12,6 +12,18 @@ capturas do [README principal](../README.md).
 |---|---|---|
 | [`exemplo-multi-rota.xlsx`](../public/romaneios/exemplo-multi-rota.xlsx) | 20 entregas em 2 rotas: **L-29** (Copacabana) e **L-30** (Ipanema) | Fluxo completo: escolher rota na tela "Rotas", alternar entre elas |
 | [`exemplo-rota-unica.xlsx`](../public/romaneios/exemplo-rota-unica.xlsx) | 12 entregas, **sem** a coluna `Corridor Cage` | O caminho de rota única, em que o app pula a seleção e vai direto ao sumário |
+| [`exemplo-rota-grande.xlsx`](../public/romaneios/exemplo-rota-grande.xlsx) | 120 entregas numa rota só, **L-31** (Copacabana) | **Medir algoritmo**, não usar o app: é o tamanho do caso real, 70 a 150 endereços |
+
+> **A rota grande é diferente das outras duas.** Nenhuma tela a carrega, e ela fica **fora do
+> precache do PWA** (`globIgnores` no [`vite.config.ts`](../vite.config.ts)) justamente para não
+> pesar na primeira carga de quem usa o app. Serve à medição da **TASK-SPIKE-001** e continua
+> baixável pela URL publicada.
+>
+> Os endereços dela não foram digitados: saíram de [`enderecos-l31.json`](./enderecos-l31.json),
+> amostrado uma vez **sobre a malha real do OpenStreetMap** de Copacabana, para que todo ponto caia
+> numa rua que existe — é o que torna a contagem de conversões honesta. O amostrador vive em
+> `__utilidades-back-office__/spike-conversoes/` e é código de spike; este gerador continua offline,
+> lendo só o JSON.
 
 ## Como usar
 

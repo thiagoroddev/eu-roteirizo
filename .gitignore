@@ -65,3 +65,11 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+# ------------------------------------------------------
+# 🧪 Cache do arnês de medição (TASK-SPIKE-001)
+# ------------------------------------------------------
+# Malha do OpenStreetMap baixada uma vez e guardada em arquivo para a medição não
+# depender da rede a cada execução. É CACHE, não evidência: apagar só faz a próxima
+# execução buscar de novo no Overpass. A evidência da medição é o `medicao.txt`,
+# que fica versionado ao lado.
+__utilidades-back-office__/spike-conversoes/.cache/

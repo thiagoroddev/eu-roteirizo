@@ -1,0 +1,113 @@
+{
+  "id": "TASK-SPIKE-001",
+  "tipo": "SPIKE",
+  "titulo": "Definir e medir conversao, e a busca que a minimiza",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "P",
+    "ia": "G"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": 1,
+  "origem": "RF-34",
+  "requisitos": [
+    "RF-34"
+  ],
+  "criada_em": "01/09/26 21:31",
+  "iniciada_em": "02/09/26 19:22",
+  "commit_base": "8310a457aa9a47932bf57e0df9a68dbbeb6355c4",
+  "concluida_em": "05/09/26 18:34",
+  "plano": {
+    "muda": [
+      "romaneios/gerar-romaneio-exemplo.mjs - acrescenta a rota L-31 com ~120 enderecos amostrados sobre o grafo OSM real de Copacabana.",
+      "romaneios/README.md - linha da rota nova na tabela de planilhas.",
+      "public/romaneios/exemplo-rota-grande.xlsx - planilha gerada, versionada como as outras.",
+      "__utilidades-back-office__/spike-conversoes/arnes.ts - carrega planilha, busca e cacheia o grafo em arquivo, mede e imprime a tabela comparativa.",
+      "__utilidades-back-office__/spike-conversoes/conversoes.ts - tres definicoes de conversao, A* por aresta, geracao de ancoras livres e cobertura gulosa."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Qual definicao de conversao e qual busca produzem, sobre uma rota de ~120 enderecos em Copacabana, um roteiro com menos conversoes que o guloso por distancia - e a que custo de CPU?",
+        "teste": "nao se aplica: spike"
+      }
+    ],
+    "impacto": "Nenhum modulo de src/ muda. O spike vive fora do bundle, em __utilidades-back-office__/, e responde o que as fatias de TASK-RF-029 precisam saber antes de existir.",
+    "riscos": [
+      "Nenhuma busca bater o guloso: e resposta legitima, e a narrativa registra.",
+      "A* por aresta explodir em tempo: o estado cresce com o grau medio dos nos, e por isso o custo em ms e parte da pergunta.",
+      "Overpass publico rate-limited (DT-005): mitigado cacheando o grafo em arquivo, buscado uma vez.",
+      "Corpus sintetico nao representar a distribuicao real de enderecos, ainda que caia em ruas reais."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram um botao de auto-roteirizacao; proponho um arnes de medicao e uma resposta, sem botao nenhum. Sao dois arquivos fora de src/ mais ~30 linhas no gerador de romaneio que ja existe. E do tamanho do pedido porque o pedido e declaradamente nao sei como fazer, e o custo de descobrir errado depois de implementar e uma fatia inteira jogada fora."
+  },
+  "gates": {
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "05/09/26 18:21",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "05/09/26 18:21",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest\n\n\n RUN  v4.1.9 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  72 passed (72)\n      Tests  777 passed (777)\n   Start at  18:21:48\n   Duration  32.11s (transform 13.30s, setup 24.95s, import 26.11s, tests 54.63s, environment 104.93s)\n\n(node:21088) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "05/09/26 18:22",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1952 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.81 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-q5HgCi8R.css   \u001b[39m\u001b[1m\u001b[2m 27.74 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.10 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-UfF1rw5c.js    \u001b[39m\u001b[1m\u001b[33m512.36 kB\u001b[39m\u001b[22m\u001b[2m │ gzip:  94.79 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-giTtp3H-.js   \u001b[39m\u001b[1m\u001b[33m803.48 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.60 kB\u001b[22m\n\u001b[32m✓ built in 6.24s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1766.19 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "05/09/26 18:22",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    }
+  },
+  "achados": [
+    {
+      "classe": 3,
+      "descricao": "O exemplo-rota-grande.xlsx (104 KB), corpus de medicao que nenhuma tela carrega, entrou no precache do service worker: o globPatterns do vite-plugin-pwa casa **/*.xlsx. Confirmado no dist/sw.js do build. Todo usuario baixaria 104 KB a mais na primeira carga por um arquivo que o app nao usa.",
+      "destino": "descartado",
+      "ref": "Corrigido nesta propria tarefa: globIgnores em vite.config.ts exclui so esse arquivo. Reconferido no build - fora do precache, os dois romaneios que o app serve continuam dentro, e o arquivo segue baixavel pela URL."
+    }
+  ],
+  "validacao": "dispensado",
+  "validado_em": "05/09/26 18:34",
+  "validacao_motivo": "SPIKE headless: nenhum arquivo de src/ mudou e nenhuma tela existe para conferir. Verificado por busca - zero referencia a auto-roteirizacao em src/, zero import do codigo do spike, git status src/ vazio. A validacao em aparelho volta a ser obrigatoria na fatia que criar o botao (TASK-RF-029).",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-05--18h34--TASK-SPIKE-001.md"
+}
