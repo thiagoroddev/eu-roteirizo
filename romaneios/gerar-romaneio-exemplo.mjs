@@ -13,7 +13,7 @@
  * Nenhum dado de entrega real, de cliente ou de operação foi usado.
  */
 import { createRequire } from "node:module";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -97,6 +97,22 @@ const unica = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(unica, XLSX.utils.json_to_sheet(soUma), "Romaneio");
 writeFileSync(join(DESTINO, "exemplo-rota-unica.xlsx"), XLSX.write(unica, { type: "buffer", bookType: "xlsx" }));
 
+// Rota GRANDE (L-31), do tamanho do caso real: 70 a 150 endereços (fluxo-roteirizacao §1).
+// As doze linhas da L-29 servem para ver o fluxo; não servem para MEDIR algoritmo, que é
+// para o que esta existe (TASK-SPIKE-001).
+//
+// Os endereços vêm de `enderecos-l31.json`, amostrado UMA vez sobre a malha real do
+// OpenStreetMap de Copacabana — assim todo ponto cai numa rua que existe, sem inventar
+// coordenada. O amostrador vive em `__utilidades-back-office__/spike-conversoes/` e é código
+// de spike; este gerador continua offline, lendo só o JSON. Regerar o JSON só faz sentido se
+// a área mudar. Dados fictícios pela mesma regra das outras duas: rua real, resto inventado.
+const L31 = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "enderecos-l31.json"), "utf8"));
+const linhasGrande = L31.map((e, i) => linha({ ...e, cage: "L-31", seq: i + 1, stop: i + 1, tn: `BR${9000 + i}DEMO` }));
+const grande = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(grande, XLSX.utils.json_to_sheet(linhasGrande), "Romaneio");
+writeFileSync(join(DESTINO, "exemplo-rota-grande.xlsx"), XLSX.write(grande, { type: "buffer", bookType: "xlsx" }));
+
 console.log(`OK
   exemplo-multi-rota.xlsx  → ${linhas.length} linhas, 2 rotas (L-29 Copacabana, L-30 Ipanema)
-  exemplo-rota-unica.xlsx  → ${soUma.length} linhas, sem coluna "Corridor Cage"`);
+  exemplo-rota-unica.xlsx  → ${soUma.length} linhas, sem coluna "Corridor Cage"
+  exemplo-rota-grande.xlsx → ${linhasGrande.length} linhas, rota L-31 (Copacabana), tamanho do caso real`);

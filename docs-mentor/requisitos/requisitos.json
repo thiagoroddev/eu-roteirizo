@@ -90,7 +90,9 @@
     "requisitos_relacionados": [
       "RF-37"
     ],
-    "tarefas": [],
+    "tarefas": [
+      "TASK-SPIKE-001"
+    ],
     "adr": [],
     "criado_em": "01/09/26 15:27",
     "implementado_em": null,

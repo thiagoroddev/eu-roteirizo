@@ -5,7 +5,7 @@
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-02T13:23:55.651Z",
+    "atualizado_em": "2026-09-05T21:34:43.359Z",
     "gerado_por": "script"
   },
   "projeto": {
@@ -615,9 +615,9 @@
   },
   "contagens": {
     "_gerado_por_script": true,
-    "tarefas_concluidas": 0,
-    "tarefas_abertas": 16,
-    "tarefas_no_ciclo": 2,
+    "tarefas_concluidas": 1,
+    "tarefas_abertas": 15,
+    "tarefas_no_ciclo": 1,
     "tarefas_na_reserva": 14,
     "validacoes_pendentes": 0,
     "requisitos_total": 22,
@@ -681,9 +681,9 @@
     "bloqueio_em_tarefas": 40
   },
   "lembretes": [
-    "5 configuracao(oes) de plataforma nao declarada(s): protecao_do_ramo_principal, apagar_ramo_apos_merge, alertas_de_vulnerabilidade, atualizacoes_de_seguranca, segredos_do_ambiente_de_esteira. Nenhum script alcanca isso",
-    "TASK-RF-024 e critica+imediata e esta aberta ha 44 dias",
-    "versionamento incompleto: protecao_do_ramo_principal, uma_tarefa_por_ramo, apaga_ramo_no_merge"
+    "3 configuracao(oes) de plataforma nao declarada(s): alertas_de_vulnerabilidade, atualizacoes_de_seguranca, segredos_do_ambiente_de_esteira. Nenhum script alcanca isso",
+    "TASK-RF-024 e critica+imediata e esta aberta ha 47 dias",
+    "versionamento incompleto: uma_tarefa_por_ramo"
   ],
   "_lembretes_nota": "GERADO pelo doctor a cada execucao. Nao digite aqui: campo livre acumula prosa como qualquer outro.",
   "offsets_de_id": {

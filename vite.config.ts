@@ -16,6 +16,12 @@ const config = {
         // `xlsx` está aqui por causa do romaneio de exemplo (TASK-RF-014): sem ele o
         // botão "Testar com romaneio de exemplo" quebra quando o app roda offline.
         globPatterns: ["**/*.{js,css,html,png,svg,ico,json,xlsx}"],
+        // ...mas só os romaneios que o app REALMENTE serve. O `exemplo-rota-grande.xlsx`
+        // (120 endereços, 104 KB) é corpus de medição do TASK-SPIKE-001: nenhuma tela o
+        // carrega, e sem esta linha o padrão acima o empurrava para o precache, fazendo
+        // todo usuário baixá-lo na primeira carga. Continua versionado e baixável pela
+        // URL publicada — só não entra no pacote offline.
+        globIgnores: ["**/romaneios/exemplo-rota-grande.xlsx"],
         // Otimização para o cache não estourar com arquivos grandes
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // Aumenta limite do SW para 5MB
       },

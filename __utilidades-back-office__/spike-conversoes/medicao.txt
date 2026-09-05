@@ -1,0 +1,49 @@
+
+### L-31 (120 enderecos) - 120 pontos, limite de caminhada 120 m
+
+cenario                         conv.       km  paradas   cob/dup   andar m   trechos     estados      ms
+---------------------------------------------------------------------------------------------------------
+baseline distancia / D1 nome-da-via    189    45.03       52     120/0       119  FALHOU:1      12.826     231
+  conversao peso 0 / D1 nome-da-via    110    26.38       46     120/0       119  FALHOU:1     116.769    2175  -42%
+  conversao peso 50 / D1 nome-da-via    112    30.88       46     120/0       119  FALHOU:1     140.091    2181  -41%
+  conversao peso 150 / D1 nome-da-via    102    32.00       46     120/0       119  FALHOU:1     142.691    2190  -46%
+  conversao peso 400 / D1 nome-da-via     97    32.72       46     120/0       119  FALHOU:1     168.779    2220  -49%
+---------------------------------------------------------------------------------------------------------
+baseline distancia / D2 angulo    181    45.03       52     120/0       119  FALHOU:1      12.826     199
+  conversao peso 0 / D2 angulo     95    26.38       46     120/0       119  FALHOU:1     116.769    2292  -48%
+  conversao peso 50 / D2 angulo     98    31.55       46     120/0       119  FALHOU:1     138.829    2390  -46%
+  conversao peso 150 / D2 angulo     87    30.30       46     120/0       119  FALHOU:1     141.333    2251  -52%
+  conversao peso 400 / D2 angulo     81    31.87       46     120/0       119  FALHOU:1     168.596    2295  -55%
+---------------------------------------------------------------------------------------------------------
+baseline distancia / D3 angulo+via    177    45.03       52     120/0       119  FALHOU:1      12.826     191
+  conversao peso 0 / D3 angulo+via     93    26.38       46     120/0       119  FALHOU:1     116.769    2180  -47%
+  conversao peso 50 / D3 angulo+via     90    31.02       46     120/0       119  FALHOU:1     125.003    2214  -49%
+  conversao peso 150 / D3 angulo+via     85    29.39       46     120/0       119  FALHOU:1     133.627    2279  -52%
+  conversao peso 400 / D3 angulo+via     78    29.31       46     120/0       119  FALHOU:1     162.587    2303  -56%
+---------------------------------------------------------------------------------------------------------
+
+### L-29 (12 enderecos) - 12 pontos, limite de caminhada 120 m
+
+cenario                         conv.       km  paradas   cob/dup   andar m   trechos     estados      ms
+---------------------------------------------------------------------------------------------------------
+baseline distancia / D1 nome-da-via     33     8.89       11      12/0       101        ok         997      33
+  conversao peso 0 / D1 nome-da-via     31     9.86       11      12/0       101        ok      16.163     202  -6%
+  conversao peso 50 / D1 nome-da-via     29     9.90       11      12/0       101        ok      16.875     200  -12%
+  conversao peso 150 / D1 nome-da-via     27    10.14       11      12/0       101        ok      19.098     205  -18%
+  conversao peso 400 / D1 nome-da-via     25    10.56       11      12/0       101        ok      23.626     222  -24%
+---------------------------------------------------------------------------------------------------------
+baseline distancia / D2 angulo     33     8.89       11      12/0       101        ok         997      33
+  conversao peso 0 / D2 angulo     31     9.86       11      12/0       101        ok      16.163     210  -6%
+  conversao peso 50 / D2 angulo     29     9.90       11      12/0       101        ok      16.904     213  -12%
+  conversao peso 150 / D2 angulo     27    10.14       11      12/0       101        ok      19.501     216  -18%
+  conversao peso 400 / D2 angulo     23    10.90       11      12/0       101        ok      23.798     223  -30%
+---------------------------------------------------------------------------------------------------------
+baseline distancia / D3 angulo+via     33     8.89       11      12/0       101        ok         997      33
+  conversao peso 0 / D3 angulo+via     31     9.86       11      12/0       101        ok      16.163     213  -6%
+  conversao peso 50 / D3 angulo+via     29     9.90       11      12/0       101        ok      16.814     208  -12%
+  conversao peso 150 / D3 angulo+via     27    10.14       11      12/0       101        ok      19.091     215  -18%
+  conversao peso 400 / D3 angulo+via     23    10.90       11      12/0       101        ok      22.941     222  -30%
+---------------------------------------------------------------------------------------------------------
+
+Fator declarado para celular: 4x o tempo medido aqui.
+cob/dup = enderecos cobertos / cobertos duas vezes. Cobertura tem que bater com o total.

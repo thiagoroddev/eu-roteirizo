@@ -1,0 +1,1082 @@
+[
+  {
+    "endereco": "Rua Euclides da Rocha, 49, Apto 581",
+    "bairro": "Copacabana",
+    "lat": -22.962733,
+    "lng": -43.192467,
+    "tipo": "HOME",
+    "cep": "22048-419",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua República do Peru, 2, Loja 12",
+    "bairro": "Copacabana",
+    "lat": -22.967491,
+    "lng": -43.181905,
+    "tipo": "OFFICE",
+    "cep": "22037-224",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Siqueira Campos, 17, Apto 140",
+    "bairro": "Copacabana",
+    "lat": -22.966223,
+    "lng": -43.187673,
+    "tipo": "HOME",
+    "cep": "22026-840",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Euclides da Rocha, 83, Loja 27",
+    "bairro": "Copacabana",
+    "lat": -22.962608,
+    "lng": -43.191925,
+    "tipo": "OFFICE",
+    "cep": "22044-201",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Pompeu Loureiro, 50, Loja 11",
+    "bairro": "Copacabana",
+    "lat": -22.971899,
+    "lng": -43.191592,
+    "tipo": "OFFICE",
+    "cep": "22044-965",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Santa Clara, 15, Apto 447",
+    "bairro": "Copacabana",
+    "lat": -22.963495,
+    "lng": -43.192313,
+    "tipo": "HOME",
+    "cep": "22012-962",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Ladeira dos Tabajaras, 6, Apto 387",
+    "bairro": "Copacabana",
+    "lat": -22.96542,
+    "lng": -43.187632,
+    "tipo": "HOME",
+    "cep": "22072-532",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua 11 Horas, 16, Loja 21",
+    "bairro": "Copacabana",
+    "lat": -22.979653,
+    "lng": -43.192346,
+    "tipo": "OFFICE",
+    "cep": "22018-419",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Ladeira dos Tabajaras, 35, Apto 905",
+    "bairro": "Copacabana",
+    "lat": -22.962151,
+    "lng": -43.191465,
+    "tipo": "HOME",
+    "cep": "22038-372",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Aires Saldanha, 34, Apto 973",
+    "bairro": "Copacabana",
+    "lat": -22.978705,
+    "lng": -43.189843,
+    "tipo": "HOME",
+    "cep": "22041-675",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Barata Ribeiro, 60, Loja 20",
+    "bairro": "Copacabana",
+    "lat": -22.97782,
+    "lng": -43.192874,
+    "tipo": "OFFICE",
+    "cep": "22010-895",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Euclides da Rocha, 125, Apto 111",
+    "bairro": "Copacabana",
+    "lat": -22.962914,
+    "lng": -43.19307,
+    "tipo": "HOME",
+    "cep": "22032-552",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Avenida Pinheiro, 16, Apto 743",
+    "bairro": "Copacabana",
+    "lat": -22.979481,
+    "lng": -43.193236,
+    "tipo": "HOME",
+    "cep": "22016-701",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Paula Freitas, 15, Loja 2",
+    "bairro": "Copacabana",
+    "lat": -22.967517,
+    "lng": -43.183339,
+    "tipo": "OFFICE",
+    "cep": "22039-990",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Siqueira Campos, 25, Apto 473",
+    "bairro": "Copacabana",
+    "lat": -22.966975,
+    "lng": -43.186326,
+    "tipo": "HOME",
+    "cep": "22036-307",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Avenida Pinheiro, 21, Apto 594",
+    "bairro": "Copacabana",
+    "lat": -22.979306,
+    "lng": -43.19427,
+    "tipo": "HOME",
+    "cep": "22033-630",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Euclides da Rocha, 134, Apto 836",
+    "bairro": "Copacabana",
+    "lat": -22.965872,
+    "lng": -43.193777,
+    "tipo": "HOME",
+    "cep": "22039-725",
+    "pedidos": 5
+  },
+  {
+    "endereco": "Rua Euclides da Rocha, 180, Loja 25",
+    "bairro": "Copacabana",
+    "lat": -22.964919,
+    "lng": -43.19467,
+    "tipo": "OFFICE",
+    "cep": "22031-840",
+    "pedidos": 3
+  },
+  {
+    "endereco": "Rua Assis Brasil, 53, Apto 964",
+    "bairro": "Copacabana",
+    "lat": -22.962733,
+    "lng": -43.18137,
+    "tipo": "HOME",
+    "cep": "22075-986",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua 11 Horas, 24, Apto 752",
+    "bairro": "Copacabana",
+    "lat": -22.979649,
+    "lng": -43.192736,
+    "tipo": "HOME",
+    "cep": "22052-277",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Maestro Francisco Braga, 37, Apto 469",
+    "bairro": "Copacabana",
+    "lat": -22.964589,
+    "lng": -43.191659,
+    "tipo": "HOME",
+    "cep": "22043-136",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Duvivier, 47, Apto 226",
+    "bairro": "Copacabana",
+    "lat": -22.965807,
+    "lng": -43.177735,
+    "tipo": "HOME",
+    "cep": "22021-282",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Tonelero, 58, Apto 870",
+    "bairro": "Copacabana",
+    "lat": -22.964558,
+    "lng": -43.181034,
+    "tipo": "HOME",
+    "cep": "22029-650",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Avenida Atlântica, 24, Loja 18",
+    "bairro": "Copacabana",
+    "lat": -22.970701,
+    "lng": -43.183458,
+    "tipo": "OFFICE",
+    "cep": "22033-905",
+    "pedidos": 4
+  },
+  {
+    "endereco": "Rua Marechal Mascarenhas de Morais, 21, Apto 866",
+    "bairro": "Copacabana",
+    "lat": -22.965174,
+    "lng": -43.182418,
+    "tipo": "HOME",
+    "cep": "22052-123",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Pompeu Loureiro, 110, Apto 711",
+    "bairro": "Copacabana",
+    "lat": -22.974615,
+    "lng": -43.193065,
+    "tipo": "HOME",
+    "cep": "22087-177",
+    "pedidos": 3
+  },
+  {
+    "endereco": "Rua Henrique Oswald, 20, Apto 948",
+    "bairro": "Copacabana",
+    "lat": -22.963656,
+    "lng": -43.191782,
+    "tipo": "HOME",
+    "cep": "22043-810",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Guimarães Natal, 15, Apto 760",
+    "bairro": "Copacabana",
+    "lat": -22.964076,
+    "lng": -43.180109,
+    "tipo": "HOME",
+    "cep": "22060-704",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Emilio Berla, 8, Apto 150",
+    "bairro": "Copacabana",
+    "lat": -22.973938,
+    "lng": -43.193621,
+    "tipo": "HOME",
+    "cep": "22087-258",
+    "pedidos": 5
+  },
+  {
+    "endereco": "Rua Miguel Lemos, 19, Apto 365",
+    "bairro": "Copacabana",
+    "lat": -22.978289,
+    "lng": -43.189074,
+    "tipo": "HOME",
+    "cep": "22066-291",
+    "pedidos": 4
+  },
+  {
+    "endereco": "Rua Barata Ribeiro, 66, Loja 8",
+    "bairro": "Copacabana",
+    "lat": -22.97056,
+    "lng": -43.188544,
+    "tipo": "OFFICE",
+    "cep": "22051-560",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Belfort Roxo, 8, Apto 889",
+    "bairro": "Copacabana",
+    "lat": -22.965222,
+    "lng": -43.175531,
+    "tipo": "HOME",
+    "cep": "22087-588",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Barata Ribeiro, 94, Apto 453",
+    "bairro": "Copacabana",
+    "lat": -22.965982,
+    "lng": -43.181654,
+    "tipo": "HOME",
+    "cep": "22040-598",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Ladeira dos Tabajaras, 92, Apto 261",
+    "bairro": "Copacabana",
+    "lat": -22.965125,
+    "lng": -43.188163,
+    "tipo": "HOME",
+    "cep": "22063-637",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua General Barbosa Lima, 20, Apto 355",
+    "bairro": "Copacabana",
+    "lat": -22.966499,
+    "lng": -43.180007,
+    "tipo": "HOME",
+    "cep": "22020-628",
+    "pedidos": 4
+  },
+  {
+    "endereco": "Rua Paula Freitas, 37, Loja 15",
+    "bairro": "Copacabana",
+    "lat": -22.969425,
+    "lng": -43.181747,
+    "tipo": "OFFICE",
+    "cep": "22085-421",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Xavier da Silveira, 57, Loja 11",
+    "bairro": "Copacabana",
+    "lat": -22.976366,
+    "lng": -43.192841,
+    "tipo": "OFFICE",
+    "cep": "22060-102",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Avenida Nossa Senhora de Copacabana, 54, Loja 19",
+    "bairro": "Copacabana",
+    "lat": -22.965905,
+    "lng": -43.17817,
+    "tipo": "OFFICE",
+    "cep": "22079-669",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Marechal Mascarenhas de Morais, 27, Apto 508",
+    "bairro": "Copacabana",
+    "lat": -22.964556,
+    "lng": -43.182871,
+    "tipo": "HOME",
+    "cep": "22011-745",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Avenida Atlântica, 57, Apto 971",
+    "bairro": "Copacabana",
+    "lat": -22.974814,
+    "lng": -43.186955,
+    "tipo": "HOME",
+    "cep": "22068-385",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Euclides da Rocha, 197, Apto 835",
+    "bairro": "Copacabana",
+    "lat": -22.966165,
+    "lng": -43.193506,
+    "tipo": "HOME",
+    "cep": "22069-303",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Marechal Mascarenhas de Morais, 43, Apto 952",
+    "bairro": "Copacabana",
+    "lat": -22.963938,
+    "lng": -43.183662,
+    "tipo": "HOME",
+    "cep": "22028-970",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Tonelero, 75, Apto 202",
+    "bairro": "Copacabana",
+    "lat": -22.969542,
+    "lng": -43.190209,
+    "tipo": "HOME",
+    "cep": "22015-156",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua 5 de Julho, 27, Apto 104",
+    "bairro": "Copacabana",
+    "lat": -22.969212,
+    "lng": -43.188691,
+    "tipo": "HOME",
+    "cep": "22046-574",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Ladeira dos Tabajaras, 116, Loja 30",
+    "bairro": "Copacabana",
+    "lat": -22.964224,
+    "lng": -43.189839,
+    "tipo": "OFFICE",
+    "cep": "22069-438",
+    "pedidos": 3
+  },
+  {
+    "endereco": "Ladeira dos Tabajaras, 171, Apto 566",
+    "bairro": "Copacabana",
+    "lat": -22.963002,
+    "lng": -43.190957,
+    "tipo": "HOME",
+    "cep": "22055-812",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Djalma Ulrich, 33, Apto 863",
+    "bairro": "Copacabana",
+    "lat": -22.978232,
+    "lng": -43.192243,
+    "tipo": "HOME",
+    "cep": "22026-691",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Raimundo Corrêa, 22, Loja 15",
+    "bairro": "Copacabana",
+    "lat": -22.971761,
+    "lng": -43.188778,
+    "tipo": "OFFICE",
+    "cep": "22064-501",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Bolívar, 54, Apto 837",
+    "bairro": "Copacabana",
+    "lat": -22.975958,
+    "lng": -43.189028,
+    "tipo": "HOME",
+    "cep": "22047-990",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Travessa Frederico Pamplona, 29, Apto 608",
+    "bairro": "Copacabana",
+    "lat": -22.972421,
+    "lng": -43.19251,
+    "tipo": "HOME",
+    "cep": "22024-580",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Avenida Atlântica, 60, Apto 574",
+    "bairro": "Copacabana",
+    "lat": -22.967432,
+    "lng": -43.178433,
+    "tipo": "HOME",
+    "cep": "22081-122",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Henrique Oswald, 34, Loja 9",
+    "bairro": "Copacabana",
+    "lat": -22.964971,
+    "lng": -43.193024,
+    "tipo": "OFFICE",
+    "cep": "22021-292",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Tonelero, 77, Apto 586",
+    "bairro": "Copacabana",
+    "lat": -22.967792,
+    "lng": -43.187438,
+    "tipo": "HOME",
+    "cep": "22012-249",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua da Coroa, 16, Apto 521",
+    "bairro": "Copacabana",
+    "lat": -22.9627,
+    "lng": -43.190514,
+    "tipo": "HOME",
+    "cep": "22072-983",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Ladeira dos Tabajaras, 229, Loja 33",
+    "bairro": "Copacabana",
+    "lat": -22.964986,
+    "lng": -43.188565,
+    "tipo": "OFFICE",
+    "cep": "22027-630",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Maestro Francisco Braga, 94, Apto 795",
+    "bairro": "Copacabana",
+    "lat": -22.968114,
+    "lng": -43.189547,
+    "tipo": "HOME",
+    "cep": "22049-992",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Euclides da Rocha, 201, Apto 101",
+    "bairro": "Copacabana",
+    "lat": -22.964075,
+    "lng": -43.194929,
+    "tipo": "HOME",
+    "cep": "22024-200",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Barata Ribeiro, 108, Apto 788",
+    "bairro": "Copacabana",
+    "lat": -22.972972,
+    "lng": -43.190857,
+    "tipo": "HOME",
+    "cep": "22030-581",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Raimundo Corrêa, 41, Loja 20",
+    "bairro": "Copacabana",
+    "lat": -22.972492,
+    "lng": -43.187987,
+    "tipo": "OFFICE",
+    "cep": "22027-691",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Avenida Nossa Senhora de Copacabana, 60, Apto 987",
+    "bairro": "Copacabana",
+    "lat": -22.964711,
+    "lng": -43.175831,
+    "tipo": "HOME",
+    "cep": "22027-765",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua 5 de Julho, 79, Apto 608",
+    "bairro": "Copacabana",
+    "lat": -22.969685,
+    "lng": -43.188788,
+    "tipo": "HOME",
+    "cep": "22028-146",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Colibri, 13, Apto 775",
+    "bairro": "Copacabana",
+    "lat": -22.979884,
+    "lng": -43.193605,
+    "tipo": "HOME",
+    "cep": "22059-825",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Figueiredo de Magalhães, 17, Apto 877",
+    "bairro": "Copacabana",
+    "lat": -22.967649,
+    "lng": -43.188219,
+    "tipo": "HOME",
+    "cep": "22041-149",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Travessa Santa Leocádia, 40, Apto 525",
+    "bairro": "Copacabana",
+    "lat": -22.974256,
+    "lng": -43.193026,
+    "tipo": "HOME",
+    "cep": "22060-521",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Avenida Pinheiro, 36, Apto 516",
+    "bairro": "Copacabana",
+    "lat": -22.979306,
+    "lng": -43.193935,
+    "tipo": "HOME",
+    "cep": "22059-608",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Euclides da Rocha, 231, Loja 14",
+    "bairro": "Copacabana",
+    "lat": -22.966528,
+    "lng": -43.193238,
+    "tipo": "OFFICE",
+    "cep": "22072-639",
+    "pedidos": 3
+  },
+  {
+    "endereco": "Avenida Pavão, 47, Loja 34",
+    "bairro": "Copacabana",
+    "lat": -22.97982,
+    "lng": -43.192921,
+    "tipo": "OFFICE",
+    "cep": "22064-287",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Marechal Mascarenhas de Morais, 90, Apto 295",
+    "bairro": "Copacabana",
+    "lat": -22.964879,
+    "lng": -43.183837,
+    "tipo": "HOME",
+    "cep": "22039-491",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Professor Gastão Bahiana, 50, Loja 14",
+    "bairro": "Copacabana",
+    "lat": -22.977117,
+    "lng": -43.194587,
+    "tipo": "OFFICE",
+    "cep": "22019-277",
+    "pedidos": 4
+  },
+  {
+    "endereco": "Rua Barata Ribeiro, 168, Apto 239",
+    "bairro": "Copacabana",
+    "lat": -22.97472,
+    "lng": -43.191765,
+    "tipo": "HOME",
+    "cep": "22066-175",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Avenida Atlântica, 117, Loja 34",
+    "bairro": "Copacabana",
+    "lat": -22.976153,
+    "lng": -43.188058,
+    "tipo": "OFFICE",
+    "cep": "22018-311",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Ladeira dos Tabajaras, 262, Loja 39",
+    "bairro": "Copacabana",
+    "lat": -22.963365,
+    "lng": -43.190848,
+    "tipo": "OFFICE",
+    "cep": "22021-675",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua General Azevedo Pimentel, 60, Apto 810",
+    "bairro": "Copacabana",
+    "lat": -22.965783,
+    "lng": -43.180635,
+    "tipo": "HOME",
+    "cep": "22088-654",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Duvivier, 89, Apto 419",
+    "bairro": "Copacabana",
+    "lat": -22.964105,
+    "lng": -43.178727,
+    "tipo": "HOME",
+    "cep": "22082-721",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Ladeira dos Tabajaras, 323, Apto 424",
+    "bairro": "Copacabana",
+    "lat": -22.962059,
+    "lng": -43.1908,
+    "tipo": "HOME",
+    "cep": "22013-312",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua General Barbosa Lima, 62, Apto 597",
+    "bairro": "Copacabana",
+    "lat": -22.966674,
+    "lng": -43.180197,
+    "tipo": "HOME",
+    "cep": "22042-972",
+    "pedidos": 3
+  },
+  {
+    "endereco": "Rua da Coroa, 23, Apto 993",
+    "bairro": "Copacabana",
+    "lat": -22.962306,
+    "lng": -43.191065,
+    "tipo": "HOME",
+    "cep": "22019-219",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua General Barbosa Lima, 122, Apto 110",
+    "bairro": "Copacabana",
+    "lat": -22.966044,
+    "lng": -43.180623,
+    "tipo": "HOME",
+    "cep": "22041-140",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Colibri, 66, Apto 971",
+    "bairro": "Copacabana",
+    "lat": -22.979449,
+    "lng": -43.193544,
+    "tipo": "HOME",
+    "cep": "22051-998",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Constante Ramos, 60, Loja 10",
+    "bairro": "Copacabana",
+    "lat": -22.97489,
+    "lng": -43.187379,
+    "tipo": "OFFICE",
+    "cep": "22050-469",
+    "pedidos": 4
+  },
+  {
+    "endereco": "Rua General Barbosa Lima, 164, Apto 604",
+    "bairro": "Copacabana",
+    "lat": -22.966809,
+    "lng": -43.180711,
+    "tipo": "HOME",
+    "cep": "22015-957",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Belfort Roxo, 14, Loja 10",
+    "bairro": "Copacabana",
+    "lat": -22.964239,
+    "lng": -43.176018,
+    "tipo": "OFFICE",
+    "cep": "22051-801",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Barata Ribeiro, 199, Apto 305",
+    "bairro": "Copacabana",
+    "lat": -22.963502,
+    "lng": -43.177895,
+    "tipo": "HOME",
+    "cep": "22052-200",
+    "pedidos": 4
+  },
+  {
+    "endereco": "Rua Constante Ramos, 115, Loja 30",
+    "bairro": "Copacabana",
+    "lat": -22.9727,
+    "lng": -43.191181,
+    "tipo": "OFFICE",
+    "cep": "22085-240",
+    "pedidos": 4
+  },
+  {
+    "endereco": "Rua Barata Ribeiro, 222, Apto 835",
+    "bairro": "Copacabana",
+    "lat": -22.969874,
+    "lng": -43.187668,
+    "tipo": "HOME",
+    "cep": "22086-888",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Xavier da Silveira, 85, Apto 662",
+    "bairro": "Copacabana",
+    "lat": -22.976546,
+    "lng": -43.192014,
+    "tipo": "HOME",
+    "cep": "22017-819",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Figueiredo de Magalhães, 71, Loja 19",
+    "bairro": "Copacabana",
+    "lat": -22.966263,
+    "lng": -43.189353,
+    "tipo": "OFFICE",
+    "cep": "22085-623",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Avenida Nossa Senhora de Copacabana, 104, Apto 404",
+    "bairro": "Copacabana",
+    "lat": -22.972186,
+    "lng": -43.187738,
+    "tipo": "HOME",
+    "cep": "22039-536",
+    "pedidos": 3
+  },
+  {
+    "endereco": "Travessa Santa Margarida, 30, Apto 813",
+    "bairro": "Copacabana",
+    "lat": -22.965535,
+    "lng": -43.187879,
+    "tipo": "HOME",
+    "cep": "22053-668",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Barão de Ipanema, 30, Apto 912",
+    "bairro": "Copacabana",
+    "lat": -22.974238,
+    "lng": -43.191742,
+    "tipo": "HOME",
+    "cep": "22016-847",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua República do Peru, 58, Apto 655",
+    "bairro": "Copacabana",
+    "lat": -22.965473,
+    "lng": -43.183651,
+    "tipo": "HOME",
+    "cep": "22067-596",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Conrado Niemeyer, 57, Apto 146",
+    "bairro": "Copacabana",
+    "lat": -22.965051,
+    "lng": -43.183121,
+    "tipo": "HOME",
+    "cep": "22033-150",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Avenida Atlântica, 130, Loja 38",
+    "bairro": "Copacabana",
+    "lat": -22.972677,
+    "lng": -43.185556,
+    "tipo": "OFFICE",
+    "cep": "22046-349",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Ladeira dos Tabajaras, 357, Apto 124",
+    "bairro": "Copacabana",
+    "lat": -22.965217,
+    "lng": -43.187833,
+    "tipo": "HOME",
+    "cep": "22079-462",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Ronald de Carvalho, 6, Apto 591",
+    "bairro": "Copacabana",
+    "lat": -22.963645,
+    "lng": -43.177594,
+    "tipo": "HOME",
+    "cep": "22025-236",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Ronald de Carvalho, 18, Apto 470",
+    "bairro": "Copacabana",
+    "lat": -22.965753,
+    "lng": -43.176517,
+    "tipo": "HOME",
+    "cep": "22063-846",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Pompeu Loureiro, 131, Apto 212",
+    "bairro": "Copacabana",
+    "lat": -22.975808,
+    "lng": -43.193666,
+    "tipo": "HOME",
+    "cep": "22031-545",
+    "pedidos": 5
+  },
+  {
+    "endereco": "Avenida Nossa Senhora de Copacabana, 115, Loja 32",
+    "bairro": "Copacabana",
+    "lat": -22.973276,
+    "lng": -43.188443,
+    "tipo": "OFFICE",
+    "cep": "22069-881",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Avenida Atlântica, 134, Loja 33",
+    "bairro": "Copacabana",
+    "lat": -22.973021,
+    "lng": -43.185868,
+    "tipo": "OFFICE",
+    "cep": "22036-180",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Constante Ramos, 152, Apto 955",
+    "bairro": "Copacabana",
+    "lat": -22.973607,
+    "lng": -43.189628,
+    "tipo": "HOME",
+    "cep": "22023-601",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Avenida Atlântica, 136, Apto 948",
+    "bairro": "Copacabana",
+    "lat": -22.974412,
+    "lng": -43.186966,
+    "tipo": "HOME",
+    "cep": "22055-407",
+    "pedidos": 4
+  },
+  {
+    "endereco": "Rua Domingos Ferreira, 11, Loja 39",
+    "bairro": "Copacabana",
+    "lat": -22.975518,
+    "lng": -43.188654,
+    "tipo": "OFFICE",
+    "cep": "22012-842",
+    "pedidos": 5
+  },
+  {
+    "endereco": "Rua Xavier da Silveira, 139, Loja 30",
+    "bairro": "Copacabana",
+    "lat": -22.976293,
+    "lng": -43.193109,
+    "tipo": "OFFICE",
+    "cep": "22018-521",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Santa Clara, 36, Apto 843",
+    "bairro": "Copacabana",
+    "lat": -22.964558,
+    "lng": -43.193437,
+    "tipo": "HOME",
+    "cep": "22034-528",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Figueiredo de Magalhães, 127, Apto 225",
+    "bairro": "Copacabana",
+    "lat": -22.969323,
+    "lng": -43.186767,
+    "tipo": "HOME",
+    "cep": "22019-860",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Travessa Santa Leocádia, 92, Apto 922",
+    "bairro": "Copacabana",
+    "lat": -22.974215,
+    "lng": -43.193503,
+    "tipo": "HOME",
+    "cep": "22050-995",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Felipe de Oliveira, 38, Apto 517",
+    "bairro": "Copacabana",
+    "lat": -22.962089,
+    "lng": -43.177094,
+    "tipo": "HOME",
+    "cep": "22063-889",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Euclides da Rocha, 288, Apto 690",
+    "bairro": "Copacabana",
+    "lat": -22.965614,
+    "lng": -43.194071,
+    "tipo": "HOME",
+    "cep": "22063-441",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Almirante Gonçalves, 5, Apto 988",
+    "bairro": "Copacabana",
+    "lat": -22.979967,
+    "lng": -43.189703,
+    "tipo": "HOME",
+    "cep": "22074-818",
+    "pedidos": 5
+  },
+  {
+    "endereco": "Rua Pompeu Loureiro, 148, Apto 553",
+    "bairro": "Copacabana",
+    "lat": -22.975503,
+    "lng": -43.19352,
+    "tipo": "HOME",
+    "cep": "22068-182",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Barata Ribeiro, 226, Loja 33",
+    "bairro": "Copacabana",
+    "lat": -22.962175,
+    "lng": -43.175858,
+    "tipo": "OFFICE",
+    "cep": "22080-444",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Joseph Bloch, 26, Apto 858",
+    "bairro": "Copacabana",
+    "lat": -22.966351,
+    "lng": -43.188509,
+    "tipo": "HOME",
+    "cep": "22016-972",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Constante Ramos, 169, Apto 469",
+    "bairro": "Copacabana",
+    "lat": -22.973965,
+    "lng": -43.188998,
+    "tipo": "HOME",
+    "cep": "22057-573",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Professor Gastão Bahiana, 82, Apto 510",
+    "bairro": "Copacabana",
+    "lat": -22.977781,
+    "lng": -43.193195,
+    "tipo": "HOME",
+    "cep": "22066-945",
+    "pedidos": 2
+  },
+  {
+    "endereco": "Rua Joseph Bloch, 48, Apto 610",
+    "bairro": "Copacabana",
+    "lat": -22.965954,
+    "lng": -43.188064,
+    "tipo": "HOME",
+    "cep": "22012-828",
+    "pedidos": 3
+  },
+  {
+    "endereco": "Rua Figueiredo de Magalhães, 164, Apto 430",
+    "bairro": "Copacabana",
+    "lat": -22.968015,
+    "lng": -43.187917,
+    "tipo": "HOME",
+    "cep": "22065-783",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Travessa Santa Margarida, 48, Apto 679",
+    "bairro": "Copacabana",
+    "lat": -22.965424,
+    "lng": -43.188271,
+    "tipo": "HOME",
+    "cep": "22079-800",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua da Coroa, 64, Apto 188",
+    "bairro": "Copacabana",
+    "lat": -22.96281,
+    "lng": -43.189864,
+    "tipo": "HOME",
+    "cep": "22065-482",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Xavier da Silveira, 183, Apto 666",
+    "bairro": "Copacabana",
+    "lat": -22.976054,
+    "lng": -43.193765,
+    "tipo": "HOME",
+    "cep": "22081-107",
+    "pedidos": 1
+  },
+  {
+    "endereco": "Rua Pompeu Loureiro, 171, Apto 110",
+    "bairro": "Copacabana",
+    "lat": -22.972495,
+    "lng": -43.191978,
+    "tipo": "HOME",
+    "cep": "22050-346",
+    "pedidos": 1
+  }
+]

@@ -7,7 +7,7 @@
 | `RF-11` | RF | Diferenciar visualmente tipos de parada no mapa e na lista, reduzindo ambiguidades de apartamentos, casas, lojas e indefinidos. | importante | - |
 | `RF-20` | RF | Permitir alternar entre a sequencia Original e Meu roteiro; quando o roteiro for importado sem romaneio, Original fica indisponivel. | essencial | - |
 | `RF-33` | RF | Permitir salvar roteiro incompleto gratuitamente e liberar execucao somente quando todos os enderecos estiverem resolvidos. | essencial | - |
-| `RF-34` | RF | Oferecer Auto-roteirizar, que monta o roteiro inteiro minimizando conversoes: escolhe paradas do veiculo em pontos livres das ruas adjacentes, cobre todos os enderecos resolvidos dentro do limite de caminhada, e entrega resultado editavel antes de salvar ou executar. | importante | - |
+| `RF-34` | RF | Oferecer Auto-roteirizar, que monta o roteiro inteiro minimizando conversoes: escolhe paradas do veiculo em pontos livres das ruas adjacentes, cobre todos os enderecos resolvidos dentro do limite de caminhada, e entrega resultado editavel antes de salvar ou executar. | importante | TASK-SPIKE-001 |
 | `RF-36` | RF | Exportar e importar Roteiro em JSON para compartilhar ou continuar em outro dispositivo. | importante | - |
 | `RF-37` | RF | Executar o roteiro entrega a entrega, com destino atual, progresso, conclusao, insucesso e integracao por deeplink/GPS externo. | essencial | - |
 | `RF-40` | RF | Exibir legenda recolhivel do mapa usando o mesmo sistema visual de icones das paradas. | desejavel | - |
