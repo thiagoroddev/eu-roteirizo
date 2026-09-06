@@ -12,8 +12,8 @@
     "ia": "G"
   },
   "depende_de": [],
-  "ordem": 2,
-  "fila": "ciclo",
+  "ordem": null,
+  "fila": "reserva",
   "origem": "RF-37, RN-22",
   "requisitos": [
     "RF-37",
@@ -37,7 +37,7 @@
       "Persistencia suporta autosave e restauracao por roteiro.",
       "Atualizacoes sao imutaveis e cobertas por testes unitarios."
     ],
-    "impacto": "Baseia todo o modo execucao sem expor ainda a experiencia visual.",
+    "impacto": "Baseia o modo execucao sem expor ainda a experiencia visual. Adiada para a reserva por escolha humana nesta sessao: priorizar TASK-RF-029 apos o spike; escopo, data original e criticidade preservados.",
     "riscos": [
       "Modelagem errada nesta fatia contamina as telas seguintes."
     ],

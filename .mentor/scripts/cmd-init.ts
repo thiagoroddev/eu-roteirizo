@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { agoraIso, caminhos, escreverJson, escreverTexto, existe, garantirPasta, lerJson } from './arquivos.ts'
+import { agoraIso, caminhos, escreverJson, escreverTexto, existe, garantirPasta, lerJson, lerTexto } from './arquivos.ts'
 import { regenerarTudo } from './vistas.ts'
 import type { Contexto } from './tipos.ts'
 
@@ -14,7 +14,7 @@ export function inicializar(): void {
     console.log('docs-mentor/contexto.json ja existe. Nada a fazer.')
     return
   }
-  for (const pasta of [c.abertas, c.concluidas, c.stack, c.adr, c.docs + '/requisitos', c.docs + '/dividas', c.docs + '/seguranca']) {
+  for (const pasta of [c.abertas, c.concluidas, c.stack, c.adr, c.docs + '/requisitos', c.docs + '/dividas', c.docs + '/seguranca', c.docs + '/rascunhos', c.docs + '/skills']) {
     garantirPasta(pasta)
   }
 
@@ -46,6 +46,38 @@ export function inicializar(): void {
   )
 
   escreverTexto(
+    c.docs + '/skills/LEIA-ME.md',
+    [
+      '# Skills do Projeto',
+      '',
+      '> **Habilidades e instrucoes customizadas especificas deste projeto.**',
+      '> Esta pasta e sagrada: sobrevive a `mentor instalar --forcar`.',
+      '',
+      'Para adicionar uma habilidade no projeto:',
+      '1. Crie uma subpasta com o nome da habilidade: `docs-mentor/skills/<nome-da-habilidade>/`',
+      '2. Crie o arquivo `SKILL.md` contendo frontmatter YAML (`name`, `description`) e o roteiro tatico.',
+    ].join('\n'),
+  )
+
+  escreverTexto(
+    c.docs + '/rascunhos/LEIA-ME.md',
+    [
+      '# Rascunhos',
+      '',
+      '> **Zona livre para exploracao, analises comerciais, pesquisas, ideias e prototipos.**',
+      '> Rascunho nao e tarefa: nao tem gate, nao tem criterio de aceite e nao conta no ciclo.',
+      '',
+      'Organize livremente em arquivos ou subpastas (ex: `comercial/`, `pesquisas/`, `prototipos/`).',
+      '',
+      '**Destinos possiveis para um rascunho:**',
+      '1. **Requisito (`RF`, `RN`, `RNF`)**: quando a ideia vira o que o produto faz.',
+      '2. **ADR**: quando e uma decisao arquitetural cara de reverter.',
+      '3. **Tarefa**: quando vira trabalho acionavel e bem resolvido.',
+      '4. **Descartado**: com uma linha justificando o descarte.',
+    ].join('\n'),
+  )
+
+  escreverTexto(
     c.docs + '/LEIA.md',
     [
       '# docs-mentor/',
@@ -57,17 +89,32 @@ export function inicializar(): void {
       '| `contexto.json` | `contexto.md` |',
       '| `requisitos/requisitos.json` | `requisitos/implementados.md`, `requisitos/pendentes.md` |',
       '| `tarefas/abertas/*.json` | `tarefas/backlog.md` (ciclo) e `tarefas/reserva.md` |',
-      '| `referencias.json` | ponteiros para itens historicos/externos |',
+      '| `referencias.json` | `referencias.md` (mapa de links para documentos do projeto) |',
       '| `invariantes.json` | invariantes de dominio e restricoes arquiteturais |',
       '| `glossario.md` | termos canonicos do dominio |',
+      '| `skills/` | habilidades e instrucoes customizadas do projeto |',
+      '| `rascunhos/` | zona livre para ideias, pesquisas e analises de negocio |',
+      '| `melhorias-do-pacote.md` | anotacoes sobre o mentor-agent (criado por `mentor anotar --sobre pacote`) |',
       '| `dividas/dividas.json` | ainda sem vista |',
       '| `seguranca/riscos-aceitos.json` | ainda sem vista |',
       '',
-      'Escritos a mao: a narrativa de cada tarefa concluida, as ADRs e as convencoes de stack.',
+      'Escritos a mao: a narrativa de cada tarefa concluida, as ADRs, as convencoes de stack, as skills e os rascunhos.',
     ].join('\n'),
   )
 
+  const gitignore = join(c.raiz, '.gitignore')
+  const entradaSaidas = '.mentor-saidas/'
+  if (existe(gitignore)) {
+    const conteudo = lerTexto(gitignore)
+    if (!conteudo.includes('.mentor-saidas')) {
+      escreverTexto(gitignore, `${conteudo.trimEnd()}\n\n# Logs e saidas temporarias do mentor\n${entradaSaidas}\n`)
+    }
+  } else {
+    escreverTexto(gitignore, `# Logs e saidas temporarias do mentor\n${entradaSaidas}\n`)
+  }
+
   regenerarTudo()
-  console.log('Projeto inicializado. Proximo passo: responder os portoes V, C e 0,')
-  console.log('que decidem o nivel de rigor. Processo em .mentor/processos/inicializacao.md')
+  console.log('Projeto inicializado com sucesso!')
+  console.log('Proximo passo: ler docs/ e codigo se for legado, e responder os portoes V, C e 0 (nivel de rigor).')
+  console.log('Roteiro detalhado em .mentor/processos/inicializacao.md')
 }

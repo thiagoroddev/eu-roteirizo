@@ -23,19 +23,56 @@
   "commit_base": null,
   "concluida_em": null,
   "plano": {
-    "muda": [],
-    "criterios_aceite": [],
-    "impacto": null,
-    "riscos": [],
+    "muda": [
+      "TASK-RF-030: candidatos de parada de veiculo livres nas ruas e cobertura por raio.",
+      "TASK-RF-031: custo D3 e ordem/caminhos por distancia + 400m por unidade de penalidade de conversao, conforme escolha humana.",
+      "TASK-RF-032: motor completo headless, circuitos a pe, geometria coerente e tratamento de inviabilidade.",
+      "TASK-TEST-004: regressao sintetica e medicao local com os romaneios reais antes da interface.",
+      "TASK-RF-034: integrar motor em worker, aplicacao atomica, edicao e persistencia compativel.",
+      "TASK-RF-033: botao, feedback de progresso/cancelamento/erro e smoke no Samsung M35."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Motor calcula paradas independentes dos enderecos, inclusive em outra rua, com membros dentro do raio geometrico da ancora.",
+        "teste": "autoRouteAnchors.test.ts > ancora em rua paralela cobre varias entregas"
+      },
+      {
+        "texto": "Padrao Menos conversoes usa o equilibrio de custo aprovado e caminho de veiculo dirigido, desde o inicio informado.",
+        "teste": "turnAwarePath.test.ts > prefere menos conversoes dentro do equilibrio aprovado"
+      },
+      {
+        "texto": "Motor completo e validado antes do botao; cobertura, pacotes, raio e conectividade sao criterios de validade, nao apenas metricas de desempenho.",
+        "teste": "autoRouteIntegration.test.ts e autoRouteCorpus.test.ts"
+      },
+      {
+        "texto": "Botao entrega um roteiro editavel e persistente, mantendo coerencia entre caminho calculado e exibido.",
+        "teste": "MapPage.test.tsx e routeStorage.test.ts"
+      }
+    ],
+    "impacto": "Planejamento autorizado nesta sessao; implementacao ainda nao iniciada. Fonte: TASK-SPIKE-001 e esclarecimento do humano sobre veiculo independente, raio e motor antes do botao. Camadas: dominio puro, validacao local, worker e integracao com builder/IndexedDB. Reversibilidade: modulos aditivos e leitura compativel de roteiros antigos; aplicar resultado existente exige confirmacao do usuario.",
+    "riscos": [
+      "O spike demonstrou viabilidade, nao motor pronto: L-31 registrou um trecho sem caminho em todas as variantes; nao usar suas metricas como aceite de rota completa.",
+      "O spike usa 120m, enquanto o produto configura o raio; nao alterar o default do produto para reproduzir uma tabela.",
+      "A* com penalidade e cobertura/ordem gulosas nao garantem minimo global de conversoes. O compromisso de produto e preferir menos conversoes no equilibrio aprovado.",
+      "O modelo OSM disponivel nao garante permissao real de estacionar ou todas as restricoes viarias; o resultado continua editavel.",
+      "As medidas reais de desempenho e offline no Samsung M35 permanecem parte do aceite futuro, sem usar a estimativa 4x como prova."
+    ],
     "dependencias_novas": [],
-    "proporcionalidade": null
+    "proporcionalidade": "Pediram construir o motor e depois expor num botao, aproveitando spike e romaneios reais. Sao tres fatias de motor, uma de validacao, uma de integracao tecnica e uma visual. A separacao evita que worker, estado, persistencia e interface formem uma tarefa XG. Nenhuma implementacao, backend ou dependencia nova e criada neste planejamento."
   },
   "gates": {},
   "achados": [],
   "validacao": "nao_requer",
   "validado_em": null,
   "validacao_motivo": null,
-  "tarefas_geradas": [],
+  "tarefas_geradas": [
+    "TASK-RF-030",
+    "TASK-RF-031",
+    "TASK-RF-032",
+    "TASK-RF-033",
+    "TASK-RF-034",
+    "TASK-TEST-004"
+  ],
   "adrs": [],
   "divida_tecnica": [],
   "riscos_aceitos": [],

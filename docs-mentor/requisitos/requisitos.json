@@ -72,17 +72,19 @@
   {
     "id": "RF-34",
     "tipo": "RF",
-    "enunciado": "Oferecer Auto-roteirizar, que monta o roteiro inteiro minimizando conversoes: escolhe paradas do veiculo em pontos livres das ruas adjacentes, cobre todos os enderecos resolvidos dentro do limite de caminhada, e entrega resultado editavel antes de salvar ou executar.",
-    "historia": "Como entregador, quero que o app monte a rota sozinha preferindo caminho reto, para dirigir menos convertendo e resolver mais enderecos a pe a cada parada.",
+    "enunciado": "Oferecer o botao Auto-roteirizar sobre um motor local testavel sem UI. O padrao Menos conversoes combina distancia e penalidade D3 com peso de 400m. O motor escolhe paradas do veiculo em pontos livres das ruas, independentes dos enderecos, agrupa entregas dentro do raio geometrico da ancora e devolve roteiro editavel com caminhos de veiculo e circuitos a pe coerentes.",
+    "historia": "Como entregador, quero que o app escolha onde parar o veiculo, inclusive em uma rua diferente das entregas, e monte o roteiro preferindo menos conversoes, para atender a pe os enderecos dentro do raio e poder ajustar o resultado.",
     "prioridade": "importante",
     "status": "pendente",
     "criterios_aceite": [
-      "O resultado cobre 100% dos enderecos resolvidos, cada um em exatamente uma parada.",
-      "Nenhuma parada excede o limite de caminhada configurado.",
-      "A parada do veiculo pode cair em qualquer ponto de rua adjacente, nao apenas sobre um endereco de entrega.",
-      "O resultado permanece editavel pelo fluxo manual existente antes de salvar ou executar.",
-      "A metrica de conversoes do roteiro gerado e melhor que a do guloso por distancia sobre o romaneio de referencia.",
-      "A logica principal e testada sem depender da interface."
+      "Dadas entregas viaveis e raio configurado, quando gerar o roteiro, entao cada endereco resolvido aparece uma vez, todos os seus pacotes sao preservados e haversine(ancora, endereco) <= raio para todo agrupamento automatico.",
+      "Dadas ruas adjacentes, quando escolher a parada do veiculo, entao ela pode ficar numa rua diferente das entregas e nao precisa coincidir com nenhum endereco; incluir caso sintetico de rua paralela.",
+      "Dado o modo padrao aprovado, quando comparar caminhos, entao usa metros + 400 * penalidade D3; retorna metricas distinguindo manobras, unidades D3 e distancia. Nao promete minimo global.",
+      "Dados inicio e paradas, quando montar o percurso, entao considera o trecho inicial, mao unica do carro, transicoes nas ancoras e circuito a pe com retorno ao veiculo; a geometria exibida corresponde ao custo calculado.",
+      "Dado endereco ou trecho inviavel, quando calcular, entao informa pendencias e distingue resultado parcial de completo; nao descarta entregas, fabrica ligacoes retas nem usa custo zero para trechos sem caminho.",
+      "Dado o corpus de referencia, quando validar o motor, entao compara ao guloso por distancia sob entradas e metrica iguais; mede cobertura, raio, conversoes, km, paradas, caminhada e CPU antes da UI.",
+      "Dado o corpus de romaneios reais locais, quando medir, entao mantem os dados privados e registra apenas resultados agregados; CI usa casos sinteticos reproduziveis.",
+      "Dado o botao Auto-roteirizar, quando calcular, entao informa progresso e permite cancelar sem perder trabalho; resultado confirmado e editavel e persistente, inclusive a ancora livre do veiculo."
     ],
     "regras_aplicaveis": [
       "RN-14"
@@ -91,7 +93,14 @@
       "RF-37"
     ],
     "tarefas": [
-      "TASK-SPIKE-001"
+      "TASK-RF-029",
+      "TASK-RF-030",
+      "TASK-RF-031",
+      "TASK-RF-032",
+      "TASK-RF-033",
+      "TASK-RF-034",
+      "TASK-SPIKE-001",
+      "TASK-TEST-004"
     ],
     "adr": [],
     "criado_em": "01/09/26 15:27",

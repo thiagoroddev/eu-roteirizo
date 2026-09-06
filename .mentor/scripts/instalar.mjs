@@ -110,6 +110,18 @@ export function copiarPacote(origem, destino, forcar, migrarDocs = false) {
   try {
     cpSync(join(origem, '.mentor'), pastaDestino, { recursive: true })
     cpSync(join(origem, 'mentor.mjs'), join(destino, 'mentor.mjs'))
+
+    const gitignore = join(destino, '.gitignore')
+    if (existsSync(gitignore)) {
+      try {
+        const conteudo = readFileSync(gitignore, 'utf8')
+        if (!conteudo.includes('.mentor-saidas')) {
+          writeFileSync(gitignore, `${conteudo.trimEnd()}\n\n# Logs e saidas temporarias do mentor\n.mentor-saidas/\n`, 'utf8')
+        }
+      } catch {
+        // continua
+      }
+    }
   } catch (erro) {
     if (deveMigrar && existsSync(documentosAtuais) && !existsSync(documentosLegados)) {
       desfazerReferencias()
@@ -148,6 +160,10 @@ function texto() {
     '**Antes de qualquer outra coisa, leia `' + NUCLEO + '`.** Ele e curto, e a autoridade sobre',
     'este repositorio, e traz a tabela que diz o que mais carregar em cada situacao. Nada aqui repete',
     'o que esta la: uma copia envelheceria em silencio.',
+    '',
+    '**Postura ativa do mentor:** ao iniciar qualquer sessao, receber saudacoes ou quando nao houver',
+    'tarefa ativa em execucao, inspecione `docs-mentor/contexto.json` e o `doctor`, identifique o estado',
+    'do projeto e apresente imediatamente o diagnostico com os proximos passos recomendados.',
     '',
     'Tres coisas valem antes mesmo dessa leitura, porque as duas primeiras sao irreversiveis:',
     '',

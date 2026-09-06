@@ -1,0 +1,146 @@
+{
+  "id": "TASK-CHORE-012",
+  "tipo": "CHORE",
+  "titulo": "Conferir configuracoes do GitHub e aferir as metas de qualidade apontadas pelo doctor",
+  "fatia_de": null,
+  "estado": "em-execucao",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "P",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "criada_em": "06/09/26 04:02",
+  "iniciada_em": "06/09/26 04:02",
+  "commit_base": "cde57d52cd16bb19400b39d3b401824ed930e34d",
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "docs-mentor/contexto.json - declarar configuracoes consultadas no GitHub, explicitar o padrao de uma tarefa por ramo e registrar afericoes com suas limitacoes.",
+      "docs-mentor/tarefas/abertas/TASK-CHORE-012.json - guardar plano, gates executados e pendencias que dependem de autorizacao ou validacao humana.",
+      "docs-mentor/tarefas/abertas/TASK-RF-024.json e TASK-RF-029.json - refletir a prioridade de RF-029 escolhida pelo humano; gerar suas quatro fatias pelo CLI a partir do SPIKE-001.",
+      "Vistas de docs-mentor/ - regenerar pelo CLI apos alterar as fontes."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "As tres configuracoes de plataforma possuem estado observado e fonte; protecao desativada continua explicitamente pendente.",
+        "teste": "nao se aplica: consulta GET autenticada ao GitHub e verificacao documental"
+      },
+      {
+        "texto": "Metas avaliadas citam evidencia e limites; validacao em aparelho e medidas inexistentes nao recebem conformidade.",
+        "teste": "nao se aplica: revisao documental contra codigo, gates e registros existentes"
+      },
+      {
+        "texto": "A proxima fatia de desenvolvimento pertence a RF-029, conforme escolha humana, e RF-024 permanece na reserva com historico preservado.",
+        "teste": "nao se aplica: gerar, verificar e leitura da fila calculada"
+      },
+      {
+        "texto": "Os quatro gates declarados sao executados e sua saida e registrada, incluindo ressalvas.",
+        "teste": "nao se aplica: executa a suite existente e os gates declarados como afericao; nao acrescenta codigo ou testes"
+      }
+    ],
+    "impacto": "Atualiza o diagnostico e a fila do projeto; as alteracoes externas de protecao do GitHub ficam preparadas para autorizacao. Nenhuma funcionalidade do produto e implementada nesta tarefa.",
+    "riscos": [
+      "Confundir ausencia de aviso no doctor com protecao ativa.",
+      "Tratar testes automatizados como validacao em aparelho.",
+      "Alteracoes da atualizacao do Mentor ja estavam presentes no inicio desta tarefa."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram resolver as pendencias do doctor; proponho um unico registro de verificacao e as quatro fatias ja definidas pelo spike para a prioridade RF-029 escolhida pelo humano. O registro concentra evidencias; as fatias dividem um epico XG existente, sem criar funcionalidades adicionais."
+  },
+  "gates": {
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "06/09/26 04:03",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "06/09/26 04:05",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest\n\n\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.9 \u001b[39m\u001b[90mE:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\u001b[39m\n\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroStopSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 895\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m kind='vehicle' = SEMPRE o veículo: glifo do carro + badge, SEM pacote, NÃO tocável, com 'Editar local' (RF-006.16/.18) \u001b[33m 386\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/hooks/useRouteUploader.test.ts \u001b[2m(\u001b[22m\u001b[2m24 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1979\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m sets error for files exceeding max size \u001b[33m 1874\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/StopItemList.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1084\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m opens with EVERY item expanded (scan mode) and the badge as box glyph + count \u001b[33m 379\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m tapping a row toggles ONLY that item's expansion \u001b[33m 398\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroDraftSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1213\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m header: edit-mode label, stop number, metric CHIPS, the FIXED radius card and ALWAYS-VISIBLE CTAs — no global remaining (RF-006.4.25) \u001b[33m 406\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m body: a ÂNCORA abre a lista com o sentido; 'Tornar âncora' por membro; 'Resetar' só fora do padrão (RF-006.6) \u001b[33m 416\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroPanelHeader.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 297\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/RouteMap.test.tsx \u001b[2m(\u001b[22m\u001b[2m32 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 302\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/FileUploader.test.tsx \u001b[2m(\u001b[22m\u001b[2m13 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 300\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroStartSection.test.\n[...recortado...]\n-BV7QT456.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)\n\n\u001b[90mstderr\u001b[2m | src/__tests__/pages/MapPage.test.tsx\u001b[2m > \u001b[22m\u001b[2mMapPage (focus screen)\u001b[2m > \u001b[22m\u001b[2mo círculo do preview segue o stepper de raio (RF-006.4.6)\n\u001b[22m\u001b[39mWarning: An update to MapScreen inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\n    at MapScreen (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:148:22)\n    at div\n    at MapPage (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:109:119)\n    at RenderedRoute (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)",
+      "executado_em": "06/09/26 04:06",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO com ressalva",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1952 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.81 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-q5HgCi8R.css   \u001b[39m\u001b[1m\u001b[2m 27.74 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.10 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-UfF1rw5c.js    \u001b[39m\u001b[1m\u001b[33m512.36 kB\u001b[39m\u001b[22m\u001b[2m │ gzip:  94.79 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-giTtp3H-.js   \u001b[39m\u001b[1m\u001b[33m803.48 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.60 kB\u001b[22m\n\u001b[32m✓ built in 11.43s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1766.19 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "06/09/26 04:07",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": "O limite de 500 kB gera aviso, sem bloquear o build; avaliar os tamanhos registrados na saida."
+    }
+  },
+  "achados": [
+    {
+      "classe": 1,
+      "descricao": "Alertas e atualizacoes de seguranca estavam desativados. Apos autorizacao humana, ambas as medidas foram ativadas por PUT e reconferidas por GET: HTTP 204 e enabled=true/paused=false, respectivamente. Evidencia: .mentor-saidas/github-security-20260906T075343Z.json",
+      "destino": "descartado",
+      "ref": "Corrigido nesta tarefa apos autorizacao humana; nao houve commit, merge ou push."
+    },
+    {
+      "classe": 1,
+      "descricao": "npm audit --json retornou exit 1, com 1 vulnerabilidade moderada e 1 baixa; nenhuma alta/critica. @humanfs/node: GHSA-p498-v437-472g; esbuild: GHSA-g7r4-m6w7-qqqr. Ambas transitivas com fixAvailable=true. Saida crua: .mentor-saidas/npm-audit-20260906T070412Z.json. Nenhuma correcao de dependencia foi aplicada.",
+      "destino": "tarefa",
+      "ref": "TASK-CHORE-012"
+    },
+    {
+      "classe": 3,
+      "descricao": "Build gerou chunks JavaScript de 512.36, 803.48 kB, acima do aviso de 500 kB. O build conclui, mas o aviso nao comprova desempenho de carregamento aceitavel. Meta de latencia no aparelho continua sem medicao.",
+      "destino": "tarefa",
+      "ref": "TASK-CHORE-012"
+    },
+    {
+      "classe": 4,
+      "descricao": "Contagem 44/49 no contexto nao era sustentada pela rastreabilidade legada. Removida sem inventar percentual. RF-35 ainda aparece planejado em docs/requisitos/funcionais.md, apesar da persistencia implementada em routeStorage e TASK-RF-008 concluida; reconciliacao completa do legado segue pendente.",
+      "destino": "tarefa",
+      "ref": "TASK-CHORE-012"
+    }
+  ],
+  "validacao": "pendente",
+  "validado_em": null,
+  "validacao_motivo": "Relato humano nesta sessao: uso no proprio Samsung M35, sem data do teste; offline ainda nao testado. O relato nao discrimina resultados por cenario nem versao do navegador. Validacao integral e aprovacao continuam pendentes; validado_em permanece null.",
+  "tarefas_geradas": [
+    "TASK-RF-030",
+    "TASK-RF-031",
+    "TASK-RF-032",
+    "TASK-RF-033",
+    "TASK-RF-034",
+    "TASK-TEST-004"
+  ],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

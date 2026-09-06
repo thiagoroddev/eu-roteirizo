@@ -1,0 +1,82 @@
+{
+  "id": "TASK-RF-031",
+  "tipo": "RF",
+  "titulo": "Calcular caminhos e ordenar paradas com custo de conversao",
+  "fatia_de": "TASK-RF-029",
+  "estado": "aberta",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "G"
+  },
+  "depende_de": [
+    "TASK-RF-030"
+  ],
+  "fila": "reserva",
+  "ordem": null,
+  "origem": "RF-34",
+  "requisitos": [
+    "RF-34"
+  ],
+  "criada_em": "06/09/26 04:03",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "src/utils/routing/turnCost.ts (novo) - definicao D3 do spike e opcoes tipadas; distinguir quantidade de manobras, penalidade D3 e metros.",
+      "src/utils/routing/turnAwarePath.ts (novo) - busca por aresta de chegada, map matching consistente, geometria e custos de trechos dirigidos.",
+      "src/utils/routing/autoRouteOrder.ts (novo) - ordenar ancoras a partir do inicio informado, comparando candidatos pelo custo distancia + 400 * penalidade D3; cachear consultas reutilizaveis.",
+      "src/__tests__/utils/routing/turnCost.test.ts, turnAwarePath.test.ts e autoRouteOrder.test.ts (novos) - limiares D3, vias de mao unica, partida, escolha do caminho e ordem das paradas.",
+      "src/types/autoRouting.ts - completar o contrato de trechos, politica de custo e contagem; reutilizar graph/match/minHeap, preservando a busca por distancia do modo manual."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Dadas duas alternativas viaveis, quando calcular no modo padrao aprovado, entao minimiza metros + 400 * penalidade D3 entre as alternativas examinadas: uma conversao simples evitada compensa desvio menor que 400m; empate tem regra determinista.",
+        "teste": "turnAwarePath.test.ts > prefere menos conversoes dentro do equilibrio aprovado"
+      },
+      {
+        "texto": "Dadas curvas e retornos, quando medir, entao aplica os limiares do D3: curva >35 graus, mesma via ate 45 graus sem penalidade e retorno >150 graus com peso 3. A metrica ponderada nao e apresentada como contagem bruta de manobras.",
+        "teste": "turnCost.test.ts > limiares D3 e peso de retorno"
+      },
+      {
+        "texto": "Dado um inicio escolhido e varias paradas, quando ordenar, entao o trecho inicio-primeira ancora participa da comparacao e dos totais; a ordem de entrada nao escolhe a primeira parada por acidente.",
+        "teste": "autoRouteOrder.test.ts > considera a partida ao escolher e pontuar a primeira parada"
+      },
+      {
+        "texto": "Dada mao unica e dois matches no mesmo segmento, quando buscar, entao preserva as direcoes permitidas e usa um grafo que conhece ambos os nos sinteticos; caminho inexistente retorna estado explicito.",
+        "teste": "turnAwarePath.test.ts > respeita mao unica e matches compartilhados"
+      },
+      {
+        "texto": "Dadas chegada e saida numa ancora, quando encadear trechos, entao uma mudanca real de direcao nao some pela parada, nem e contada duas vezes. Guardar a informacao de chegada necessaria entre os trechos.",
+        "teste": "autoRouteOrder.test.ts > conserva manobras nas transicoes entre paradas"
+      },
+      {
+        "texto": "Dado um candidato desconectado entre os mais proximos, quando escolher o proximo, entao tenta candidatos viaveis e nao usa Infinity como se fosse custo valido; trabalho tem limite e informa pendencias.",
+        "teste": "autoRouteOrder.test.ts > nao escolhe trecho impossivel por fallback"
+      }
+    ],
+    "impacto": "Segundo modulo do motor: trajetos de veiculo e ordem das paradas. Default de 400m por unidade D3 aprovado pelo humano; estrategia permanece parametrizavel internamente. Nao promete minimo global da rota.",
+    "riscos": [
+      "O spike usa pre-filtro TOP_N e busca gulosa; otimizar cada trecho nao prova otimizar a rota inteira.",
+      "O spike nao considera o inicio externo e zera a manobra na ancora; os numeros antigos precisam ser medidos novamente apos corrigir essas limitacoes.",
+      "O grafo representa mao unica, mas nao toda restricao de conversao, acesso ou estacionamento real; caminhos sao sugestoes sobre os dados disponiveis."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram menos conversoes como padrao; esta fatia implementa e testa o custo aprovado tanto no caminho quanto na ordem, em modulos reutilizaveis e sem interface."
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

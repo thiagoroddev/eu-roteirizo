@@ -1,11 +1,11 @@
 {
   "_meta": {
     "schema": "contexto-projeto/1",
-    "versao_do_pacote": "0.2.2",
+    "versao_do_pacote": "0.3.0",
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-05T21:34:43.359Z",
+    "atualizado_em": "2026-09-06T08:04:59.282Z",
     "gerado_por": "script"
   },
   "projeto": {
@@ -154,41 +154,41 @@
       "adequacao_funcional": {
         "pergunta": "Faz tudo o que foi combinado, e certo?",
         "vira_meta_como": "cenarios de aceite aprovados",
-        "meta": "RFs em docs/requisitos guiam aceite; 44/49 entregues em 28/07, pendentes declarados.",
-        "aferida_em": null,
-        "resultado": null,
+        "meta": "Cenarios de aceite dos RFs em docs/requisitos; pendencias nas tarefas. Percentual depende de reconciliar o legado.",
+        "aferida_em": "2026-09-06",
+        "resultado": "ressalva",
         "resultados_possiveis": [
           "conforme",
           "ressalva",
           "reprovada"
         ],
-        "nota": "RF-009/RF-012/RF-013 ainda fora do produto atual."
+        "nota": "Avaliacao parcial, TASK-CHORE-012. A suite passou, mas nao certifica todos os RFs. Contagem 44/49 retirada por rastreabilidade obsoleta: RF-35 ainda consta planejado apesar de routeStorage/TASK-RF-008. RF-009, RF-029 e RF-013 seguem pendentes."
       },
       "desempenho": {
         "pergunta": "Quanto tempo o usuario tolera esperar?",
         "vira_meta_como": "tempo de resposta, simultaneos",
         "meta": "Upload max 10MB; A* bairro alvo ~150ms; grafo cacheado 7d; chunk warning 500k.",
-        "aferida_em": null,
-        "resultado": null,
+        "aferida_em": "2026-09-06",
+        "resultado": "ressalva",
         "resultados_possiveis": [
           "conforme",
           "ressalva",
           "reprovada"
         ],
-        "nota": "Medicoes de Overpass existem, mas resultado ISO deve ser aferido pelo doctor/gates."
+        "nota": "Parcial, TASK-CHORE-012: upload/TTL conferidos no codigo; build com chunks acima de 500 kB, sem bloqueio. A* usa teste sintetico sem assercao temporal. Alvo ~150ms em bairro/celular segue sem medicao; doctor/gates nao aferem isso."
       },
       "compatibilidade": {
         "pergunta": "Precisa conversar com o que? Rodar onde?",
         "vira_meta_como": "versoes, navegadores, contratos",
         "meta": "PWA mobile-first em navegador moderno/Android; XLSX/CSV; Cloudflare Pages com SPA fallback.",
-        "aferida_em": null,
-        "resultado": null,
+        "aferida_em": "2026-09-06",
+        "resultado": "ressalva",
         "resultados_possiveis": [
           "conforme",
           "ressalva",
           "reprovada"
         ],
-        "nota": "TWA/Play Store planejados, nao entregues."
+        "nota": "Parcial, TASK-CHORE-012: PWA, fallback SPA e teste de round-trip XLSX presentes. Faltam matriz de versoes/navegadores e validacao em Android. TWA/Play Store planejados."
       },
       "usabilidade": {
         "pergunta": "Alguem sem treinamento consegue usar?",
@@ -201,59 +201,59 @@
           "ressalva",
           "reprovada"
         ],
-        "nota": "Acessibilidade especifica alem de Radix/shadcn nao foi medida."
+        "nota": "Relato humano nesta sessao: uso em Samsung M35, sem data do teste; offline ainda nao testado. Ha evidencia informal de uso, mas sem roteiro/resultados por cenario, versao do navegador ou medicao em rua/sol. Afericao formal e validacao humana seguem pendentes em TASK-CHORE-012."
       },
       "confiabilidade": {
         "pergunta": "O que acontece se cair? Quanto tempo fora e tolerav[e]l?",
         "vira_meta_como": "disponibilidade, tempo de recuperacao",
         "meta": "Shell PWA offline; dados locais; grafo em IndexedDB 7d; retry/backoff para Overpass.",
-        "aferida_em": null,
-        "resultado": null,
+        "aferida_em": "2026-09-06",
+        "resultado": "ressalva",
         "resultados_possiveis": [
           "conforme",
           "ressalva",
           "reprovada"
         ],
-        "nota": "Sem backup/sync remoto por decisao."
+        "nota": "Parcial, TASK-CHORE-012: precache e testes de TTL, cache e retry/backoff presentes. Humano relata uso em Samsung M35 sem data; offline ainda nao testado. Recuperacao por cenario nao documentada. Sem backup/sync remoto por decisao."
       },
       "seguranca": {
         "pergunta": "Quem pode ver e fazer o que?",
         "vira_meta_como": "matriz de papeis e permissoes",
         "meta": "Sem PII em log de producao; HTML escapado; xlsx fixo; dados no dispositivo.",
-        "aferida_em": null,
-        "resultado": null,
+        "aferida_em": "2026-09-06",
+        "resultado": "ressalva",
         "resultados_possiveis": [
           "conforme",
           "ressalva",
           "reprovada"
         ],
-        "nota": "Protecoes de plataforma e plano de incidente estao abertos."
+        "nota": "Parcial, TASK-CHORE-012: logs DEV, escapeHtml e XLSX fixado. Alertas e correcoes de seguranca GitHub ativados e reconferidos por API. Plano de incidente aberto; audit local anterior identificou 1 moderada (@humanfs/node) e 1 baixa (esbuild), ainda sem correcao local."
       },
       "manutenibilidade": {
         "pergunta": "Outra pessoa mexe nisso em 6 meses?",
         "vira_meta_como": "modularidade, testabilidade, documentacao",
         "meta": "TypeScript strict, UI_LABELS, utils puras, servicos IO, reducer puro e testes espelhando src.",
-        "aferida_em": null,
-        "resultado": null,
+        "aferida_em": "2026-09-06",
+        "resultado": "ressalva",
         "resultados_possiveis": [
           "conforme",
           "ressalva",
           "reprovada"
         ],
-        "nota": "Docs antigas tem rascunhos obsoletos sinalizados."
+        "nota": "Parcial, TASK-CHORE-012: strict, UI_LABELS, reducer e gates verdes. Docs de requisitos obsoletas; separacao utils/servicos incompleta, pois routing/osm.ts executa fetch."
       },
       "portabilidade": {
         "pergunta": "Precisa mudar de servidor, banco ou nuvem?",
         "vira_meta_como": "dependencias isolaveis",
         "meta": "PWA web hoje; TWA/Capacitor possiveis; sem DB remoto/auth; mapas isolados por servico.",
-        "aferida_em": null,
-        "resultado": null,
+        "aferida_em": "2026-09-06",
+        "resultado": "ressalva",
         "resultados_possiveis": [
           "conforme",
           "ressalva",
           "reprovada"
         ],
-        "nota": "PMTiles/R2 planejado antes de publico maior."
+        "nota": "Parcial, TASK-CHORE-012: PWA e dados locais presentes. Isolamento de mapas incompleto: Worker em RouteMap.tsx, Overpass em routing/osm.ts. TWA/Capacitor e PMTiles/R2 planejados, sem teste de migracao."
       }
     },
     "metodo_de_teste": "tdd",
@@ -274,10 +274,11 @@
     ],
     "limiar_de_cobertura": null,
     "riscos_de_qualidade": [
-      "RF-009 execucao, RF-012 auto-rota e RF-013 export/import seguem pendentes.",
+      "RF-009 execucao, RF-029 auto-roteirizacao e RF-013 export/import seguem pendentes.",
       "Overpass e tiles OSM publicos sao dividas antes de lancamento publico.",
-      "docs antigas tem rascunhos HubFlow que nao representam o app atual.",
-      "CI/configuracoes de plataforma nao foram confirmadas no repositorio."
+      "Rastreabilidade de requisitos do legado tem estados obsoletos; nao ha percentual global aferido.",
+      "Validacao em aparelho e metas de desempenho, compatibilidade e usabilidade ainda dependem de evidencia pratica.",
+      "npm audit atual identificou vulnerabilidades transitivas em @humanfs/node (moderada) e esbuild (baixa); correcao ainda pendente em TASK-CHORE-012."
     ],
     "dispensas_aceitas": [],
     "definicao_de_pronto_para_comecar": "Plano aprovado, origem citada, teste vermelho quando TDD/BDD couber e dependencias aprovadas.",
@@ -285,12 +286,12 @@
     "perfil": {
       "_gerado_por_doctor": true,
       "de": 8,
-      "avaliadas": 0,
+      "avaliadas": 7,
       "conformes": 0,
-      "ressalvas": 0,
+      "ressalvas": 7,
       "reprovadas": 0,
       "sem_meta": 0,
-      "sem_afericao": 8
+      "sem_afericao": 1
     }
   },
   "problema": {
@@ -616,10 +617,10 @@
   "contagens": {
     "_gerado_por_script": true,
     "tarefas_concluidas": 1,
-    "tarefas_abertas": 15,
-    "tarefas_no_ciclo": 1,
-    "tarefas_na_reserva": 14,
-    "validacoes_pendentes": 0,
+    "tarefas_abertas": 22,
+    "tarefas_no_ciclo": 2,
+    "tarefas_na_reserva": 20,
+    "validacoes_pendentes": 1,
     "requisitos_total": 22,
     "requisitos_implementados": 0,
     "requisitos_pendentes": 22,
@@ -629,7 +630,7 @@
     "tarefas_desde_revisao_geral": null,
     "adrs": 0,
     "ferramentas_sem_padrao": 0,
-    "campos_nulos_do_contexto": 35,
+    "campos_nulos_do_contexto": 17,
     "divida_tecnica_com_gatilho_vencido": null
   },
   "auditoria": {
@@ -643,7 +644,7 @@
   },
   "versionamento": {
     "ramo_principal": "main",
-    "estrategia_de_ramos": "Integracao por PR: a main nao aceita envio direto. Ramo nomeado pelo ID da tarefa (entrega.md). Quantas tarefas cabem num ramo ainda nao foi declarado.",
+    "estrategia_de_ramos": "PR obrigatorio; ramo pelo ID da tarefa. Uma tarefa por ramo, salvo tarefas inseparaveis com justificativa, conforme .mentor/processos/entrega.md.",
     "revisao_antes_do_merge": "PR obrigatorio, 0 aprovacoes exigidas, merge so por squash. A autorizacao humana por ato do nucleo continua valendo por cima disso.",
     "quem_aprova": "Thiago Silva / humano dono do projeto.",
     "protecao_do_ramo_principal": "Ruleset 'protect-main' ativo: PR obrigatorio, status check 'Typecheck, lint, test, build, and audit', delete e force-push bloqueados.",
@@ -656,16 +657,16 @@
       "build",
       "audit-high"
     ],
-    "uma_tarefa_por_ramo": null,
+    "uma_tarefa_por_ramo": true,
     "apaga_ramo_no_merge": true
   },
   "configuracoes_de_plataforma": {
     "_leia": "Configuracao que NAO e' codigo e nenhum script alcanca: vive na web da plataforma. Por isso e' esquecida, e por isso a auditoria cobra.",
     "protecao_do_ramo_principal": "GitHub ruleset 'protect-main' (id 22049629), ativo em refs/heads/main desde 01/09/26. Conferido por gh api em 02/09/26.",
     "apagar_ramo_apos_merge": "Ligado em 02/09/26 (delete_branch_on_merge=true): o ramo de origem de um PR e apagado quando o PR e mergeado. Nao toca em main, ramo sem PR, PR fechado sem merge nem fork. Os commits seguem alcancaveis por refs/pull/<n>/head.",
-    "alertas_de_vulnerabilidade": null,
-    "atualizacoes_de_seguranca": null,
-    "segredos_do_ambiente_de_esteira": null,
+    "alertas_de_vulnerabilidade": "ATIVOS; GitHub API em 2026-09-06: GET vulnerability-alerts = HTTP 204. Evidencia em TASK-CHORE-012.",
+    "atualizacoes_de_seguranca": "ATIVAS; GitHub API em 2026-09-06: automated-security-fixes enabled=true, paused=false. Evidencia em TASK-CHORE-012.",
+    "segredos_do_ambiente_de_esteira": "GitHub API, 2026-09-06: 0 segredos e 0 environments. quality.yml nao os usa; contents: read. Evidencia em TASK-CHORE-012.",
     "outras": []
   },
   "limites": {
@@ -681,9 +682,7 @@
     "bloqueio_em_tarefas": 40
   },
   "lembretes": [
-    "3 configuracao(oes) de plataforma nao declarada(s): alertas_de_vulnerabilidade, atualizacoes_de_seguranca, segredos_do_ambiente_de_esteira. Nenhum script alcanca isso",
-    "TASK-RF-024 e critica+imediata e esta aberta ha 47 dias",
-    "versionamento incompleto: uma_tarefa_por_ramo"
+    "1 validacao(oes) manual(is) pendente(s): TASK-CHORE-012"
   ],
   "_lembretes_nota": "GERADO pelo doctor a cada execucao. Nao digite aqui: campo livre acumula prosa como qualquer outro.",
   "offsets_de_id": {
