@@ -1,0 +1,76 @@
+{
+  "id": "TASK-RF-033",
+  "tipo": "RF",
+  "titulo": "Adicionar botao Auto-roteirizar e validar a experiencia no celular",
+  "fatia_de": "TASK-RF-029",
+  "estado": "aberta",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "G"
+  },
+  "depende_de": [
+    "TASK-RF-034"
+  ],
+  "fila": "reserva",
+  "ordem": null,
+  "origem": "RF-34",
+  "requisitos": [
+    "RF-34"
+  ],
+  "criada_em": "06/09/26 04:03",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "src/pages/MapPage.tsx - acionar useAutoRoute com entregas, inicio, grafo e raio; apresentar progresso/cancelamento/erro e aplicar o resultado confirmado.",
+      "src/components/map/panel/RoteiroOverviewSection.tsx - botao Auto-roteirizar e estados acessiveis, integrado ao painel existente.",
+      "src/constants/uiLabels.ts - textos em portugues: criterio Menos conversoes, progresso e impedimentos, sem detalhes do algoritmo na interface.",
+      "src/__tests__/pages/MapPage.test.tsx e components/map/panel/RoteiroOverviewSection.test.tsx - comportamento do botao, preservacao de trabalho, resultado editavel e mensagens."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Dadas entregas, inicio e grafo disponiveis, quando tocar Auto-roteirizar, entao usa o modo padrao aprovado e o raio configurado, mantendo a tela responsiva e mostrando progresso real.",
+        "teste": "MapPage.test.tsx > calcula com criterio e raio configurados"
+      },
+      {
+        "texto": "Dado roteiro ja editado, quando solicitar outro calculo, entao preserva trabalho durante calculo/falha/cancelamento e pede confirmacao antes de substituir o roteiro.",
+        "teste": "MapPage.test.tsx > preserva trabalho ate confirmar substituicao"
+      },
+      {
+        "texto": "Dado resultado completo confirmado, quando aplicar, entao usuario pode mover o veiculo inclusive para outra rua, alterar membros e reordenar pelo fluxo manual existente; autosave usa a integracao ja testada.",
+        "teste": "MapPage.test.tsx > edita ancoras e paradas do resultado automatico"
+      },
+      {
+        "texto": "Dado grafo indisponivel, inicio ausente, falha ou cobertura parcial, quando tentar ou terminar o calculo, entao apresenta o impedimento sem falso sucesso e sem apagar o roteiro.",
+        "teste": "MapPage.test.tsx > informa impedimento e preserva roteiro"
+      },
+      {
+        "texto": "Dado Samsung M35, quando executar o fluxo completo, entao registrar navegador, data, tempo real, responsividade, aplicacao, edicao e recarga; testar offline com grafo cacheado e ausente separadamente.",
+        "teste": "nao se aplica: smoke manual no Samsung M35 com evidencia por cenario"
+      }
+    ],
+    "impacto": "Ultima etapa: disponibiliza o motor ja integrado e validado em um botao no Meu roteiro. Nao reimplementa busca, worker, reducer ou persistencia.",
+    "riscos": [
+      "O smoke anterior no Samsung M35 nao tem data nem teste offline; nao vale como aceite desta funcionalidade nova.",
+      "Feedback de progresso precisa ser legivel durante uso em rua e nunca mascarar resultado parcial."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram tornar o motor acessivel em um botao; esta fatia fica restrita ao fluxo visual e seus testes, reaproveitando a integracao da fatia anterior."
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

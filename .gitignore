@@ -73,3 +73,6 @@ Thumbs.db
 # execução buscar de novo no Overpass. A evidência da medição é o `medicao.txt`,
 # que fica versionado ao lado.
 __utilidades-back-office__/spike-conversoes/.cache/
+
+# Logs e saidas temporarias do mentor
+.mentor-saidas/

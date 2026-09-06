@@ -1,0 +1,82 @@
+{
+  "id": "TASK-RF-032",
+  "tipo": "RF",
+  "titulo": "Montar o roteiro automatico completo e tratar trechos inviaveis",
+  "fatia_de": "TASK-RF-029",
+  "estado": "aberta",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "G"
+  },
+  "depende_de": [
+    "TASK-RF-031"
+  ],
+  "fila": "reserva",
+  "ordem": null,
+  "origem": "RF-34",
+  "requisitos": [
+    "RF-34"
+  ],
+  "criada_em": "06/09/26 04:03",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "src/utils/routing/autoRoute.ts (novo) - orquestrar cobertura, ordem, caminhos e circuitos; validar resultado completo antes de entrega ao chamador.",
+      "src/types/autoRouting.ts - estados completo/parcial/erro/cancelado, motivos de pendencias, progresso por etapas e resultado serializavel.",
+      "src/utils/routing/routePath.ts - acrescentar caminho que consome os trechos do novo motor; nao substituir sua geometria pelo A* de menor distancia ao exibir o resultado.",
+      "src/__tests__/utils/routing/autoRoute.test.ts e autoRouteIntegration.test.ts (novos) - motor completo headless, ilha de mao unica, conectividade a pe, consistencia de geometria e cancelamento.",
+      "src/__tests__/utils/routing/routePath.test.ts - cobrir a geometria otimizada e manter o comportamento do modo manual."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Dados inicio, grafo, raio e entregas viaveis, quando executar o motor completo, entao retorna 100% dos pontos resolvidos, cada um em uma parada, com pacotes preservados, ancoras livres e circuito a pe saindo e voltando ao veiculo.",
+        "teste": "autoRouteIntegration.test.ts > produz roteiro completo de veiculo e circuitos a pe"
+      },
+      {
+        "texto": "Dado um endereco dentro do raio mas sem caminho a pe, ou uma ilha onde o carro entra e nao consegue sair, quando montar o roteiro, entao reporta pontos/trechos afetados e resultado parcial ou inviavel. Nunca apresenta segmento reto ou distancia zero como caminho confirmado.",
+        "teste": "autoRouteIntegration.test.ts > distingue proximidade de conectividade e expoe trechos sem caminho"
+      },
+      {
+        "texto": "Dado resultado completo, quando renderizar seus trechos, entao distancia, penalidade D3 e polilinha correspondem ao mesmo caminho escolhido pelo motor.",
+        "teste": "routePath.test.ts > preserva a geometria do motor de conversoes"
+      },
+      {
+        "texto": "Dados pontos sem coordenada valida, grafo ausente ou inicio nao definido, quando chamar o motor, entao devolve motivos especificos e mantem a entrada intacta; pontos invalidos nao desaparecem das contagens.",
+        "teste": "autoRoute.test.ts > valida entradas e conserva pendencias"
+      },
+      {
+        "texto": "Dado cancelamento ou limite de trabalho, quando interromper, entao termina de forma explicita, sem entregar roteiro parcial como completo e sem alterar estado do usuario.",
+        "teste": "autoRoute.test.ts > interrompe calculo sem aplicar resultado incompleto"
+      },
+      {
+        "texto": "Dados parametros iguais e o mesmo grafo, quando repetir, entao obtem os mesmos grupos e custos; progresso usa etapas/trabalho realizado, sem percentual ficticio.",
+        "teste": "autoRoute.test.ts > resultado reproduzivel e progresso verificavel"
+      }
+    ],
+    "impacto": "Fecha o motor antes da interface. Circuitos usam a regra de ordem a pe existente e o grafo pedestre; o raio continua geometrico. Proposta de execucao sem DOM permite worker na integracao posterior.",
+    "riscos": [
+      "O grafo pedestre atual e derivado do grafo de veiculo e nao contem todas as passagens exclusivas para pedestres; cobertura representa o grafo disponivel.",
+      "Completar a cobertura espacial nao prova a viabilidade do encadeamento de veiculo. A falta de caminho da L-31 e uma regressao obrigatoria.",
+      "O motor calcula sobre um snapshot; o chamador deve descartar o resultado se romaneio, grafo, inicio ou raio mudarem."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram construir primeiro o motor: esta fatia conecta os dois modulos anteriores e define sucesso/falha verificaveis sem criar ainda o botao."
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

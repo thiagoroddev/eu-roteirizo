@@ -1,0 +1,75 @@
+{
+  "id": "TASK-RF-030",
+  "tipo": "RF",
+  "titulo": "Gerar ancoras livres e cobertura de entregas dentro do raio",
+  "fatia_de": "TASK-RF-029",
+  "estado": "aberta",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": 1,
+  "origem": "RF-34",
+  "requisitos": [
+    "RF-34"
+  ],
+  "criada_em": "06/09/26 04:03",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "src/types/autoRouting.ts (novo) - contrato do motor: pontos e pacotes, inicio, grafo, raio, opcoes, grupos propostos, pendencias e metricas; sem React ou armazenamento.",
+      "src/utils/routing/autoRouteAnchors.ts (novo) - candidatos em segmentos de ruas proximas, deduplicacao determinista e cobertura gulosa por ancoras independentes dos enderecos.",
+      "src/__tests__/utils/routing/autoRouteAnchors.test.ts (novo) - exemplos de rua paralela, esquinas, raio nas bordas, pontos repetidos e ausencia de cobertura.",
+      "src/__tests__/utils/routing/__fixtures__/syntheticGraph.ts - acrescentar apenas os cenarios de grafo que faltarem; reutilizar geo/selectors/match e tipos existentes."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Dado um grupo alcancavel a partir de uma rua diferente da rua das entregas, quando gerar candidatos, entao existe ancora naquela rua independente de qualquer coordenada de entrega. Nao limitar candidatos a nearestEdge de cada endereco.",
+        "teste": "autoRouteAnchors.test.ts > ancora em rua paralela cobre varias entregas"
+      },
+      {
+        "texto": "Dado raio R, quando agrupar automaticamente, entao todo membro satisfaz haversine(ancora, endereco) <= R; testar exatamente R, logo abaixo e logo acima. Usar config.autoRadiusMeters, sem fixar os 120m do spike.",
+        "teste": "autoRouteAnchors.test.ts > respeita o raio geometrico configurado e suas bordas"
+      },
+      {
+        "texto": "Dados enderecos com varios pacotes, quando agrupar, entao cada DeliveryPoint aparece uma vez e todos os pacotes permanecem associados. Entrada e grafo nao sofrem mutacao.",
+        "teste": "autoRouteAnchors.test.ts > cobre pontos sem duplicar ou perder pacotes"
+      },
+      {
+        "texto": "Dados pontos sem candidato no raio ou grafo vazio, quando agrupar, entao retorna IDs e motivos pendentes; nao inclui uma semente fora do raio nem abandona pontos silenciosamente.",
+        "teste": "autoRouteAnchors.test.ts > informa cobertura inviavel sem falso sucesso"
+      },
+      {
+        "texto": "Dadas as mesmas entradas e configuracoes, quando repetir o calculo, entao candidatos, desempates e grupos sao identicos.",
+        "teste": "autoRouteAnchors.test.ts > resultado determinista"
+      }
+    ],
+    "impacto": "Primeiro modulo do motor, independente da interface. O raio automatico e centrado no veiculo; o fluxo manual continua com as regras existentes de sugestao e inclusao livre. Resultado ainda nao e um roteiro dirigivel validado.",
+    "riscos": [
+      "Enumerar apenas a rua mais proxima elimina justamente a opcao de estacionar noutra rua; usar candidatos de segmentos elegiveis no entorno, com busca espacial limitada.",
+      "Raio geometrico nao e comprimento do percurso a pe: conectividade e circuito sao verificados na montagem completa, em TASK-RF-032.",
+      "Cobertura gulosa e candidatos discretos sao uma heuristica; nao garantem a melhor posicao entre todos os pontos continuos das ruas."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram paradas de veiculo independentes dos enderecos; esta fatia entrega somente essa decisao espacial e seus testes, reutilizando geometria e tipos do projeto."
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

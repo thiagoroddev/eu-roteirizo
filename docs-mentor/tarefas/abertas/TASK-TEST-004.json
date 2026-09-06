@@ -1,0 +1,83 @@
+{
+  "id": "TASK-TEST-004",
+  "tipo": "TEST",
+  "titulo": "Validar o motor com corpus sintetico e romaneios reais locais",
+  "fatia_de": "TASK-RF-029",
+  "estado": "aberta",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "G"
+  },
+  "depende_de": [
+    "TASK-RF-032"
+  ],
+  "fila": "reserva",
+  "ordem": null,
+  "origem": "RF-34",
+  "requisitos": [
+    "RF-34"
+  ],
+  "criada_em": "06/09/26 04:55",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "__utilidades-back-office__/auto-roteirizacao/validar.arnes.ts (novo) - executar baseline e motor sobre a mesma entrada, inicio, raio e grafo local; emitir apenas metricas agregadas e identificadores anonimos.",
+      "src/__tests__/utils/routing/autoRouteCorpus.test.ts (novo) - regressao determinista em grafos/casos sinteticos versionados, sem rede ou planilhas reais.",
+      "src/__tests__/utils/routing/__fixtures__/autoRouteCases.ts (novo) - cenarios construidos de rua paralela, mao unica, multiplos pacotes, raio-limite e desconexao; nao copiar linhas de planilhas reais.",
+      "__utilidades-back-office__/auto-roteirizacao/README.md (novo) - comando local, pre-condicoes, metricas, identificacao de versao/configuracao e separacao entre corpus privado e CI.",
+      ".mentor-saidas/ - resultados locais com nome/data gerados pelo arnes; manter dados, coordenadas, codigos de pacote e conteudo de planilhas fora dos relatorios versionados."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Dado o corpus sintetico congelado, quando comparar motor e baseline, entao ambos usam a mesma definicao D3, grafo, inicio, raio e pontos; casos completos exigem zero duplicata, perda ou trecho sem caminho antes de comparar desempenho.",
+        "teste": "autoRouteCorpus.test.ts > comparacao justa com invariantes de completude"
+      },
+      {
+        "texto": "Dados casos viaveis de referencia, quando medir, entao a estrategia padrao reduz a penalidade D3 agregada contra o baseline por distancia. Publicar tambem metros, custo ponderado, paradas e caminhada; nao exigir o percentual antigo de 56% nem alegar melhora em toda entrada.",
+        "teste": "autoRouteCorpus.test.ts > melhora a metrica de conversoes no corpus de referencia"
+      },
+      {
+        "texto": "Dadas as planilhas reais locais, quando validar, entao o arnes inventaria todos os arquivos e distingue executado, invalido e nao medido; falta de grafo nao vira sucesso. Registrar linhas, pontos unicos e pacotes como medidas diferentes.",
+        "teste": "nao se aplica: execucao local do arnes com os romaneios reais e relatorio agregado"
+      },
+      {
+        "texto": "Dado qualquer run, quando gerar evidencia, entao registra versao do codigo, configuracao, identidade do corpus/grafo, cobertura, duplicatas, pendencias, conversoes/penalidade D3, km de veiculo, paradas, caminhada, tempo e estados expandidos sem dados de entrega.",
+        "teste": "nao se aplica: inspecao do relatorio agregado produzido pelo arnes"
+      },
+      {
+        "texto": "Dados arquivos privados ausentes, quando CI executar, entao a regressao sintetica continua completa; dados reais nao sao copiados para public/, fixtures ou precache e nao sao enviados a APIs de roteirizacao.",
+        "teste": "autoRouteCorpus.test.ts > CI independe do corpus privado"
+      },
+      {
+        "texto": "Dado o run no desktop, quando relatar desempenho, entao identifica maquina, quantidade de pontos e repeticoes; a estimativa 4x do spike nao e rotulada como medicao em celular.",
+        "teste": "nao se aplica: relatorio de medicao, com smoke Samsung M35 previsto na integracao"
+      }
+    ],
+    "impacto": "Etapa de validacao do motor concluido, antes do botao. Foram encontrados 20 XLSX locais, todos ignorados pelo Git; a contagem de linhas XML inclui cabecalhos e nao representa enderecos. Reutilizar parser do produto e grafos cacheados quando disponiveis.",
+    "riscos": [
+      "Romaneios contem dados reais: nao incluir conteudo, localizacoes, nomes ou codigos em logs compartilhados ou commits.",
+      "Sem grafo disponivel para um arquivo, declarar nao medido; nao reduzir silenciosamente o corpus para os casos faceis.",
+      "Tempos dependem de hardware e tamanho do grafo: nao impor limite de CI baseado no desktop do spike.",
+      "AGENTS do back-office aponta para dois guias legados ausentes; preservar a regra explicita de nao expor PII e conferir instrucoes vigentes antes de criar o arnes."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram usar romaneios reais e entregar o motor antes do botao; uma etapa de validacao concentra comparabilidade, regressao e medidas, sem criar uma tarefa por planilha."
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

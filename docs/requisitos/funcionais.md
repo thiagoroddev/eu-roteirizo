@@ -65,7 +65,7 @@
 | RF-31 | Estimar tempo (a pé na parada + veículo entre paradas); exibir total e próximo trecho | MUST | 🔭 | fluxo §6; tela 5 | TASK-RF-007 |
 | RF-32 | HUD com contadores sempre visíveis (faltando endereços/pacotes, paradas, distância, tempo) | SHOULD | 🔭 | fluxo §7; telas 1/7 | TASK-RF-006.2 |
 | RF-33 | Salvar é **livre** (rascunho auto-salvo, mesmo incompleto); o botão **'Iniciar roteiro'** (executar) só aparece com **0 faltando**; completude exigida só para executar | MUST | 🔭 | fluxo §12; tela 7 | TASK-RF-006.7 |
-| RF-34 | Auto-roteirizar: montar um rascunho editável (vizinho-mais-próximo + raio) | SHOULD | 🔭 | fluxo §12; telas 1/7 | TASK-RF-012 |
+| RF-34 | Auto-roteirizar: motor local com **menos conversoes** por padrao (distancia + penalidade D3), paradas de veiculo livres na rua, agrupamento por raio e resultado editavel. Especificacao vigente: `docs-mentor/requisitos/requisitos.json` | SHOULD | 🔭 | TASK-SPIKE-001; RF-34 no Mentor | TASK-RF-029 (fatias RF-030/031/032, TEST-004, RF-034 e RF-033) |
 | RF-35 | Salvar (auto-save de **rascunho**, mesmo incompleto), listar e reabrir **Roteiros** localmente (IndexedDB) | MUST | 🔭 | fluxo §13 | TASK-RF-008 |
 | RF-36 | Exportar/importar um **Roteiro** como JSON autocontido (ajudante/troca de aparelho); o importado vira um **card avulso** na home (abre direto em 'Meu roteiro', sem 'Original') | MUST | 🔭 | fluxo §13; tela 8 | TASK-RF-013 |
 | RF-37 | Executar o Roteiro (uma entrega por vez): Abrir GPS (deep link), **Concluir entrega**, progresso e previsão; durante a execução o Roteiro **não é editável** | MUST | 🔭 | fluxo §14; tela 9 | TASK-RF-009 |

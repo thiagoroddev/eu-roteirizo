@@ -3,7 +3,7 @@
 <!-- Gerado por `node mentor.mjs gerar`. Nao edite a mao: a proxima geracao sobrescreve. -->
 
 **Fase:** construcao · **Rigor:** N2
-**Respondido por voce:** 139 · **Padrao do pacote:** 25 · **Em aberto:** 35
+**Respondido por voce:** 157 · **Padrao do pacote:** 25 · **Em aberto:** 17
 
 Todos os portoes foram respondidos ou dispensados com motivo.
 
@@ -49,25 +49,39 @@ Todos os portoes foram respondidos ou dispensados com motivo.
 - `conformidade.terceiros_que_recebem_dados`: 4 item(s)
 - `conformidade.licencas_verificadas_em`: 2026-07-20 para infra/mapas; LICENSE declara codigo proprietario e OSM ODbL.
 - `conformidade.revisar_em`: Antes de publicar com cobranca, ads, geocoding, sync remoto ou Play Store.
-- `qualidade.metas_nao_funcionais.adequacao_funcional.meta`: RFs em docs/requisitos guiam aceite; 44/49 entregues em 28/07, pendentes declarados.
+- `qualidade.metas_nao_funcionais.adequacao_funcional.meta`: Cenarios de aceite dos RFs em docs/requisitos; pendencias nas tarefas. Percentual depende de reconciliar o legado.
+- `qualidade.metas_nao_funcionais.adequacao_funcional.aferida_em`: 2026-09-06
+- `qualidade.metas_nao_funcionais.adequacao_funcional.resultado`: ressalva
 - `qualidade.metas_nao_funcionais.desempenho.meta`: Upload max 10MB; A* bairro alvo ~150ms; grafo cacheado 7d; chunk warning 500k.
+- `qualidade.metas_nao_funcionais.desempenho.aferida_em`: 2026-09-06
+- `qualidade.metas_nao_funcionais.desempenho.resultado`: ressalva
 - `qualidade.metas_nao_funcionais.compatibilidade.meta`: PWA mobile-first em navegador moderno/Android; XLSX/CSV; Cloudflare Pages com SPA fallback.
+- `qualidade.metas_nao_funcionais.compatibilidade.aferida_em`: 2026-09-06
+- `qualidade.metas_nao_funcionais.compatibilidade.resultado`: ressalva
 - `qualidade.metas_nao_funcionais.usabilidade.meta`: Uso em rua/sol/celular; UI em portugues; smoke real obrigatorio para UI/gestos.
 - `qualidade.metas_nao_funcionais.confiabilidade.meta`: Shell PWA offline; dados locais; grafo em IndexedDB 7d; retry/backoff para Overpass.
+- `qualidade.metas_nao_funcionais.confiabilidade.aferida_em`: 2026-09-06
+- `qualidade.metas_nao_funcionais.confiabilidade.resultado`: ressalva
 - `qualidade.metas_nao_funcionais.seguranca.meta`: Sem PII em log de producao; HTML escapado; xlsx fixo; dados no dispositivo.
+- `qualidade.metas_nao_funcionais.seguranca.aferida_em`: 2026-09-06
+- `qualidade.metas_nao_funcionais.seguranca.resultado`: ressalva
 - `qualidade.metas_nao_funcionais.manutenibilidade.meta`: TypeScript strict, UI_LABELS, utils puras, servicos IO, reducer puro e testes espelhando src.
+- `qualidade.metas_nao_funcionais.manutenibilidade.aferida_em`: 2026-09-06
+- `qualidade.metas_nao_funcionais.manutenibilidade.resultado`: ressalva
 - `qualidade.metas_nao_funcionais.portabilidade.meta`: PWA web hoje; TWA/Capacitor possiveis; sem DB remoto/auth; mapas isolados por servico.
+- `qualidade.metas_nao_funcionais.portabilidade.aferida_em`: 2026-09-06
+- `qualidade.metas_nao_funcionais.portabilidade.resultado`: ressalva
 - `qualidade.estrategia_de_testes`: TDD; testes unitarios, servicos IDB, componentes/paginas e gates locais.
 - `qualidade.quadrantes_cobertos`: 4 item(s)
-- `qualidade.riscos_de_qualidade`: 4 item(s)
+- `qualidade.riscos_de_qualidade`: 5 item(s)
 - `qualidade.definicao_de_pronto_para_comecar`: Plano aprovado, origem citada, teste vermelho quando TDD/BDD couber e dependencias aprovadas.
 - `qualidade.definicao_de_pronto`: typecheck, lint, test e build verdes; smoke quando UI; registro com evidencias.
-- `qualidade.perfil.avaliadas`: 0
+- `qualidade.perfil.avaliadas`: 7
 - `qualidade.perfil.conformes`: 0
-- `qualidade.perfil.ressalvas`: 0
+- `qualidade.perfil.ressalvas`: 7
 - `qualidade.perfil.reprovadas`: 0
 - `qualidade.perfil.sem_meta`: 0
-- `qualidade.perfil.sem_afericao`: 8
+- `qualidade.perfil.sem_afericao`: 1
 - `problema.processos`: 6 item(s)
 - `problema.atores`: 4 item(s)
 - `problema.fora_de_escopo`: 5 item(s)
@@ -129,19 +143,23 @@ Todos os portoes foram respondidos ou dispensados com motivo.
 - `convencoes.commit`: <tipo>(<ID da tarefa>): <descricao>; sem ID quando nao houver tarefa.
 - `convencoes.nomes_de_arquivo`: src em ingles/kebab/camel conforme padrao existente; docs em portugues.
 - `versionamento.ramo_principal`: main
-- `versionamento.estrategia_de_ramos`: Integracao por PR: a main nao aceita envio direto. Ramo nomeado pelo ID da tarefa (entrega.md). Quantas tarefas cabem num ramo ainda nao foi declarado.
+- `versionamento.estrategia_de_ramos`: PR obrigatorio; ramo pelo ID da tarefa. Uma tarefa por ramo, salvo tarefas inseparaveis com justificativa, conforme .mentor/processos/entrega.md.
 - `versionamento.revisao_antes_do_merge`: PR obrigatorio, 0 aprovacoes exigidas, merge so por squash. A autorizacao humana por ato do nucleo continua valendo por cima disso.
 - `versionamento.quem_aprova`: Thiago Silva / humano dono do projeto.
 - `versionamento.protecao_do_ramo_principal`: Ruleset 'protect-main' ativo: PR obrigatorio, status check 'Typecheck, lint, test, build, and audit', delete e force-push bloqueados.
 - `versionamento.esquema_de_versao`: package.json 0.1.0; sem release publico estavel.
 - `versionamento.release_automatizado`: false
 - `versionamento.esteira_barra`: 5 item(s)
+- `versionamento.uma_tarefa_por_ramo`: true
 - `versionamento.apaga_ramo_no_merge`: true
 - `configuracoes_de_plataforma.protecao_do_ramo_principal`: GitHub ruleset 'protect-main' (id 22049629), ativo em refs/heads/main desde 01/09/26. Conferido por gh api em 02/09/26.
 - `configuracoes_de_plataforma.apagar_ramo_apos_merge`: Ligado em 02/09/26 (delete_branch_on_merge=true): o ramo de origem de um PR e apagado quando o PR e mergeado. Nao toca em main, ramo sem PR, PR fechado sem merge nem fork. Os commits seguem alcancaveis por refs/pull/<n>/head.
+- `configuracoes_de_plataforma.alertas_de_vulnerabilidade`: ATIVOS; GitHub API em 2026-09-06: GET vulnerability-alerts = HTTP 204. Evidencia em TASK-CHORE-012.
+- `configuracoes_de_plataforma.atualizacoes_de_seguranca`: ATIVAS; GitHub API em 2026-09-06: automated-security-fixes enabled=true, paused=false. Evidencia em TASK-CHORE-012.
+- `configuracoes_de_plataforma.segredos_do_ambiente_de_esteira`: GitHub API, 2026-09-06: 0 segredos e 0 environments. quality.yml nao os usa; contents: read. Evidencia em TASK-CHORE-012.
 - `revisao_geral.ultima_em`: 2026-06-22
 - `revisao_geral.ultima_na_tarefa`: REV-001
-- `lembretes`: 3 item(s)
+- `lembretes`: 1 item(s)
 - `offsets_de_id.RF`: 28
 - `offsets_de_id.DOC`: 10
 - `offsets_de_id.REF`: 19

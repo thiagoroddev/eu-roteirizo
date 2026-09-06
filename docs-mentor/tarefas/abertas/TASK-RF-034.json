@@ -1,0 +1,80 @@
+{
+  "id": "TASK-RF-034",
+  "tipo": "RF",
+  "titulo": "Integrar o motor em worker e preservar o roteiro editavel",
+  "fatia_de": "TASK-RF-029",
+  "estado": "aberta",
+  "cerimonia": "Strict",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "G"
+  },
+  "depende_de": [
+    "TASK-TEST-004"
+  ],
+  "fila": "reserva",
+  "ordem": null,
+  "origem": "RF-34",
+  "requisitos": [
+    "RF-34"
+  ],
+  "criada_em": "06/09/26 05:02",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "src/workers/autoRoute.worker.ts (novo) - executar o motor fora da thread da interface, com contrato de progresso, resultado e falha.",
+      "src/hooks/useAutoRoute.ts (novo) - iniciar e encerrar o worker, cancelar e descartar respostas de snapshots obsoletos.",
+      "src/utils/routing/builder.ts - aplicar paradas e criterio em lote, preservando identidade, pacotes e o estado anterior ate a aplicacao.",
+      "src/types/routing.ts - persistir opcionalmente a politica de custo e normalizar roteiros antigos sem alterar seu comportamento.",
+      "src/utils/routing/routePath.ts - manter o criterio e a geometria de veiculo ao aplicar, editar ou reabrir um roteiro automatico.",
+      "src/__tests__/hooks/useAutoRoute.test.ts e workers/autoRoute.worker.test.ts (novos) - execucao assíncrona, mensagens, cancelamento e descarte de resultado antigo.",
+      "src/__tests__/utils/routing/builder.test.ts, routePath.test.ts e services/routeStorage.test.ts - aplicacao atomica, edicao da ancora e round-trip compativel."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Dado o motor validado, quando executar via worker, entao o resultado e seus custos equivalem a chamada direta com o mesmo snapshot; progresso decorre de etapas/trabalho real.",
+        "teste": "autoRoute.worker.test.ts > resultado equivalente ao motor headless"
+      },
+      {
+        "texto": "Dado calculo em andamento, quando cancelar ou mudar rota/grafo/inicio/raio, entao encerra o trabalho e ignora respostas antigas sem alterar o roteiro existente.",
+        "teste": "useAutoRoute.test.ts > cancela e descarta respostas obsoletas"
+      },
+      {
+        "texto": "Dado resultado completo aprovado pelo chamador, quando aplicar, entao substitui as paradas em uma unica atualizacao coerente e preserva IDs, pacotes, configuracoes e edicao independente das ancoras.",
+        "teste": "builder.test.ts > aplica resultado automatico em lote e permite editar"
+      },
+      {
+        "texto": "Dado roteiro automatico salvo, quando restaurar ou editar uma ancora, entao recalcula/exibe segundo sua politica de custo; roteiros antigos continuam abrindo no modo anterior.",
+        "teste": "routeStorage.test.ts > restaura criterio automatico e aceita formato legado"
+      },
+      {
+        "texto": "Dada geometria otimizada, quando integrá-la ao builder e ao caminho de veiculo, entao nao reverte para o A* de menor distancia nem usa pontos de entrega como paradas do carro.",
+        "teste": "routePath.test.ts > mantem caminho e ancora do motor automatico"
+      }
+    ],
+    "impacto": "Integracao tecnica depois da validacao do motor e antes do botao. Web Worker nativo, sem dependencia nova. Registrar ADR curta sobre worker e persistencia opcional antes de implementar. O store atual recebe PlannedRoute genericamente; confirmar necessidade de migracao pelo formato final, sem bump automatico.",
+    "riscos": [
+      "Autosave nao pode persistir uma sequencia intermediaria de paradas.",
+      "Clonagem de grafo e transferencia de resultado podem custar memoria/tempo; medir alem da busca.",
+      "routePath atual usa menor distancia; a politica do roteiro precisa sobreviver a hidratacao e edicao."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram motor antes do botao; esta fatia isola a fronteira entre calculo, estado editavel e persistencia, para testar concorrencia e evitar que a tarefa visual atravesse mais de doze arquivos."
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}
