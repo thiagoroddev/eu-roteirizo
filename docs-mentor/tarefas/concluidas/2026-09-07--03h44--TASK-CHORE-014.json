@@ -1,0 +1,107 @@
+{
+  "id": "TASK-CHORE-014",
+  "tipo": "CHORE",
+  "titulo": "Apontar proxy de tiles do mapa para 1-teste-prototipo",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "criada_em": "07/09/26 03:22",
+  "iniciada_em": "07/09/26 03:24",
+  "commit_base": "e47f3d222ab175fe46b6cf4ad795ba404e0346cf",
+  "concluida_em": "07/09/26 03:44",
+  "plano": {
+    "muda": [
+      "src/components/RouteMap.tsx - atualizar endpoint do tileLayer para 1-teste-prototipo",
+      "src/__tests__/components/RouteMap.test.tsx - atualizar assercao do teste para o novo endpoint de tiles",
+      "infra/cloudflare-tile-worker/README.md - registrar a nova URL de referencia do worker 1-teste-prototipo"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "RouteMap e seus testes apontam para 1-teste-prototipo.thiagorod-dev.workers.dev",
+        "teste": "src/__tests__/components/RouteMap.test.tsx > RouteMap > configures the tile proxy layer with the correct settings"
+      },
+      {
+        "texto": "Gates declarados (tipos, lint, testes, build) aprovados",
+        "teste": "nao se aplica: execucao formal dos gates declarados"
+      },
+      {
+        "texto": "Deploy realizado e validado no Cloudflare Pages teste-prototipo",
+        "teste": "nao se aplica: verificacao manual do mapa no navegador"
+      }
+    ],
+    "impacto": "Apenas a camada de exibicao visual de tiles no mapa; nenhuma alteracao em roteamento ou dados locais",
+    "riscos": [
+      "Worker novo fora do ar: mitigado pela verificacao previa com HTTP 200"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "O usuario desativou o worker antigo tile-proxy e colocou no ar o novo 1-teste-prototipo. Proponho a tarefa Standard TASK-CHORE-014 para atualizar a URL do tileLayer em RouteMap.tsx, atualizar a assercao no teste unitario RouteMap.test.tsx, rodar a suite de gates e fazer o novo deploy no Cloudflare Pages teste-prototipo."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "07/09/26 03:26",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest\n\n\n RUN  v4.1.9 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  73 passed (73)\n      Tests  796 passed (796)\n   Start at  03:27:02\n   Duration  37.90s (transform 16.26s, setup 40.44s, import 28.10s, tests 69.25s, environment 165.51s)\n\n(node:12508) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "07/09/26 03:27",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "07/09/26 03:28",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "07/09/26 03:31",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1952 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CRig_ynt.css   \u001b[39m\u001b[1m\u001b[2m 27.77 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.10 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-Dm6cT562.js    \u001b[39m\u001b[1m\u001b[33m516.16 kB\u001b[39m\u001b[22m\u001b[2m │ gzip:  96.35 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-giTtp3H-.js   \u001b[39m\u001b[1m\u001b[33m803.48 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.60 kB\u001b[22m\n\u001b[32m✓ built in 11.75s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1769.92 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "07/09/26 03:32",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    }
+  },
+  "achados": [],
+  "validacao": "aprovado",
+  "validado_em": "07/09/26 03:44",
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-07--03h44--TASK-CHORE-014.md"
+}

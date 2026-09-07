@@ -1,0 +1,203 @@
+{
+  "id": "TASK-BG-011",
+  "tipo": "BG",
+  "titulo": "Restabelecer o carregamento da malha viaria e diagnosticar falhas de rede, HTTP e timeout",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "critico",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "G"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": 1,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "criada_em": "06/09/26 19:40",
+  "iniciada_em": "06/09/26 21:57",
+  "commit_base": "da5e1d41c17d9ddac0dba86b9325dcbe513c359c",
+  "concluida_em": "07/09/26 14:23",
+  "plano": {
+    "muda": [
+      "src/utils/routing/osm.ts - preservar error para os consumidores e acrescentar diagnostico estruturado de cada tentativa: categoria, HTTP quando acessivel, tempo ate headers, leitura do corpo, total e bytes efetivamente recebidos. Distinguir timeout do cliente, erro Overpass no corpo, HTTP, rede e payload invalido. Validar elements como array; elements=[] valido nao equivale a elements ausente. Retry limitado com Retry-After, sem rotacao automatica de endpoints.",
+      "src/services/graphDiagnostics.ts e src/services/graphCache.ts - historico versionado e limitado, compativel com amostras antigas; dados indisponiveis como null, nunca zero inventado. Registrar hit, miss, expirado e falha de armazenamento separadamente de falha de rede; conservar grafo valido e impedir cache de resposta invalida. Area, duracao e categorias bastam para este diagnostico; nao copiar romaneio para logs.",
+      "src/hooks/useRoadGraph.ts - recuperar por retry explicito e impedir resposta obsoleta de substituir estado atual. MapScreen ja remonta por manifestId/routeName: preservar esse contrato, sem presumir bug de troca de rota. Rever timeout total e cancelamento com testes de integracao existentes.",
+      "src/components/shell/DeliverySettingsDialog.tsx e src/constants/uiLabels.ts - mostrar resumo da ultima falha e detalhes tecnicos no painel existente (categoria, HTTP quando acessivel, tentativas, tempos e cache). Remover inferencia automatica de fila baseada em tamanho ausente; historico legado deve exibir causa nao registrada. Nao exigir dados do cliente para interpretar erro.",
+      "src/pages/MapPage.tsx - explicitar que segmentos sem malha nao sao percursos calculados pelas ruas, preservando romaneio e paradas.",
+      "src/__tests__/utils/routing/osm.test.ts, src/__tests__/services/graphCache.test.ts, src/__tests__/services/graphDiagnostics.test.ts e src/__tests__/pages/MapPage.test.tsx - cobrir falhas, recuperacao, historico antigo e comportamento offline com/sem grafo.",
+      "docs/rascunhos/plano-infraestrutura-e-custos.md - registrar comparacao das fontes apos pesquisa humana, limites, custos de distribuicao, transicao e evidencias; mudanca arquitetural exige revisar ADR-010 antes de executar."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "HTTP 200 com remark de erro ou elements ausente/nao-array nao gera sucesso nem entrada de cache. elements=[] valido permanece distinguivel de payload invalido. HTTP 429/5xx, timeout cliente, rede e parse possuem categorias; CORS/DNS nao sao inventados quando o navegador expoe apenas TypeError.",
+        "teste": "osm.test.ts: HTTP 200 invalido/remark/array vazio, timeout, HTTP e rede; graphCache.test.ts: nao gravar erro"
+      },
+      {
+        "texto": "Retentativas sao limitadas, respeitam Retry-After e nao multiplicam chamadas em paralelo; a recuperacao bem-sucedida entrega grafo utilizavel para a area correta.",
+        "teste": "osm.test.ts: retry limitado e recuperacao; MapPage.test.tsx: recuperacao e troca de rota"
+      },
+      {
+        "texto": "Historico registra categoria, status acessivel, numero de tentativas, tempos de headers/corpo/total e situacao do cache; campos nao medidos sao null. Leitura de amostras antigas continua funcionando. Logs usam apenas metadados necessarios ao diagnostico, sem copiar linhas do romaneio.",
+        "teste": "graphDiagnostics.test.ts: legado, null, limite do historico e campos permitidos; graphCache.test.ts: erro versus cache"
+      },
+      {
+        "texto": "Com grafo em cache valido o roteiro e calculado offline sem rede; sem grafo a indisponibilidade fica explicita, sem perda das paradas ou falsa rota pelas ruas.",
+        "teste": "graphCache.test.ts: cache offline; MapPage.test.tsx: ausencia de malha e preservacao do roteiro"
+      },
+      {
+        "texto": "Recuperacao do carregamento online e percurso offline com grafo salvo sao demonstrados no Samsung M35, registrando data, versao publicada, navegador, area, resultado e duracao. Apenas mensagens melhores ou aumento de timeout nao satisfazem a tarefa.",
+        "teste": "Validacao manual Samsung M35: falha, recuperacao online, reabertura offline e percurso seguindo ruas"
+      },
+      {
+        "texto": "Fonte adotada tem evidencia de permissao de uso, cache e volume agregado do app; custo de obter, atualizar e distribuir dados separado do calculo local. Nenhuma troca silenciosa por mirrors nem migracao arquitetural sem decisao documentada.",
+        "teste": "Revisao documental de plano-infraestrutura-e-custos.md e ADR-010 com fontes oficiais"
+      },
+      {
+        "texto": "Reproducao identifica a versao publicada e usa area publica pequena, com poucas tentativas controladas; associa cada falha a diagnostico real. A correcao de causa depende dessa evidencia. Se o problema exigir outra fonte, revisar plano e ADR antes da migracao; nao declarar resolvido com testes simulados apenas.",
+        "teste": "Registro de reproducao no aparelho e comparacao antes/depois na validacao manual"
+      },
+      {
+        "texto": "Carregamento online e recuperacao apos falha sao validados tambem no navegador do PC, registrando navegador, versao publicada, contexto de rede, mensagem e tempos; comparar com M35 sem atribuir causa comum apenas pela coincidencia do sintoma.",
+        "teste": "Validacao manual web/PC: carga inicial, falha identificada e recuperacao; comparar com smoke Samsung M35"
+      },
+      {
+        "texto": "HTTP 429 nao gera retry automatico e orienta espera minima de 30 segundos; falha de rede sem HTTP termina na primeira tentativa, preservando diagnostico.",
+        "teste": "osm.test.ts > BG-011 — consumo do servico publico"
+      }
+    ],
+    "impacto": "Planejamento solicitado para o incidente BG-011 (BG-001 e tarefa legada concluida de testes). Sequencia: (1) identificar build e reproduzir com requisicoes controladas; (2) testes vermelhos para contratos de erro/diagnostico ja conhecidos; (3) implementar classificacao e instrumentacao; (4) corrigir causa demonstrada e validar recuperacao; (5) gates do contexto e smoke Samsung M35 online/offline. O plano nao presume qual fornecedor resolvera a falha. Pesquisa humana de alternativas e insumo paralelo, sem bloquear o desenho do diagnostico. Execucao autorizada pelo humano: CHORE-012 voltou a aberta, com historico e pendencias preservados; BG-011 em-execucao, respeitando WIP=1.",
+    "riscos": [
+      "Causa raiz da versao publicada ainda desconhecida; falhas entre 1,39 e 2,69 km² nao provam fila ou payload excessivo.",
+      "Dependencia de servico publico sem garantia; diagnostico nao substitui correcao.",
+      "Escolha de nova fonte pode exigir plano Strict e divisao antes da execucao; nao ampliar esta correcao silenciosamente para uma migracao inteira.",
+      "Teste no aparelho e necessario; mocks nao demonstram disponibilidade do fornecedor.",
+      "A resposta atual usa data.elements ?? [] e o teste aceita objeto vazio como grafo: sucesso aparente pode esconder payload invalido. Ainda nao associado ao timeout observado.",
+      "Mesmo com diagnostico completo, o navegador pode nao revelar a causa de uma falha de rede; apresentar desconhecido em vez de afirmar DNS/CORS/fila.",
+      "Usuario esclareceu que os romaneios nao contem nome/CPF e que codigo de pacote nao da acesso publico ao rastreio. Nao classificar indiscriminadamente nomes de ruas como dados pessoais; a escolha de metadados nos logs e suficiente para esta investigacao.",
+      "Reversao: preservar compatibilidade das amostras e nao limpar cache/romaneios; nenhum upgrade de banco ou fornecedor contratado nesta fase."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Foi solicitada uma tarefa critica para recuperar as ruas e melhorar o diagnostico. Proponho uma tarefa BG com escopo de recuperacao, observabilidade e validacao, vinculada a CHORE existente. Pesquisa humana de fontes alimenta a decisao; infraestrutura nova sera dimensionada antes de implementar."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "07/09/26 01:17",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest\n\n\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.9 \u001b[39m\u001b[90mE:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\u001b[39m\n\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/StopItemList.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1627\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m opens with EVERY item expanded (scan mode) and the badge as box glyph + count \u001b[33m 361\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m tapping a row toggles ONLY that item's expansion \u001b[33m 656\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m highlights the SELECTED item (aria-current), independent of expansion \u001b[33m 342\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroDraftSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1886\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m header: edit-mode label, stop number, metric CHIPS, the FIXED radius card and ALWAYS-VISIBLE CTAs — no global remaining (RF-006.4.25) \u001b[33m 401\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m body: full-list structure with ± icon toggles (rev. 08/07 3ª rodada) \u001b[33m 401\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m body: a ÂNCORA abre a lista com o sentido; 'Tornar âncora' por membro; 'Resetar' só fora do padrão (RF-006.6) \u001b[33m 811\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/hooks/useRouteUploader.test.ts \u001b[2m(\u001b[22m\u001b[2m24 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 3061\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m sets error for files exceeding max size \u001b[33m 2857\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/RouteTable.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1587\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m deve renderizar o título usando UI_LABELS.ROUTE_TABLE.TITLE \u001b[33m 567\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/RouteSimpleTable.test.tsx \u001b[2m(\u001b[22m\u001b[2m8 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1798\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders the correct title using UI_LABELS \u001b[33m 541\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders the column headers using UI_LA\n[...recortado...]\n-BV7QT456.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)\n\n\u001b[90mstderr\u001b[2m | src/__tests__/pages/MapPage.test.tsx\u001b[2m > \u001b[22m\u001b[2mMapPage (focus screen)\u001b[2m > \u001b[22m\u001b[2mo círculo do preview segue o stepper de raio (RF-006.4.6)\n\u001b[22m\u001b[39mWarning: An update to MapScreen inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\n    at MapScreen (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:148:22)\n    at div\n    at MapPage (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:109:119)\n    at RenderedRoute (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)",
+      "executado_em": "07/09/26 06:15",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "07/09/26 06:14",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "07/09/26 06:15",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO com ressalva",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1952 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CRig_ynt.css   \u001b[39m\u001b[1m\u001b[2m 27.77 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.10 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-sDVXj40g.js    \u001b[39m\u001b[1m\u001b[33m516.18 kB\u001b[39m\u001b[22m\u001b[2m │ gzip:  96.37 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-giTtp3H-.js   \u001b[39m\u001b[1m\u001b[33m803.48 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.60 kB\u001b[22m\n\u001b[32m✓ built in 10.43s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1769.94 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "07/09/26 06:16",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": "Aviso Vite de chunks > 500 kB preexistente"
+    }
+  },
+  "achados": [
+    {
+      "classe": 4,
+      "descricao": "Planejamento verificou que osm.ts aceita elements ausente como array vazio e osm.test.ts confirma esse comportamento; classificar payload invalido e necessario para nao apresentar falso sucesso. MapScreen possui key manifestId:routeName, portanto troca de rota nao foi diagnosticada como defeito. Sem alteracao de codigo ou execucao de gates nesta etapa.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-011"
+    },
+    {
+      "classe": 4,
+      "descricao": "Humano informa que a falha de carregamento da malha tambem ocorre no navegador do PC. Incidente nao restrito ao Samsung M35. Navegador, versao publicada, rede, mensagem e tempos especificos do PC ainda nao informados; nao presumir mesma causa tecnica nem reproducao independente em outra rede.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-011"
+    },
+    {
+      "classe": 4,
+      "descricao": "Bloqueante para fechamento: restabelecimento do servico real nao demonstrado. Implementados diagnostico por tentativa, validacao de payload, respeito ao Retry-After, cancelamento e aviso de aproximacao. Smoke Chromium 152 com resposta controlada passou (3 nos, 5 pontos no percurso, 213,56 m offline, 2 requisicoes apenas). Evidencias .mentor-saidas/bg011-browser-smoke.json e bg011-network-observation.json. Previa de teste publicada apos autorizacao humana; pesquisa de fonte alternativa permanece pendente.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-011"
+    },
+    {
+      "classe": 3,
+      "descricao": "Auto-revisao do diff: dialogo de diagnostico ganhou limite de altura e rolagem para manter os controles acessiveis com historico detalhado. Testes MapPage ainda emitem avisos act preexistentes; suite passou. Sem declaracao de revisao independente ou validacao humana. Vulnerabilidades e aviso de chunks continuam registrados na CHORE-012, sem mudanca de dependencias nesta tarefa.",
+      "destino": "tarefa",
+      "ref": "TASK-CHORE-012"
+    },
+    {
+      "classe": 4,
+      "descricao": "Publicacao autorizada da previa BG-011: https://95bf73f7.eu-roteirizo-prototipo.pages.dev (alias https://bg-011-carregamento-malha.eu-roteirizo-prototipo.pages.dev), verificada em 2026-09-07T03:47:50.904Z. Artefato original aprovado preservado; site principal nao alterado. Revisao automatica pediu comprovacao das planilhas: tres exemplos sinteticos identicos a public/romaneios, com codigos DEMO; nova tentativa liberada. Evidencias .mentor-saidas/bg011-deployment.json e bg011-public-fixtures-verification.json. Validacao real pendente.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-011"
+    },
+    {
+      "classe": 4,
+      "descricao": "Validacao humana da previa falhou em PC/M35 via Wi-Fi. Seis tentativas de ~21,3 s sem HTTP e outra carga M35 de 8,5 s (726/956/1539 ms). DNS do endpoint resolveu neste host; Chromium local excedeu prazo de navegacao de 15 s ao /api/status (interrompido pelo proprio teste). Nao comprova bloqueio por IP nem fila. Operadora em 11/08/2026 exige >=30 s apos HTTP 429 e relata bloqueios por insistencia: https://community.openstreetmap.org/t/overpass-api-performance-issues/140598/157 . Corrigido localmente: sem retry automatico para 429 nem rede sem resposta; mensagem 429 orienta espera minima. Vermelho/verde registrados; nova publicacao e restauracao real pendentes.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-011"
+    },
+    {
+      "classe": 4,
+      "descricao": "Apos solicitar acesso a /api/status no M35 com Wi-Fi desligado, humano retornou resposta do servico com Current time 2026-09-07T04:22:00Z, endpoint anunciado gall.openstreetmap.de/, Rate limit 2 e 2 slots disponiveis, sem consultas em execucao listadas. Registrado como resultado do teste solicitado em dados moveis; identificador Connected as omitido por nao ser necessario. Evidencia confirma acesso ao status e capacidade disponivel naquele instante, nao sucesso do POST do app nem bloqueio por IP no Wi-Fi. Comparar /api/status no Wi-Fi e uma carga da previa em dados moveis antes de atribuir causa.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-011"
+    },
+    {
+      "classe": 4,
+      "descricao": "Apos instruir uma carga da previa em dados moveis, humano enviou duas novas falhas de 2,31 km² e ~7 s totais: tentativas 823/276/822 ms e 1034/763/277 ms; todas network, sem HTTP/bytes expostos e cache ausente. Interpretacao condicional ao teste solicitado: status acessivel, mas POST do app falha; causa exclusivamente Wi-Fi enfraquecida. CORS/recusa por origem ou outra restricao do interpreter permanecem hipoteses; nao confirmar bloqueio sem evidencia do navegador. Historico ainda com 3 tentativas porque ajuste local posterior nao foi publicado. Proxima evidencia necessaria: erro exato de Console/Network referente ao Overpass no PC.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-011"
+    },
+    {
+      "classe": 4,
+      "descricao": "Console do PC fornecido pelo humano confirma POST https://overpass-api.de/api/interpreter com net::ERR_CONNECTION_TIMED_OUT no build publicado index-CmHUcFf-.js. Classificacao confirmada nesse teste: timeout de conexao exposto pelo navegador, nao erro de parse ou HTTP 429 observado. Nao confirma bloqueio por IP, CORS ou causa no servidor. Avisos de preload/service worker e runtime.lastError aparecem no mesmo console, sem evidencia de nexo causal com o timeout; manter separados. Diagnostico anterior do app (network sem HTTP) e consistente com TypeError exposto ao JavaScript. Recuperacao real e escolha/transicao da fonte continuam pendentes.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-011"
+    },
+    {
+      "classe": 4,
+      "descricao": "Restabelecimento da malha comprovado em producao (teste-prototipo.pages.dev). Implementado proxy /overpass com CORS no Cloudflare Worker 1-teste-prototipo, utilizando instancias globais oficiais (overpass-api.de, lz4, z, kumi). Validacao manual do usuario confirmou 2.250 nos baixados com sucesso (294 KB, 4,69 km²), resiliencia com recuperacao na tentativa 2 apos timeout inicial, e gravacao no cache local do navegador.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-011"
+    }
+  ],
+  "validacao": "aprovado",
+  "validado_em": "07/09/26 14:21",
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-07--14h23--TASK-BG-011.md"
+}

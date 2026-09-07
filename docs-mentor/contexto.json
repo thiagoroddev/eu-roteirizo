@@ -5,7 +5,7 @@
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-07T04:37:11.647Z",
+    "atualizado_em": "2026-09-07T17:23:57.662Z",
     "gerado_por": "script"
   },
   "projeto": {
@@ -415,7 +415,7 @@
     "ambientes": [
       "local Vite dev server",
       "build/preview local",
-      "Cloudflare Pages: eu-roteirizo-prototipo",
+      "Cloudflare Pages: teste-prototipo",
       "Cloudflare Worker de tiles",
       "TWA/Google Play planejado"
     ],
@@ -439,7 +439,7 @@
       "ferramenta": "GitHub Actions com npm run lint; ESLint 9 + Prettier."
     },
     "deploy": {
-      "destino": "Cloudflare Pages projeto eu-roteirizo-prototipo; comando deploy:test.",
+      "destino": "Cloudflare Pages projeto teste-prototipo; comando deploy:test.",
       "gradual": false,
       "registro_de_publicacao": "Workflow de qualidade em GitHub Actions; deploy/teste continua manual por tarefa."
     },
@@ -616,11 +616,11 @@
   },
   "contagens": {
     "_gerado_por_script": true,
-    "tarefas_concluidas": 1,
-    "tarefas_abertas": 23,
-    "tarefas_no_ciclo": 3,
+    "tarefas_concluidas": 4,
+    "tarefas_abertas": 22,
+    "tarefas_no_ciclo": 2,
     "tarefas_na_reserva": 20,
-    "validacoes_pendentes": 2,
+    "validacoes_pendentes": 1,
     "requisitos_total": 22,
     "requisitos_implementados": 0,
     "requisitos_pendentes": 22,

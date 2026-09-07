@@ -3,7 +3,7 @@
 **PWA que transforma o romaneio de entregas em paradas de veículo com circuitos de entrega a pé,
 traçados sobre o grafo de ruas do OpenStreetMap. Sem backend, sem conta e sem API de roteirização paga.**
 
-**[▶️ Abrir o protótipo](https://eu-roteirizo-prototipo.pages.dev/)** ·
+**[▶️ Abrir o protótipo](https://teste-prototipo.pages.dev/)** ·
 [Avaliando em 5 minutos](#-avaliando-em-5-minutos) ·
 [Estado atual](#-estado-atual) ·
 [Documentação](#-documentação) ·
@@ -63,7 +63,7 @@ Nenhuma é mockup. São o que o código faz hoje.
 
 Se você chegou aqui para julgar o trabalho e tem pouco tempo, este é o caminho curto.
 
-**No app** ([protótipo ao vivo](https://eu-roteirizo-prototipo.pages.dev/), ou `npm run dev`):
+**No app** ([protótipo ao vivo](https://teste-prototipo.pages.dev/), ou `npm run dev`):
 
 1. Toque em **"Testar com romaneio de exemplo"**. Não precisa de arquivo nenhum: um romaneio
    fictício de Copacabana entra pelo mesmo caminho de um upload real.
