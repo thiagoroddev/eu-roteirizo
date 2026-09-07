@@ -283,7 +283,7 @@ export const RouteMap: React.FC<Props> = ({
     });
 
     // Tile Layer (Map skin)
-    L.tileLayer("https://tile-proxy.thiagorod-dev.workers.dev/tiles/{z}/{x}/{y}.png", {
+    L.tileLayer("https://1-teste-prototipo.thiagorod-dev.workers.dev/tiles/{z}/{x}/{y}.png", {
       maxZoom: MAP_CONFIG.ZOOM.MAX,
       minZoom: MAP_CONFIG.ZOOM.MIN,
       tileSize: MAP_CONFIG.TILE_SIZE,
