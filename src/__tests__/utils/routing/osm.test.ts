@@ -216,25 +216,25 @@ describe("fetchRoadGraph", () => {
     expect(result.graph?.adj.size).toBe(0);
   });
 
-  it("returns the network error when the body cannot be parsed as JSON", async () => {
+  it("returns an invalid-response error when the body cannot be parsed as JSON", async () => {
     vi.mocked(fetch).mockResolvedValue(unparsable());
 
     const result = await buscarGrafo();
 
-    expect(result.error).toBe(UI_LABELS.ROUTING.NETWORK_ERROR);
+    expect(result.error).toBe(UI_LABELS.ROUTING.INVALID_RESPONSE);
   });
 
-  it("treats a response without an elements field as an empty graph", async () => {
+  it("rejects a response without elements instead of claiming an empty graph", async () => {
     vi.mocked(fetch).mockResolvedValue(okJson({}));
 
     const result = await buscarGrafo();
 
-    expect(result.error).toBeUndefined();
-    expect(result.graph?.coords.size).toBe(0);
+    expect(result.error).toBeDefined();
+    expect(result.graph).toBeUndefined();
   });
 
-  it("auto-retries a transient 429 and succeeds on a later attempt (TASK-BG-008)", async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(httpError(429)).mockResolvedValueOnce(okJson(oneWayResponse));
+  it("auto-retries a transient 503 and succeeds on a later attempt", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(httpError(503)).mockResolvedValueOnce(okJson(oneWayResponse));
 
     const result = await buscarGrafo();
 
@@ -254,17 +254,17 @@ describe("fetchRoadGraph", () => {
   });
 
   it("stops after maxAttempts and returns the last error", async () => {
-    vi.mocked(fetch).mockResolvedValue(httpError(429));
+    vi.mocked(fetch).mockResolvedValue(httpError(503));
 
     const result = await buscarGrafo({ maxAttempts: 3 });
 
     expect(fetch).toHaveBeenCalledTimes(3);
-    expect(result.error).toBe(UI_LABELS.ROUTING.OVERPASS_HTTP_ERROR(429));
+    expect(result.error).toBe(UI_LABELS.ROUTING.OVERPASS_HTTP_ERROR(503));
   });
 
   it("honors the Retry-After header for the backoff wait", async () => {
-    // 429 with "Retry-After: 3", then success — the wait must be >= 3 s (+ jitter).
-    vi.mocked(fetch).mockResolvedValueOnce(httpError(429, "3")).mockResolvedValueOnce(okJson(oneWayResponse));
+    // 503 with "Retry-After: 3", then success — the wait must be >= 3 s (+ jitter).
+    vi.mocked(fetch).mockResolvedValueOnce(httpError(503, "3")).mockResolvedValueOnce(okJson(oneWayResponse));
     const sleepSpy = vi.fn<(ms: number) => Promise<void>>(() => Promise.resolve());
 
     await buscarGrafo({ sleep: sleepSpy });
@@ -286,5 +286,98 @@ describe("fetchRoadGraph", () => {
     expect(logged).toContain("nós=");
     expect(logged).not.toContain("-43.204");
     expect(logged).not.toContain("Rua Teste");
+  });
+});
+
+describe("BG-011 — falhas observaveis", () => {
+  it("nao aceita dados parciais quando Overpass retorna remark com HTTP 200", async () => {
+    vi.mocked(fetch).mockResolvedValue(okJson({ ...oneWayResponse, remark: "runtime error: Query timed out" }));
+    const result = await buscarGrafo({ maxAttempts: 1 });
+    expect(result.graph).toBeUndefined();
+    expect(result.diagnostics?.attempts[0]).toMatchObject({ category: "overpass", httpStatus: 200 });
+  });
+
+  it("preserva HTTP de cada tentativa e sucesso posterior", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(httpError(503)).mockResolvedValueOnce(okJson(oneWayResponse));
+    const result = await buscarGrafo();
+    expect(result.graph?.coords.size).toBe(2);
+    expect(result.diagnostics?.attempts.map((a) => [a.category, a.httpStatus])).toEqual([
+      ["http", 503],
+      ["ok", 200],
+    ]);
+  });
+
+  it("falha de rede nao inventa status HTTP nem quantidade de bytes", async () => {
+    vi.mocked(fetch).mockRejectedValue(new TypeError("Failed to fetch"));
+    const result = await buscarGrafo({ maxAttempts: 1 });
+    expect(result.diagnostics?.attempts[0]).toMatchObject({ category: "network", httpStatus: null, responseBytes: null, headersMs: null });
+  });
+
+  it("cancelamento externo nao dispara retry", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const result = await buscarGrafo({ signal: controller.signal });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(result.diagnostics?.attempts[0].category).toBe("cancelled");
+  });
+});
+
+describe("BG-011 — limites e recuperacao", () => {
+  it("nao antecipa Retry-After longo nem faz polling", async () => {
+    vi.mocked(fetch).mockResolvedValue(httpError(429, "120"));
+    const sleep = vi.fn(noSleep);
+    const result = await buscarGrafo({ sleep });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
+    expect(result.diagnostics?.attempts[0].httpStatus).toBe(429);
+  });
+  it("cancelar durante backoff impede nova chamada", async () => {
+    const controller = new AbortController();
+    vi.mocked(fetch).mockResolvedValue(httpError(503));
+    const result = await buscarGrafo({
+      signal: controller.signal,
+      sleep: async () => {
+        controller.abort();
+      },
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(result.diagnostics?.attempts.at(-1)?.category).toBe("cancelled");
+  });
+  it("mede bytes UTF-8 efetivos da resposta completa", async () => {
+    const body = { elements: [], generator: "ação" };
+    vi.mocked(fetch).mockResolvedValue(okJson(body));
+    const result = await buscarGrafo();
+    expect(result.diagnostics?.attempts[0].responseBytes).toBe(new TextEncoder().encode(JSON.stringify(body)).byteLength);
+  });
+  it("timeout durante leitura conserva HTTP e distingue corpo nao recebido", async () => {
+    vi.mocked(fetch).mockResolvedValue({ ok: true, status: 200, text: () => Promise.reject(new DOMException("aborted", "AbortError")) } as unknown as Response);
+    const result = await buscarGrafo({ maxAttempts: 1 });
+    expect(result.diagnostics?.attempts[0]).toMatchObject({ category: "timeout", httpStatus: 200, bodyMs: null, responseBytes: null });
+  });
+});
+
+describe("BG-011 — estrutura incompleta", () => {
+  it.each([{ elements: null }, { elements: [null] }, { elements: [{ type: "way", nodes: [1, 2] }] }])("rejeita estrutura incompleta %j", async (body) => {
+    vi.mocked(fetch).mockResolvedValue(okJson(body));
+    const result = await buscarGrafo();
+    expect(result.graph).toBeUndefined();
+    expect(result.diagnostics?.attempts[0].category).toBe("invalid-response");
+  });
+});
+
+describe("BG-011 — consumo do servico publico", () => {
+  it("nao repete automaticamente HTTP 429 mesmo com Retry-After curto", async () => {
+    vi.mocked(fetch).mockResolvedValue(httpError(429, "3"));
+    const sleep = vi.fn(noSleep);
+    const result = await buscarGrafo({ sleep });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
+    expect(result.error).toContain("30 segundos");
+  });
+  it("falha sem resposta HTTP termina apos uma tentativa", async () => {
+    vi.mocked(fetch).mockRejectedValue(new TypeError("Failed to fetch"));
+    const result = await buscarGrafo();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(result.diagnostics?.attempts).toHaveLength(1);
   });
 });

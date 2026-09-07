@@ -46,6 +46,27 @@ const GraphDiagnostics = () => {
             {samples.map((sample) => (
               <li key={sample.at} className="text-xs tabular-nums text-muted-foreground">
                 {D.SAMPLE(sample)}
+                {sample.cacheState && (
+                  <div>
+                    {D.CACHE_STATE}: {D.CACHE_STATES[sample.cacheState]}
+                  </div>
+                )}
+                {sample.cacheWrite && (
+                  <div>
+                    {D.CACHE_WRITE}: {D.CACHE_STATES[sample.cacheWrite]}
+                  </div>
+                )}
+                {!sample.diagnostics && sample.source === "erro" && <div>{D.CAUSE_UNKNOWN}</div>}
+                {sample.diagnostics?.attempts.map((attempt, index) => (
+                  <div key={index}>
+                    {D.ATTEMPT} {index + 1}: {D.CATEGORIES[attempt.category]}
+                    {attempt.httpStatus !== null && ` · HTTP ${attempt.httpStatus}`}
+                    <div>
+                      {D.HEADERS}: {attempt.headersMs === null ? D.NOT_MEASURED : `${attempt.headersMs} ms`} · {D.BODY}: {attempt.bodyMs === null ? D.NOT_MEASURED : `${attempt.bodyMs} ms`} · {D.TOTAL}
+                      : {attempt.totalMs} ms · {D.BYTES}: {attempt.responseBytes ?? D.NOT_MEASURED}
+                    </div>
+                  </div>
+                ))}
               </li>
             ))}
           </ul>
@@ -94,7 +115,7 @@ export const DeliverySettingsDialog = ({ open, onOpenChange }: { open: boolean; 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-h-[90dvh] max-w-sm overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{S.TITLE}</DialogTitle>
           <DialogDescription>{S.DESCRIPTION}</DialogDescription>

@@ -142,3 +142,26 @@ describe("loadRoadGraph", () => {
     expect(await getCachedGraph(BB)).toBeNull();
   });
 });
+
+describe("BG-011 — evidencia do cache", () => {
+  it("registra expiracao e falha de rede sem zerar metricas desconhecidas", async () => {
+    await putCachedGraph(BB, sampleGraph());
+    vi.mocked(fetchRoadGraph).mockResolvedValue({
+      error: "timeout",
+      diagnostics: { version: 1, attempts: [{ category: "timeout", httpStatus: null, headersMs: null, bodyMs: null, responseBytes: null, totalMs: 30000 }] },
+    });
+    await loadRoadGraph(BB, { ttlMs: 0 });
+    expect(recordGraphSample).toHaveBeenLastCalledWith(
+      expect.objectContaining({ source: "erro", cacheState: "expired", networkMs: null, responseKb: null, diagnostics: expect.objectContaining({ version: 1 }) })
+    );
+    expect(await getCachedGraph(BB)).not.toBeNull();
+  });
+  it("cache valido funciona offline e preserva topologia", async () => {
+    await putCachedGraph(BB, sampleGraph());
+    vi.mocked(fetchRoadGraph).mockRejectedValue(new Error("offline"));
+    const result = await loadRoadGraph(BB);
+    expect(fetchRoadGraph).not.toHaveBeenCalled();
+    expect(result.graph?.adj.get(1)?.[0].to).toBe(2);
+    expect(recordGraphSample).toHaveBeenLastCalledWith(expect.objectContaining({ cacheState: "hit" }));
+  });
+});

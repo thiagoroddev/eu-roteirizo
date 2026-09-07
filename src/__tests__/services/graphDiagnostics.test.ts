@@ -1,3 +1,4 @@
+import { UI_LABELS } from "../../constants/uiLabels";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { readGraphSamples, recordGraphSample, clearGraphSamples, type GraphFetchSample } from "../../services/graphDiagnostics";
 
@@ -75,5 +76,29 @@ describe("graphDiagnostics", () => {
     expect(() => recordGraphSample(sample())).not.toThrow();
     expect(readGraphSamples()).toEqual([]);
     expect(() => clearGraphSamples()).not.toThrow();
+  });
+});
+
+describe("BG-011 — historico de falhas", () => {
+  beforeEach(installStorage);
+  it("mantem legibilidade das amostras antigas sem inventar causa", () => {
+    const old = sample({ source: "erro", networkMs: 0, responseKb: 0 });
+    recordGraphSample(old);
+    const loaded = readGraphSamples()[0];
+    expect(loaded.diagnostics).toBeUndefined();
+    expect(UI_LABELS.GRAPH_DIAGNOSTICS.SAMPLE(loaded)).toContain("erro");
+    expect(UI_LABELS.GRAPH_DIAGNOSTICS.HINT).not.toContain("= fila");
+  });
+  it("preserva medidas desconhecidas e categoria sem copiar payload", () => {
+    const failed = sample({
+      source: "erro",
+      networkMs: null,
+      responseKb: null,
+      schemaVersion: 1,
+      diagnostics: { version: 1, attempts: [{ category: "network", httpStatus: null, headersMs: null, bodyMs: null, totalMs: 5000, responseBytes: null }] },
+    });
+    recordGraphSample(failed);
+    expect(readGraphSamples()[0]).toEqual(failed);
+    expect(UI_LABELS.GRAPH_DIAGNOSTICS.SAMPLE(failed)).toContain("erro");
   });
 });

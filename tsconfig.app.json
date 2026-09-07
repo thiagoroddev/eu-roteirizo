@@ -35,7 +35,6 @@
     // -----------------------------------------------------
     // 🔀 ALIAS CONFIGURATION (CLEANER IMPORTS)
     // -----------------------------------------------------
-    "baseUrl": ".",
     "paths": {
       // Allows you to:
       // import Botao from "@/components/Botao"
