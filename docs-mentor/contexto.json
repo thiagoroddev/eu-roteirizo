@@ -5,7 +5,7 @@
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-07T04:37:11.647Z",
+    "atualizado_em": "2026-09-07T05:46:07.890Z",
     "gerado_por": "script"
   },
   "projeto": {
@@ -415,7 +415,7 @@
     "ambientes": [
       "local Vite dev server",
       "build/preview local",
-      "Cloudflare Pages: eu-roteirizo-prototipo",
+      "Cloudflare Pages: teste-prototipo",
       "Cloudflare Worker de tiles",
       "TWA/Google Play planejado"
     ],
@@ -439,7 +439,7 @@
       "ferramenta": "GitHub Actions com npm run lint; ESLint 9 + Prettier."
     },
     "deploy": {
-      "destino": "Cloudflare Pages projeto eu-roteirizo-prototipo; comando deploy:test.",
+      "destino": "Cloudflare Pages projeto teste-prototipo; comando deploy:test.",
       "gradual": false,
       "registro_de_publicacao": "Workflow de qualidade em GitHub Actions; deploy/teste continua manual por tarefa."
     },
@@ -616,7 +616,7 @@
   },
   "contagens": {
     "_gerado_por_script": true,
-    "tarefas_concluidas": 1,
+    "tarefas_concluidas": 2,
     "tarefas_abertas": 23,
     "tarefas_no_ciclo": 3,
     "tarefas_na_reserva": 20,
@@ -682,7 +682,7 @@
     "bloqueio_em_tarefas": 40
   },
   "lembretes": [
-    "1 validacao(oes) manual(is) pendente(s): TASK-CHORE-012"
+    "2 validacao(oes) manual(is) pendente(s): TASK-BG-011, TASK-CHORE-012"
   ],
   "_lembretes_nota": "GERADO pelo doctor a cada execucao. Nao digite aqui: campo livre acumula prosa como qualquer outro.",
   "offsets_de_id": {

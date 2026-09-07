@@ -41,8 +41,8 @@ Toda tarefa fecha com os quatro gates verdes: `tsc -b`, `eslint`, `vitest` e `bu
 
 ## Testar no celular
 
-`npm run deploy:test` builda e publica no projeto Cloudflare Pages `eu-roteirizo-prototipo`, ou seja
-em **https://eu-roteirizo-prototipo.pages.dev**. URL fixa, HTTPS (GPS e instalação de PWA só
+`npm run deploy:test` builda e publica no projeto Cloudflare Pages `teste-prototipo`, ou seja
+em **https://teste-prototipo.pages.dev**. URL fixa, HTTPS (GPS e instalação de PWA só
 funcionam sob HTTPS), com `X-Robots-Tag: noindex` via [`public/_headers`](../public/_headers).
 
 É **protótipo, não lançamento**. A URL é divulgada no README e em portfólio, mas segue fora dos
