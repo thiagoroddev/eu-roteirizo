@@ -121,7 +121,7 @@ Todos os portoes foram respondidos ou dispensados com motivo.
 - `operacao.analise_de_dependencias.cadencia`: Dependabot semanal; audit em push, pull_request e workflow_dispatch.
 - `operacao.analise_estatica.automatica`: true
 - `operacao.analise_estatica.ferramenta`: GitHub Actions com npm run lint; ESLint 9 + Prettier.
-- `operacao.deploy.destino`: Cloudflare Pages projeto eu-roteirizo-prototipo; comando deploy:test.
+- `operacao.deploy.destino`: Cloudflare Pages projeto teste-prototipo; comando deploy:test.
 - `operacao.deploy.gradual`: false
 - `operacao.deploy.registro_de_publicacao`: Workflow de qualidade em GitHub Actions; deploy/teste continua manual por tarefa.
 - `operacao.observabilidade.registro`: Sem observabilidade externa; diagnosticos locais de grafo ficam no aparelho.

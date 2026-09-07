@@ -1,0 +1,115 @@
+{
+  "id": "TASK-CHORE-013",
+  "tipo": "CHORE",
+  "titulo": "Migrar projeto Cloudflare Pages de eu-roteirizo-prototipo para teste-prototipo",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "criada_em": "07/09/26 02:16",
+  "iniciada_em": "07/09/26 02:18",
+  "commit_base": "74ebd70909a2612782d3de34461e220b9700740a",
+  "concluida_em": "07/09/26 02:44",
+  "plano": {
+    "muda": [
+      "package.json - atualizar homepage e script deploy:test para o projeto teste-prototipo",
+      "index.html - atualizar metatags og:url e og:image para teste-prototipo.pages.dev",
+      "docs-mentor/contexto.json - atualizar operacao.ambientes e operacao.deploy.destino para o novo projeto",
+      "README.md - atualizar links do prototipo para https://teste-prototipo.pages.dev",
+      "docs/contexto-projeto-ai.md e docs/README.md - atualizar referencias a URL antiga do prototipo",
+      "src/__tests__/config/deploymentConfig.test.ts - teste de regressao para garantir que o projeto aponta para teste-prototipo"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Projeto teste-prototipo criado com sucesso no Cloudflare Pages",
+        "teste": "nao se aplica: validacao via wrangler pages project list"
+      },
+      {
+        "texto": "Build e deploy executados com sucesso em teste-prototipo.pages.dev",
+        "teste": "nao se aplica: verificacao de status HTTP 200 na URL de deploy"
+      },
+      {
+        "texto": "Projeto antigo eu-roteirizo-prototipo excluido do Cloudflare Pages apos validacao do novo",
+        "teste": "nao se aplica: confirmacao de exclusao via wrangler pages project list"
+      },
+      {
+        "texto": "Gates declarados (tipos, lint, testes, build) aprovados",
+        "teste": "src/__tests__/config/deploymentConfig.test.ts > deploymentConfig"
+      }
+    ],
+    "impacto": "Configuracoes de deploy e operacao do app no Cloudflare Pages; nenhuma alteracao no codigo funcional de src/",
+    "riscos": [
+      "Exclusao do projeto antigo remove deployments historicos e a previa da TASK-BG-011, conforme aprovado pelo usuario",
+      "Disponibilidade temporaria do DNS/dominio novo no Cloudflare Pages logo apos a criacao"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "O usuario solicitou a desativacao do wrangler atual eu-roteirizo-prototipo.pages.dev e a criacao de outro chamado teste-prototipo, com registro em tarefa conforme o padrao do mentor-agent. Proponho a tarefa Standard TASK-CHORE-013 para gerenciar a criacao do novo projeto no Cloudflare, atualizacao dos arquivos de configuracao/documentacao do repositorio, execucao dos 4 gates declarados, deploy de validacao e subsequente delecao do projeto antigo. Nao ha adicao de novas dependencias ou mudancas de arquitetura."
+  },
+  "gates": {
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "07/09/26 02:22",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "07/09/26 02:22",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "07/09/26 02:42",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest\n\n\n RUN  v4.1.9 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  73 passed (73)\n      Tests  796 passed (796)\n   Start at  02:42:56\n   Duration  33.25s (transform 8.93s, setup 27.97s, import 17.94s, tests 64.06s, environment 103.72s)\n\n(node:20088) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "07/09/26 02:43",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1952 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CRig_ynt.css   \u001b[39m\u001b[1m\u001b[2m 27.77 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.10 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-BMXtSll6.js    \u001b[39m\u001b[1m\u001b[33m516.15 kB\u001b[39m\u001b[22m\u001b[2m │ gzip:  96.34 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-giTtp3H-.js   \u001b[39m\u001b[1m\u001b[33m803.48 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.60 kB\u001b[22m\n\u001b[32m✓ built in 7.95s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1769.91 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "07/09/26 02:24",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    }
+  },
+  "achados": [],
+  "validacao": "aprovado",
+  "validado_em": "07/09/26 02:44",
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-07--02h44--TASK-CHORE-013.md"
+}

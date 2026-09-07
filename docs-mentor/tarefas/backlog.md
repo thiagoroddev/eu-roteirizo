@@ -17,6 +17,5 @@
 
 | # | ID | Titulo | Fatia | Valor | Urgencia | Esforco H/IA | Bloqueada por | Origem |
 |--:|---|---|---|---|---|---|---|---|
-| 1📌 | `TASK-BG-011` | Restabelecer o carregamento da malha viaria e diagnosticar falhas de rede, HTTP e timeout 🔍 | - | critico | imediata | M/G | - | titulo-autossuficiente |
-| 2📌 | `TASK-RF-030` | Gerar ancoras livres e cobertura de entregas dentro do raio | 1/6 de TASK-RF-029 | importante | imediata | M/M | - | RF-34 |
-| 3 | `TASK-CHORE-012` | Conferir configuracoes do GitHub e aferir as metas de qualidade apontadas pelo doctor 🔍 | - | importante | imediata | P/M | - | titulo-autossuficiente |
+| 1📌 | `TASK-RF-030` | Gerar ancoras livres e cobertura de entregas dentro do raio | 1/6 de TASK-RF-029 | importante | imediata | M/M | - | RF-34 |
+| 2 | `TASK-CHORE-012` | Conferir configuracoes do GitHub e aferir as metas de qualidade apontadas pelo doctor 🔍 | - | importante | imediata | P/M | - | titulo-autossuficiente |

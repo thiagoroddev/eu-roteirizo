@@ -162,7 +162,7 @@ describe("RouteMap (controlled embedded map)", () => {
     renderRouteMap();
 
     expect(L.tileLayer).toHaveBeenCalledWith(
-      "https://tile-proxy.thiagorod-dev.workers.dev/tiles/{z}/{x}/{y}.png",
+      "https://1-teste-prototipo.thiagorod-dev.workers.dev/tiles/{z}/{x}/{y}.png",
       expect.objectContaining({ maxZoom: 19, minZoom: 14, tileSize: 256, updateWhenIdle: true, keepBuffer: 2 })
     );
   });

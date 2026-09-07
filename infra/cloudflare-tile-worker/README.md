@@ -30,6 +30,6 @@ Proxy + cache dos *tiles* do OpenStreetMap usados pelo mapa Leaflet do app
 `wrangler deploy` ou pelo painel do Cloudflare. Ajuste o domínio/rota do Worker
 e o `User-Agent` (hoje um placeholder) conforme o seu projeto.
 
-> **Pendente de confirmação:** a URL/rota pública do Worker e a configuração do
-> `wrangler.toml` não estão neste repo: adicionar se/quando o Worker for tratado
-> como parte versionada do projeto.
+> **Worker ativo (TASK-CHORE-014):** `1-teste-prototipo`, publicado em
+> `https://1-teste-prototipo.thiagorod-dev.workers.dev/tiles/{z}/{x}/{y}.png`.
+

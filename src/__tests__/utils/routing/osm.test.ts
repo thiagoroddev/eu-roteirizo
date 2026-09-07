@@ -166,7 +166,7 @@ describe("fetchRoadGraph", () => {
 
     expect(fetch).toHaveBeenCalledTimes(1);
     const [url, init] = vi.mocked(fetch).mock.calls[0];
-    expect(url).toBe("https://overpass-api.de/api/interpreter");
+    expect(url).toBe("https://1-teste-prototipo.thiagorod-dev.workers.dev/overpass");
     expect(init?.method).toBe("POST");
     expect(init?.headers).toEqual({ "Content-Type": "application/x-www-form-urlencoded" });
     expect(String(init?.body)).toMatch(/^data=/);
