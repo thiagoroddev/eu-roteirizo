@@ -20,8 +20,8 @@ import type { OsmElement, RoadGraph } from "./graph";
 import { buildGraph, countEdges } from "./graph";
 import { UI_LABELS } from "../../constants/uiLabels";
 
-/** Public Overpass API endpoint (see DT-005 — rate-limited, swap before release). */
-const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter";
+/** Proxy Overpass no Cloudflare Worker (TASK-BG-011) para contornar CORS e instabilidade de endpoint público. */
+const OVERPASS_ENDPOINT = "https://1-teste-prototipo.thiagorod-dev.workers.dev/overpass";
 
 /**
  * Highway classes we route over (drivable streets). Mirrors the validated
