@@ -105,6 +105,20 @@ Grafo dirigido sobre OSM + A* **no cliente**. Mão única = aresta ausente.
 
 **Descartados:** mirror comunitário (adia o problema) · self-host do Overpass (servidor pesado para algo que pode ser estático) · extrato embutido no PWA (só serve app regional; o usuário baixaria o país para entregar em 3 quarteirões).
 
+### 4.2.1 Pendência crítica de disponibilidade — TASK-BG-011
+
+O teste no Samsung M35, registrado em TASK-CHORE-012, mostrou falhas repetidas de carga em áreas de 1,39 a 2,69 km² e mensagem de tempo excedido. A classificação atual do histórico não permite atribuir todas as falhas à fila do Overpass. A medição histórica de uma carga bem-sucedida não explica, sozinha, as falhas atuais.
+
+A substituição do Overpass já está prevista na ADR-010; falta validar e executar a transição. TASK-BG-011 concentra a recuperação do carregamento e seu diagnóstico. A CHORE-012 permanece aberta, com validação pendente. Pesquisa humana de fontes alternativas alimentará a decisão técnica; este registro não escolhe nem contrata fornecedor.
+
+Dados OSM gratuitos não significam capacidade ilimitada de uma API pública. O [manual do Overpass](https://dev.overpass-api.de/overpass-doc/en/preface/commons.html) descreve capacidade compartilhada e orientações de consumo, que não constituem cota garantida ou SLA. As regras dos tiles raster são distintas das regras de acesso à malha: não transferir permissões entre serviços.
+
+A comparação deve cobrir extratos OSM com distribuição própria (caminho da ADR-010), serviço hospedado com capacidade contratada e operação própria quando justificada. Para cada opção, verificar permissão de cache/offline e redistribuição, volume agregado de todos os usuários, limites e disponibilidade, atualização, cobertura/topologia (IDs, sentidos e conexões entre recortes), custo de preparação, armazenamento, leituras e operação. Mirrors comunitários não comprovam capacidade de produção. O armazenamento local requer cobertura, versão, tamanho e validade explícitos.
+
+**Evidência da prévia BG-011:** duas cargas de 1,68 km² falharam sem resposta HTTP exposta ao navegador; seis tentativas duraram cerca de 21,3 s cada (totais de 68,9 s e 69,3 s). Isso não comprova fila nem identifica bloqueio por IP. O console do PC confirmou posteriormente `POST /api/interpreter net::ERR_CONNECTION_TIMED_OUT`: timeout de conexão, ainda sem atribuição da causa subjacente. O [aviso da operadora de 11/08/2026](https://community.openstreetmap.org/t/overpass-api-performance-issues/140598/157) exige ao menos 30 s após HTTP 429 e relata bloqueios por insistência. As retentativas rápidas herdadas do protótipo precisam ser revistas; trocar IP, identidade ou espelhar chamadas para contornar bloqueio não é solução de capacidade. A fonte alternativa deve ter permissão e capacidade para o volume agregado do app.
+
+Os valores históricos deste documento não foram revalidados nesta revisão. A decisão precisa incluir medições e transição verificável no aparelho; melhorar mensagens ou aumentar timeout não comprova recuperação. Download antecipado das imagens do mapa é um escopo separado e exige fonte que o permita.
+
 ### 4.3 **Por que vector tiles** (ADR-007): o ponto que faltava aqui
 
 Três problemas forçaram a decisão:

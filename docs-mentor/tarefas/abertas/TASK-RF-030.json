@@ -13,7 +13,7 @@
   },
   "depende_de": [],
   "fila": "ciclo",
-  "ordem": 1,
+  "ordem": 2,
   "origem": "RF-34",
   "requisitos": [
     "RF-34"

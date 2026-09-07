@@ -3,7 +3,7 @@
   "tipo": "CHORE",
   "titulo": "Conferir configuracoes do GitHub e aferir as metas de qualidade apontadas pelo doctor",
   "fatia_de": null,
-  "estado": "em-execucao",
+  "estado": "aberta",
   "cerimonia": "Standard",
   "valor": "importante",
   "urgencia": "imediata",
@@ -124,18 +124,61 @@
       "descricao": "Contagem 44/49 no contexto nao era sustentada pela rastreabilidade legada. Removida sem inventar percentual. RF-35 ainda aparece planejado em docs/requisitos/funcionais.md, apesar da persistencia implementada em routeStorage e TASK-RF-008 concluida; reconciliacao completa do legado segue pendente.",
       "destino": "tarefa",
       "ref": "TASK-CHORE-012"
+    },
+    {
+      "classe": 3,
+      "descricao": "Teste Samsung M35: tiles aparecem apenas ao terminar o arraste. RouteMap.tsx configura updateWhenIdle=true, consistente com o relato. Ajuste de atualizacao durante movimento requer medir fluidez no aparelho; nao implementado.",
+      "destino": "tarefa",
+      "ref": "TASK-CHORE-012"
+    },
+    {
+      "classe": 4,
+      "descricao": "Teste Samsung M35: cobertura visual offline limitada aos tiles/zooms visitados, reutilizados entre romaneios. Isso evidencia reuso de cache, nao pacote offline completo ou armazenamento garantido. Proposta humana: baixar area de entrega com limites. Worker atual usa tile.openstreetmap.org, cuja politica proibe prefetch/offline por area (https://operations.osmfoundation.org/policies/tiles/); avaliar fonte propria/permitida e limites de area, zoom e bytes, incluindo entregas dispersas.",
+      "destino": "tarefa",
+      "ref": "TASK-CHORE-012"
+    },
+    {
+      "classe": 4,
+      "descricao": "Teste Samsung M35: percursos fora das ruas ao criar paradas offline e falha de carregamento das ruas mesmo online. routePath.ts usa segmentos retos sem grafo; useRoadGraph.ts carrega via Overpass e graphCache.ts usa chave por bbox com TTL de 7 dias, independente dos tiles. Causa da falha online nao confirmada; falta mensagem exibida e reproducao da versao publicada. Offline com malha disponivel deve permitir calculo local; indisponibilidade precisa ficar explicita ao usuario.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-011"
+    },
+    {
+      "classe": 4,
+      "descricao": "Capturas fornecidas pelo humano no teste Samsung M35: mensagem \"O download das ruas demorou demais e foi cancelado. Tente novamente.\"; diagnostico mostra erros em 2,69 km² (36,6 s e 17,8 s), 2,31 km² (4,7 s a 37,8 s) e 1,39 km² (4,9 s). Mensagem corresponde a TIMEOUT no codigo local; nao prova que todas as entradas tiveram a mesma causa ou que houve fila no servidor. graphDiagnostics/graphCache registram apenas area e tempo total nas falhas, com networkMs/responseKb zerados por convencao e sem status HTTP, categoria de erro ou tentativas. A dica de resposta pequena versus fila nao permite diagnosticar essas falhas. Capturas sao evidencia humana, sem reproducao local da versao publicada. Proximo diagnostico deve distinguir timeout, HTTP e rede, mantendo logs sem enderecos/coordenadas.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-011"
+    },
+    {
+      "classe": 4,
+      "descricao": "Por solicitacao humana, recuperacao critica da malha e melhoria do diagnostico encaminhadas a TASK-BG-011. CHORE-012 permanece em-execucao e validacao pendente; nao foi encerrada nem teve falhas dispensadas. TASK-BG-011 deve preceder o proximo desenvolvimento RF-030; iniciar exige tratar a tarefa ativa respeitando WIP=1. Relacao de descoberta nao e dependencia da BG em relacao ao fechamento da CHORE.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-011"
+    },
+    {
+      "classe": 4,
+      "descricao": "Humano informa que a falha de carregamento da malha tambem ocorre no navegador do PC. Incidente nao restrito ao Samsung M35. Navegador, versao publicada, rede, mensagem e tempos especificos do PC ainda nao informados; nao presumir mesma causa tecnica nem reproducao independente em outra rede.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-011"
+    },
+    {
+      "classe": 4,
+      "descricao": "Execucao interrompida para priorizar BG-011 conforme autorizacao humana. Estado volta a aberta porque Mentor nao possui pausa; datas, gates e pendencias preservados. Nao concluida, cancelada nem dispensada. Retomar apos a correcao critica.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-011"
     }
   ],
   "validacao": "pendente",
   "validado_em": null,
-  "validacao_motivo": "Relato humano nesta sessao: uso no proprio Samsung M35, sem data do teste; offline ainda nao testado. O relato nao discrimina resultados por cenario nem versao do navegador. Validacao integral e aprovacao continuam pendentes; validado_em permanece null.",
+  "validacao_motivo": "Teste offline relatado pelo humano nesta sessao no Samsung M35: tiles ja visitados continuam disponiveis ao trocar romaneio; areas/zooms nao visitados ficam sem imagem; durante arraste prolongado, tiles ficam cinza ate soltar o dedo. Criacao de paradas offline produz linhas fora das ruas; carregamento de ruas tambem falhou online. Data da execucao, versao publicada, navegador e mensagem de erro nao informados. Validacao integral permanece pendente com falhas observadas; validado_em permanece null. Capturas posteriores confirmam mensagem de tempo excedido e multiplas cargas com erro entre 1,39 e 2,69 km²; causa raiz ainda nao determinada.",
   "tarefas_geradas": [
     "TASK-RF-030",
     "TASK-RF-031",
     "TASK-RF-032",
     "TASK-RF-033",
     "TASK-RF-034",
-    "TASK-TEST-004"
+    "TASK-TEST-004",
+    "TASK-BG-011"
   ],
   "adrs": [],
   "divida_tecnica": [],

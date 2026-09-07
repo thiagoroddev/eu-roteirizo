@@ -31,5 +31,8 @@
   "references": [
     { "path": "./tsconfig.app.json" }, // Config do app (React)
     { "path": "./tsconfig.node.json" } // Config do Node (build, Vite, scripts etc.)
-  ]
+  ],
+  "compilerOptions": {
+    "strict": true
+  }
 }

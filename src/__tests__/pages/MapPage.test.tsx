@@ -816,6 +816,15 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByText(UI_LABELS.ROUTING.LOADING_STREETS)).toBeInTheDocument();
   });
 
+  it("BG-011: informa aproximacao sem ruas e permite tentar novamente", () => {
+    roadGraphState.status = "error";
+    roadGraphState.error = UI_LABELS.ROUTING.TIMEOUT;
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+    expect(screen.getByText(`${UI_LABELS.ROUTING.TIMEOUT} ${UI_LABELS.ROUTING.APPROXIMATE_PATH}`)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.ROUTING.RETRY }));
+    expect(roadGraphState.retry).toHaveBeenCalled();
+  });
+
   // ==========================================================================
   // Ponto órfão + rascunho da parada (TASK-RF-006.4 — telas 8–9)
   // ==========================================================================
