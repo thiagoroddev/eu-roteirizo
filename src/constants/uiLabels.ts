@@ -70,7 +70,26 @@ export const UI_LABELS = {
   GRAPH_DIAGNOSTICS: {
     TITLE: "Diagnóstico da malha (últimas cargas)",
     EMPTY: "Nenhuma carga de ruas registrada ainda neste aparelho.",
-    HINT: "Tempo alto com resposta pequena = fila do servidor. Tempo alto com resposta grande = área pedida grande.",
+    HINT: "A duração sozinha não identifica a causa. Consulte o erro e as tentativas; dados ausentes não foram medidos.",
+    CAUSE_UNKNOWN: "Causa não registrada (histórico antigo).",
+    ATTEMPT: "Tentativa",
+    CACHE_STATE: "Leitura do cache",
+    CACHE_WRITE: "Gravação do cache",
+    HEADERS: "Até resposta",
+    BODY: "Leitura",
+    TOTAL: "Total",
+    BYTES: "Bytes recebidos",
+    NOT_MEASURED: "não medido",
+    CATEGORIES: {
+      ok: "sucesso",
+      http: "erro HTTP",
+      timeout: "tempo excedido",
+      network: "falha de rede (causa não informada pelo navegador)",
+      "invalid-response": "resposta inválida",
+      overpass: "erro informado pelo serviço",
+      cancelled: "cancelado",
+    },
+    CACHE_STATES: { hit: "encontrado", miss: "ausente", expired: "expirado", "read-error": "falha de leitura", stored: "salvo", "write-error": "falha ao salvar", "not-needed": "não necessária" },
     CLEAR: "Limpar histórico",
     /** Apaga o cache de ruas para que a próxima abertura de mapa force uma carga de REDE. */
     CLEAR_CACHE: "Limpar cache de ruas (forçar nova carga)",
@@ -81,13 +100,13 @@ export const UI_LABELS = {
      * - cache: "cache · 4,2 km² · 0,1 s · 4.512 nós"
      * - erro:  "erro · 4,2 km² · 30 s"
      */
-    SAMPLE: (s: { source: string; bboxKm2: number; totalMs: number; networkMs: number; responseKb: number; nodes: number }) => {
+    SAMPLE: (s: { source: string; bboxKm2: number; totalMs: number; networkMs: number | null; responseKb: number | null; nodes: number }) => {
       const seconds = (ms: number) => `${(ms / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} s`;
       const head = `${s.source} · ${s.bboxKm2.toLocaleString("pt-BR")} km²`;
       if (s.source === "erro") return `${head} · ${seconds(s.totalMs)}`;
       const nodes = `${s.nodes.toLocaleString("pt-BR")} nós`;
       if (s.source === "cache") return `${head} · ${seconds(s.totalMs)} · ${nodes}`;
-      return `${head} · ${seconds(s.totalMs)} (rede ${seconds(s.networkMs)}) · ${s.responseKb.toLocaleString("pt-BR")} KB · ${nodes}`;
+      return `${head} · ${seconds(s.totalMs)} (rede ${s.networkMs === null ? "não medido" : seconds(s.networkMs)}) · ${s.responseKb === null ? "não medido" : s.responseKb.toLocaleString("pt-BR")} KB · ${nodes}`;
     },
   },
   // Aba Rotas (TASK-RF-022.3): lista de romaneios salvos
@@ -386,8 +405,16 @@ export const UI_LABELS = {
     STATUS_NONE: "Sem roteiro",
   },
   ROUTING: {
-    OVERPASS_HTTP_ERROR: (status: number) => `O servidor de mapas respondeu com erro (${status}). Tente novamente em instantes.`,
+    OVERPASS_HTTP_ERROR: (status: number) =>
+      status === 429
+        ? "O serviço de ruas atingiu o limite de consultas (429). Aguarde pelo menos 30 segundos antes de tentar novamente."
+        : `O servidor de mapas respondeu com erro (${status}). Tente novamente em instantes.`,
     NETWORK_ERROR: "Não foi possível baixar as ruas do mapa. Verifique sua conexão e tente novamente.",
+    NO_STREETS: "Nenhuma rua disponível para calcular percursos nesta área.",
+    INVALID_RESPONSE: "O serviço de ruas retornou uma resposta inválida. Tente novamente.",
+    OVERPASS_ERROR: "O serviço não conseguiu preparar as ruas desta área. Tente novamente em instantes.",
+    CANCELLED: "Carregamento das ruas cancelado.",
+    APPROXIMATE_PATH: "Ruas indisponíveis: as linhas são aproximações e não representam caminhos pelas ruas.",
     TIMEOUT: "O download das ruas demorou demais e foi cancelado. Tente novamente.",
     // Status discreto do grafo no painel do roteiro (TASK-RF-006.3).
     LOADING_STREETS: "Carregando ruas…",

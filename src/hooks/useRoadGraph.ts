@@ -14,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { DeliveryPoint } from "../types/routing";
 import type { RoadGraph } from "../utils/routing/graph";
 import { bboxFromPoints } from "../utils/routing/osm";
+import { UI_LABELS } from "../constants/uiLabels";
 import { loadRoadGraph } from "../services/graphCache";
 
 /** Margin (meters) around the points' envelope: street context for map
@@ -55,6 +56,7 @@ export const useRoadGraph = (points: DeliveryPoint[], enabled: boolean): RoadGra
     // `cancelled` is LOCAL to this run (captured by the cleanup closure), never a
     // shared ref — a stale run resolving late is ignored without wedging the next.
     let cancelled = false;
+    const controller = new AbortController();
     // Canonical fetch-in-effect: the synchronous "loading" transition is the
     // effect's own lifecycle state, not derivable from props/state — the rule's
     // alternatives (derived state/event handler) don't apply to a URL-driven load.
@@ -62,20 +64,21 @@ export const useRoadGraph = (points: DeliveryPoint[], enabled: boolean): RoadGra
     setStatus("loading");
     setError(null);
     /* eslint-enable react-hooks/set-state-in-effect */
-    void loadRoadGraph(bbox).then((result) => {
+    void loadRoadGraph(bbox, { signal: controller.signal }).then((result) => {
       if (cancelled) return;
       completedAttemptRef.current = attempt;
-      if (result.graph) {
+      if (result.graph && result.graph.coords.size > 0) {
         setGraph(result.graph);
         setStatus("ready");
       } else {
-        setError(result.error ?? null);
+        setError(result.error ?? UI_LABELS.ROUTING.NO_STREETS);
         setStatus("error");
       }
     });
 
     return () => {
       cancelled = true;
+      controller.abort();
       // Only an incomplete run releases the in-flight guard; a completed attempt
       // keeps its marker so a ready graph is not refetched on the next toggle.
       if (startedAttemptRef.current === attempt && completedAttemptRef.current !== attempt) {

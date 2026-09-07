@@ -1083,7 +1083,11 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
 
   /** Discreet graph status for the header (ready/idle = silence). */
   const graphStatus =
-    graphLoadStatus === "loading" ? { text: UI_LABELS.ROUTING.LOADING_STREETS } : graphLoadStatus === "error" ? { text: graphError ?? UI_LABELS.ROUTING.NETWORK_ERROR, onRetry: retryGraph } : null;
+    graphLoadStatus === "loading"
+      ? { text: UI_LABELS.ROUTING.LOADING_STREETS }
+      : graphLoadStatus === "error"
+        ? { text: `${graphError ?? UI_LABELS.ROUTING.NETWORK_ERROR} ${UI_LABELS.ROUTING.APPROXIMATE_PATH}`, onRetry: retryGraph }
+        : null;
 
   /** Shared transition: updates the markers and the panel's stop memory. The
       panel follows the FOCUSED or expanded stop (RF-006.4.10 — a single click

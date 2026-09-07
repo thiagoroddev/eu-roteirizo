@@ -5,7 +5,7 @@
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-06T08:04:59.282Z",
+    "atualizado_em": "2026-09-07T04:37:11.647Z",
     "gerado_por": "script"
   },
   "projeto": {
@@ -201,7 +201,7 @@
           "ressalva",
           "reprovada"
         ],
-        "nota": "Relato humano nesta sessao: uso em Samsung M35, sem data do teste; offline ainda nao testado. Ha evidencia informal de uso, mas sem roteiro/resultados por cenario, versao do navegador ou medicao em rua/sol. Afericao formal e validacao humana seguem pendentes em TASK-CHORE-012."
+        "nota": "Relato Samsung M35 em TASK-CHORE-012: teste offline realizado, com reuso de tiles visitados entre romaneios, lacunas em zooms/areas e atraso durante arraste. Percursos fora das ruas offline e falha ao carregar malha tambem online. Validacao integral pendente com falhas; data do teste e versao nao informadas."
       },
       "confiabilidade": {
         "pergunta": "O que acontece se cair? Quanto tempo fora e tolerav[e]l?",
@@ -214,7 +214,7 @@
           "ressalva",
           "reprovada"
         ],
-        "nota": "Parcial, TASK-CHORE-012: precache e testes de TTL, cache e retry/backoff presentes. Humano relata uso em Samsung M35 sem data; offline ainda nao testado. Recuperacao por cenario nao documentada. Sem backup/sync remoto por decisao."
+        "nota": "Relato Samsung M35 em TASK-CHORE-012: teste offline realizado, com reuso de tiles visitados entre romaneios, lacunas em zooms/areas e atraso durante arraste. Percursos fora das ruas offline e falha ao carregar malha tambem online. Validacao integral pendente com falhas; data do teste e versao nao informadas."
       },
       "seguranca": {
         "pergunta": "Quem pode ver e fazer o que?",
@@ -617,10 +617,10 @@
   "contagens": {
     "_gerado_por_script": true,
     "tarefas_concluidas": 1,
-    "tarefas_abertas": 22,
-    "tarefas_no_ciclo": 2,
+    "tarefas_abertas": 23,
+    "tarefas_no_ciclo": 3,
     "tarefas_na_reserva": 20,
-    "validacoes_pendentes": 1,
+    "validacoes_pendentes": 2,
     "requisitos_total": 22,
     "requisitos_implementados": 0,
     "requisitos_pendentes": 22,

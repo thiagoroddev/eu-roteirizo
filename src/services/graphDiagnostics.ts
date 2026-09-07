@@ -1,11 +1,10 @@
+import type { GraphDiagnostics } from "../utils/routing/osm";
+
 /**
  * services/graphDiagnostics.ts - Medição do carregamento da malha viária
  * (TASK-CHORE-006, primeiro passo da ADR-010).
  *
- * A pergunta que isto responde: a lentidão do "Carregando ruas…" é **payload**
- * (resposta grande ⇒ vale fatiar o bbox) ou **fila do Overpass** (resposta
- * pequena e mesmo assim demorada ⇒ só a migração da ADR-010 resolve)? As duas
- * têm correções opostas, então medir vem antes de otimizar.
+ * Registra transporte, tentativas e cache. Duracao isolada nao identifica a causa.
  *
  * Por que gravar SEMPRE (e não atrás de `import.meta.env.DEV`):
  * - o smoke roda no build de PRODUÇÃO (site de testes), onde DEV é falso;
@@ -30,16 +29,20 @@ export type GraphFetchSource = "rede" | "cache" | "erro";
 export interface GraphFetchSample {
   /** ISO de quando terminou. */
   at: string;
+  schemaVersion?: 1;
+  diagnostics?: GraphDiagnostics;
+  cacheState?: "hit" | "miss" | "expired" | "read-error";
+  cacheWrite?: "stored" | "write-error" | "not-needed";
   /** Rede, cache ou falha. */
   source: GraphFetchSource;
   /** Área do bbox consultado, em km². */
   bboxKm2: number;
-  /** Tempo até a resposta chegar (rede + fila do servidor), em ms. Zero em cache/erro. */
-  networkMs: number;
+  /** Tempo até a resposta chegar (rede + fila do servidor), em ms. Zero em cache, null quando nao medido em falha. */
+  networkMs: number | null;
   /** Tempo total: rede+parse+grafo, leitura do cache, ou até a falha. Em ms. */
   totalMs: number;
-  /** Tamanho aproximado da resposta, em KB. Zero em cache/erro. */
-  responseKb: number;
+  /** Tamanho aproximado da resposta, em KB. Zero em cache, null quando nao medido em falha. */
+  responseKb: number | null;
   nodes: number;
   edges: number;
 }

@@ -68,18 +68,19 @@ export const bboxKey = (bbox: BBox): string => [bbox.south, bbox.west, bbox.nort
  * @param options - Optional TTL override.
  * @returns The cached RoadGraph, or `null` on miss/stale/failure.
  */
-export const getCachedGraph = async (bbox: BBox, options: GraphCacheOptions = {}): Promise<RoadGraph | null> => {
-  const ttlMs = options.ttlMs ?? DEFAULT_TTL_MS;
+type CacheReadState = "hit" | "miss" | "expired" | "read-error";
+const readCachedGraph = async (bbox: BBox, options: GraphCacheOptions = {}): Promise<{ graph: RoadGraph | null; state: CacheReadState }> => {
   try {
     const db = await getDb();
     const record = (await db.get(STORE, bboxKey(bbox))) as CacheRecord | undefined;
-    if (!record) return null;
-    if (Date.now() - record.storedAt >= ttlMs) return null; // stale
-    return record.graph;
+    if (!record) return { graph: null, state: "miss" };
+    if (Date.now() - record.storedAt >= (options.ttlMs ?? DEFAULT_TTL_MS)) return { graph: null, state: "expired" };
+    return { graph: record.graph, state: "hit" };
   } catch {
-    return null;
+    return { graph: null, state: "read-error" };
   }
 };
+export const getCachedGraph = async (bbox: BBox, options: GraphCacheOptions = {}): Promise<RoadGraph | null> => (await readCachedGraph(bbox, options)).graph;
 
 /**
  * Stores a graph for a bbox (best-effort; failures are swallowed).
@@ -87,13 +88,14 @@ export const getCachedGraph = async (bbox: BBox, options: GraphCacheOptions = {}
  * @param bbox - The bounding box this graph covers.
  * @param graph - The RoadGraph to cache.
  */
-export const putCachedGraph = async (bbox: BBox, graph: RoadGraph): Promise<void> => {
+export const putCachedGraph = async (bbox: BBox, graph: RoadGraph): Promise<boolean> => {
   try {
     const db = await getDb();
     const record: CacheRecord = { graph, storedAt: Date.now() };
     await db.put(STORE, record, bboxKey(bbox));
+    return true;
   } catch {
-    // caching is best-effort; ignore failures
+    return false;
   }
 };
 
@@ -121,22 +123,22 @@ export const loadRoadGraph = async (bbox: BBox, options: GraphCacheOptions & Fet
   /** Campos numéricos comuns às três origens (TASK-CHORE-006). */
   const base = () => ({ at: new Date().toISOString(), bboxKm2: Math.round(bboxAreaKm2(bbox) * 100) / 100, totalMs: Math.round(performance.now() - startedAt) });
 
-  const cached = await getCachedGraph(bbox, options);
+  const { graph: cached, state: cacheState } = await readCachedGraph(bbox, options);
   if (cached) {
     if (import.meta.env.DEV) console.info(`loadRoadGraph: cache hit — nós=${cached.coords.size}`);
     // Cache hit TAMBÉM vira amostra: sem isso o painel fica vazio numa área já
     // visitada e parece instrumento quebrado — foi o que aconteceu no 1º smoke.
-    recordGraphSample({ ...base(), source: "cache", networkMs: 0, responseKb: 0, nodes: cached.coords.size, edges: countEdges(cached) });
+    recordGraphSample({ ...base(), schemaVersion: 1, cacheState, cacheWrite: "not-needed", source: "cache", networkMs: 0, responseKb: 0, nodes: cached.coords.size, edges: countEdges(cached) });
     return { graph: cached };
   }
 
   const result = await fetchRoadGraph(bbox, options);
-  if (result.graph) await putCachedGraph(bbox, result.graph);
+  const cacheWrite = result.graph ? ((await putCachedGraph(bbox, result.graph)) ? "stored" : "write-error") : "not-needed";
 
-  if (result.stats) recordGraphSample({ at: base().at, source: "rede", ...result.stats });
+  if (result.stats) recordGraphSample({ at: base().at, source: "rede", ...result.stats, schemaVersion: 1, cacheState, cacheWrite, diagnostics: result.diagnostics });
   // Falha também é dado — e é a mais importante: "às vezes nem carrega" só
   // aparece se a carga que morreu (timeout/429) deixar rastro.
-  else recordGraphSample({ ...base(), source: "erro", networkMs: 0, responseKb: 0, nodes: 0, edges: 0 });
+  else recordGraphSample({ ...base(), source: "erro", networkMs: null, responseKb: null, nodes: 0, edges: 0, schemaVersion: 1, cacheState, cacheWrite, diagnostics: result.diagnostics });
 
   return result;
 };
