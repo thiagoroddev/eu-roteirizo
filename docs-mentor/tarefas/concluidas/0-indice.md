@@ -9,3 +9,4 @@
 | 07/09/26 02:44 | [`TASK-CHORE-013`](./2026-09-07--02h44--TASK-CHORE-013.md) | CHORE | Migrar projeto Cloudflare Pages de eu-roteirizo-prototipo para teste-prototipo | - | concluida | aprovado |
 | 07/09/26 03:44 | [`TASK-CHORE-014`](./2026-09-07--03h44--TASK-CHORE-014.md) | CHORE | Apontar proxy de tiles do mapa para 1-teste-prototipo | - | concluida | aprovado |
 | 07/09/26 14:23 | [`TASK-BG-011`](./2026-09-07--14h23--TASK-BG-011.md) | BG | Restabelecer o carregamento da malha viaria e diagnosticar falhas de rede, HTTP e timeout | - | concluida | aprovado |
+| 07/09/26 15:21 | [`TASK-CHORE-012`](./2026-09-07--15h21--TASK-CHORE-012.md) | CHORE | Conferir configuracoes do GitHub e aferir as metas de qualidade apontadas pelo doctor | - | concluida | aprovado |
