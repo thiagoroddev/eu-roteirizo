@@ -3,7 +3,7 @@
   "tipo": "CHORE",
   "titulo": "Conferir configuracoes do GitHub e aferir as metas de qualidade apontadas pelo doctor",
   "fatia_de": null,
-  "estado": "aberta",
+  "estado": "concluida",
   "cerimonia": "Standard",
   "valor": "importante",
   "urgencia": "imediata",
@@ -19,7 +19,7 @@
   "criada_em": "06/09/26 04:02",
   "iniciada_em": "06/09/26 04:02",
   "commit_base": "cde57d52cd16bb19400b39d3b401824ed930e34d",
-  "concluida_em": null,
+  "concluida_em": "07/09/26 15:21",
   "plano": {
     "muda": [
       "docs-mentor/contexto.json - declarar configuracoes consultadas no GitHub, explicitar o padrao de uma tarefa por ramo e registrar afericoes com suas limitacoes.",
@@ -61,7 +61,7 @@
       "comando": "npm run typecheck",
       "codigo_saida": 0,
       "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
-      "executado_em": "06/09/26 04:03",
+      "executado_em": "07/09/26 15:12",
       "evidencia_url": null,
       "motivo": null,
       "ressalva": null
@@ -72,18 +72,18 @@
       "comando": "npm run lint",
       "codigo_saida": 0,
       "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
-      "executado_em": "06/09/26 04:05",
+      "executado_em": "07/09/26 15:13",
       "evidencia_url": null,
       "motivo": null,
       "ressalva": null
     },
     "testes": {
       "rotulo": "APROVADO",
-      "vermelho_em": null,
+      "vermelho_em": "06/09/26 04:02",
       "comando": "npm run test",
       "codigo_saida": 0,
-      "saida": "> eu-roteirizo@0.1.0 test\n> vitest\n\n\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.9 \u001b[39m\u001b[90mE:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\u001b[39m\n\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroStopSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 895\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m kind='vehicle' = SEMPRE o veículo: glifo do carro + badge, SEM pacote, NÃO tocável, com 'Editar local' (RF-006.16/.18) \u001b[33m 386\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/hooks/useRouteUploader.test.ts \u001b[2m(\u001b[22m\u001b[2m24 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1979\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m sets error for files exceeding max size \u001b[33m 1874\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/StopItemList.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1084\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m opens with EVERY item expanded (scan mode) and the badge as box glyph + count \u001b[33m 379\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m tapping a row toggles ONLY that item's expansion \u001b[33m 398\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroDraftSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1213\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m header: edit-mode label, stop number, metric CHIPS, the FIXED radius card and ALWAYS-VISIBLE CTAs — no global remaining (RF-006.4.25) \u001b[33m 406\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m body: a ÂNCORA abre a lista com o sentido; 'Tornar âncora' por membro; 'Resetar' só fora do padrão (RF-006.6) \u001b[33m 416\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroPanelHeader.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 297\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/RouteMap.test.tsx \u001b[2m(\u001b[22m\u001b[2m32 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 302\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/FileUploader.test.tsx \u001b[2m(\u001b[22m\u001b[2m13 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 300\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroStartSection.test.\n[...recortado...]\n-BV7QT456.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)\n\n\u001b[90mstderr\u001b[2m | src/__tests__/pages/MapPage.test.tsx\u001b[2m > \u001b[22m\u001b[2mMapPage (focus screen)\u001b[2m > \u001b[22m\u001b[2mo círculo do preview segue o stepper de raio (RF-006.4.6)\n\u001b[22m\u001b[39mWarning: An update to MapScreen inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\n    at MapScreen (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:148:22)\n    at div\n    at MapPage (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:109:119)\n    at RenderedRoute (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)",
-      "executado_em": "06/09/26 04:06",
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest\n\n\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.9 \u001b[39m\u001b[90mE:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\u001b[39m\n\n \u001b[32m✓\u001b[39m src/__tests__/components/RouteSimpleTable.test.tsx \u001b[2m(\u001b[22m\u001b[2m8 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 2135\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders the correct title using UI_LABELS \u001b[33m 688\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders the column headers using UI_LABELS \u001b[33m 715\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroStopSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 2249\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m kind='vehicle' = SEMPRE o veículo: glifo do carro + badge, SEM pacote, NÃO tocável, com 'Editar local' (RF-006.16/.18) \u001b[33m 828\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m NÃO tem gestos de âncora — editar âncora = 'Editar parada' (RF-006.15 reverteu a .5) \u001b[33m 492\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/StopItemList.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 2684\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m opens with EVERY item expanded (scan mode) and the badge as box glyph + count \u001b[33m 726\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m tapping a row toggles ONLY that item's expansion \u001b[33m 1056\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m highlights the SELECTED item (aria-current), independent of expansion \u001b[33m 592\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/hooks/useRouteUploader.test.ts \u001b[2m(\u001b[22m\u001b[2m24 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 3612\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m sets error for files exceeding max size \u001b[33m 3433\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroDraftSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 3083\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m header: edit-mode label, stop number, metric CHIPS, the FIXED radius card and ALWAYS-VISIBLE CTAs — no global remaining (RF-006.4.25) \u001b[33m 1024\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m body: full-\n[...recortado...]\n-BV7QT456.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)\n\n\u001b[90mstderr\u001b[2m | src/__tests__/pages/MapPage.test.tsx\u001b[2m > \u001b[22m\u001b[2mMapPage (focus screen)\u001b[2m > \u001b[22m\u001b[2mo círculo do preview segue o stepper de raio (RF-006.4.6)\n\u001b[22m\u001b[39mWarning: An update to MapScreen inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\n    at MapScreen (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:148:22)\n    at div\n    at MapPage (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:109:119)\n    at RenderedRoute (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)",
+      "executado_em": "07/09/26 15:13",
       "evidencia_url": null,
       "motivo": null,
       "ressalva": null
@@ -93,11 +93,11 @@
       "vermelho_em": null,
       "comando": "npm run build",
       "codigo_saida": 0,
-      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1952 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.81 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-q5HgCi8R.css   \u001b[39m\u001b[1m\u001b[2m 27.74 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.10 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-UfF1rw5c.js    \u001b[39m\u001b[1m\u001b[33m512.36 kB\u001b[39m\u001b[22m\u001b[2m │ gzip:  94.79 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-giTtp3H-.js   \u001b[39m\u001b[1m\u001b[33m803.48 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.60 kB\u001b[22m\n\u001b[32m✓ built in 11.43s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1766.19 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
-      "executado_em": "06/09/26 04:07",
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1952 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CRig_ynt.css   \u001b[39m\u001b[1m\u001b[2m 27.77 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.10 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-sDVXj40g.js    \u001b[39m\u001b[1m\u001b[33m516.18 kB\u001b[39m\u001b[22m\u001b[2m │ gzip:  96.37 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-giTtp3H-.js   \u001b[39m\u001b[1m\u001b[33m803.48 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.60 kB\u001b[22m\n\u001b[32m✓ built in 6.31s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1769.94 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "07/09/26 15:14",
       "evidencia_url": null,
       "motivo": null,
-      "ressalva": "O limite de 500 kB gera aviso, sem bloquear o build; avaliar os tamanhos registrados na saida."
+      "ressalva": "Aviso de chunks > 500 kB"
     }
   },
   "achados": [
@@ -168,9 +168,9 @@
       "ref": "TASK-BG-011"
     }
   ],
-  "validacao": "pendente",
-  "validado_em": null,
-  "validacao_motivo": "Teste offline relatado pelo humano nesta sessao no Samsung M35: tiles ja visitados continuam disponiveis ao trocar romaneio; areas/zooms nao visitados ficam sem imagem; durante arraste prolongado, tiles ficam cinza ate soltar o dedo. Criacao de paradas offline produz linhas fora das ruas; carregamento de ruas tambem falhou online. Data da execucao, versao publicada, navegador e mensagem de erro nao informados. Validacao integral permanece pendente com falhas observadas; validado_em permanece null. Capturas posteriores confirmam mensagem de tempo excedido e multiplas cargas com erro entre 1,39 e 2,69 km²; causa raiz ainda nao determinada.",
+  "validacao": "aprovado",
+  "validado_em": "07/09/26 15:14",
+  "validacao_motivo": null,
   "tarefas_geradas": [
     "TASK-RF-030",
     "TASK-RF-031",
@@ -185,5 +185,5 @@
   "riscos_aceitos": [],
   "absorvida_por": null,
   "cancelamento_motivo": null,
-  "narrativa": null
+  "narrativa": "2026-09-07--15h21--TASK-CHORE-012.md"
 }
