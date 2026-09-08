@@ -10,6 +10,9 @@ import { saveRoteiro } from "./routeStorage";
 import { saveStandaloneManifest, deriveAvailableColsFromRows, findRouteAt } from "./manifestStorage";
 import { COLUMN_NAMES } from "../constants";
 import type { RowData } from "../types";
+import zipcodeDataNeighborhood from "../data/CEPs-Hub_RJ_Ilha-do-Governador.json";
+
+const zipcodeMapNeighborhood = new Map(Object.entries(zipcodeDataNeighborhood));
 
 export const deliveryPointToRow = (p: DeliveryPoint, index = 0): RowData => {
   const firstPkg = p.packages?.[0];
@@ -67,16 +70,174 @@ export const createRouteExportPayload = (
 
 export const serializeRouteExport = (payload: ExportedRoutePayloadV1): string => JSON.stringify(payload, null, 2);
 
-export const downloadRouteJson = (payload: ExportedRoutePayloadV1): void => {
+export const extractDateFromFileName = (fileName?: string): string | null => {
+  if (!fileName) return null;
+
+  // Match YYYY-MM-DD or YYYY_MM_DD or YYYY.MM.DD
+  const ymdMatch = fileName.match(/(?:^|[^0-9])(20\d{2})[-_.](\d{2})[-_.](\d{2})(?:[^0-9]|$)/);
+  if (ymdMatch) {
+    const [, y, m, d] = ymdMatch;
+    const month = parseInt(m, 10);
+    const day = parseInt(d, 10);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${y}-${m}-${d}`;
+    }
+  }
+
+  // Match DD-MM-YYYY or DD_MM_YYYY or DD.MM.YYYY
+  const dmyMatch = fileName.match(/(?:^|[^0-9])(\d{2})[-_.](\d{2})[-_.](\d{4})(?:[^0-9]|$)/);
+  if (dmyMatch) {
+    const [, d, m, y] = dmyMatch;
+    const month = parseInt(m, 10);
+    const day = parseInt(d, 10);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${y}-${m}-${d}`;
+    }
+  }
+
+  // Match compact YYYYMMDD (ex: 20260908)
+  const compactMatch = fileName.match(/(?:^|[^0-9])(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])(?:[^0-9]|$)/);
+  if (compactMatch) {
+    const [, y, m, d] = compactMatch;
+    return `${y}-${m}-${d}`;
+  }
+
+  return null;
+};
+
+export const extractDateFromRows = (rows?: RowData[]): string | null => {
+  if (!rows || rows.length === 0) return null;
+
+  for (const row of rows) {
+    const rawDate = row[COLUMN_NAMES.DATE];
+    if (rawDate !== undefined && rawDate !== null && String(rawDate).trim() !== "") {
+      const s = String(rawDate).trim();
+      const isoMatch = s.match(/\b(\d{4})[-/.](\d{2})[-/.](\d{2})\b/);
+      if (isoMatch) {
+        return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+      }
+      const brMatch = s.match(/\b(\d{2})[-/.](\d{2})[-/.](\d{4})\b/);
+      if (brMatch) {
+        return `${brMatch[3]}-${brMatch[2]}-${brMatch[1]}`;
+      }
+    }
+  }
+
+  for (const row of rows) {
+    const at = row[COLUMN_NAMES.PLANNED_AT];
+    if (typeof at === "string") {
+      const atMatch = at.match(/AT(\d{4})(\d{2})(\d{2})/i);
+      if (atMatch) {
+        return `${atMatch[1]}-${atMatch[2]}-${atMatch[3]}`;
+      }
+    }
+  }
+
+  return null;
+};
+
+export const resolveRouteDate = (params: { fileName?: string; rows?: RowData[]; importedAt?: string; exportedAt?: string; isSingleRoute?: boolean }): string => {
+  const dateFromFileName = extractDateFromFileName(params.fileName);
+  if (dateFromFileName) return dateFromFileName;
+
+  const dateFromRows = extractDateFromRows(params.rows);
+  if (dateFromRows) return dateFromRows;
+
+  if (params.importedAt && params.importedAt.length >= 10) {
+    const parsed = params.importedAt.slice(0, 10);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(parsed)) return parsed;
+  }
+
+  if (params.exportedAt && params.exportedAt.length >= 10) {
+    const parsed = params.exportedAt.slice(0, 10);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(parsed)) return parsed;
+  }
+
+  return new Date().toISOString().slice(0, 10);
+};
+
+export const extractAtSuffix = (payload: ExportedRoutePayloadV1): string => {
+  const at = (payload.meta?.at ?? findRouteAt(payload.rows ?? []) ?? "").trim();
+  if (!at) return "ROTA";
+  if (at.length >= 4) return at.slice(-4).toUpperCase();
+  return at.toUpperCase().padStart(4, "0");
+};
+
+export const getDominantNeighborhood = (rows?: RowData[], points?: DeliveryPoint[]): string => {
+  const counts = new Map<string, number>();
+
+  const add = (name?: string) => {
+    if (!name) return;
+    const clean = name.trim();
+    if (clean) {
+      counts.set(clean, (counts.get(clean) ?? 0) + 1);
+    }
+  };
+
+  if (rows && rows.length > 0) {
+    for (const r of rows) {
+      let b = r[COLUMN_NAMES.NEIGHBORHOOD] ? String(r[COLUMN_NAMES.NEIGHBORHOOD]).trim() : "";
+      if (!b && r[COLUMN_NAMES.ZIPCODE]) {
+        const rawZip = String(r[COLUMN_NAMES.ZIPCODE]).replace(/\D/g, "");
+        const cepEntry = zipcodeMapNeighborhood.get(rawZip);
+        if (cepEntry?.bairro) b = cepEntry.bairro.trim();
+      }
+      add(b);
+    }
+  } else if (points && points.length > 0) {
+    for (const p of points) {
+      const b = p.packages?.[0]?.rawData?.[COLUMN_NAMES.NEIGHBORHOOD];
+      if (b) add(String(b).trim());
+    }
+  }
+
+  if (counts.size === 0) return "GERAL";
+
+  let bestName = "GERAL";
+  let maxCount = -1;
+  for (const [name, count] of counts.entries()) {
+    if (count > maxCount) {
+      maxCount = count;
+      bestName = name;
+    }
+  }
+
+  const sanitized = bestName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toUpperCase();
+
+  return sanitized || "GERAL";
+};
+
+export const buildExportFileName = (payload: ExportedRoutePayloadV1, manifestMeta?: { fileName?: string; importedAt?: string }): string => {
+  const effectiveFileName = manifestMeta?.fileName ?? payload.meta?.manifestFileName;
+  const effectiveImportedAt = manifestMeta?.importedAt ?? payload.meta?.importedAt;
+
+  const date = resolveRouteDate({
+    fileName: effectiveFileName,
+    rows: payload.rows,
+    importedAt: effectiveImportedAt,
+    exportedAt: payload.exportedAt,
+    isSingleRoute: payload.isSingleRoute,
+  });
+
+  const atSuffix = extractAtSuffix(payload);
+  const neighborhood = getDominantNeighborhood(payload.rows, payload.points);
+
+  return `${date}-${atSuffix}-${neighborhood}.json`;
+};
+
+export const downloadRouteJson = (payload: ExportedRoutePayloadV1, manifestMeta?: { fileName?: string; importedAt?: string }): void => {
   if (typeof document === "undefined") return;
   const json = serializeRouteExport(payload);
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const dateStr = payload.exportedAt ? payload.exportedAt.slice(0, 10) : new Date().toISOString().slice(0, 10);
-  const sanitizedRoute = payload.routeName.replace(/[^a-zA-Z0-9_\u00C0-\u00FF-]/g, "_").toLowerCase();
   a.href = url;
-  a.download = `roteiro-${sanitizedRoute}-${dateStr}.json`;
+  a.download = buildExportFileName(payload, manifestMeta);
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

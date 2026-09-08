@@ -22,6 +22,7 @@
 
 import type { RoutesMap } from "./index";
 import type { SaveManifestResult } from "../services/manifestStorage";
+import type { ManifestMeta } from "./manifest";
 
 /** ================================================================================================================
  * This hook manages file upload and processing.
@@ -67,8 +68,10 @@ export interface RouteUploaderReturn {
    * exist in this mode. False before any file is processed. */
   isSingleRoute: boolean;
 
-  /**
-   * Outcome of persisting the manifest locally (TASK-RF-022.1/.2): saved,
+  /** Metadata of the active loaded manifest (filename, importedAt, etc.). Null before any load. */
+  manifestMeta: ManifestMeta | null;
+
+  /** Result of persisting the manifest locally (TASK-RF-022.1/.2): saved,
    * duplicate (RN-23 — meta of the EXISTING record) or a storage error the UI
    * should surface. Null before any upload; reset on each new upload. A save
    * failure never blocks viewing the routes. */

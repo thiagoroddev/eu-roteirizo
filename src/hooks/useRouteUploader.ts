@@ -5,6 +5,7 @@ import { saveManifest, getManifest, getRouteRows, backfillRouteRows, deriveAvail
 import { parseAndValidateRouteJson, extractAllRowsFromPayload } from "../services/routeExport";
 import type { RoutesMap } from "../types";
 import type { RouteUploaderReturn } from "../types/hooks";
+import type { ManifestMeta } from "../types/manifest";
 import { EXAMPLE_MANIFEST, FILE_CONFIG, UI_LABELS } from "../constants";
 
 /**
@@ -63,6 +64,9 @@ export function useRouteUploader(): RouteUploaderReturn {
 
   /** True when the loaded file is a single delivery route (no "Corridor Cage") */
   const [isSingleRoute, setIsSingleRoute] = useState(false);
+
+  /** Metadata of the active loaded manifest */
+  const [manifestMeta, setManifestMeta] = useState<ManifestMeta | null>(null);
 
   /** Result of persisting the manifest locally (RF-46/RN-23); null before any upload */
   const [manifestSave, setManifestSave] = useState<SaveManifestResult | null>(null);
@@ -128,7 +132,11 @@ export function useRouteUploader(): RouteUploaderReturn {
        * re-uploading. Never blocks viewing: a duplicate (RN-23) or a storage
        * failure is only surfaced as a notice via `manifestSave`.
        */
-      setManifestSave(await saveManifest(file, result));
+      const saveRes = await saveManifest(file, result);
+      setManifestSave(saveRes);
+      if (saveRes.status === "saved" || saveRes.status === "duplicate") {
+        setManifestMeta(saveRes.meta);
+      }
     }
 
     /** Turn off loading spinner */
@@ -212,6 +220,9 @@ export function useRouteUploader(): RouteUploaderReturn {
       return false;
     }
 
+    const { id: mId, fileName, fileType, fileSize, kind, routes: rMetas, importedAt, availableCols, missingCols } = record;
+    setManifestMeta({ id: mId, fileName, fileType, fileSize, kind, routes: rMetas, importedAt, availableCols, missingCols });
+
     // Fast path: rows already grouped (REF-018).
     if (routeName) {
       const rows = await getRouteRows(id, routeName);
@@ -289,6 +300,7 @@ export function useRouteUploader(): RouteUploaderReturn {
     availableCols,
     missingCols,
     isSingleRoute,
+    manifestMeta,
     manifestSave,
     handleFileUpload,
     loadExampleManifest,
