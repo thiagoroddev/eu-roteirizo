@@ -123,4 +123,12 @@ describe("RoteiroStopSection (parada firmada — TASK-RF-006.4.2/.4.7/.4.16, rev
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: STOP.EDIT })).toBeInTheDocument();
   });
+
+  it("botao de exclusao usa rotulo Deletar parada", () => {
+    const handlers = renderSection();
+    const deleteBtn = screen.getByRole("button", { name: "Deletar parada" });
+    expect(deleteBtn).toBeInTheDocument();
+    fireEvent.click(deleteBtn);
+    expect(handlers.onDissolve).toHaveBeenCalledTimes(1);
+  });
 });

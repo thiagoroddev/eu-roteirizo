@@ -566,5 +566,25 @@
     "criado_em": "08/09/26 08:25",
     "implementado_em": "08/09/26 08:54",
     "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-51",
+    "tipo": "RF",
+    "enunciado": "Permitir recomecar rascunho no cabecalho e focar ultima parada ao deletar com rotulo Deletar parada",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "implementado",
+    "criterios_aceite": [
+      "Botao Recomecar no cabecalho com confirmacao limpa todas as paradas do rascunho",
+      "Ao deletar uma parada a ultima parada restante e selecionada automaticamente",
+      "Botao de exclusao de parada exibe icone de lixeira e rotulo Deletar parada"
+    ],
+    "tarefas": [
+      "TASK-RF-036"
+    ],
+    "adr": null,
+    "criado_em": "08/09/26 09:51",
+    "implementado_em": "08/09/26 10:08",
+    "pendente_de_validacao": false
   }
 ]

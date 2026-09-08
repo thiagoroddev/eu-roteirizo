@@ -234,6 +234,12 @@ export const UI_LABELS = {
       SECTION_START: "Ponto inicial da rota",
       /** Ícone que marca o endereço que É o início (fluxo "Partir deste endereço"). */
       START_BADGE_ARIA: "Ponto inicial da rota",
+      RESET_ROUTE: "Recomeçar",
+      RESET_ROUTE_ARIA: "Recomeçar construção do roteiro e apagar todas as paradas",
+      RESET_ROUTE_DIALOG_TITLE: "Recomeçar roteiro?",
+      RESET_ROUTE_DIALOG_DESC: "Todas as paradas criadas serão apagadas do rascunho. O ponto de partida será mantido.",
+      RESET_ROUTE_CONFIRM: "Sim, recomeçar",
+      RESET_ROUTE_CANCEL: "Cancelar",
     },
     // Linha de estado do rascunho: sempre diz O QUE FAZER agora (feedback 08/07).
     ROTEIRO_STATE_BUILDING: "Toque num endereço no mapa para criar uma parada.",
@@ -251,7 +257,7 @@ export const UI_LABELS = {
       /** Link da row do veículo (RF-006.9): abre direções até a COORDENADA da
           âncora — "como chegar lá" mesmo sem endereço; funciona sem grafo. */
       NAVIGATE: "Como chegar",
-      DISSOLVE: "Desfazer parada",
+      DISSOLVE: "Deletar parada",
       // Gestos da âncora — SÓ no modo edição (TASK-RF-006.15 reverteu a .5:
       // a parada firmada é read-only; editar âncora = reabrir como rascunho).
       MOVE_ANCHOR_HINT: "Arraste o carro no mapa para mover a parada do veículo.",

@@ -57,4 +57,29 @@ describe("RoteiroPanelHeader (TASK-RF-006.2/.3/.4.1; concise since RF-006.8)", (
     expect(screen.queryByRole("button", { name: UI_LABELS.MAP_PANEL.PREV_STOP })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: UI_LABELS.MAP_PANEL.NEXT_STOP })).not.toBeInTheDocument();
   });
+
+  it("exibe botao Recomecar quando ha paradas e confirma limpeza", () => {
+    const onResetRoute = vi.fn();
+    const { rerender } = render(
+      <RoteiroPanelHeader progress={0.38} modeLabel={UI_LABELS.MAP_PANEL.MODE_ROTEIRO_DRAFT} detailsOpen={false} onToggleDetails={vi.fn()} stopsCount={0} onResetRoute={onResetRoute} />
+    );
+
+    // Quando stopsCount é 0, o botão Recomeçar não deve ser exibido
+    expect(screen.queryByRole("button", { name: "Recomeçar" })).not.toBeInTheDocument();
+
+    // Quando há paradas criadas, o botão Recomeçar deve ser exibido
+    rerender(<RoteiroPanelHeader progress={0.38} modeLabel={UI_LABELS.MAP_PANEL.MODE_ROTEIRO_DRAFT} detailsOpen={false} onToggleDetails={vi.fn()} stopsCount={2} onResetRoute={onResetRoute} />);
+    const resetBtn = screen.getByRole("button", { name: "Recomeçar" });
+    expect(resetBtn).toBeInTheDocument();
+
+    // Clicar em Recomeçar abre o diálogo de confirmação
+    fireEvent.click(resetBtn);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText("Recomeçar roteiro?")).toBeInTheDocument();
+    expect(screen.getByText("Todas as paradas criadas serão apagadas do rascunho. O ponto de partida será mantido.")).toBeInTheDocument();
+
+    // Clicar em Sim, recomeçar invoca onResetRoute
+    fireEvent.click(screen.getByRole("button", { name: "Sim, recomeçar" }));
+    expect(onResetRoute).toHaveBeenCalledTimes(1);
+  });
 });

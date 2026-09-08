@@ -1536,6 +1536,45 @@ describe("MapPage (focus screen)", () => {
     expect(stub).toHaveAttribute("data-radius-circle", "-22.9,-43.2@20");
   });
 
+  it("ao deletar uma parada seleciona automaticamente a ultima parada remanescente", async () => {
+    startRoteiroFlow();
+    // Cria Parada 1 (p1 + p2)
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    expect(screen.getByText(new RegExp(`^${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`))).toBeInTheDocument();
+
+    // Cria Parada 2 (p3)
+    fireEvent.click(screen.getByRole("button", { name: "stub-second-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    expect(screen.getByText(new RegExp(`^${UI_LABELS.MAP_PANEL.STOP_PREFIX} 2`))).toBeInTheDocument();
+
+    // Seleciona Parada 1 (models[0])
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    expect(screen.getByText(new RegExp(`^${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`))).toBeInTheDocument();
+
+    // Deleta a Parada 1: a parada remanescente (antiga Parada 2, agora Parada 1) é selecionada automaticamente
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.DISSOLVE }));
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`^${UI_LABELS.MAP_PANEL.STOP_PREFIX} 1`))).toBeInTheDocument();
+  });
+
+  it("no painel com paradas, Recomeçar abre diálogo e limpa todas as paradas preservando ponto de partida", () => {
+    startRoteiroFlow();
+    // Cria Parada 1
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+    expect(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.RESET_ROUTE })).toBeInTheDocument();
+
+    // Clica em Recomeçar e confirma
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.RESET_ROUTE }));
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.RESET_ROUTE_CONFIRM }));
+
+    // Paradas limpas, ponto de partida continua definido
+    expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "-22.95,-43.19");
+    expect(screen.queryByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.RESET_ROUTE })).not.toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.PERCENT(0))).toBeInTheDocument();
+  });
+
   it("shows the error state when the manifest cannot be reopened", () => {
     uploaderState.routes = null;
     uploaderState.error = UI_LABELS.FILE_UPLOADER.MANIFEST_NOT_FOUND;

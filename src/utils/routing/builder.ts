@@ -75,6 +75,7 @@ export type RouteBuilderAction =
   | { type: "DISSOLVE_STOP"; stopId: string }
   | { type: "ADD_POINT_TO_STOP"; stopId: string; pointId: string }
   | { type: "HYDRATE"; route: PlannedRoute }
+  | { type: "CLEAR_STOPS" }
   | { type: "RESET" };
 
 /**
@@ -336,6 +337,11 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
         config: action.route.config,
       };
     }
+
+    case "CLEAR_STOPS":
+      /** Clears all stops, active draft and suggestion override, but keeps startPoint,
+       *  routeId, points and config intact. */
+      return { ...state, stops: [], draft: null, nextSuggestionOverride: null };
 
     case "RESET":
       /** Start construction over; route identity and config survive (RN-21: the roteiro of this rota). */
