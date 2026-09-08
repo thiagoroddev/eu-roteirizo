@@ -10,10 +10,16 @@ import {
   walkEstimateLabel,
   legLabel,
   orderedStopPoints,
+  formatRoteiroStopTitle,
+  formatVehicleStopAddress,
+  normalizeStreetName,
+  isSameStreetName,
   NO_STOP_INDEX,
+  stopColor,
 } from "../../../utils/markers/roteiroModels";
 import { ROTEIRO_TYPE_COLORS } from "../../../utils/markers/markerColors";
 import type { StopDraft } from "../../../utils/routing/builder";
+import { buildGraph } from "../../../utils/routing/graph";
 import { COLUMN_NAMES, UI_LABELS } from "../../../constants";
 import type { DeliveryPoint, RouteStop } from "../../../types/routing";
 
@@ -110,10 +116,14 @@ describe("computeRoteiroMarkerModels — draft/stop context (TASK-RF-006.4)", ()
       kind: "stop",
       lat: -22.98,
       lng: -43.2,
-      iconProps: { shape: "square", number: 3, badge: { kind: "addresses", count: 2 } },
+      iconProps: { shape: "square", number: "P3", badge: { kind: "addresses", count: 2 } },
     });
-    // "Commercial wins" (decision 26/06), in the mode's neon register (rev. 08/07).
+    // Parada com comercial mantém azul (ROTEIRO_TYPE_COLORS.commercial)
     expect(models[0].iconProps.color).toBe(ROTEIRO_TYPE_COLORS.commercial);
+
+    // Purely commercial stop retains the neon commercial blue
+    const singleOffice = computeRoteiroMarkerModels([office], [stop("stop_2", ["pt_o"], 4)]);
+    expect(singleOffice[0].iconProps.color).toBe(ROTEIRO_TYPE_COLORS.commercial);
   });
 
   it("single-address stop badges its packages instead", () => {
@@ -344,5 +354,170 @@ describe("pure helpers (TASK-RF-006.4.2)", () => {
 describe("mapsDirectionsUrl", () => {
   it("builds a Google Maps DIRECTIONS url to the coordinate (RF-006.9)", () => {
     expect(mapsDirectionsUrl({ lat: -22.95, lng: -43.19 })).toBe("https://www.google.com/maps/dir/?api=1&destination=-22.95,-43.19");
+  });
+});
+
+describe("formatVehicleStopAddress & formatRoteiroStopTitle (RF-53 / TASK-RF-038)", () => {
+  it("normaliza nomes de vias e compara equivalência de ruas", () => {
+    expect(normalizeStreetName("Avenida Epitácio Pessoa")).toBe("epitaciopessoa");
+    expect(normalizeStreetName("Av. Epitacio Pessoa")).toBe("epitaciopessoa");
+    expect(normalizeStreetName("Rua Barão da Torre")).toBe("baraodatorre");
+    expect(isSameStreetName("Avenida Epitácio Pessoa", "Av. Epitacio Pessoa")).toBe(true);
+    expect(isSameStreetName("Rua Barão da Torre", "Rua Maria Quitéria")).toBe(false);
+  });
+
+  it("formata o título da parada com o endereço completo da co-âncora no formato padrão", () => {
+    const p1: DeliveryPoint = {
+      id: "p1",
+      lat: -22.98,
+      lng: -43.2,
+      address: "Avenida Epitácio Pessoa, 4224, Apt 101",
+      packageCount: 1,
+      packages: [
+        {
+          id: "pkg_1",
+          rawData: {
+            [COLUMN_NAMES.NEIGHBORHOOD]: "Lagoa",
+            [COLUMN_NAMES.ZIPCODE]: "22061-000",
+          },
+        },
+      ],
+    };
+    const pointsById = new Map([["p1", p1]]);
+    const s: RouteStop = {
+      id: "stop_1",
+      order: 26,
+      vehicleStop: { lat: -22.98, lng: -43.2 },
+      pointIds: ["p1"],
+      radiusMeters: 30,
+      vehicleStopIsDefault: true,
+    };
+
+    const res = formatVehicleStopAddress(s, pointsById);
+    expect(res.streetLine).toBe("Avenida Epitácio Pessoa, 4224");
+    expect(res.placeLine).toBe("Lagoa, 22061-000");
+    expect(res.isSameStreet).toBe(true);
+    expect(res.isEdited).toBe(false);
+    expect(formatRoteiroStopTitle(s, pointsById)).toBe("P26 - Avenida Epitácio Pessoa, 4224, Lagoa");
+  });
+
+  it("quando vehicleStopIsDefault === false na mesma rua, formata com próximo ao número e distância", () => {
+    const p1: DeliveryPoint = {
+      id: "p1",
+      lat: -22.98,
+      lng: -43.2,
+      address: "Avenida Epitácio Pessoa, 4224",
+      packageCount: 1,
+      packages: [
+        {
+          id: "pkg_1",
+          rawData: {
+            [COLUMN_NAMES.NEIGHBORHOOD]: "Lagoa",
+          },
+        },
+      ],
+    };
+    const pointsById = new Map([["p1", p1]]);
+    const s: RouteStop = {
+      id: "stop_1",
+      order: 26,
+      vehicleStop: { lat: -22.981, lng: -43.201 },
+      pointIds: ["p1"],
+      radiusMeters: 30,
+      vehicleStopIsDefault: false,
+    };
+
+    const res = formatVehicleStopAddress(s, pointsById);
+    expect(res.isEdited).toBe(true);
+    expect(res.isSameStreet).toBe(true);
+    expect(res.distanceMeters).toBeGreaterThan(0);
+    expect(res.streetLine).toBe(`Avenida Epitácio Pessoa, próximo ao número 4224 (${res.distanceMeters}m)`);
+    expect(formatRoteiroStopTitle(s, pointsById)).toBe(`P26 - Avenida Epitácio Pessoa, próximo ao número 4224 (${res.distanceMeters}m), Lagoa`);
+  });
+
+  it("quando o veículo para em outra rua diferente da co-âncora, formata como Próximo à Rua tal", () => {
+    const p1: DeliveryPoint = {
+      id: "p1",
+      lat: -22.98,
+      lng: -43.2,
+      address: "Avenida Epitácio Pessoa, 4224",
+      packageCount: 1,
+      packages: [
+        {
+          id: "pkg_1",
+          rawData: {
+            [COLUMN_NAMES.NEIGHBORHOOD]: "Lagoa",
+          },
+        },
+      ],
+    };
+    const pointsById = new Map([["p1", p1]]);
+    const s: RouteStop = {
+      id: "stop_1",
+      order: 26,
+      vehicleStop: { lat: -22.981, lng: -43.201 },
+      pointIds: ["p1"],
+      radiusMeters: 30,
+      vehicleStopIsDefault: false,
+    };
+
+    // Mock do RoadGraph indicando que a via mais próxima é a Rua Maria Quitéria
+    const mockGraph = buildGraph([
+      {
+        type: "way",
+        nodes: [1, 2],
+        geometry: [
+          { lat: -22.981, lon: -43.201 },
+          { lat: -22.982, lon: -43.202 },
+        ],
+        tags: { name: "Rua Maria Quitéria" },
+      },
+    ]);
+
+    const res = formatVehicleStopAddress(s, pointsById, mockGraph);
+    expect(res.isSameStreet).toBe(false);
+    expect(res.isEdited).toBe(true);
+    expect(res.streetLine).toBe(`Próximo à Avenida Epitácio Pessoa, 4224 (${res.distanceMeters}m)`);
+    expect(formatRoteiroStopTitle(s, pointsById, mockGraph)).toBe(`P26 - Próximo à Avenida Epitácio Pessoa, 4224 (${res.distanceMeters}m), Lagoa`);
+  });
+
+  it("fallback quando a co-âncora não é encontrada", () => {
+    const s: RouteStop = {
+      id: "stop_1",
+      order: 26,
+      vehicleStop: { lat: -22.98, lng: -43.2 },
+      pointIds: ["ghost"],
+      radiusMeters: 30,
+    };
+    expect(formatRoteiroStopTitle(s, new Map())).toBe("P26");
+  });
+
+  it("stopColor mantém azul para parada que contém entregas comerciais mesmo se mista com residenciais", () => {
+    const comPoint = typedPt("pt_com", "Office");
+    const resPoint = typedPt("pt_res", "Home");
+    const pointsMap = new Map<string, DeliveryPoint>([
+      ["pt_com", comPoint],
+      ["pt_res", resPoint],
+    ]);
+
+    const mixedStop: RouteStop = {
+      id: "stop_mixed",
+      order: 10,
+      vehicleStop: { lat: -22.98, lng: -43.2 },
+      pointIds: ["pt_com", "pt_res"],
+      radiusMeters: 30,
+    };
+    const mixedColor = stopColor(mixedStop, pointsMap);
+    expect(mixedColor).toEqual(ROTEIRO_TYPE_COLORS.commercial);
+
+    const pureResStop: RouteStop = {
+      id: "stop_res",
+      order: 11,
+      vehicleStop: { lat: -22.98, lng: -43.2 },
+      pointIds: ["pt_res"],
+      radiusMeters: 30,
+    };
+    const resColor = stopColor(pureResStop, pointsMap);
+    expect(resColor).toEqual(ROTEIRO_TYPE_COLORS.residential);
   });
 });

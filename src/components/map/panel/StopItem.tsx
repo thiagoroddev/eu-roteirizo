@@ -57,7 +57,7 @@ interface RowProps {
   vehicleStop?: boolean;
 }
 
-export const StopItemRow = ({ item, onTap, leading, highlighted = false, expanded, neon = false, markerGlyph, isStart = false, vehicleStop = false }: RowProps) => {
+export const StopItemRow = ({ item, onTap, leading, highlighted = false, expanded, neon = false, markerGlyph, isStart = false }: RowProps) => {
   const typeColor = neon ? roteiroColorForLocationType(item.markerType) : colorForLocationType(item.markerType);
   const color = markerGlyph === "vehicle" ? ROTEIRO_MARKER_COLORS.vehicle : typeColor;
 
@@ -92,14 +92,6 @@ export const StopItemRow = ({ item, onTap, leading, highlighted = false, expande
         </span>
         {/* Real complement — the vehicle-only placeholder row has none. */}
         {markerGlyph !== "vehicle" && item.complement !== SHEET.NO_COMPLEMENT && <span className="block truncate text-xs text-muted-foreground">{`${SHEET.COMPLEMENT} ${item.complement}`}</span>}
-        {/* "Parada do veículo" badge under the address (RF-006.15/.18): the vehicle
-            row AND the delivery it parks by both carry the same text badge. */}
-        {vehicleStop && (
-          <Badge variant="secondary" className="mt-0.5 gap-1 px-1.5 py-0 text-[10px] font-medium" style={{ backgroundColor: ROTEIRO_MARKER_COLORS.vehicle.bottom, color: "#FFFFFF" }}>
-            <Car className="h-3 w-3" aria-hidden />
-            {UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE}
-          </Badge>
-        )}
       </span>
       {/* Package badge for a delivery address (rev. 07/07). The VEHICLE STOP row
           has no packages of its own — it's where the car parks, not a delivery —

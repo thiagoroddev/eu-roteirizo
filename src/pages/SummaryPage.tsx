@@ -189,9 +189,11 @@ function SummaryPage() {
               </Button>
             )}
 
-            <Button variant="outline" onClick={() => setShowSimpleTable(true)}>
-              {UI_LABELS.ROUTE_SUMMARY.SIMPLE_TABLE}
-            </Button>
+            {infoMode === "roteiro" && (
+              <Button variant="outline" onClick={() => setShowSimpleTable(true)}>
+                {UI_LABELS.ROUTE_SUMMARY.ROTEIRO_TABLE}
+              </Button>
+            )}
             {infoMode === "original" && (
               <Button variant="outline" onClick={() => setShowTable(true)}>
                 {UI_LABELS.ROUTE_SUMMARY.ORIGINAL_TABLE}

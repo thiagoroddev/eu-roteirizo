@@ -39,4 +39,12 @@ describe("PanelModeBar", () => {
     expect(screen.queryByRole("button", { name: UI_LABELS.MAP_PANEL.PREV_STOP })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: UI_LABELS.MAP_PANEL.NEXT_STOP })).not.toBeInTheDocument();
   });
+
+  it("renderiza a porcentagem diretamente ao lado do nome do modo", () => {
+    render(<PanelModeBar modeLabel="Meu Roteiro" progress={1.0} />);
+
+    expect(screen.getByText("Meu Roteiro")).toBeInTheDocument();
+    expect(screen.getByText("-")).toBeInTheDocument();
+    expect(screen.getByText("100%")).toBeInTheDocument();
+  });
 });

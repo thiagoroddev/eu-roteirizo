@@ -5,6 +5,7 @@ import { MapPin } from "lucide-react";
 import { RouteMap } from "../components/RouteMap";
 import { MapToast } from "../components/map/MapToast";
 import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
 import { MapModeToggle, MODE_QUERY_PARAM, MODE_QUERY_ROTEIRO, type MapMode } from "../components/map/MapModeToggle";
 import { MapPanel, PANEL_COLLAPSED_PX, type PanelSnap } from "../components/map/panel/MapPanel";
 import { ORIGINAL_PANEL_SIZING, ROTEIRO_PANEL_SIZING } from "../components/map/panel/panelSizing";
@@ -40,7 +41,11 @@ import {
   stopPlaceSummaryFromPoints,
   walkEstimateLabel,
   orderedStopPoints,
+  formatVehicleStopAddress,
+  type FormattedVehicleStopAddress,
+  stopColor,
 } from "../utils/markers/roteiroModels";
+import { Footprints } from "lucide-react";
 import { buildDeliveryPoints } from "../utils/routing/points";
 import { suggestionOrigin, draftCandidateIds, farChosenPointIds, isComplete, toPlannedRoute, FAR_POINT_RADIUS_FACTOR, FAR_POINT_MIN_METERS } from "../utils/routing/builder";
 import { getRoteiro, saveRoteiro, deleteRoteiro } from "../services/routeStorage";
@@ -84,9 +89,9 @@ const TYPE_LABELS = UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.TYPE_LABELS;
     07/07) — shared by the Original summary and the roteiro's stop summaries
     (RF-006.4.3: "exatamente a mesma coisa que no modo Original"). */
 const typedPackageChips = (packagesByType: PanelMetrics["packagesByType"]): PanelMetric[] => [
-  ...(packagesByType.residential > 0 ? [{ label: UI_LABELS.MAP_PANEL.METRIC_TYPED_PACKAGES(TYPE_LABELS.RESIDENTIAL, packagesByType.residential) }] : []),
-  ...(packagesByType.commercial > 0 ? [{ label: UI_LABELS.MAP_PANEL.METRIC_TYPED_PACKAGES(TYPE_LABELS.COMMERCIAL, packagesByType.commercial) }] : []),
-  ...(packagesByType.indefinite > 0 ? [{ label: UI_LABELS.MAP_PANEL.METRIC_TYPED_PACKAGES(TYPE_LABELS.INDEFINITE, packagesByType.indefinite) }] : []),
+  ...(packagesByType.residential > 0 ? [{ label: UI_LABELS.MAP_PANEL.METRIC_TYPED_PACKAGES(TYPE_LABELS.RESIDENTIAL, packagesByType.residential), kind: "residential" as const }] : []),
+  ...(packagesByType.commercial > 0 ? [{ label: UI_LABELS.MAP_PANEL.METRIC_TYPED_PACKAGES(TYPE_LABELS.COMMERCIAL, packagesByType.commercial), kind: "commercial" as const }] : []),
+  ...(packagesByType.indefinite > 0 ? [{ label: UI_LABELS.MAP_PANEL.METRIC_TYPED_PACKAGES(TYPE_LABELS.INDEFINITE, packagesByType.indefinite), kind: "indefinite" as const }] : []),
 ];
 
 /**
@@ -119,6 +124,26 @@ function MapPage() {
   );
 }
 
+const renderVehicleStreetNode = (addr: FormattedVehicleStopAddress, prefix?: string) => {
+  const p = prefix ? `${prefix} - ` : "";
+  if (!addr.distLabel) {
+    return `${p}${addr.streetLine}`;
+  }
+  return (
+    <span className="flex items-center gap-1">
+      <span>
+        {p}
+        {addr.baseStreetLine}
+      </span>
+      <span className="inline-flex items-center gap-0.5 text-xs font-normal text-muted-foreground">
+        <span>({addr.distanceMeters}m</span>
+        <Footprints className="inline h-3 w-3 align-middle" aria-hidden />
+        <span>)</span>
+      </span>
+    </span>
+  );
+};
+
 /**
  * MapScreen - the loaded map screen; owns ALL the screen state (interaction,
  * panel, mode, builder). Two modes over the same structure (ADR-009):
@@ -135,7 +160,7 @@ function MapPage() {
  *   here — instantiated unconditionally so a draft survives toggling modes — and
  *   feeds RouteMap with external models (faded free points) and the panel with
  *   the remaining-work HUD. Falls back to Original when nothing is plottable.
- */
+ * */
 function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestId: string; routeName: string }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -583,10 +608,6 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
     // No auto-raise: the collapsed snap now FITS the summary (RF-006.4.12).
   };
 
-  const handleReorderStop = (stopId: string, targetOrder: number) => {
-    dispatch({ type: "REORDER_STOP", stopId, targetOrder });
-  };
-
   /** Committed-stop actions (RF-006.4.2 — fluxo §9; REOPEN/DISSOLVE were ready). */
   const handleEditStop = () => {
     if (!selectedStop) return;
@@ -779,9 +800,12 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       showReorderNotice(UI_LABELS.MAP_PANEL.REORDERED_NOTICE);
     }
   };
-  /** The distinct vehicle car is selectable when ungrouped (RF-006.17): tapping
-      it drops the member selection, so the panel returns to the vehicle stop. */
-  const handleAnchorTap = () => setSelectedMemberId(null);
+  /** The vehicle anchor icon on the map selects the 1st delivery point (RF-53 / TASK-RF-038). */
+  const handleAnchorTap = () => {
+    if (selectedStop) {
+      setSelectedMemberId(selectedStop.pointIds[0] ?? null);
+    }
+  };
 
   // ------- Anchor/sense gestures INSIDE the edit (draft — RF-006.6) -------
   /** Same DEFAULT rule as the firmed stop's reset, over the draft's members. */
@@ -902,29 +926,27 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
 
   const stopEstimate = selectedStop && stopPoints.length > 0 ? stopWalkEstimate(selectedStop.vehicleStop, stopPoints, estimateConfig) : null;
   const stopPlace = stopPlaceSummaryFromPoints(stopPoints);
+  const selectedStopAddress = selectedStop ? formatVehicleStopAddress(selectedStop, pointsById, graph) : null;
+  const stopTitle = selectedStopAddress ? renderVehicleStreetNode(selectedStopAddress) : undefined;
+  const stopSubtitle = selectedStopAddress?.placeLine || undefined;
+  const selectedStopColor = selectedStop ? stopColor(selectedStop, pointsById) : undefined;
   const stopMetrics: PanelMetric[] = [
     { label: UI_LABELS.MAP_PANEL.METRIC_ADDRESSES(stopPoints.length) },
     ...typedPackageChips(packagesByTypeFromPoints(stopPoints)),
     ...(stopEstimate ? [{ label: walkEstimateLabel(stopEstimate) }] : []),
   ];
-  /** The VEHICLE STOP is an INDEPENDENT entity per stop (RF-006.18): its own
-      clickable map marker + its own panel row, whether or not it coincides with
-      a delivery. The delivery it PARKS BY is the 1st (nearest to it — nearest-
-      first order), which carries the "Parada do veículo" badge. Its address line
-      + maps link come from the anchor's OWN coordinate now (RF-006.9). */
   const vehicleDeliveryPoint = stopPoints[0] ?? null;
-  const stopAnchorItem = selectedStop && vehicleDeliveryPoint ? buildAnchorItem(vehicleDeliveryPoint, selectedStop.vehicleStop) : null;
   /** The stop's full address list ("Ver parada" — RF-006.4.7), ordinals in visit
       order, each with its walking leg from the previous (RF-006.10). */
   const stopListLegs = stopLegs(stopPoints, pedGraph);
   const stopListItems = stopPoints.map((point, index) => pointToStopItemData(point, { ordinal: index + 1, leg: stopListLegs[index] }));
-  /** "Endereço selecionado" of a firmed stop (RF-006.18): with nothing tapped,
-      the VEHICLE STOP row (independent, with the quick "Editar local"); tapping
-      the 1st delivery shows it as the one the vehicle parks by (badge + packages);
-      any other tapped member is a plain address. */
+  /** "Endereço selecionado" of a firmed stop (RF-006.18, revised RF-53 / TASK-RF-038):
+      The card only renders when ungrouped/expanded; the 1st delivery point is selected
+      by default without vehicle stop badge. */
   const selectedMemberIndex = effectiveSelectedMemberId ? stopPoints.findIndex((p) => p.id === effectiveSelectedMemberId) : -1;
-  const stopSelectedKind: "member" | "coincident" | "vehicle" = selectedMemberIndex < 0 ? "vehicle" : selectedMemberIndex === 0 ? "coincident" : "member";
-  const stopSelectedItem = selectedMemberIndex >= 0 ? pointToStopItemData(stopPoints[selectedMemberIndex], { ordinal: selectedMemberIndex + 1 }) : stopAnchorItem;
+  const stopSelectedKind: "member" | "coincident" | "vehicle" = selectedMemberIndex <= 0 ? "member" : "member";
+  const stopSelectedItem =
+    selectedMemberIndex >= 0 ? pointToStopItemData(stopPoints[selectedMemberIndex], { ordinal: selectedMemberIndex + 1 }) : stopPoints[0] ? pointToStopItemData(stopPoints[0], { ordinal: 1 }) : null;
 
   // ------- Suggested-stop preview (3ª seção do painel — RF-006.4.3/.4.4) -------
   /** How the stop WOULD look if created now: the summary aggregates the seed
@@ -980,9 +1002,26 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
         const estimate = stopPts.length > 0 ? stopWalkEstimate(stop.vehicleStop, stopPts, estimateConfig) : null;
         const legs = stopLegs(stopPts, pedGraph);
         const place = stopPlaceSummaryFromPoints(stopPts);
+        const vehicleAddr = formatVehicleStopAddress(stop, pointsById, graph);
+        const color = stopColor(stop, pointsById);
+        const badgeStyle = {
+          background: `linear-gradient(to bottom, ${color.top}, ${color.bottom})`,
+          color: color.numberInk ?? "#FFFFFF",
+          border: "none",
+        };
+        const streetNode = renderVehicleStreetNode(vehicleAddr);
+        const titleNode = (
+          <span className="flex items-center gap-1.5 font-semibold truncate">
+            <Badge style={badgeStyle} className="px-1.5 py-0 text-[11px] font-bold shrink-0">
+              P{stop.order}
+            </Badge>
+            <span className="truncate">{streetNode}</span>
+          </span>
+        );
         return {
           id: stop.id,
           order: stop.order,
+          titleOverride: titleNode,
           neighborhoods: place.neighborhoods,
           zipcodes: place.zipcodes,
           metrics: [
@@ -996,7 +1035,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
           vehicleStopKey: stopPts[0]?.id ?? null,
         };
       }),
-    [builderState.stops, estimateConfig, pointsById, pedGraph]
+    [builderState.stops, estimateConfig, pointsById, pedGraph, graph]
   );
 
   /** The would-be NEXT stop (RF-006.8 — numbered in sequence, stops.length + 1):
@@ -1426,6 +1465,10 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
                   onDissolve={handleDissolveStop}
                   listOpen={panelView === "list"}
                   onToggleList={panelView === "list" ? handleHideRoteiroList : handleShowRoteiroList}
+                  titleOverride={stopTitle}
+                  subtitleOverride={stopSubtitle}
+                  isExpanded={expandedRoteiroStopId === selectedStop.id}
+                  stopColor={selectedStopColor}
                 />
               </div>
             ) : roteiroContext === "point-selected" && selectedPointItem ? (
@@ -1528,7 +1571,6 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
               onShowSuggestedOnMap={handleShowSuggestedOnMap}
               onCreateSuggested={handleCreateSuggested}
               onExportRoute={handleExportRoute}
-              onReorderStop={handleReorderStop}
             />
           ) : roteiroContext === "start-flow" && !startSelected ? (
             // Idle (RF-006.11): ONLY the suggested-next-stop card — the lean

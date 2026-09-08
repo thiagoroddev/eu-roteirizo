@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
  *   "Ver lista completa" pattern; the roteiro's "Editar/Desfazer parada").
  */
 interface Props {
-  label: string;
+  label: ReactNode;
   /** Inline info right BESIDE the label (e.g. the suggested-stop's vehicle distance). */
   meta?: ReactNode;
   /** Buttons on the label row (right side). */
@@ -30,7 +30,8 @@ interface Props {
 export const PanelSection = ({ label, meta, actions, divider = true, children }: Props) => {
   // shrink-0: the label never wraps to two lines — on a narrow screen the META
   // (which already truncates) is what gives way, not "Parada sugerida" (REF-016).
-  const labelEl = <p className="shrink-0 text-xs font-medium text-muted-foreground">{label}</p>;
+  const labelEl =
+    typeof label === "string" ? <p className="shrink-0 text-xs font-medium text-muted-foreground">{label}</p> : <div className="shrink-0 text-xs font-medium text-muted-foreground">{label}</div>;
   return (
     <div className={cn(divider && "border-t border-input")}>
       {/* pb-1: THE canonical breathing room between a section's label and its

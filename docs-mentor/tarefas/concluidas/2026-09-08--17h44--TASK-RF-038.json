@@ -1,0 +1,123 @@
+{
+  "id": "TASK-RF-038",
+  "tipo": "RF",
+  "titulo": "Mutirao de UI do Meu Roteiro: resumo da parada em 2 linhas, badge P{N} estilizado, porcentagem no cabecalho, cores das paradas, tabelas no sumario e remocao de reordenacao",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "RF-53",
+  "requisitos": [
+    "RF-53"
+  ],
+  "criada_em": "08/09/26 15:31",
+  "iniciada_em": "08/09/26 15:32",
+  "commit_base": "e1531366dd1a4421b0b86ae84d097ce14f2f63d4",
+  "concluida_em": "08/09/26 17:44",
+  "plano": {
+    "muda": [
+      "src/utils/markers/roteiroModels.ts - Adicionar comparacao de vias (mesma rua vs rua diferente), formatacao do endereco do veiculo com distancia/icone a pe e prefixo P nos icones das paradas.",
+      "src/components/map/panel/PanelSection.tsx - Suportar ReactNode em label para permitir badge colorido P{N} na secao.",
+      "src/components/map/panel/PanelTitle.tsx - Suportar titleOverride e subtitleOverride para layout de duas linhas no resumo e detalhes.",
+      "src/components/map/panel/RoteiroStopSection.tsx - Renderizar badge colorido P{order} no label da secao, ocultar card Endereco selecionado na agrupada e exibir na desagrupada com layout em duas linhas.",
+      "src/components/map/panel/RoteiroOverviewSection.tsx - Exibir P{order} - Endereco do veiculo no titulo de cada parada da visao geral.",
+      "src/pages/MapPage.tsx - Integrar novo formatador de endereco do veiculo, passar stopColor para RoteiroStopSection e configurar titleOverride na visao geral.",
+      "src/__tests__/utils/markers/roteiroModels.test.ts - Testes unitarios de deteccao de via, formatacao com distancia e marcadores P{N}.",
+      "src/__tests__/components/map/panel/RoteiroStopSection.test.tsx - Testes de layout em duas linhas, badge colorido e visibilidade condicional.",
+      "src/__tests__/pages/MapPage.test.tsx - Testes de integracao do novo resumo e marcadores do mapa."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Ao selecionar uma parada agrupada o resumo exibe badge colorido P{N}, linha 1 com endereco do veiculo (com indicacao de proximo e distancia a pe com icone se afastado ou em outra rua) e linha 2 com Bairro e CEP",
+        "teste": "roteiroModels.test.ts > formata o endereco do veiculo com mesma rua, rua adjacente e distancia a pe"
+      },
+      {
+        "texto": "Na parada agrupada o card Endereco selecionado permanece oculto",
+        "teste": "RoteiroStopSection.test.tsx > oculta a secao Endereco selecionado quando isExpanded e falso"
+      },
+      {
+        "texto": "Ao desagrupar a parada com duplo-clique a primeira entrega e selecionada automaticamente no card Endereco selecionado sem o selo de veiculo",
+        "teste": "MapPage.test.tsx > duplo-clique desagrupa e exibe automaticamente a primeira entrega selecionada no card de endereco"
+      },
+      {
+        "texto": "Os marcadores quadrados das paradas no mapa exibem o prefixo P (P1, P2...)",
+        "teste": "roteiroModels.test.ts > gera marcadores quadrados de paradas com prefixo P"
+      },
+      {
+        "texto": "Na visao geral dos detalhes cada parada exibe o endereco do veiculo precedido de P{N}",
+        "teste": "RoteiroOverviewSection.test.tsx > exibe o titulo da parada com P{N} e o endereco do veiculo"
+      }
+    ],
+    "impacto": "Modulo de painel de parada e marcadores do Meu Roteiro (MapPage, RoteiroStopSection, RoteiroOverviewSection, PanelSection, PanelTitle e roteiroModels).",
+    "riscos": [
+      "Testes legados que esperavam o numero puro nos marcadores do mapa ou o formato antigo de titulo da parada precisarao ser atualizados."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram deteccao de mesma rua vs rua adjacente para a parada do veiculo, layout em duas linhas no resumo com badge colorido P{N}, prefixo P nos marcadores de parada e exibicao de P{N} - Endereco nos detalhes. A solucao e estritamente proporcional, utilizando as estruturas de grafos e calculos de distancia ja existentes no projeto sem novas dependencias."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "08/09/26 15:44",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest\n\n\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.9 \u001b[39m\u001b[90mE:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\u001b[39m\n\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroPanelHeader.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 634\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/RouteSimpleTable.test.tsx \u001b[2m(\u001b[22m\u001b[2m8 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 754\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders the correct title using UI_LABELS \u001b[33m 321\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroStopSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1236\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m exibe a seção 'Endereço selecionado' sem badge de veículo quando isExpanded é verdadeiro \u001b[33m 468\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/pages/RoutesPage.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 2141\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m acende o chip das rotas com roteiro salvo (RN-21) \u001b[33m 404\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m collapses a BIG multi card by default; the toggle shows/hides the scrollable chips \u001b[33m 337\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m deletes a manifest after confirmation and refreshes the list \u001b[33m 467\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m keeps the manifest when the deletion is cancelled \u001b[33m 396\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroDraftSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 2080\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m header: edit-mode label, stop number, metric CHIPS, the FIXED radius card and ALWAYS-VISIBLE CTAs — no global remaining (RF-006.4.25) \u001b[33m 585\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m body: full-list structure with ± icon toggles (rev. 08/07 3ª rodada) \u001b[33m 635\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m body: a ÂNCORA abre a lista com o sentido; 'Tornar âncora' por membro; 'Resetar' só fora do padrão (RF-006.6) \u001b[33m 595\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m \n[...recortado...]\nprojetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)\n\n\u001b[90mstderr\u001b[2m | src/__tests__/pages/MapPage.test.tsx\u001b[2m > \u001b[22m\u001b[2mMapPage (focus screen)\u001b[2m > \u001b[22m\u001b[2mduplo-clique desagrupa e exibe automaticamente a primeira entrega selecionada no card de endereco (RF-53 / TASK-RF-038)\n\u001b[22m\u001b[39mWarning: An update to MapScreen inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\n    at MapScreen (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:199:22)\n    at div\n    at MapPage (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:115:119)\n    at RenderedRoute (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)",
+      "executado_em": "08/09/26 17:42",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "08/09/26 17:42",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "08/09/26 17:42",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1954 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-DGx9Izec.css   \u001b[39m\u001b[1m\u001b[2m 27.88 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.13 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-BvJ694yY.js    \u001b[39m\u001b[1m\u001b[33m530.12 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 100.57 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-B6etagQ-.js   \u001b[39m\u001b[1m\u001b[33m803.28 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.49 kB\u001b[22m\n\u001b[32m✓ built in 8.93s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1783.46 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "08/09/26 17:43",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    }
+  },
+  "achados": [],
+  "validacao": "pendente",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-08--17h44--TASK-RF-038.md"
+}

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Car, ChevronDown, ChevronUp, Download, MapPin, Move, Trash2 } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Car, Download, MapPin, Move, Trash2 } from "lucide-react";
 import { Button } from "../../ui/button";
 import { PanelSection } from "./PanelSection";
 import { PanelTitle, type PanelMetric } from "./PanelTitle";
@@ -22,6 +22,8 @@ export interface OverviewStopView {
   neighborhoods: string[];
   zipcodes: string[];
   metrics: PanelMetric[];
+  /** Custom title overriding "Parada N — Bairro" (RF-53 / TASK-RF-038). */
+  titleOverride?: ReactNode;
   /** Addresses in visit order (ordinals) — the tap-to-expand drill-down. */
   items: StopItemData[];
   /** The address the vehicle parks by (1st) — its "Parada do veículo" badge in
@@ -98,8 +100,6 @@ interface Props {
   onCreateSuggested: () => void;
   /** Export the current route to a JSON file (TASK-RF-013). */
   onExportRoute?: () => void;
-  /** Reorder a stop to a target order (TASK-RF-035). */
-  onReorderStop?: (stopId: string, targetOrder: number) => void;
 }
 
 export const RoteiroOverviewSection = ({
@@ -117,7 +117,6 @@ export const RoteiroOverviewSection = ({
   onShowSuggestedOnMap,
   onCreateSuggested,
   onExportRoute,
-  onReorderStop,
 }: Props) => {
   /** One drill-down open at a time — the overview is a scan, not an editor. */
   const [openStopId, setOpenStopId] = useState<string | null>(null);
@@ -164,38 +163,15 @@ export const RoteiroOverviewSection = ({
                   >
                     {/* pt-2.5 = same rhythm as the start row (smoke 15/07: the
                         title used to sit flush on the divider above). */}
-                    <PanelTitle className="pt-2.5" stopNumber={String(stop.order)} neighborhoods={stop.neighborhoods} zipcodes={stop.zipcodes} metrics={stop.metrics} />
+                    <PanelTitle
+                      className="pt-2.5"
+                      stopNumber={String(stop.order)}
+                      neighborhoods={stop.neighborhoods}
+                      zipcodes={stop.zipcodes}
+                      metrics={stop.metrics}
+                      titleOverride={stop.titleOverride}
+                    />
                   </button>
-                  {onReorderStop && stops.length > 1 && (
-                    <div className="flex items-center gap-0.5 mr-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        data-vaul-no-drag
-                        aria-label={OVERVIEW.MOVE_UP_ARIA(stop.order)}
-                        title={OVERVIEW.MOVE_UP_ARIA(stop.order)}
-                        disabled={stop.order <= 1}
-                        className="h-8 w-8 shrink-0 disabled:opacity-30"
-                        onClick={() => onReorderStop(stop.id, stop.order - 1)}
-                      >
-                        <ChevronUp className="h-4 w-4" aria-hidden />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        data-vaul-no-drag
-                        aria-label={OVERVIEW.MOVE_DOWN_ARIA(stop.order)}
-                        title={OVERVIEW.MOVE_DOWN_ARIA(stop.order)}
-                        disabled={stop.order >= stops.length}
-                        className="h-8 w-8 shrink-0 disabled:opacity-30"
-                        onClick={() => onReorderStop(stop.id, stop.order + 1)}
-                      >
-                        <ChevronDown className="h-4 w-4" aria-hidden />
-                      </Button>
-                    </div>
-                  )}
                   <Button
                     type="button"
                     variant="ghost"

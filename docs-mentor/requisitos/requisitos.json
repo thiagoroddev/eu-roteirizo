@@ -606,5 +606,25 @@
     "criado_em": "08/09/26 12:04",
     "implementado_em": "08/09/26 13:06",
     "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-53",
+    "tipo": "RF",
+    "enunciado": "Resumo da parada agrupada com endereco completo do veiculo no titulo e selecao automatica da primeira entrega ao desagrupar",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "implementado",
+    "criterios_aceite": [
+      "Ao selecionar uma parada agrupada o titulo do resumo exibe o endereco completo da parada do veiculo herdado da co-ancora",
+      "Na parada agrupada o card Endereco selecionado nao e exibido",
+      "Ao desagrupar a parada o card Endereco selecionado exibe automaticamente a primeira entrega selecionada sem o selo de veiculo"
+    ],
+    "tarefas": [
+      "TASK-RF-038"
+    ],
+    "adr": null,
+    "criado_em": "08/09/26 15:31",
+    "implementado_em": "08/09/26 17:44",
+    "pendente_de_validacao": false
   }
 ]

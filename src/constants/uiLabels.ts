@@ -477,6 +477,7 @@ export const UI_LABELS = {
     // RF-008: com roteiro salvo, o mesmo botão passa a REABRIR em vez de criar.
     VIEW_ROTEIRO: "Ver Meu Roteiro",
     SIMPLE_TABLE: "Tabela Simplificada",
+    ROTEIRO_TABLE: "Tabela Meu Roteiro",
     ORIGINAL_TABLE: "Tabela Original",
     // Redesenho do Sumário (TASK-REF-017): as duas seções viram um toggle e o
     // botão do mapa passa a SEGUIR o toggle (um só, contextual).
