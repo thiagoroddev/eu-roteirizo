@@ -151,6 +151,10 @@ export const UI_LABELS = {
     // Duas visões do painel (rev. 07/07 — TASK-RF-023.7)
     SECTION_STOP: "Resumo da parada",
     SECTION_SELECTED: "Endereço selecionado",
+    IGNORE_ADDRESS: "Ignorar endereço",
+    UNIGNORE_ADDRESS: "Restaurar endereço",
+    IGNORED_BADGE: "Ignorado",
+    SECTION_IGNORED: (count: number) => `Endereços ignorados (${count})`,
     /** Badge da "parada do veículo" (RF-006.15): no lugar do complemento na row.
         A âncora que COINCIDE com um endereço de entrega mostra o ordinal + este
         badge (tocável, pacotes); a distinta mostra o glifo do carro + o badge.

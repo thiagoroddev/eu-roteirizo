@@ -32,7 +32,7 @@ import type { StopWalkEstimate } from "../routing/estimates";
 import type { MarkerModel } from "./markerModels";
 import type { StopItemData, PackageRowData } from "./panelModels";
 import type { MarkerColor } from "./markerSvg";
-import { roteiroColorForLocationType } from "./markerColors";
+import { IGNORED_MARKER_COLOR, roteiroColorForLocationType } from "./markerColors";
 import { dominantType } from "./stopGrouping";
 import { extractRowComplement, locationTypeLabel } from "./markerModels";
 import { resolveLocationType } from "../inferLocationType";
@@ -87,6 +87,8 @@ export interface RoteiroModelOptions {
       selects — the panel's "Adicionar a esta parada" is what edits. Separate
       from `selectedPointId`, whose chrome is suppressed while drafting. */
   draftSelectedPointId?: string | null;
+  /** Endereços ignorados pelo usuário — ganham cor de aviso no mapa. */
+  ignoredPointIds?: readonly string[];
 }
 
 /**
@@ -193,8 +195,10 @@ export const computeRoteiroMarkerModels = (points: DeliveryPoint[], stops: Route
   // stop). Draft members: ring + "1º/2º…"; candidates: DASHED ring + glow.
   // During an EDIT (RF-006.4.9) the source also includes the edited stop's own
   // points (they're not in ANOTHER stop), so its members/candidates draw here.
+  const ignoredSet = new Set(opts.ignoredPointIds ?? []);
   const circleSource = draft ? points.filter((point) => !otherCommittedIds.has(point.id)) : unassignedPoints(points, stops);
   for (const point of circleSource) {
+    const isIgnored = ignoredSet.has(point.id);
     const memberIndex = draft?.pointIds.indexOf(point.id) ?? -1;
     const isMember = memberIndex >= 0;
     const isCandidate = !isMember && candidateIds.has(point.id);
@@ -209,7 +213,7 @@ export const computeRoteiroMarkerModels = (points: DeliveryPoint[], stops: Route
       stopIndex: NO_STOP_INDEX,
       iconProps: {
         shape: "circle",
-        color: roteiroColorForLocationType(pointDominantType(point)),
+        color: isIgnored ? IGNORED_MARKER_COLOR : roteiroColorForLocationType(pointDominantType(point)),
         number: isMember ? UI_LABELS.MAP_PANEL.ORDINAL(memberIndex + 1) : null,
         badge: point.packageCount > 1 ? { kind: "packages", count: point.packageCount } : null,
         selected: isMember || isCandidate || isSelected,

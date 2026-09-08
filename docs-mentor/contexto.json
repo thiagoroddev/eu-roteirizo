@@ -682,8 +682,8 @@
     "bloqueio_em_tarefas": 40
   },
   "lembretes": [
-    "1 validacao(oes) manual(is) pendente(s): TASK-RF-037",
-    "10 tarefas sem auditoria (cadencia 10). Rode: mentor auditar preparar"
+    "3 validacao(oes) manual(is) pendente(s): TASK-RF-037, TASK-RF-038, TASK-RF-039",
+    "12 tarefas sem auditoria (cadencia 10). Rode: mentor auditar preparar"
   ],
   "_lembretes_nota": "GERADO pelo doctor a cada execucao. Nao digite aqui: campo livre acumula prosa como qualquer outro.",
   "offsets_de_id": {

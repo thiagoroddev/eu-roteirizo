@@ -58,6 +58,22 @@ describe("routeProgress", () => {
     expect(progress.ratio).toBe(1);
   });
 
+  it("reaches 100% when active points are committed and remaining points are ignored", () => {
+    const state = run(
+      withStopAB(started()),
+      { type: "OPEN_STOP_DRAFT", seedPointId: "c", suggestedVehicleStop: { lat: c.lat, lng: c.lng } },
+      { type: "TOGGLE_DRAFT_POINT", pointId: "e" },
+      { type: "COMMIT_STOP" }
+    );
+    expect(routeProgress(state).ratio).toBeCloseTo(4 / 5);
+
+    const ignoredD = run(state, { type: "IGNORE_POINT", pointId: "d" });
+    const progress = routeProgress(ignoredD);
+    expect(progress.addressesTotal).toBe(4);
+    expect(progress.addressesDone).toBe(4);
+    expect(progress.ratio).toBe(1);
+  });
+
   it("no points → ratio 0, never a division by zero", () => {
     const empty = createInitialBuilderState([], undefined, { routeId: "route_empty", createdAt: "2026-07-07T00:00:00.000Z" });
     expect(routeProgress(empty).ratio).toBe(0);

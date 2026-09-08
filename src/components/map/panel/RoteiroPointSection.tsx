@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Car, Move, Trash2 } from "lucide-react";
 import { Button } from "../../ui/button";
+import { Badge } from "../../ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../ui/dialog";
 import { PanelSection } from "./PanelSection";
 import { PanelTitle, type PanelMetric } from "./PanelTitle";
@@ -68,6 +69,10 @@ interface Props {
   /** Start gestures (RF-006.14): reposition arms a map tap; delete drops it. */
   onDeleteStart?: () => void;
   onRepositionStart?: () => void;
+  /** Se o endereço selecionado está ignorado. */
+  isIgnored?: boolean;
+  /** Callback para alternar entre ignorar e restaurar o endereço. */
+  onToggleIgnore?: () => void;
 }
 
 export const RoteiroPointSection = ({
@@ -88,6 +93,8 @@ export const RoteiroPointSection = ({
   isStart = false,
   onDeleteStart,
   onRepositionStart,
+  isIgnored = false,
+  onToggleIgnore,
 }: Props) => {
   const stopsCount = totalStops ?? (stopOptions.length > 0 ? stopOptions.length : suggestedOrder > 1 ? suggestedOrder - 1 : 0);
   const [chosenOrder, setChosenOrder] = useState<number>(suggestedOrder);
@@ -101,7 +108,23 @@ export const RoteiroPointSection = ({
     <div>
       {/* 2ª seção — Endereço selecionado. The "no stop yet" notice lives HERE —
           it is about the ADDRESS (rev. 08/07). */}
-      <PanelSection label={UI_LABELS.MAP_PANEL.SECTION_SELECTED}>
+      <PanelSection
+        label={UI_LABELS.MAP_PANEL.SECTION_SELECTED}
+        meta={
+          isIgnored ? (
+            <Badge variant="outline" className="border-orange-500/60 bg-orange-500/10 text-orange-600 dark:text-orange-400 px-1.5 py-0 text-[10px] font-semibold">
+              {UI_LABELS.MAP_PANEL.IGNORED_BADGE}
+            </Badge>
+          ) : undefined
+        }
+        actions={
+          onToggleIgnore && (
+            <Button type="button" variant="outline" size="sm" className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground" data-vaul-no-drag onClick={onToggleIgnore}>
+              {isIgnored ? UI_LABELS.MAP_PANEL.UNIGNORE_ADDRESS : UI_LABELS.MAP_PANEL.IGNORE_ADDRESS}
+            </Button>
+          )
+        }
+      >
         {/* No local pt: the label's breathing room is PanelSection's pb-1 now
             (REF-016) — per-component compensations are exactly what drifted. */}
         <p className="px-4 text-xs text-muted-foreground">{UI_LABELS.MAP_PANEL.ROTEIRO_NO_STOP_YET}</p>

@@ -48,6 +48,14 @@ export const ROTEIRO_MARKER_COLORS: Record<"vehicle" | "start", MarkerColor> = {
   start: { top: "#3B82F6", bottom: "#1D4ED8", glow: "rgba(59,130,246,.55)" },
 };
 
+/** Cor de aviso/destaque (laranja) para endereços ignorados no mapa. */
+export const IGNORED_MARKER_COLOR: MarkerColor = {
+  top: "#FF7043",
+  bottom: "#D84315",
+  glow: "rgba(255,112,67,.55)",
+  numberInk: "#FFFFFF",
+};
+
 /** The mode's neon accent — suggestion line + radius circle (RF-006.4.2). */
 export const ROTEIRO_ACCENT = "#00D1FF";
 

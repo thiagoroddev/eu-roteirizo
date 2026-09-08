@@ -118,4 +118,33 @@ describe("RoteiroOverviewSection (TASK-RF-013 Exportar Roteiro)", () => {
     expect(screen.getByText("P1 - Rua Barão da Torre, 123")).toBeInTheDocument();
     expect(screen.getByText("Ipanema, 22410-000")).toBeInTheDocument();
   });
+
+  it("renderiza a seção de endereços ignorados em último lugar com ações de restaurar e ver no mapa", () => {
+    const onUnignorePoint = vi.fn();
+    const onShowPointOnMap = vi.fn();
+    const ignoredItem = {
+      addressKey: "pt_ignored",
+      markerNumber: "",
+      markerType: "home",
+      addressLine: "Rua Euclides da Rocha, 421",
+      complement: "Sem complemento",
+      packageCount: 1,
+      packages: [],
+      mapsUrl: "https://maps.google.com",
+    };
+
+    render(<RoteiroOverviewSection {...defaultProps} ignoredItems={[ignoredItem]} onUnignorePoint={onUnignorePoint} onShowPointOnMap={onShowPointOnMap} />);
+
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_IGNORED(1))).toBeInTheDocument();
+    expect(screen.getByText("Rua Euclides da Rocha, 421")).toBeInTheDocument();
+
+    const unignoreBtn = screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.UNIGNORE_ADDRESS });
+    fireEvent.click(unignoreBtn);
+    expect(onUnignorePoint).toHaveBeenCalledWith("pt_ignored");
+
+    const showOnMapBtns = screen.getAllByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_ON_MAP });
+    const showOnMapBtn = showOnMapBtns[showOnMapBtns.length - 1];
+    fireEvent.click(showOnMapBtn);
+    expect(onShowPointOnMap).toHaveBeenCalledWith("pt_ignored");
+  });
 });

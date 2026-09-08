@@ -127,6 +127,8 @@ export interface PlannedRoute {
   config: RoutingConfig;
   /** ISO timestamp of creation. */
   createdAt: string;
+  /** Endereços ignorados que não contam para conclusão do roteiro */
+  ignoredPointIds?: string[];
 }
 
 /** Sensible defaults for a new route's config. The delivery times are

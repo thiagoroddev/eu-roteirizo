@@ -32,8 +32,10 @@ export interface RouteProgress {
 /** Construction progress: committed vs total. There is no "done" selector in
     the builder — done is the complement of `remainingCounts` by design. */
 export const routeProgress = (state: RouteBuilderState): RouteProgress => {
-  const addressesTotal = totalPoints(state.points);
-  const packagesTotal = totalPackages(state.points);
+  const ignored = new Set(state.ignoredPointIds ?? []);
+  const activePoints = state.points.filter((p) => !ignored.has(p.id));
+  const addressesTotal = totalPoints(activePoints);
+  const packagesTotal = totalPackages(activePoints);
   const remaining = remainingCounts(state);
   const addressesDone = addressesTotal - remaining.addresses;
   const packagesDone = packagesTotal - remaining.packages;
