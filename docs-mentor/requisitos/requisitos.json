@@ -626,5 +626,26 @@
     "criado_em": "08/09/26 15:31",
     "implementado_em": "08/09/26 17:44",
     "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-54",
+    "tipo": "RF",
+    "enunciado": "Nome unico para exportacao de roteiros em JSON composto por data do romaneio, 4 ultimos caracteres do AT e bairro predominante",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "implementado",
+    "criterios_aceite": [
+      "Nome de arquivo JSON segue padrao YYYY-MM-DD-XXXX-BAIRRO.json",
+      "Data obtida do nome do arquivo (unico), dados da planilha (multi) ou data de importacao como fallback",
+      "4 ultimos caracteres do codigo Planned AT da rota",
+      "Bairro mais frequente entre os enderecos da rota"
+    ],
+    "tarefas": [
+      "TASK-RF-039"
+    ],
+    "adr": null,
+    "criado_em": "08/09/26 18:02",
+    "implementado_em": "08/09/26 18:34",
+    "pendente_de_validacao": false
   }
 ]

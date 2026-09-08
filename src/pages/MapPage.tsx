@@ -29,6 +29,7 @@ import { useDeliverySettings } from "../contexts/DeliverySettingsContext";
 import { useRoadGraph } from "../hooks/useRoadGraph";
 import type { RowData } from "../types";
 import type { DeliveryPoint, LatLng } from "../types/routing";
+import type { ManifestMeta } from "../types/manifest";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
 import { collapseInteraction, focusInteraction, regroupInteraction, type InteractionState, type MarkerModel } from "../utils/markers/markerModels";
 import { adjacentStopKey, buildPanelItems, panelMetrics, smallestStopKey, stopPlaceSummary, type PanelMetrics, type StopItemData } from "../utils/markers/panelModels";
@@ -104,7 +105,7 @@ const typedPackageChips = (packagesByType: PanelMetrics["packagesByType"]): Pane
  * route builder initializes over the REAL rows (never the loading-state []).
  */
 function MapPage() {
-  const { manifestId, routeName, routes, loading, error, currentRows } = useManifestFromUrl();
+  const { manifestId, routeName, routes, loading, error, manifestMeta, currentRows } = useManifestFromUrl();
 
   if (!manifestId || !routeName) return <Navigate to="/rotas" replace />;
 
@@ -119,7 +120,7 @@ function MapPage() {
 
       {error && <div className="m-4 rounded-md border border-destructive bg-destructive/10 p-3 text-center font-semibold text-destructive">{error}</div>}
 
-      {!loading && !error && routes && <MapScreen key={`${manifestId}:${routeName}`} rows={currentRows} manifestId={manifestId} routeName={routeName} />}
+      {!loading && !error && routes && <MapScreen key={`${manifestId}:${routeName}`} rows={currentRows} manifestId={manifestId} routeName={routeName} manifestMeta={manifestMeta} />}
     </div>
   );
 }
@@ -161,7 +162,7 @@ const renderVehicleStreetNode = (addr: FormattedVehicleStopAddress, prefix?: str
  *   feeds RouteMap with external models (faded free points) and the panel with
  *   the remaining-work HUD. Falls back to Original when nothing is plottable.
  * */
-function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestId: string; routeName: string }) {
+function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowData[]; manifestId: string; routeName: string; manifestMeta?: ManifestMeta | null }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -1125,9 +1126,10 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
 
   const handleExportRoute = useCallback(() => {
     const planned = toPlannedRoute(builderState);
-    const payload = createRouteExportPayload(manifestId, routeName, planned, points, rows);
-    downloadRouteJson(payload);
-  }, [manifestId, routeName, builderState, points, rows]);
+    const meta = manifestMeta ? { manifestFileName: manifestMeta.fileName, importedAt: manifestMeta.importedAt } : undefined;
+    const payload = createRouteExportPayload(manifestId, routeName, planned, points, rows, undefined, meta);
+    downloadRouteJson(payload, manifestMeta ? { fileName: manifestMeta.fileName, importedAt: manifestMeta.importedAt } : undefined);
+  }, [manifestId, routeName, builderState, points, rows, manifestMeta]);
 
   /** Roteiro state header (feedback 08/07: the panel always says the next step). */
   const roteiroComplete = isComplete(builderState);

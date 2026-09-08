@@ -18,6 +18,10 @@ export interface ExportedRouteMeta {
   packageCount?: number;
   totalDistanceMeters?: number;
   at?: string;
+  manifestFileName?: string;
+  importedAt?: string;
+  dominantNeighborhood?: string;
+  atSuffix?: string;
 }
 
 export interface ExportedRoutePayloadV1 {

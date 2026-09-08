@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { describe, it, expect, beforeEach } from "vitest";
 
-import { createRouteExportPayload, serializeRouteExport, parseAndValidateRouteJson, importRoutePayload, extractAllRowsFromPayload } from "../../services/routeExport";
+import { createRouteExportPayload, serializeRouteExport, parseAndValidateRouteJson, importRoutePayload, extractAllRowsFromPayload, buildExportFileName } from "../../services/routeExport";
 import { clearRoteiros, getRoteiro } from "../../services/routeStorage";
 import { clearManifests, getManifest, getRouteRows, saveStandaloneManifest } from "../../services/manifestStorage";
 import { COLUMN_NAMES } from "../../constants";
@@ -230,5 +230,116 @@ describe("routeExport", () => {
     expect(updated?.availableCols).toContain(COLUMN_NAMES.LONGITUDE);
     const updatedRows = await getRouteRows("man_reimport", "Rota Reimport");
     expect(updatedRows?.length).toBe(2);
+  });
+
+  describe("buildExportFileName (RF-54 / TASK-RF-039)", () => {
+    it("gera nome único no formato YYYY-MM-DD-XXXX-BAIRRO.json", () => {
+      const rows = [
+        {
+          [COLUMN_NAMES.NEIGHBORHOOD]: "Ipanema",
+          [COLUMN_NAMES.PLANNED_AT]: "AT20260908123QEAB",
+        },
+      ];
+      const payload = createRouteExportPayload("man_1", "Rota 1", sampleRoute, samplePoints, rows);
+      const fileName = buildExportFileName(payload, {
+        fileName: "romaneio_2026-09-08_ipanema.xlsx",
+        importedAt: "2026-09-08T10:00:00.000Z",
+      });
+
+      expect(fileName).toBe("2026-09-08-QEAB-IPANEMA.json");
+    });
+
+    it("resolve data corretamente para romaneio único a partir do nome do arquivo com diferentes formatos", () => {
+      const rows = [
+        {
+          [COLUMN_NAMES.NEIGHBORHOOD]: "Copacabana",
+          [COLUMN_NAMES.PLANNED_AT]: "AT2026090399C6P",
+        },
+      ];
+      const payload = createRouteExportPayload("man_2", "Minha rota", sampleRoute, samplePoints, rows);
+
+      // Formato DD-MM-YYYY no nome do arquivo
+      const fileA = buildExportFileName(payload, {
+        fileName: "Minha_Rota_07-09-2026.csv",
+        importedAt: "2026-09-07T12:00:00.000Z",
+      });
+      expect(fileA).toBe("2026-09-07-9C6P-COPACABANA.json");
+
+      // Formato DD_MM_YYYY
+      const fileB = buildExportFileName(payload, {
+        fileName: "Entregas_15_10_2026.xlsx",
+      });
+      expect(fileB).toBe("2026-10-15-9C6P-COPACABANA.json");
+    });
+
+    it("resolve data para romaneio multi a partir da coluna Date da planilha ou do código AT", () => {
+      // 1. A partir da coluna Date (YYYY-MM-DD)
+      const rowsWithDate = [
+        {
+          [COLUMN_NAMES.DATE]: "2026-07-27",
+          [COLUMN_NAMES.NEIGHBORHOOD]: "Copacabana",
+          [COLUMN_NAMES.PLANNED_AT]: "AT202607270DEMO",
+        },
+      ];
+      const payloadDate = createRouteExportPayload("man_multi_1", "L-29", sampleRoute, samplePoints, rowsWithDate);
+      const nameDate = buildExportFileName(payloadDate, { fileName: "exemplo-multi-rota.xlsx" });
+      expect(nameDate).toBe("2026-07-27-DEMO-COPACABANA.json");
+
+      // 2. A partir do código Planned AT quando coluna Date está ausente
+      const rowsWithAt = [
+        {
+          [COLUMN_NAMES.NEIGHBORHOOD]: "Leblon",
+          [COLUMN_NAMES.PLANNED_AT]: "AT2026090399C6P",
+        },
+      ];
+      const payloadAt = createRouteExportPayload("man_multi_2", "Rota Leblon", sampleRoute, samplePoints, rowsWithAt);
+      const nameAt = buildExportFileName(payloadAt, { fileName: "romaneio_multi.xlsx" });
+      expect(nameAt).toBe("2026-09-03-9C6P-LEBLON.json");
+    });
+
+    it("usa a data de importação como fallback se não houver data no arquivo nem na planilha", () => {
+      const rowsNoDate = [
+        {
+          [COLUMN_NAMES.NEIGHBORHOOD]: "Botafogo",
+          [COLUMN_NAMES.PLANNED_AT]: "ATXYZ9876",
+        },
+      ];
+      const payload = createRouteExportPayload("man_no_date", "Rota", sampleRoute, samplePoints, rowsNoDate);
+      const name = buildExportFileName(payload, {
+        fileName: "planilha_sem_data.xlsx",
+        importedAt: "2026-08-20T14:30:00.000Z",
+      });
+      expect(name).toBe("2026-08-20-9876-BOTAFOGO.json");
+    });
+
+    it("extrai os 4 últimos caracteres do Planned AT em maiúsculas", () => {
+      const rows = [
+        {
+          [COLUMN_NAMES.NEIGHBORHOOD]: "Ipanema",
+          [COLUMN_NAMES.PLANNED_AT]: "at20260908abcd",
+        },
+      ];
+      const payload = createRouteExportPayload("man_at", "Rota", sampleRoute, samplePoints, rows);
+      const name = buildExportFileName(payload, { importedAt: "2026-09-08T00:00:00.000Z" });
+      expect(name).toBe("2026-09-08-ABCD-IPANEMA.json");
+    });
+
+    it("identifica e sanitiza o bairro com maior contagem na rota (maior quantidade)", () => {
+      const rows = [
+        { [COLUMN_NAMES.NEIGHBORHOOD]: "São Conrado" },
+        { [COLUMN_NAMES.NEIGHBORHOOD]: "Ipanema" },
+        { [COLUMN_NAMES.NEIGHBORHOOD]: "São Conrado" },
+        { [COLUMN_NAMES.NEIGHBORHOOD]: "Leblon" },
+      ];
+      const payload = createRouteExportPayload("man_bairro", "Rota", sampleRoute, samplePoints, rows);
+      const name = buildExportFileName(payload, { importedAt: "2026-09-08T00:00:00.000Z" });
+      expect(name).toBe("2026-09-08-ROTA-SAO-CONRADO.json");
+    });
+
+    it("aplica fallbacks seguros quando AT e bairro não existem", () => {
+      const payload = createRouteExportPayload("man_empty", "Rota", sampleRoute, samplePoints, []);
+      const name = buildExportFileName(payload, { importedAt: "2026-09-08T00:00:00.000Z" });
+      expect(name).toBe("2026-09-08-ROTA-GERAL.json");
+    });
   });
 });
