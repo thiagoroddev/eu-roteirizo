@@ -17,6 +17,7 @@ import { plannedRouteStatus, type RoteiroStatus } from "../utils/routing/status"
 import { assignedPointIds } from "../utils/routing/selectors";
 import { packagesByTypeFromPoints } from "../utils/markers/roteiroModels";
 import { getVehicleType } from "../utils/formatters";
+import type { RowData } from "../types";
 import type { PlannedRoute } from "../types/routing";
 import { COLUMN_NAMES } from "../constants";
 import { UI_LABELS } from "../constants/uiLabels";
@@ -92,6 +93,32 @@ function SummaryPage() {
     };
   }, [savedRoteiro, currentRows]);
 
+  /** Linhas ordenadas pela sequência do roteiro planejado (ordem das paradas e entregas). */
+  const roteiroRows = useMemo(() => {
+    if (!savedRoteiro || savedRoteiro.stops.length === 0) return currentRows;
+    const points = buildDeliveryPoints(currentRows);
+    const pointMap = new Map(points.map((p) => [p.id, p]));
+    const sortedStops = [...savedRoteiro.stops].sort((a, b) => a.order - b.order);
+    const result: RowData[] = [];
+    let seq = 1;
+    for (const stop of sortedStops) {
+      for (const pid of stop.pointIds) {
+        const pt = pointMap.get(pid);
+        if (!pt) continue;
+        for (const pkg of pt.packages) {
+          result.push({
+            ...pkg.rawData,
+            [COLUMN_NAMES.STOP]: stop.order,
+            [COLUMN_NAMES.SEQUENCE]: seq++,
+          });
+        }
+      }
+    }
+    return result;
+  }, [savedRoteiro, currentRows]);
+
+  const displayedSimpleRows = infoMode === "roteiro" ? roteiroRows : currentRows;
+
   // A malformed URL has nothing to show — go back to the saved list.
   if (!manifestId || !routeName) return <Navigate to="/rotas" replace />;
 
@@ -165,13 +192,15 @@ function SummaryPage() {
             <Button variant="outline" onClick={() => setShowSimpleTable(true)}>
               {UI_LABELS.ROUTE_SUMMARY.SIMPLE_TABLE}
             </Button>
-            <Button variant="outline" onClick={() => setShowTable(true)}>
-              {UI_LABELS.ROUTE_SUMMARY.ORIGINAL_TABLE}
-            </Button>
+            {infoMode === "original" && (
+              <Button variant="outline" onClick={() => setShowTable(true)}>
+                {UI_LABELS.ROUTE_SUMMARY.ORIGINAL_TABLE}
+              </Button>
+            )}
           </div>
 
           {showTable && <RouteTable selectedRoute={routeName} rows={currentRows} onClose={() => setShowTable(false)} />}
-          {showSimpleTable && <RouteSimpleTable rows={currentRows} selectedRoute={routeName} onClose={() => setShowSimpleTable(false)} />}
+          {showSimpleTable && <RouteSimpleTable rows={displayedSimpleRows} selectedRoute={routeName} onClose={() => setShowSimpleTable(false)} />}
         </>
       )}
     </div>

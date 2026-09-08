@@ -77,7 +77,7 @@ export type SaveManifestResult =
   | { status: "error"; reason: string };
 
 /** First non-empty "Planned AT" in the route's rows, trimmed (mirrors useRouteSearch). */
-const findRouteAt = (rows: RowData[]): string | undefined => {
+export const findRouteAt = (rows: RowData[]): string | undefined => {
   for (const row of rows) {
     const value = row[COLUMN_NAMES.PLANNED_AT];
     if (value !== undefined && value !== null && String(value).trim() !== "") return String(value).trim();
@@ -203,6 +203,53 @@ export const getManifest = async (id: string): Promise<ManifestRecord | null> =>
     return ((await db.get(STORE, id)) as ManifestRecord | undefined) ?? null;
   } catch {
     return null;
+  }
+};
+
+/**
+/** Derives available column names present in the provided rows. */
+export const deriveAvailableColsFromRows = (rows: RowData[]): string[] => {
+  const set = new Set<string>();
+  for (const row of rows) {
+    for (const key of Object.keys(row)) {
+      if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== "") {
+        set.add(key);
+      }
+    }
+  }
+  return Array.from(set);
+};
+
+/**
+ * Persists a standalone manifest with rows for a route imported via JSON (RF-36/RF-20).
+ * Preserves available columns and route AT code so original view and summary function properly.
+ * Never throws.
+ */
+export const saveStandaloneManifest = async (manifestId: string, routeName: string, rows: RowData[], availableCols?: string[], at?: string, fileBytes?: ArrayBuffer): Promise<boolean> => {
+  try {
+    const db = await getDb();
+    const effectiveAt = at ?? findRouteAt(rows);
+    const effectiveCols = availableCols && availableCols.length > 0 ? availableCols : deriveAvailableColsFromRows(rows);
+    const existing = (await db.get(STORE, manifestId)) as ManifestRecord | undefined;
+
+    const record: ManifestRecord = {
+      id: manifestId,
+      fileName: existing?.fileName && !existing.fileName.endsWith(".json") ? existing.fileName : `${routeName}.json`,
+      fileType: "application/json",
+      fileSize: fileBytes ? fileBytes.byteLength : (existing?.fileSize ?? 0),
+      kind: "single",
+      routes: [{ name: routeName, rowCount: rows.length, ...(effectiveAt !== undefined ? { at: effectiveAt } : {}) }],
+      importedAt: existing?.importedAt ?? new Date().toISOString(),
+      availableCols: effectiveCols,
+      missingCols: [],
+      bytes: fileBytes ?? existing?.bytes ?? new ArrayBuffer(0),
+    };
+
+    await db.put(STORE, record);
+    await writeRouteRows(db, manifestId, { [routeName]: rows });
+    return true;
+  } catch {
+    return false;
   }
 };
 

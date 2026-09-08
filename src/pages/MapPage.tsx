@@ -44,6 +44,7 @@ import {
 import { buildDeliveryPoints } from "../utils/routing/points";
 import { suggestionOrigin, previousAnchorOrigin, draftCandidateIds, farChosenPointIds, isComplete, toPlannedRoute, FAR_POINT_RADIUS_FACTOR, FAR_POINT_MIN_METERS } from "../utils/routing/builder";
 import { getRoteiro, saveRoteiro, deleteRoteiro } from "../services/routeStorage";
+import { createRouteExportPayload, downloadRouteJson } from "../services/routeExport";
 import { routeProgress, nextStopSuggestion, suggestedNextSeed } from "../utils/routing/overview";
 import { stopWalkEstimate, plannedRouteTotals, stopLegs } from "../utils/routing/estimates";
 import { assignedPointIds, pointsWithinRadius } from "../utils/routing/selectors";
@@ -155,7 +156,8 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   const { settings: deliverySettings } = useDeliverySettings();
   const estimateConfig = useMemo(() => ({ ...builderState.config, ...deliverySettings }), [builderState.config, deliverySettings]);
   const roteiroAvailable = points.length > 0;
-  const mode: MapMode = searchParams.get(MODE_QUERY_PARAM) === MODE_QUERY_ROTEIRO && roteiroAvailable ? "roteiro" : "original";
+  const modeParam = searchParams.get(MODE_QUERY_PARAM);
+  const mode: MapMode = modeParam === MODE_QUERY_ROTEIRO && roteiroAvailable ? "roteiro" : "original";
   /** Construction progress (RF-006.8): the concise header's %/bar and the
       overview's stat cards — the old "Faltando" HUD flipped to done/total. */
   const progress = routeProgress(builderState);
@@ -1062,6 +1064,12 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
     setPanelView("selected");
   };
 
+  const handleExportRoute = useCallback(() => {
+    const planned = toPlannedRoute(builderState);
+    const payload = createRouteExportPayload(manifestId, routeName, planned, points, rows);
+    downloadRouteJson(payload);
+  }, [manifestId, routeName, builderState, points, rows]);
+
   /** Roteiro state header (feedback 08/07: the panel always says the next step). */
   const roteiroComplete = isComplete(builderState);
   const roteiroModeLabel = roteiroComplete ? UI_LABELS.MAP_MODE.MY_ROTEIRO : UI_LABELS.MAP_PANEL.MODE_ROTEIRO_DRAFT;
@@ -1293,7 +1301,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       {/* Toggle floats OVER the map (fluxo §15.4: dominant map, compact overlays —
           no dedicated bar). z-index above Leaflet's panes/controls (~1000). */}
       <div className="absolute left-1/2 top-3 z-[1100] -translate-x-1/2">
-        <MapModeToggle mode={mode} onModeChange={handleModeChange} roteiroEnabled={roteiroAvailable} />
+        <MapModeToggle mode={mode} onModeChange={handleModeChange} roteiroEnabled={roteiroAvailable} originalEnabled={rows.length > 0} />
       </div>
 
       {/* Reorder aviso (RF-006.17): floats under the toggle, auto-dismisses. */}
@@ -1464,6 +1472,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
               onShowStopOnMap={handleShowRoteiroStopOnMap}
               onShowSuggestedOnMap={handleShowSuggestedOnMap}
               onCreateSuggested={handleCreateSuggested}
+              onExportRoute={handleExportRoute}
             />
           ) : roteiroContext === "start-flow" && !startSelected ? (
             // Idle (RF-006.11): ONLY the suggested-next-stop card — the lean

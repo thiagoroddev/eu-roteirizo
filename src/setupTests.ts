@@ -21,6 +21,19 @@ if (typeof Blob !== "undefined" && !Blob.prototype.arrayBuffer) {
   };
 }
 
+// jsdom não implementa Blob/File.text() (usado por importação de roteiro) —
+// polyfill via FileReader.
+if (typeof Blob !== "undefined" && !Blob.prototype.text) {
+  Blob.prototype.text = function text(this: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(this);
+    });
+  };
+}
+
 // jsdom não implementa matchMedia — mock mínimo (ThemeToggle/useTheme leem a preferência de tema).
 if (!window.matchMedia) {
   Object.defineProperty(window, "matchMedia", {
@@ -36,6 +49,12 @@ if (!window.matchMedia) {
       dispatchEvent: () => false,
     }),
   });
+}
+
+// jsdom não implementa URL.createObjectURL / revokeObjectURL
+if (typeof URL.createObjectURL === "undefined") {
+  URL.createObjectURL = () => "blob:mock-url";
+  URL.revokeObjectURL = () => {};
 }
 
 // Limpa o DOM após cada teste

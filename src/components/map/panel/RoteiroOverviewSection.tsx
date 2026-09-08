@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Car, MapPin, Move, Trash2 } from "lucide-react";
+import { Car, Download, MapPin, Move, Trash2 } from "lucide-react";
 import { Button } from "../../ui/button";
 import { PanelSection } from "./PanelSection";
 import { PanelTitle, type PanelMetric } from "./PanelTitle";
@@ -96,6 +96,8 @@ interface Props {
   onShowSuggestedOnMap: () => void;
   /** Commits the suggested stop — the same commit tela 8's "Criar parada" does. */
   onCreateSuggested: () => void;
+  /** Export the current route to a JSON file (TASK-RF-013). */
+  onExportRoute?: () => void;
 }
 
 export const RoteiroOverviewSection = ({
@@ -112,6 +114,7 @@ export const RoteiroOverviewSection = ({
   onShowStopOnMap,
   onShowSuggestedOnMap,
   onCreateSuggested,
+  onExportRoute,
 }: Props) => {
   /** One drill-down open at a time — the overview is a scan, not an editor. */
   const [openStopId, setOpenStopId] = useState<string | null>(null);
@@ -120,6 +123,14 @@ export const RoteiroOverviewSection = ({
     <div>
       <PanelSection label={OVERVIEW.SECTION_PROGRESS}>
         <RouteProgressCard progress={progress} totals={totals} viaStreets={totalsViaStreets} commercialPackages={commercialPackages} />
+        {onExportRoute && stops.length > 0 && (
+          <div className="mt-2.5 flex justify-end px-4">
+            <Button type="button" variant="outline" size="sm" onClick={onExportRoute} className="gap-1.5 text-xs font-semibold" aria-label={OVERVIEW.EXPORT_ROUTE_ARIA} data-vaul-no-drag>
+              <Download className="h-3.5 w-3.5" aria-hidden />
+              {OVERVIEW.EXPORT_ROUTE}
+            </Button>
+          </div>
+        )}
       </PanelSection>
 
       <PanelSection label={OVERVIEW.SECTION_CONFIRMED(stops.length)}>

@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
 import { FileUploader } from "../../components/FileUploader";
 import { UI_LABELS } from "../../constants/uiLabels";
 
@@ -34,10 +34,26 @@ describe("FileUploader", () => {
     expect(screen.getByText(UI_LABELS.FILE_UPLOADER.INSTRUCTIONS_SINGLE_TITLE)).toBeInTheDocument();
   });
 
-  it("renderiza o botão 'Importar roteiro (.json)' desabilitado (liga na RF-013)", () => {
-    render(<FileUploader onFileUpload={mockOnFileUpload} loading={false} hasRoutes={false} error={null} />);
+  it("renderiza o botão 'Importar roteiro (.json)' habilitado por padrão e desabilitado quando loading é true (RF-013)", () => {
+    const { rerender } = render(<FileUploader onFileUpload={mockOnFileUpload} loading={false} hasRoutes={false} error={null} />);
 
-    expect(screen.getByRole("button", { name: UI_LABELS.FILE_UPLOADER.IMPORT_JSON_SOON })).toBeDisabled();
+    expect(screen.getByRole("button", { name: UI_LABELS.FILE_UPLOADER.IMPORT_JSON })).toBeEnabled();
+
+    rerender(<FileUploader onFileUpload={mockOnFileUpload} loading={true} hasRoutes={false} error={null} />);
+    expect(screen.getByRole("button", { name: UI_LABELS.FILE_UPLOADER.IMPORT_JSON })).toBeDisabled();
+  });
+
+  it("chama onImportRouteFile ao selecionar arquivo JSON (RF-013)", () => {
+    const mockOnImport = vi.fn();
+    const { container } = render(<FileUploader onFileUpload={mockOnFileUpload} onImportRouteFile={mockOnImport} loading={false} hasRoutes={false} error={null} />);
+
+    const jsonInput = container.querySelector("#json-file-input") as HTMLInputElement;
+    expect(jsonInput).toBeInTheDocument();
+
+    const file = new File(['{"schema":"eu-roteirizo/roteiro/v1"}'], "roteiro.json", { type: "application/json" });
+    fireEvent.change(jsonInput, { target: { files: [file] } });
+
+    expect(mockOnImport).toHaveBeenCalledWith(file);
   });
 
   it("mostra o aviso de romaneio salvo quando manifestSave é 'saved'", () => {

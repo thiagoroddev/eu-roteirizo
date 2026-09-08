@@ -14,7 +14,6 @@
 | `TASK-DOC-008` | Resolver divergencia entre UI_LABELS.SUMMARY.VIEW_MAP e texto renderizado | - | DOC | desejavel | P/P | titulo-autossuficiente |
 | `TASK-REF-014` | Ajustar radius do tema para 0.5rem conforme neonflux | - | REF | desejavel | P/P | titulo-autossuficiente |
 | `TASK-RF-009` | Modo execucao do Meu roteiro | epico, 5 fatias | RF | critico | XG/XG | RF-37, RF-47, RF-48, RF-49, RN-22 |
-| `TASK-RF-013` | Exportar e importar roteiro JSON | - | RF | importante | M/M | RF-36, RF-20, RF-44 |
 | `TASK-RF-024` | [fatia de TASK-RF-009] Modelo e persistencia da execucao | 1/5 de TASK-RF-009 | RF | critico | M/G | RF-37, RN-22 |
 | `TASK-RF-025` | [fatia de TASK-RF-009] Shell de execucao e roteiro somente leitura | 2/5 de TASK-RF-009 | RF | critico | M/M | RF-37, RF-33, RN-22 |
 | `TASK-RF-026` | [fatia de TASK-RF-009] Marcacao de entrega, insucesso e desfazer | 3/5 de TASK-RF-009 | RF | critico | M/M | RF-37, RF-48, RN-22 |

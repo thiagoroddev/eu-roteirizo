@@ -25,7 +25,7 @@
     "enunciado": "Permitir alternar entre a sequencia Original e Meu roteiro; quando o roteiro for importado sem romaneio, Original fica indisponivel.",
     "historia": "Como entregador, quero comparar a ordem original com a rota planejada para entender o impacto do roteiro antes de executar.",
     "prioridade": "essencial",
-    "status": "pendente",
+    "status": "implementado",
     "criterios_aceite": [
       "A alternancia Original/Meu roteiro funciona quando ha romaneio vinculado.",
       "Roteiro importado de forma avulsa abre diretamente em Meu roteiro e comunica que Original nao existe.",
@@ -39,10 +39,12 @@
       "RF-36",
       "RF-44"
     ],
-    "tarefas": [],
+    "tarefas": [
+      "TASK-RF-013"
+    ],
     "adr": [],
     "criado_em": "01/09/26 15:27",
-    "implementado_em": null,
+    "implementado_em": "07/09/26 21:08",
     "pendente_de_validacao": false
   },
   {
@@ -113,7 +115,7 @@
     "enunciado": "Exportar e importar Roteiro em JSON para compartilhar ou continuar em outro dispositivo.",
     "historia": "Como entregador, quero levar um roteiro salvo para outro aparelho sem depender de conta ou servidor.",
     "prioridade": "importante",
-    "status": "pendente",
+    "status": "implementado",
     "criterios_aceite": [
       "Exportar gera JSON versionado com dados suficientes para reconstruir o roteiro.",
       "Importar reconstrui o roteiro em Meu roteiro mantendo ordem, paradas e metadados relevantes.",
@@ -126,10 +128,12 @@
       "RF-20",
       "RF-44"
     ],
-    "tarefas": [],
+    "tarefas": [
+      "TASK-RF-013"
+    ],
     "adr": [],
     "criado_em": "01/09/26 15:27",
-    "implementado_em": null,
+    "implementado_em": "07/09/26 21:08",
     "pendente_de_validacao": false
   },
   {
@@ -237,7 +241,7 @@
     "enunciado": "A tela inicial deve listar romaneios salvos com cards tipados, roteiros vinculados e atalho para abrir o mapa em Meu roteiro.",
     "historia": "Como entregador, quero retomar rapidamente um romaneio ou roteiro salvo sem precisar importar tudo de novo.",
     "prioridade": "importante",
-    "status": "pendente",
+    "status": "implementado",
     "criterios_aceite": [
       "Cards mostram diferenca entre Romaneio e Roteiro de forma escaneavel.",
       "Roteiros vinculados aparecem junto do romaneio correspondente.",
@@ -250,10 +254,12 @@
       "RF-36",
       "RF-20"
     ],
-    "tarefas": [],
+    "tarefas": [
+      "TASK-RF-013"
+    ],
     "adr": [],
     "criado_em": "01/09/26 15:27",
-    "implementado_em": null,
+    "implementado_em": "07/09/26 21:08",
     "pendente_de_validacao": false
   },
   {
@@ -383,7 +389,7 @@
     "enunciado": "Pn/En representa a nova ordem do Meu roteiro; Shopee Stop/Sequence permanece como identidade historica da planilha original.",
     "historia": "Como entregador, quero ver a ordem planejada sem perder a referencia original da Shopee para conferencia.",
     "prioridade": "essencial",
-    "status": "pendente",
+    "status": "implementado",
     "criterios_aceite": [
       "Pn/En muda conforme a ordem do roteiro salvo ou executado.",
       "Stop/Sequence original permanece disponivel como referencia imutavel.",
@@ -395,10 +401,12 @@
       "RF-36",
       "RF-37"
     ],
-    "tarefas": [],
+    "tarefas": [
+      "TASK-RF-013"
+    ],
     "adr": [],
     "criado_em": "01/09/26 15:27",
-    "implementado_em": null,
+    "implementado_em": "07/09/26 21:08",
     "pendente_de_validacao": false
   },
   {
@@ -407,7 +415,7 @@
     "enunciado": "Cada rota pode ter no maximo um Roteiro vinculado; roteiro importado sem romaneio vira standalone.",
     "historia": "Como usuario que salva e compartilha rotas, quero evitar duplicidade ambigua entre romaneio e roteiro.",
     "prioridade": "essencial",
-    "status": "pendente",
+    "status": "implementado",
     "criterios_aceite": [
       "O app impede criar multiplos roteiros ativos para a mesma rota.",
       "Importacao com vinculo reconhecido associa ao romaneio correto.",
@@ -419,10 +427,12 @@
       "RF-36",
       "RF-44"
     ],
-    "tarefas": [],
+    "tarefas": [
+      "TASK-RF-013"
+    ],
     "adr": [],
     "criado_em": "01/09/26 15:27",
-    "implementado_em": null,
+    "implementado_em": "07/09/26 21:08",
     "pendente_de_validacao": false
   },
   {

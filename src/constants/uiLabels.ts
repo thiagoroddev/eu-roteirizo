@@ -31,6 +31,10 @@ export const UI_LABELS = {
     TRY_EXAMPLE_HINT: "20 entregas fictícias em Copacabana e Ipanema — não precisa de arquivo",
     IMPORT_JSON: "Importar roteiro (.json)",
     IMPORT_JSON_SOON: "Em breve — importar um roteiro pronto (JSON)",
+    EXPORT_JSON: "Exportar roteiro (.json)",
+    EXPORT_JSON_SUCCESS: "Roteiro exportado com sucesso.",
+    IMPORT_JSON_SUCCESS: "Roteiro importado com sucesso.",
+    IMPORT_JSON_ERROR: "Falha ao importar o arquivo de roteiro.",
     MANIFEST_SAVED: "Romaneio salvo neste aparelho.",
     MANIFEST_DUPLICATE: (fileName: string) => `Este arquivo já foi importado como "${fileName}".`,
     MANIFEST_SAVE_ERROR: "Não foi possível salvar o romaneio neste aparelho — será preciso reenviar na próxima vez.",
@@ -190,6 +194,8 @@ export const UI_LABELS = {
       SECTION_NEXT: "Próxima parada sugerida",
       VIEW_DETAILS: "Ver detalhes",
       HIDE_DETAILS: "Esconder detalhes",
+      EXPORT_ROUTE: "Exportar roteiro (.json)",
+      EXPORT_ROUTE_ARIA: "Exportar roteiro em arquivo JSON",
       STAT_ADDRESSES: "Endereços",
       STAT_PACKAGES: "Pacotes",
       STAT_STOPS: "Paradas",
@@ -331,6 +337,7 @@ export const UI_LABELS = {
     MY_ROTEIRO: "Meu roteiro",
     // Only shown while the side is disabled — since TASK-RF-006.2 that means "no plottable points".
     MY_ROTEIRO_SOON: "Indisponível — nenhum endereço com coordenada válida",
+    ORIGINAL_DISABLED_STANDALONE: "Modo Original indisponível em roteiro importado sem romaneio",
   },
   ROUTE_MAP: {
     FULLSCREEN_ARIA: "Mapa em tela cheia",

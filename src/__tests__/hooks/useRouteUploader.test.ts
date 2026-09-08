@@ -70,9 +70,8 @@ const mockErrorResult = {
 
 /** Helper to create a fake File object in Node.js environment */
 const createMockFile = (name: string, size: number = 1024, type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"): File => {
-  const content = new Array(size).fill("x").join("");
-  // Manually override size property because JSDOM File size is read-only based on content
-  const file = new File([content], name, { type });
+  // Use a tiny content; Object.defineProperty overrides size property
+  const file = new File(["x"], name, { type });
   Object.defineProperty(file, "size", { value: size });
   return file;
 };
