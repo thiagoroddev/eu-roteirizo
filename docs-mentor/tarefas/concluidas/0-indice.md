@@ -12,3 +12,4 @@
 | 07/09/26 15:21 | [`TASK-CHORE-012`](./2026-09-07--15h21--TASK-CHORE-012.md) | CHORE | Conferir configuracoes do GitHub e aferir as metas de qualidade apontadas pelo doctor | - | concluida | aprovado |
 | 07/09/26 21:08 | [`TASK-RF-013`](./2026-09-07--21h08--TASK-RF-013.md) | RF | Exportar e importar roteiro JSON | - | concluida | aprovado |
 | 08/09/26 08:04 | [`TASK-BG-012`](./2026-09-08--08h04--TASK-BG-012.md) | BG | Corrigir conectividade de alcas viarias e regras de mao unica no grafo OSM | - | concluida | aprovado |
+| 08/09/26 08:54 | [`TASK-RF-035`](./2026-09-08--08h54--TASK-RF-035.md) | RF | Permitir insercao de parada em posicao arbitraria e reordenacao no rascunho | - | concluida | aprovado |

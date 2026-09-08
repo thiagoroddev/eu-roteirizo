@@ -61,7 +61,8 @@ export type RouteBuilderAction =
   | { type: "CLEAR_START" }
   | { type: "SET_NEXT_SUGGESTION"; pointId: string | null }
   | { type: "OPEN_STOP_DRAFT"; seedPointId: string; suggestedVehicleStop: LatLng }
-  | { type: "CREATE_STOP"; seedPointId: string; memberIds: string[]; vehicleStop: LatLng; radiusMeters: number }
+  | { type: "CREATE_STOP"; seedPointId: string; memberIds: string[]; vehicleStop: LatLng; radiusMeters: number; targetOrder?: number }
+  | { type: "REORDER_STOP"; stopId: string; targetOrder: number }
   | { type: "REOPEN_STOP"; stopId: string }
   | { type: "SET_DRAFT_RADIUS"; radiusMeters: number }
   | { type: "TOGGLE_DRAFT_POINT"; pointId: string }
@@ -174,7 +175,27 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
        *  `defaultAnchorSeed` projection, so "Resetar âncora" stays hidden until
        *  the user actually moves it (RF-006.6). */
       const committed: RouteStop = { id: stopId, order: 0, vehicleStop: action.vehicleStop, pointIds, radiusMeters: Math.max(0, action.radiusMeters), reversed: false, vehicleStopIsDefault: true };
-      return { ...state, stops: normalizeOrders([...state.stops, committed]), nextSuggestionOverride: null };
+      let stops: RouteStop[];
+      if (typeof action.targetOrder === "number" && action.targetOrder >= 1 && action.targetOrder <= state.stops.length) {
+        const targetIndex = action.targetOrder - 1;
+        stops = [...state.stops.slice(0, targetIndex), committed, ...state.stops.slice(targetIndex)];
+      } else {
+        stops = [...state.stops, committed];
+      }
+      return { ...state, stops: normalizeOrders(stops), nextSuggestionOverride: null };
+    }
+
+    case "REORDER_STOP": {
+      const currentIndex = state.stops.findIndex((s) => s.id === action.stopId);
+      if (currentIndex === -1) return state;
+      const targetIndex = action.targetOrder - 1;
+      if (targetIndex < 0 || targetIndex >= state.stops.length || targetIndex === currentIndex) {
+        return state;
+      }
+      const stopToMove = state.stops[currentIndex];
+      const withoutStop = state.stops.filter((_, i) => i !== currentIndex);
+      const reordered = [...withoutStop.slice(0, targetIndex), stopToMove, ...withoutStop.slice(targetIndex)];
+      return { ...state, stops: normalizeOrders(reordered) };
     }
 
     case "REOPEN_STOP": {

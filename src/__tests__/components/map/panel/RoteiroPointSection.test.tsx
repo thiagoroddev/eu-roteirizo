@@ -99,7 +99,7 @@ describe("RoteiroPointSection (tela 8 — TASK-RF-006.4.1/.4.2/.4.3, Original vi
     expect(handlers.onCreateStop).toHaveBeenCalledTimes(1);
 
     // No fixed select (rev. 08/07 3ª rodada) — it appears on the button tap.
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: POINT.TARGET_STOP_ARIA })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: POINT.INCORPORATE_OTHER }));
     const select = screen.getByRole("combobox", { name: POINT.TARGET_STOP_ARIA });
     expect(select).toHaveValue("stop_1");
@@ -117,12 +117,12 @@ describe("RoteiroPointSection (tela 8 — TASK-RF-006.4.1/.4.2/.4.3, Original vi
     fireEvent.click(screen.getByRole("button", { name: POINT.CONFIRM }));
     expect(handlers.onIncorporate).toHaveBeenCalledWith("stop_2");
     // Confirming CLOSES the popup (rev. 15/07 — it used to be an inline select).
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: POINT.TARGET_STOP_ARIA })).not.toBeInTheDocument();
 
     // Reopening and cancelling closes without incorporating again.
     fireEvent.click(screen.getByRole("button", { name: POINT.INCORPORATE_OTHER }));
     fireEvent.click(screen.getByRole("button", { name: POINT.CANCEL }));
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: POINT.TARGET_STOP_ARIA })).not.toBeInTheDocument();
     expect(handlers.onIncorporate).toHaveBeenCalledTimes(1);
   });
 
@@ -130,9 +130,24 @@ describe("RoteiroPointSection (tela 8 — TASK-RF-006.4.1/.4.2/.4.3, Original vi
     renderSection({ stopOptions: [], defaultStopId: null, vehicleDistanceLabel: `${POINT.DISTANCE_TO_HERE("160 m")} (linha reta)` });
 
     expect(screen.getByRole("button", { name: POINT.CREATE_STOP })).toBeInTheDocument();
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: POINT.TARGET_STOP_ARIA })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: POINT.INCORPORATE_OTHER })).not.toBeInTheDocument();
     // Straight-line fallback keeps the honest suffix.
     expect(screen.getByText(`${POINT.DISTANCE_TO_HERE("160 m")} (linha reta)`)).toBeInTheDocument();
+  });
+
+  it("permite selecionar posicao de insercao e passa targetOrder", () => {
+    const handlers = renderSection({
+      stopOptions: options,
+      totalStops: 3,
+    });
+    const positionSelect = screen.getByRole("combobox", { name: POINT.INSERT_POSITION_LABEL });
+    expect(positionSelect).toBeInTheDocument();
+
+    fireEvent.change(positionSelect, { target: { value: "2" } });
+    expect(screen.getByText("Parada 2 — Botafogo (22270-000)")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: POINT.CREATE_STOP }));
+    expect(handlers.onCreateStop).toHaveBeenCalledWith(2);
   });
 });

@@ -1033,7 +1033,7 @@ describe("MapPage (focus screen)", () => {
     // Selecionar p3 (models = [stop, p3] → segundo botão); o select só aparece
     // ON DEMAND e pré-seleciona a Parada 1 (a única/mais próxima, já com 2 endereços).
     fireEvent.click(screen.getByRole("button", { name: "stub-second-point-tap" }));
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: POINT_LABELS.TARGET_STOP_ARIA })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.INCORPORATE_OTHER }));
     const select = screen.getByRole("combobox", { name: POINT_LABELS.TARGET_STOP_ARIA });
     expect(select).toBeInTheDocument();

@@ -546,5 +546,25 @@
     "criado_em": "01/09/26 15:27",
     "implementado_em": null,
     "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-50",
+    "tipo": "RF",
+    "enunciado": "Permitir inserir nova parada em posicao arbitraria e reordenar paradas existentes no rascunho do roteiro",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "implementado",
+    "criterios_aceite": [
+      "Inserir parada em ordem especifica renumera subsequentes",
+      "Mover parada para nova ordem ajusta a sequencia 1..n",
+      "UI permite escolher posicao de insercao e reordenar na lista"
+    ],
+    "tarefas": [
+      "TASK-RF-035"
+    ],
+    "adr": null,
+    "criado_em": "08/09/26 08:25",
+    "implementado_em": "08/09/26 08:54",
+    "pendente_de_validacao": false
   }
 ]

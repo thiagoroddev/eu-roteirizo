@@ -72,4 +72,45 @@ describe("RoteiroOverviewSection (TASK-RF-013 Exportar Roteiro)", () => {
 
     expect(screen.queryByRole("button", { name: OVERVIEW.EXPORT_ROUTE_ARIA })).not.toBeInTheDocument();
   });
+
+  it("permite mover parada para cima e para baixo", () => {
+    const onReorderStop = vi.fn();
+    const twoStops = [
+      {
+        id: "stop_1",
+        order: 1,
+        neighborhoods: ["Ipanema"],
+        zipcodes: ["22410-000"],
+        metrics: [{ label: "3 entregas" }],
+        items: [],
+        vehicleStopKey: null,
+      },
+      {
+        id: "stop_2",
+        order: 2,
+        neighborhoods: ["Copacabana"],
+        zipcodes: ["22020-000"],
+        metrics: [{ label: "2 entregas" }],
+        items: [],
+        vehicleStopKey: null,
+      },
+    ];
+    render(<RoteiroOverviewSection {...defaultProps} stops={twoStops} onReorderStop={onReorderStop} />);
+
+    const upStop1 = screen.getByRole("button", { name: OVERVIEW.MOVE_UP_ARIA(1) });
+    expect(upStop1).toBeDisabled();
+
+    const downStop1 = screen.getByRole("button", { name: OVERVIEW.MOVE_DOWN_ARIA(1) });
+    expect(downStop1).not.toBeDisabled();
+    fireEvent.click(downStop1);
+    expect(onReorderStop).toHaveBeenCalledWith("stop_1", 2);
+
+    const downStop2 = screen.getByRole("button", { name: OVERVIEW.MOVE_DOWN_ARIA(2) });
+    expect(downStop2).toBeDisabled();
+
+    const upStop2 = screen.getByRole("button", { name: OVERVIEW.MOVE_UP_ARIA(2) });
+    expect(upStop2).not.toBeDisabled();
+    fireEvent.click(upStop2);
+    expect(onReorderStop).toHaveBeenCalledWith("stop_2", 1);
+  });
 });
