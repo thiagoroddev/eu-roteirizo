@@ -1207,16 +1207,16 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).toBeInTheDocument();
     expect(screen.getByText(STOP_LABELS_ANCHOR.MOVE_ANCHOR_HINT)).toBeInTheDocument();
 
-    // Ordem inicial [p2, p1] (âncora coincide com p2 → 1º). "Inverter" existe e
+    // Ordem inicial [p1, p2] (âncora coincide com p1 → 1º — RF-52). "Inverter" existe e
     // está fiado; com 2 endereços o mais próximo fica em 1º nos dois sentidos
     // (RF-006.17 — a reordenação por sentido é coberta no unit do reducer).
     const memberRows = () => screen.getAllByRole("button", { name: /Rua (Mapa|Beta)/ });
-    expect(memberRows()[0]).toHaveAccessibleName(/Rua Beta, 20/);
+    expect(memberRows()[0]).toHaveAccessibleName(/Rua Mapa, 10/);
     fireEvent.click(screen.getByRole("button", { name: STOP_LABELS_ANCHOR.REVERSE_ORDER }));
-    expect(memberRows()[0]).toHaveAccessibleName(/Rua Beta, 20/);
+    expect(memberRows()[0]).toHaveAccessibleName(/Rua Mapa, 10/);
 
     // "Tornar âncora" existe por membro (ao lado do −).
-    expect(screen.getByRole("button", { name: `${STOP_LABELS_ANCHOR.MAKE_ANCHOR}: Rua Mapa, 10` })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: `${STOP_LABELS_ANCHOR.MAKE_ANCHOR}: Rua Beta, 20` })).toBeInTheDocument();
   });
 
   it("desagrupar a parada firmada (2 cliques) MOSTRA o carro da âncora no mapa (RF-006.16)", () => {
@@ -1228,10 +1228,10 @@ describe("MapPage (focus screen)", () => {
     expect(stub).toHaveAttribute("data-anchor", "none");
 
     // Focar + desagrupar (duplo-clique) → o carro da âncora aparece no overlay,
-    // no local do veículo (sem grafo = coord do endereço-âncora p2).
+    // no local do veículo (sem grafo = coord do endereço-âncora p1 — RF-52).
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-dbltap" }));
-    expect(stub).toHaveAttribute("data-anchor", "-22.90015,-43.2");
+    expect(stub).toHaveAttribute("data-anchor", "-22.9,-43.2");
   });
 
   it("endereço que É o início ganha a flag + os gestos apagar/mudar posição na própria UI (RF-006.11/.14)", () => {
@@ -1406,10 +1406,10 @@ describe("MapPage (focus screen)", () => {
     fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.EDIT })); // reabre como rascunho
 
-    // Ordem inicial [p2, p1] (âncora coincide com p2). Arrastar o carro para
-    // perto de p1 torna p1 o 1º → reordena → aviso.
+    // Ordem inicial [p1, p2] (âncora coincide com p1 — RF-52). Arrastar o carro para
+    // perto de p2 torna p2 o 1º → reordena → aviso.
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.REORDERED_NOTICE)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "stub-anchor-drag-near-p1" }));
+    fireEvent.click(screen.getByRole("button", { name: "stub-anchor-drag" }));
     expect(screen.getByText(UI_LABELS.MAP_PANEL.REORDERED_NOTICE)).toBeInTheDocument();
   });
 
@@ -1573,6 +1573,21 @@ describe("MapPage (focus screen)", () => {
     expect(screen.getByTestId("route-map-stub")).toHaveAttribute("data-overlay-start", "-22.95,-43.19");
     expect(screen.queryByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.RESET_ROUTE })).not.toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.PERCENT(0))).toBeInTheDocument();
+  });
+
+  it("ponto selecionado pelo usuario e preservado como ancora e primeiro endereco ao criar parada com vizinhos englobados", () => {
+    startRoteiroFlow();
+    // Toca no primeiro ponto (p1: Rua Mapa, 10). p2 (Rua Beta, 20) está dentro do raio de 30m.
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+
+    // A âncora do veículo foi projetada a partir de p1 (-22.9, -43.2), não de p2 (-22.90015, -43.2)
+    expect(screen.getByRole("link", { name: "Como chegar" })).toHaveAttribute("href", expect.stringContaining("-22.9,-43.2"));
+
+    // Ao editar a parada, o primeiro membro da caminhada (1º) é p1 (Rua Mapa, 10)
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.EDIT }));
+    const memberRows = screen.getAllByRole("button", { name: /Rua (Mapa|Beta)/ });
+    expect(memberRows[0]).toHaveAccessibleName(/Rua Mapa, 10/);
   });
 
   it("shows the error state when the manifest cannot be reopened", () => {

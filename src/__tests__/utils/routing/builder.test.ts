@@ -165,6 +165,18 @@ describe("CREATE_STOP (commit-on-create — RF-006.4.6)", () => {
     expect(run(withAB, { type: "CREATE_STOP", seedPointId: "b", memberIds: [], vehicleStop: START, radiusMeters: 30 })).toBe(withAB);
   });
 
+  it("CREATE_STOP fixa o ponto semente como primeiro endereco da parada", () => {
+    // Mesmo se a coordenada do veículo estiver mais perto de 'a', se a semente é 'b', 'b' deve ser 1º
+    const state = run(initial(), {
+      type: "CREATE_STOP",
+      seedPointId: "b",
+      memberIds: ["a", "e"],
+      vehicleStop: { lat: a.lat, lng: a.lng },
+      radiusMeters: 30,
+    });
+    expect(state.stops[0].pointIds[0]).toBe("b");
+  });
+
   it("CREATE_STOP insere em posicao arbitraria e renumera paradas subsequentes", () => {
     const s1 = run(initial(), { type: "CREATE_STOP", seedPointId: "a", memberIds: [], vehicleStop: { lat: a.lat, lng: a.lng }, radiusMeters: 30 });
     const s2 = run(s1, { type: "CREATE_STOP", seedPointId: "c", memberIds: [], vehicleStop: { lat: c.lat, lng: c.lng }, radiusMeters: 30 });

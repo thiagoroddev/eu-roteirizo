@@ -74,12 +74,13 @@ const nearestPoint = (vehicleStop: LatLng, points: DeliveryPoint[]): DeliveryPoi
  * @param reversed - Walk the auto-chosen sense backwards.
  * @returns The point ids in visit order.
  */
-export const nearestFirstOrder = (vehicleStop: LatLng, points: DeliveryPoint[], reversed: boolean): string[] => {
+export const nearestFirstOrder = (vehicleStop: LatLng, points: DeliveryPoint[], reversed: boolean, anchorPointId?: string): string[] => {
   if (points.length <= 1) return points.map((point) => point.id);
 
   const byId = new Map(points.map((point) => [point.id, point]));
   const clockwise = sweepWalkingOrder(vehicleStop, points);
-  const first = nearestPoint(vehicleStop, points);
+  const anchorPoint = anchorPointId ? points.find((p) => p.id === anchorPointId) : undefined;
+  const first = anchorPoint ?? nearestPoint(vehicleStop, points);
   const start = clockwise.indexOf(first.id);
 
   // Rotate the clockwise ring to begin at the nearest; the counter-clockwise

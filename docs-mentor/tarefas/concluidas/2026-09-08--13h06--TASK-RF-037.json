@@ -1,0 +1,113 @@
+{
+  "id": "TASK-RF-037",
+  "tipo": "RF",
+  "titulo": "Preservar endereco escolhido pelo usuario como ancora e primeiro ponto ao criar parada com membros englobados",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "RF-52",
+  "requisitos": [
+    "RF-52"
+  ],
+  "criada_em": "08/09/26 12:04",
+  "iniciada_em": "08/09/26 12:07",
+  "commit_base": "33947a1ce49cc95c49b85ec464237ed2150d0ec0",
+  "concluida_em": "08/09/26 13:06",
+  "plano": {
+    "muda": [
+      "src/pages/MapPage.tsx - Projetar suggestedAnchor a partir de selectedPoint e usar seedPointId no reset da ancora do rascunho.",
+      "src/utils/routing/walkOrder.ts - Suportar anchorPointId opcional em nearestFirstOrder para fixar o ponto semente como 1º.",
+      "src/utils/routing/builder.ts - Passar seed.id para sweepWithSense em CREATE_STOP garantindo semente como 1º.",
+      "src/utils/routing/overview.ts - Ancorar sugestao automatica na propria semente sugerida.",
+      "src/__tests__/utils/routing/walkOrder.test.ts - Teste de anchorPointId como primeiro endereco em nearestFirstOrder.",
+      "src/__tests__/utils/routing/builder.test.ts - Teste de CREATE_STOP fixando semente como 1º.",
+      "src/__tests__/pages/MapPage.test.tsx - Teste de integracao da criacao de parada mantendo ponto escolhido como ancora e 1º."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Ao criar uma parada a partir de um ponto selecionado pelo usuario com vizinhos englobados no raio, a ancora e projetada a partir do ponto escolhido e ele e o primeiro endereco (1º) da parada.",
+        "teste": "MapPage.test.tsx > ponto selecionado pelo usuario e preservado como ancora e primeiro endereco ao criar parada com vizinhos englobados"
+      },
+      {
+        "texto": "A ordenacao de caminhada nearestFirstOrder fixa o endereco indicado por anchorPointId como 1º, varrendo os demais a partir dele.",
+        "teste": "walkOrder.test.ts > nearestFirstOrder respeita anchorPointId como primeiro endereco da caminhada"
+      },
+      {
+        "texto": "No reducer, CREATE_STOP mantem o ponto semente informado como primeiro na sequencia de entrega a pe.",
+        "teste": "builder.test.ts > CREATE_STOP fixa o ponto semente como primeiro endereco da parada"
+      }
+    ],
+    "impacto": "Garante previsibilidade para o entregador: o endereco que ele toca para criar a parada torna-se a ancora e o primeiro local de entrega, impedindo que a heuristica mude o veiculo para outro endereco vizinho.",
+    "riscos": [
+      "Testes legados que testavam a heuristica de inversao automatica da ancora pelo defaultAnchorSeed precisarao ser atualizados para a nova regra de soberania da escolha do usuario."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram que o ponto escolhido pelo usuario para criar uma parada englobando outros seja a ancora e nao o outro ponto. A solucao e do tamanho exato do pedido: ancora e ordem partem do ponto semente selecionado, sem adicao de bibliotecas ou mudancas estruturais."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "08/09/26 12:10",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest\n\n\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.9 \u001b[39m\u001b[90mE:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\u001b[39m\n\n \u001b[32m✓\u001b[39m src/__tests__/components/RouteTable.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1580\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m deve renderizar o título usando UI_LABELS.ROUTE_TABLE.TITLE \u001b[33m 556\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/RouteSimpleTable.test.tsx \u001b[2m(\u001b[22m\u001b[2m8 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1757\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders the correct title using UI_LABELS \u001b[33m 591\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders the column headers using UI_LABELS \u001b[33m 511\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroOverviewSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1635\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renderiza o botão 'Exportar roteiro' quando há paradas e onExportRoute é fornecido \u001b[33m 661\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m permite mover parada para cima e para baixo \u001b[33m 644\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroStopSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 2100\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m kind='vehicle' = SEMPRE o veículo: glifo do carro + badge, SEM pacote, NÃO tocável, com 'Editar local' (RF-006.16/.18) \u001b[33m 652\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m NÃO tem gestos de âncora — editar âncora = 'Editar parada' (RF-006.15 reverteu a .5) \u001b[33m 585\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/StopItemList.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 2321\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m opens with EVERY item expanded (scan mode) and the badge as box glyph + count \u001b[33m 589\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m tapping a row toggles ONLY that item's expansion \u001b[33m 937\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m highlights the SELECTED item (aria-current), independent of expansio\n[...recortado...]\nios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)\n\n\u001b[90mstderr\u001b[2m | src/__tests__/pages/MapPage.test.tsx\u001b[2m > \u001b[22m\u001b[2mMapPage (focus screen)\u001b[2m > \u001b[22m\u001b[2mponto selecionado pelo usuario e preservado como ancora e primeiro endereco ao criar parada com vizinhos englobados\n\u001b[22m\u001b[39mWarning: An update to MapScreen inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\n    at MapScreen (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:150:22)\n    at div\n    at MapPage (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:111:119)\n    at RenderedRoute (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)",
+      "executado_em": "08/09/26 12:23",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "08/09/26 12:21",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "08/09/26 12:23",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1954 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-C7RdNlE2.css   \u001b[39m\u001b[1m\u001b[2m 27.95 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.14 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-C3Zd-KYB.js    \u001b[39m\u001b[1m\u001b[33m527.43 kB\u001b[39m\u001b[22m\u001b[2m │ gzip:  99.59 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-D2gTVniu.js   \u001b[39m\u001b[1m\u001b[33m803.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.68 kB\u001b[22m\n\u001b[32m✓ built in 8.28s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1781.29 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "08/09/26 12:24",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    }
+  },
+  "achados": [],
+  "validacao": "pendente",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-08--13h06--TASK-RF-037.md"
+}

@@ -14,3 +14,4 @@
 | 08/09/26 08:04 | [`TASK-BG-012`](./2026-09-08--08h04--TASK-BG-012.md) | BG | Corrigir conectividade de alcas viarias e regras de mao unica no grafo OSM | - | concluida | aprovado |
 | 08/09/26 08:54 | [`TASK-RF-035`](./2026-09-08--08h54--TASK-RF-035.md) | RF | Permitir insercao de parada em posicao arbitraria e reordenacao no rascunho | - | concluida | aprovado |
 | 08/09/26 10:08 | [`TASK-RF-036`](./2026-09-08--10h08--TASK-RF-036.md) | RF | Recomecar rascunho no cabecalho, foco na ultima parada ao deletar e rotulo Deletar parada | - | concluida | aprovado |
+| 08/09/26 13:06 | [`TASK-RF-037`](./2026-09-08--13h06--TASK-RF-037.md) | RF | Preservar endereco escolhido pelo usuario como ancora e primeiro ponto ao criar parada com membros englobados | - | concluida | pendente |

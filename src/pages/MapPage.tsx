@@ -42,14 +42,14 @@ import {
   orderedStopPoints,
 } from "../utils/markers/roteiroModels";
 import { buildDeliveryPoints } from "../utils/routing/points";
-import { suggestionOrigin, previousAnchorOrigin, draftCandidateIds, farChosenPointIds, isComplete, toPlannedRoute, FAR_POINT_RADIUS_FACTOR, FAR_POINT_MIN_METERS } from "../utils/routing/builder";
+import { suggestionOrigin, draftCandidateIds, farChosenPointIds, isComplete, toPlannedRoute, FAR_POINT_RADIUS_FACTOR, FAR_POINT_MIN_METERS } from "../utils/routing/builder";
 import { getRoteiro, saveRoteiro, deleteRoteiro } from "../services/routeStorage";
 import { createRouteExportPayload, downloadRouteJson } from "../services/routeExport";
 import { routeProgress, nextStopSuggestion, suggestedNextSeed } from "../utils/routing/overview";
 import { stopWalkEstimate, plannedRouteTotals, stopLegs } from "../utils/routing/estimates";
 import { assignedPointIds, pointsWithinRadius } from "../utils/routing/selectors";
 import { indexPointsById, nearestStopTo } from "../utils/routing/selectors";
-import { suggestVehicleStop, defaultAnchorSeed } from "../utils/routing/vehicleStop";
+import { suggestVehicleStop } from "../utils/routing/vehicleStop";
 import { nearestWayName } from "../utils/routing/match";
 import { nearestFirstOrder } from "../utils/routing/walkOrder";
 import { pedestrianGraph } from "../utils/routing/pedestrian";
@@ -677,7 +677,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   useEffect(() => {
     if (!graph || !draftAnchorIsDefault || !draft) return;
     const members = draft.pointIds.map((id) => pointsById.get(id)).filter((p): p is DeliveryPoint => p !== undefined);
-    const seed = defaultAnchorSeed(members, previousAnchorOrigin(builderState, draft.stopId));
+    const seed = members.find((m) => m.id === draft.seedPointId) ?? members[0];
     if (!seed) return;
     const projected = suggestVehicleStop(graph, seed);
     if (projected.lat === draft.vehicleStop.lat && projected.lng === draft.vehicleStop.lng) return;
@@ -788,7 +788,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   const handleResetDraftAnchor = () => {
     if (!draft) return;
     const members = draft.pointIds.map((id) => pointsById.get(id)).filter((p): p is DeliveryPoint => p !== undefined);
-    const seed = defaultAnchorSeed(members, previousAnchorOrigin(builderState, draft.stopId));
+    const seed = members.find((m) => m.id === draft.seedPointId) ?? members[0];
     if (!seed) return;
     dispatch({ type: "RESET_VEHICLE_STOP", suggestedVehicleStop: suggestVehicleStop(graph, seed) });
   };
@@ -938,20 +938,18 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
     () => (selectedPoint ? [selectedPoint, ...previewCandidateIds.map((id) => pointsById.get(id)).filter((p): p is DeliveryPoint => p !== undefined)] : []),
     [selectedPoint, previewCandidateIds, pointsById]
   );
-  /** The anchor this stop would be BORN with (RF-006.6): the member nearest to
-      where the vehicle comes from — NOT the tapped address. The preview must
-      show the same anchor `handleCreateStop` commits, or it would lie. */
+  /** The anchor this stop is BORN with (RF-52): the address chosen by the user
+      (selectedPoint) — projected onto the street in front of it. */
   const suggestedAnchor = useMemo(() => {
-    const seed = defaultAnchorSeed(previewMembers, previousAnchorOrigin(builderState, null));
-    return seed ? suggestVehicleStop(graph, seed) : null;
-  }, [graph, previewMembers, builderState]);
+    return selectedPoint ? suggestVehicleStop(graph, selectedPoint) : null;
+  }, [graph, selectedPoint]);
   const suggestedPoints = useMemo(() => {
     if (!suggestedAnchor || previewMembers.length === 0) return [];
     const byId = indexPointsById(previewMembers);
-    return nearestFirstOrder(suggestedAnchor, previewMembers, false)
+    return nearestFirstOrder(suggestedAnchor, previewMembers, false, selectedPoint?.id)
       .map((id) => byId.get(id))
       .filter((p): p is DeliveryPoint => p !== undefined);
-  }, [suggestedAnchor, previewMembers]);
+  }, [suggestedAnchor, previewMembers, selectedPoint]);
   const suggestedEstimate = suggestedAnchor && suggestedPoints.length > 0 ? stopWalkEstimate(suggestedAnchor, suggestedPoints, estimateConfig) : null;
   const suggestedPlace = stopPlaceSummaryFromPoints(suggestedPoints);
   const suggestedMetrics: PanelMetric[] = selectedPoint
