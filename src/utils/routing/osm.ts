@@ -25,10 +25,10 @@ const OVERPASS_ENDPOINT = "https://1-teste-prototipo.thiagorod-dev.workers.dev/o
 
 /**
  * Highway classes we route over (drivable streets). Mirrors the validated
- * prototype's filter (TASK-RF-001). Footways/cycleways/paths are excluded on
- * purpose — this engine routes a vehicle/courier on streets.
+ * prototype's filter (TASK-RF-001) plus connector link roads (TASK-BG-012).
+ * Footways/cycleways/paths are excluded on purpose — this engine routes a vehicle/courier on streets.
  */
-const NAVIGABLE_HIGHWAYS = "motorway|trunk|primary|secondary|tertiary|residential|unclassified|living_street|service";
+const NAVIGABLE_HIGHWAYS = "motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link|residential|unclassified|living_street|service";
 
 /** Default client-side timeout for ONE Overpass request (ms). */
 const OVERPASS_TIMEOUT_MS = 30_000;

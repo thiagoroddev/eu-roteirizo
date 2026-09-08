@@ -164,4 +164,11 @@ describe("BG-011 — evidencia do cache", () => {
     expect(result.graph?.adj.get(1)?.[0].to).toBe(2);
     expect(recordGraphSample).toHaveBeenLastCalledWith(expect.objectContaining({ cacheState: "hit" }));
   });
+
+  it("treats legacy cached records without schemaVersion as expired (TASK-BG-012)", async () => {
+    const { openDB } = await import("idb");
+    const db = await openDB("eu-roteirizo-routing", 2);
+    await db.put("graphs", { graph: sampleGraph(), storedAt: Date.now() }, bboxKey(BB));
+    expect(await getCachedGraph(BB)).toBeNull();
+  });
 });

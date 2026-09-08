@@ -11,3 +11,4 @@
 | 07/09/26 14:23 | [`TASK-BG-011`](./2026-09-07--14h23--TASK-BG-011.md) | BG | Restabelecer o carregamento da malha viaria e diagnosticar falhas de rede, HTTP e timeout | - | concluida | aprovado |
 | 07/09/26 15:21 | [`TASK-CHORE-012`](./2026-09-07--15h21--TASK-CHORE-012.md) | CHORE | Conferir configuracoes do GitHub e aferir as metas de qualidade apontadas pelo doctor | - | concluida | aprovado |
 | 07/09/26 21:08 | [`TASK-RF-013`](./2026-09-07--21h08--TASK-RF-013.md) | RF | Exportar e importar roteiro JSON | - | concluida | aprovado |
+| 08/09/26 08:04 | [`TASK-BG-012`](./2026-09-08--08h04--TASK-BG-012.md) | BG | Corrigir conectividade de alcas viarias e regras de mao unica no grafo OSM | - | concluida | aprovado |

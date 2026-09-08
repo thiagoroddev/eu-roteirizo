@@ -62,7 +62,9 @@ afterEach(() => {
 
 describe("buildOverpassQuery", () => {
   it("includes the navigable-highway filter", () => {
-    expect(buildOverpassQuery(IPANEMA)).toContain('["highway"~"^(motorway|trunk|primary|secondary|tertiary|residential|unclassified|living_street|service)$"]');
+    expect(buildOverpassQuery(IPANEMA)).toContain(
+      '["highway"~"^(motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link|residential|unclassified|living_street|service)$"]'
+    );
   });
 
   it("places the bbox in Overpass order (south,west,north,east)", () => {

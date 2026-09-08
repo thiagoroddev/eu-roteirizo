@@ -28,6 +28,22 @@ describe("onewayDirection", () => {
     expect(onewayDirection({ junction: "roundabout" })).toBe("forward");
   });
 
+  it("treats circular junction as forward", () => {
+    expect(onewayDirection({ junction: "circular" })).toBe("forward");
+    expect(onewayDirection({ junction: "CIRCULAR" })).toBe("forward");
+  });
+
+  it("treats motorway and motorway_link as forward by default, but respects oneway=no", () => {
+    expect(onewayDirection({ highway: "motorway" })).toBe("forward");
+    expect(onewayDirection({ highway: "motorway_link" })).toBe("forward");
+    expect(onewayDirection({ highway: "motorway", oneway: "no" })).toBe("both");
+    expect(onewayDirection({ highway: "motorway_link", oneway: "no" })).toBe("both");
+    expect(onewayDirection({ highway: "motorway", oneway: "0" })).toBe("both");
+    expect(onewayDirection({ highway: "motorway", oneway: "false" })).toBe("both");
+    expect(onewayDirection({ junction: "roundabout", oneway: "no" })).toBe("both");
+    expect(onewayDirection({ junction: "circular", oneway: "no" })).toBe("both");
+  });
+
   it("lets an explicit oneway win over roundabout", () => {
     expect(onewayDirection({ oneway: "-1", junction: "roundabout" })).toBe("backward");
   });

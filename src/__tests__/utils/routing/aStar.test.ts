@@ -56,6 +56,43 @@ describe("aStar", () => {
     expect(result.path).toEqual([A]);
     expect(result.distance).toBe(0);
   });
+
+  it("connects avenues via link road instead of straight fallback", () => {
+    const linkedGraph = buildGraph([
+      {
+        type: "way",
+        nodes: [101, 102],
+        geometry: [
+          { lat: -22.98, lon: -43.2 },
+          { lat: -22.981, lon: -43.2 },
+        ],
+        tags: { highway: "primary", oneway: "yes", name: "Avenida 1" },
+      },
+      {
+        type: "way",
+        nodes: [102, 103],
+        geometry: [
+          { lat: -22.981, lon: -43.2 },
+          { lat: -22.981, lon: -43.199 },
+        ],
+        tags: { highway: "primary_link", oneway: "yes", name: "Alça de Acesso" },
+      },
+      {
+        type: "way",
+        nodes: [103, 104],
+        geometry: [
+          { lat: -22.981, lon: -43.199 },
+          { lat: -22.982, lon: -43.199 },
+        ],
+        tags: { highway: "primary", oneway: "yes", name: "Avenida 2" },
+      },
+    ]);
+
+    const result = aStar(linkedGraph, 101, 104);
+    expect(result.path).toEqual([101, 102, 103, 104]);
+    expect(result.distance).toBeGreaterThan(0);
+    expect(Number.isFinite(result.distance)).toBe(true);
+  });
 });
 
 // TASK-RF-005.4: the heap frontier must keep results correct at neighborhood scale.
