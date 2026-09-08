@@ -518,6 +518,17 @@ describe("counters, completeness and persistence bridge", () => {
     expect(reset.config).toEqual(built.config);
   });
 
+  it("CLEAR_STOPS clears all stops and draft but preserves startPoint, route identity and config", () => {
+    const built = run(withStopAB(initial()), { type: "SET_START", position: START }, { type: "OPEN_STOP_DRAFT", seedPointId: "c", suggestedVehicleStop: { lat: c.lat, lng: c.lng } });
+    const cleared = run(built, { type: "CLEAR_STOPS" });
+    expect(cleared.stops).toEqual([]);
+    expect(cleared.draft).toBeNull();
+    expect(cleared.nextSuggestionOverride).toBeNull();
+    expect(cleared.startPoint).toEqual(START);
+    expect(cleared.routeId).toBe("route_test");
+    expect(cleared.config).toEqual(built.config);
+  });
+
   it("never mutates the previous state (reducer is pure)", () => {
     const before = withStopAB(initial());
     const snapshot = JSON.parse(JSON.stringify(before)) as unknown;

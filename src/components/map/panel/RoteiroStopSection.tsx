@@ -1,4 +1,4 @@
-import { Pencil, Undo2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../../ui/button";
 import { PanelSection } from "./PanelSection";
 import { PanelTitle, type PanelMetric } from "./PanelTitle";
@@ -64,7 +64,7 @@ export const RoteiroStopSection = ({ stopOrder, neighborhoods, zipcodes, metrics
               {STOP.EDIT}
             </Button>
             <Button type="button" variant="outline" size="icon" className="h-7 w-7 shrink-0" data-vaul-no-drag onClick={onDissolve} title={STOP.DISSOLVE} aria-label={STOP.DISSOLVE}>
-              <Undo2 aria-hidden className="h-4 w-4" />
+              <Trash2 aria-hidden className="h-4 w-4" />
             </Button>
             <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" data-vaul-no-drag onClick={onToggleList}>
               {listOpen ? UI_LABELS.MAP_PANEL.HIDE_FULL_LIST : UI_LABELS.MAP_PANEL.VIEW_FULL_LIST}

@@ -603,9 +603,26 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
   };
   const handleDissolveStop = () => {
     if (!selectedStop) return;
+    const remainingStops = builderState.stops.filter((s) => s.id !== selectedStop.id);
     dispatch({ type: "DISSOLVE_STOP", stopId: selectedStop.id });
+    setExpandedRoteiroStopId(null);
+    setCardExpanded(false);
+    if (remainingStops.length > 0) {
+      const nextLastStop = remainingStops[remainingStops.length - 1];
+      setSelectedStopId(nextLastStop.id);
+      setPanelView("selected");
+    } else {
+      setSelectedStopId(null);
+      setPanelView("selected");
+    }
+  };
+
+  const handleResetRoute = () => {
+    dispatch({ type: "CLEAR_STOPS" });
     setSelectedStopId(null);
     setExpandedRoteiroStopId(null);
+    setSelectedPointId(null);
+    setDraftSelectedPointId(null);
     setCardExpanded(false);
     setPanelView("selected");
   };
@@ -1359,12 +1376,28 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
               // concise header, whatever was selected — the body carries the
               // whole study panel. Hiding it returns to the untouched context.
               <div>
-                <RoteiroPanelHeader progress={progress.ratio} modeLabel={roteiroModeLabel} graphStatus={graphStatus} detailsOpen onToggleDetails={handleHideOverview} />
+                <RoteiroPanelHeader
+                  progress={progress.ratio}
+                  modeLabel={roteiroModeLabel}
+                  graphStatus={graphStatus}
+                  detailsOpen
+                  onToggleDetails={handleHideOverview}
+                  stopsCount={builderState.stops.length}
+                  onResetRoute={handleResetRoute}
+                />
               </div>
             ) : startSelected && overviewStart ? (
               // The START selected on the map (RF-006.11): "parada 0" + redefine.
               <div>
-                <RoteiroPanelHeader progress={progress.ratio} modeLabel={roteiroModeLabel} graphStatus={graphStatus} detailsOpen={false} onToggleDetails={handleShowOverview} />
+                <RoteiroPanelHeader
+                  progress={progress.ratio}
+                  modeLabel={roteiroModeLabel}
+                  graphStatus={graphStatus}
+                  detailsOpen={false}
+                  onToggleDetails={handleShowOverview}
+                  stopsCount={builderState.stops.length}
+                  onResetRoute={handleResetRoute}
+                />
                 <PanelSection label={UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.SECTION_START}>
                   <StartRow start={overviewStart} onDelete={handleDeleteStart} onReposition={handleRepositionStart} />
                 </PanelSection>
@@ -1373,7 +1406,15 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
               <div>
                 {/* detailsOpen is impossible here: the overview branch above
                     owns panelView === "overview" (RF-006.11). */}
-                <RoteiroPanelHeader progress={progress.ratio} modeLabel={roteiroModeLabel} graphStatus={graphStatus} detailsOpen={false} onToggleDetails={handleShowOverview} />
+                <RoteiroPanelHeader
+                  progress={progress.ratio}
+                  modeLabel={roteiroModeLabel}
+                  graphStatus={graphStatus}
+                  detailsOpen={false}
+                  onToggleDetails={handleShowOverview}
+                  stopsCount={builderState.stops.length}
+                  onResetRoute={handleResetRoute}
+                />
                 <RoteiroStopSection
                   stopOrder={selectedStop.order}
                   neighborhoods={stopPlace.neighborhoods}
@@ -1391,7 +1432,15 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
               </div>
             ) : roteiroContext === "point-selected" && selectedPointItem ? (
               <div>
-                <RoteiroPanelHeader progress={progress.ratio} modeLabel={roteiroModeLabel} graphStatus={graphStatus} detailsOpen={false} onToggleDetails={handleShowOverview} />
+                <RoteiroPanelHeader
+                  progress={progress.ratio}
+                  modeLabel={roteiroModeLabel}
+                  graphStatus={graphStatus}
+                  detailsOpen={false}
+                  onToggleDetails={handleShowOverview}
+                  stopsCount={builderState.stops.length}
+                  onResetRoute={handleResetRoute}
+                />
                 <RoteiroPointSection
                   key={selectedPointItem.addressKey} // key-reset: the select re-anchors per point
                   item={selectedPointItem}
@@ -1422,6 +1471,8 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
                   graphStatus={graphStatus}
                   detailsOpen={false}
                   onToggleDetails={handleShowOverview}
+                  stopsCount={builderState.stops.length}
+                  onResetRoute={handleResetRoute}
                 />
                 {/* The definition FLOW only (RF-006.11): the settled "Início
                     definido | Redefinir" row left the idle header — the start
