@@ -18,3 +18,4 @@
 | # | ID | Titulo | Fatia | Valor | Urgencia | Esforco H/IA | Bloqueada por | Origem |
 |--:|---|---|---|---|---|---|---|---|
 | 1📌 | `TASK-RF-030` | Gerar ancoras livres e cobertura de entregas dentro do raio | 1/6 de TASK-RF-029 | importante | imediata | M/M | - | RF-34 |
+| 2 | `TASK-RF-041` | Ignorar endereco com exclusao da meta do roteiro, marcador destacado e secao ao final em ver detalhes | - | importante | normal | M/M | - | RF-56 |

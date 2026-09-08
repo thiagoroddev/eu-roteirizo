@@ -647,5 +647,46 @@
     "criado_em": "08/09/26 18:02",
     "implementado_em": "08/09/26 18:34",
     "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-55",
+    "tipo": "RF",
+    "enunciado": "Inclusao do ponto inicial na malha viaria do mapa para roteirizacao completa ate a primeira parada",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "implementado",
+    "criterios_aceite": [
+      "useRoadGraph considera startPoint no calculo do bounding box da malha",
+      "trajeto do inicio ate a parada 1 segue malha viaria em vez de linha reta",
+      "redefinicao do ponto inicial atualiza malha se estiver fora do bbox"
+    ],
+    "tarefas": [
+      "TASK-RF-040"
+    ],
+    "adr": null,
+    "criado_em": "08/09/26 19:01",
+    "implementado_em": "08/09/26 19:10",
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-56",
+    "tipo": "RF",
+    "enunciado": "Ignorar endereco inacessivel ou de risco com exclusao da meta, marcador em destaque e ordenacao ao final",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Botao de acao Ignorar endereco e Restaurar endereco na linha da secao Endereco selecionado",
+      "Badge Ignorado ao lado de Endereco selecionado",
+      "Exclusao do endereco ignorado do total necessario para conclusao (100% de progresso sem ele)",
+      "Marcador no mapa com cor diferenciada laranja ou vermelha",
+      "Listagem dos enderecos ignorados ao final da visao geral em Ver detalhes",
+      "Persistencia de ignoredPointIds no roteiro salvo e exportado"
+    ],
+    "tarefas": [],
+    "adr": null,
+    "criado_em": "08/09/26 19:01",
+    "implementado_em": null,
+    "pendente_de_validacao": false
   }
 ]
