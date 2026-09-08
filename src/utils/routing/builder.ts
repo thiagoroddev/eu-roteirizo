@@ -119,12 +119,12 @@ const draftPoints = (state: RouteBuilderState, pointIds: string[]): DeliveryPoin
  * through here — the order is DERIVED, always (anchor + sense are its only two
  * inputs; there is no manual reordering).
  */
-const sweepWithSense = (anchor: LatLng, points: DeliveryPoint[], reversed: boolean): string[] => nearestFirstOrder(anchor, points, reversed);
+const sweepWithSense = (anchor: LatLng, points: DeliveryPoint[], reversed: boolean, anchorPointId?: string): string[] => nearestFirstOrder(anchor, points, reversed, anchorPointId);
 
 /** Re-sweeps the draft's walking order from its (possibly new) anchor, keeping the sense. */
 const resweepDraft = (state: RouteBuilderState, draft: StopDraft): StopDraft => ({
   ...draft,
-  pointIds: sweepWithSense(draft.vehicleStop, draftPoints(state, draft.pointIds), draft.reversed),
+  pointIds: sweepWithSense(draft.vehicleStop, draftPoints(state, draft.pointIds), draft.reversed, draft.vehicleStopIsDefault ? draft.seedPointId : undefined),
 });
 
 export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuilderAction): RouteBuilderState => {
@@ -171,7 +171,7 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
       const byId = indexPointsById(state.points);
       /** Seed first, then the radius members; de-duped and filtered to free, known points. */
       const memberIds = [seed.id, ...action.memberIds].filter((id, i, arr) => arr.indexOf(id) === i && byId.has(id) && !assigned.has(id));
-      const pointIds = sweepWithSense(action.vehicleStop, draftPoints(state, memberIds), false);
+      const pointIds = sweepWithSense(action.vehicleStop, draftPoints(state, memberIds), false, seed.id);
       /** Born clockwise and at the DEFAULT anchor: the caller passes the
        *  `defaultAnchorSeed` projection, so "Resetar âncora" stays hidden until
        *  the user actually moves it (RF-006.6). */
@@ -313,7 +313,7 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
       if (state.draft?.pointIds.includes(point.id)) return state;
       /** Incorporating an orphan re-sweeps that stop's walking order, keeping
        *  its sense (fluxo §6; RF-006.6). The anchor does NOT move (§9). */
-      const pointIds = sweepWithSense(stop.vehicleStop, draftPoints(state, [...stop.pointIds, point.id]), stop.reversed ?? false);
+      const pointIds = sweepWithSense(stop.vehicleStop, draftPoints(state, [...stop.pointIds, point.id]), stop.reversed ?? false, stop.vehicleStopIsDefault !== false ? stop.pointIds[0] : undefined);
       const stops = state.stops.map((s) => (s.id === stop.id ? { ...s, pointIds } : s));
       return { ...state, stops };
     }

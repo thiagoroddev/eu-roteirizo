@@ -331,9 +331,9 @@ describe("MapPage + real RouteMap (integration)", () => {
     it("roteiro: UNGROUPING (double-tap) keeps the frame and goes to ZOOM.MAX (.4.20)", () => {
       enterRoteiro();
       createFirstStop();
-      // The stop square sits ON its anchor, and the anchor is the member nearest
-      // to where the vehicle comes from (RF-006.6) — the start is south, so p2.
-      dblTapMarkerAt(-22.90015, -43.2);
+      // The stop square sits ON its anchor, and the anchor is the seed chosen by
+      // the user (RF-52) — p1 (-22.9, -43.2).
+      dblTapMarkerAt(-22.9, -43.2);
 
       const { bounds, options } = lastFitBounds();
       expect(options.maxZoom).toBe(MAP_CONFIG.ZOOM.MAX);
@@ -343,8 +343,8 @@ describe("MapPage + real RouteMap (integration)", () => {
     it("roteiro: tapping a MEMBER of the ungrouped stop → ADDRESS_MAX_ZOOM on it (.4.21)", () => {
       enterRoteiro();
       createFirstStop();
-      dblTapMarkerAt(-22.90015, -43.2); // the square sits on the anchor (= p2)
-      tapMarkerAt(-22.9, -43.2); // p1's member circle
+      dblTapMarkerAt(-22.9, -43.2); // the square sits on the anchor (= p1)
+      tapMarkerAt(-22.90015, -43.2); // p2's member circle
 
       const { bounds, options } = lastFitBounds();
       expect(options.maxZoom).toBe(ADDRESS_MAX_ZOOM);

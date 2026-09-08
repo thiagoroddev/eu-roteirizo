@@ -70,4 +70,11 @@ describe("nearestFirstOrder (RF-006.17)", () => {
     expect(nearestFirstOrder(anchor, [near], false)).toEqual(["near"]);
     expect(nearestFirstOrder(anchor, [near], true)).toEqual(["near"]);
   });
+
+  it("nearestFirstOrder respeita anchorPointId como primeiro endereco da caminhada", () => {
+    // Mesmo que 'near' seja mais próximo da âncora do veículo, se anchorPointId for 'closeN',
+    // 'closeN' deve ser obrigatoriamente o 1º ponto
+    const result = nearestFirstOrder(anchor, [far, closeN, near], false, "closeN");
+    expect(result[0]).toBe("closeN");
+  });
 });

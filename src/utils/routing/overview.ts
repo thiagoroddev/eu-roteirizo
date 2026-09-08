@@ -11,9 +11,9 @@
 import type { DeliveryPoint, LatLng } from "../../types/routing";
 import type { RoadGraph } from "./graph";
 import type { RouteBuilderState } from "./builder";
-import { remainingCounts, suggestedNextPointId, suggestionCandidates, suggestionOrigin, previousAnchorOrigin } from "./builder";
+import { remainingCounts, suggestedNextPointId, suggestionCandidates, suggestionOrigin } from "./builder";
 import { totalPoints, totalPackages, assignedPointIds, pointsWithinRadius, indexPointsById } from "./selectors";
-import { suggestVehicleStop, defaultAnchorSeed } from "./vehicleStop";
+import { suggestVehicleStop } from "./vehicleStop";
 import { nearestByVehicleGraph } from "./suggestion";
 import { nearestFirstOrder } from "./walkOrder";
 
@@ -90,13 +90,10 @@ export const nextStopSuggestion = (state: RouteBuilderState, graph: RoadGraph | 
   const assigned = assignedPointIds(state.stops);
   const candidates = pointsWithinRadius(seed, state.points, state.config.autoRadiusMeters).filter((p) => p.id !== seed.id && !assigned.has(p.id));
   const members = [seed, ...candidates];
-  /** The anchor the stop would be BORN with (RF-006.6): the member nearest to
-      where the vehicle comes from — the same rule `handleCreateStop` commits
-      and `RESET_STOP_ANCHOR` restores. */
-  const anchorSeed = defaultAnchorSeed(members, previousAnchorOrigin(state, null)) ?? seed;
-  const anchor = suggestVehicleStop(graph, anchorSeed);
+  /** The anchor the stop would be BORN with: projected directly in front of the seed (RF-52). */
+  const anchor = suggestVehicleStop(graph, seed);
   const byId = indexPointsById(members);
-  const ordered = nearestFirstOrder(anchor, members, false)
+  const ordered = nearestFirstOrder(anchor, members, false, seed.id)
     .map((id) => byId.get(id))
     .filter((p): p is DeliveryPoint => p !== undefined);
 
