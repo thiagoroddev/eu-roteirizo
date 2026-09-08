@@ -80,10 +80,16 @@ export interface OsmElement {
 
 /**
  * Reads the OSM tags and returns the navigable direction of the way.
- * This is where one-way restrictions enter the system.
+ * This is where one-way restrictions enter the system (ADR-002, TASK-BG-012).
  *
- * Precedence: an explicit `oneway` value wins; otherwise a roundabout is
- * forward; otherwise the way is two-way.
+ * Precedence:
+ * 1. An explicit `oneway` value:
+ *    - "yes" / "true" / "1" -> "forward"
+ *    - "-1" / "reverse" -> "backward"
+ *    - "no" / "false" / "0" -> "both" (explicitly overrides roundabout/motorway)
+ * 2. `junction` = "roundabout" | "circular" -> "forward"
+ * 3. OSM default: `highway` = "motorway" | "motorway_link" -> "forward"
+ * 4. Otherwise the way is two-way ("both").
  *
  * @param tags - The way's OSM tags.
  * @returns "forward" (a→b), "backward" (b→a) or "both".
@@ -92,7 +98,14 @@ export const onewayDirection = (tags: OsmTags = {}): OnewayDir => {
   const v = String(tags.oneway ?? "").toLowerCase();
   if (v === "yes" || v === "true" || v === "1") return "forward";
   if (v === "-1" || v === "reverse") return "backward";
-  if (String(tags.junction ?? "").toLowerCase() === "roundabout") return "forward";
+  if (v === "no" || v === "false" || v === "0") return "both";
+
+  const junction = String(tags.junction ?? "").toLowerCase();
+  if (junction === "roundabout" || junction === "circular") return "forward";
+
+  const highway = String(tags.highway ?? "").toLowerCase();
+  if (highway === "motorway" || highway === "motorway_link") return "forward";
+
   return "both";
 };
 

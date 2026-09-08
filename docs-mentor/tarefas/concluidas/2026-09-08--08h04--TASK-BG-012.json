@@ -1,0 +1,119 @@
+{
+  "id": "TASK-BG-012",
+  "tipo": "BG",
+  "titulo": "Corrigir conectividade de alcas viarias e regras de mao unica no grafo OSM",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "criada_em": "08/09/26 07:13",
+  "iniciada_em": "08/09/26 07:13",
+  "commit_base": "6b3156a314cf0d3c8764cda57c4bde939060eab1",
+  "concluida_em": "08/09/26 08:04",
+  "plano": {
+    "muda": [
+      "src/utils/routing/osm.ts - incluir classes de ligacao viaria (*_link: motorway_link, trunk_link, primary_link, secondary_link, tertiary_link) em NAVIGABLE_HIGHWAYS.",
+      "src/utils/routing/graph.ts - enriquecer onewayDirection para reconhecer junction=circular, defaults de mao unica do OSM (motorway, motorway_link) e negacoes explicitas (no, 0, false).",
+      "src/services/graphCache.ts - elevar DB_VERSION para 2 e adicionar schemaVersion no CacheRecord para invalidar automaticamente grafos cacheados anteriores sem as classes link.",
+      "src/__tests__/utils/routing/osm.test.ts - atualizar assercao de buildOverpassQuery com as classes link.",
+      "src/__tests__/utils/routing/graph.test.ts - adicionar testes de onewayDirection cobrindo junction=circular, motorway default e anulações por oneway=no.",
+      "src/__tests__/utils/routing/aStar.test.ts - teste de conexao entre vias por alca de ligacao (primary_link) sem cair em linha reta.",
+      "src/__tests__/services/graphCache.test.ts - teste de invalidacao de registro legado sem schemaVersion."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "buildOverpassQuery inclui classes de link viario (motorway_link, trunk_link, primary_link, secondary_link, tertiary_link), permitindo download de alcas de acesso e retornos.",
+        "teste": "osm.test.ts > includes the navigable-highway filter"
+      },
+      {
+        "texto": "onewayDirection reconhece junction=circular como mao unica forward, assim como roundabout.",
+        "teste": "graph.test.ts > treats circular junction as forward"
+      },
+      {
+        "texto": "onewayDirection reconhece motorway e motorway_link como forward por padrao no OSM, mas reverte para both quando oneway=no/0/false.",
+        "teste": "graph.test.ts > treats motorway as forward by default, but respects oneway=no"
+      },
+      {
+        "texto": "A* encontra percurso navegavel entre vias conectadas por alca link sem retornar nulo nem degradar para linha reta.",
+        "teste": "aStar.test.ts > connects avenues via link road instead of straight fallback"
+      },
+      {
+        "texto": "graphCache invalida registros legados que nao possuem schemaVersion 2, forcando carga da nova malha completa.",
+        "teste": "graphCache.test.ts > treats legacy cached records without schemaVersion as expired (TASK-BG-012)"
+      }
+    ],
+    "impacto": "Camada de malha viaria e grafos (src/utils/routing/). Corrige desconexoes e sentidos invertidos de ruas, viabilizando o calculo de menor caminho para o motor de auto-roteirizacao (TASK-RF-029).",
+    "riscos": [
+      "Leve aumento no payload do Overpass ao incluir vias link (<10% de bytes), amplamente compensado pela integridade das conexoes viarias."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram para corrigir falhas de linhas retas e sentido de ruas na malha viaria; proponho incluir classes link do OSM e enriquecer a interpretacao de tags na camada pura de parsing, sem dependencias novas."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "08/09/26 07:16",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest\n\n\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.9 \u001b[39m\u001b[90mE:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\u001b[39m\n\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroStopSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1380\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m kind='vehicle' = SEMPRE o veículo: glifo do carro + badge, SEM pacote, NÃO tocável, com 'Editar local' (RF-006.16/.18) \u001b[33m 466\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m NÃO tem gestos de âncora — editar âncora = 'Editar parada' (RF-006.15 reverteu a .5) \u001b[33m 409\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/StopItemList.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1796\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m opens with EVERY item expanded (scan mode) and the badge as box glyph + count \u001b[33m 314\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m tapping a row toggles ONLY that item's expansion \u001b[33m 881\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m highlights the SELECTED item (aria-current), independent of expansion \u001b[33m 385\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/RouteTable.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1436\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m deve renderizar o título usando UI_LABELS.ROUTE_TABLE.TITLE \u001b[33m 578\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroDraftSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 2022\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m header: edit-mode label, stop number, metric CHIPS, the FIXED radius card and ALWAYS-VISIBLE CTAs — no global remaining (RF-006.4.25) \u001b[33m 326\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m body: full-list structure with ± icon toggles (rev. 08/07 3ª rodada) \u001b[33m 523\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m body: a ÂNCORA abre a lista com o sentido; 'Tornar âncora' por membro; 'Resetar' só fora do padrão (RF-006.6) \u001b[33m 761\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/RouteSimpleTabl\n[...recortado...]\n-BV7QT456.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)\n\n\u001b[90mstderr\u001b[2m | src/__tests__/pages/MapPage.test.tsx\u001b[2m > \u001b[22m\u001b[2mMapPage (focus screen)\u001b[2m > \u001b[22m\u001b[2mo círculo do preview segue o stepper de raio (RF-006.4.6)\n\u001b[22m\u001b[39mWarning: An update to MapScreen inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\n    at MapScreen (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:150:22)\n    at div\n    at MapPage (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:111:119)\n    at RenderedRoute (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)",
+      "executado_em": "08/09/26 07:45",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "08/09/26 07:41",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "08/09/26 07:43",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1954 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-DsFEu2SE.css   \u001b[39m\u001b[1m\u001b[2m 27.80 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.11 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-B9xzVV99.js    \u001b[39m\u001b[1m\u001b[33m523.71 kB\u001b[39m\u001b[22m\u001b[2m │ gzip:  98.68 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-97cVGccf.js   \u001b[39m\u001b[1m\u001b[33m803.68 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.67 kB\u001b[22m\n\u001b[32m✓ built in 6.88s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1777.51 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "08/09/26 07:45",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    }
+  },
+  "achados": [],
+  "validacao": "aprovado",
+  "validado_em": "08/09/26 08:04",
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-08--08h04--TASK-BG-012.md"
+}

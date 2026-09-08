@@ -562,7 +562,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       radius members become a firmed stop directly (no draft), and the panel
       focuses that grouped stop. Radius was tuned in the preview; further edits
       go through "Editar parada" (REOPEN). Reverses §8 (candidates by choice). */
-  const handleCreateStop = () => {
+  const handleCreateStop = (targetOrder?: number) => {
     if (!selectedPoint || !suggestedAnchor) return;
     const stopId = `stop_${selectedPoint.id}`;
     dispatch({
@@ -572,6 +572,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
       // The DEFAULT anchor (RF-006.6) — exactly what the preview showed.
       vehicleStop: suggestedAnchor,
       radiusMeters: previewRadiusMeters,
+      targetOrder,
     });
     setSelectedPointId(null);
     setSelectedStopId(stopId); // focus the freshly firmed, grouped stop
@@ -580,6 +581,10 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
     setCardExpanded(false);
     setPanelView("selected");
     // No auto-raise: the collapsed snap now FITS the summary (RF-006.4.12).
+  };
+
+  const handleReorderStop = (stopId: string, targetOrder: number) => {
+    dispatch({ type: "REORDER_STOP", stopId, targetOrder });
   };
 
   /** Committed-stop actions (RF-006.4.2 — fluxo §9; REOPEN/DISSOLVE were ready). */
@@ -1393,6 +1398,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
                   expanded={cardExpanded}
                   onTapCard={handleRoteiroCardTap}
                   suggestedOrder={suggestedOrder}
+                  totalStops={builderState.stops.length}
                   suggestedPlace={suggestedPlace}
                   suggestedMetrics={suggestedMetrics}
                   vehicleDistanceLabel={vehicleDistanceLabel}
@@ -1473,6 +1479,7 @@ function MapScreen({ rows, manifestId, routeName }: { rows: RowData[]; manifestI
               onShowSuggestedOnMap={handleShowSuggestedOnMap}
               onCreateSuggested={handleCreateSuggested}
               onExportRoute={handleExportRoute}
+              onReorderStop={handleReorderStop}
             />
           ) : roteiroContext === "start-flow" && !startSelected ? (
             // Idle (RF-006.11): ONLY the suggested-next-stop card — the lean

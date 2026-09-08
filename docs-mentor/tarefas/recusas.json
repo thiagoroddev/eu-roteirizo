@@ -14,5 +14,13 @@
     "impedimentos": [
       "metodo \"tdd\" exige o gate \"testes\" visto vermelho antes do verde. Registre com: task gate TASK-CHORE-012 testes --esperando-vermelho"
     ]
+  },
+  {
+    "quando": "08/09/26 07:13",
+    "comando": "task puxar",
+    "alvo": "TASK-BG-012",
+    "impedimentos": [
+      "origem aponta para Relato de teste manual de malha viaria com linhas retas e erros de mao (familia desconhecida), que nao existe. Criar o registro duravel e parte de criar a tarefa"
+    ]
   }
 ]

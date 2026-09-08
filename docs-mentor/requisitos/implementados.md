@@ -9,3 +9,4 @@
 | `RF-44` | RF | A tela inicial deve listar romaneios salvos com cards tipados, roteiros vinculados e atalho para abrir o mapa em Meu roteiro. | importante | TASK-RF-013, TASK-RF-028 |
 | `RN-15` | RN | Pn/En representa a nova ordem do Meu roteiro; Shopee Stop/Sequence permanece como identidade historica da planilha original. | essencial | TASK-RF-013, TASK-RF-024 |
 | `RN-21` | RN | Cada rota pode ter no maximo um Roteiro vinculado; roteiro importado sem romaneio vira standalone. | essencial | TASK-RF-013 |
+| `RF-50` | RF | Permitir inserir nova parada em posicao arbitraria e reordenar paradas existentes no rascunho do roteiro | importante | TASK-RF-035 |

@@ -164,6 +164,64 @@ describe("CREATE_STOP (commit-on-create — RF-006.4.6)", () => {
     expect(run(initial(), { type: "CREATE_STOP", seedPointId: "nope", memberIds: [], vehicleStop: START, radiusMeters: 30 }).stops).toEqual([]);
     expect(run(withAB, { type: "CREATE_STOP", seedPointId: "b", memberIds: [], vehicleStop: START, radiusMeters: 30 })).toBe(withAB);
   });
+
+  it("CREATE_STOP insere em posicao arbitraria e renumera paradas subsequentes", () => {
+    const s1 = run(initial(), { type: "CREATE_STOP", seedPointId: "a", memberIds: [], vehicleStop: { lat: a.lat, lng: a.lng }, radiusMeters: 30 });
+    const s2 = run(s1, { type: "CREATE_STOP", seedPointId: "c", memberIds: [], vehicleStop: { lat: c.lat, lng: c.lng }, radiusMeters: 30 });
+    const s3 = run(s2, { type: "CREATE_STOP", seedPointId: "d", memberIds: [], vehicleStop: { lat: d.lat, lng: d.lng }, radiusMeters: 30 });
+    expect(s3.stops.map((s) => s.id)).toEqual(["stop_a", "stop_c", "stop_d"]);
+    expect(s3.stops.map((s) => s.order)).toEqual([1, 2, 3]);
+
+    // Inserir nova parada 'e' com targetOrder: 2 (entre stop_a e stop_c)
+    const insertedMid = run(s3, {
+      type: "CREATE_STOP",
+      seedPointId: "e",
+      memberIds: [],
+      vehicleStop: { lat: e.lat, lng: e.lng },
+      radiusMeters: 30,
+      targetOrder: 2,
+    });
+    expect(insertedMid.stops.map((s) => s.id)).toEqual(["stop_a", "stop_e", "stop_c", "stop_d"]);
+    expect(insertedMid.stops.map((s) => s.order)).toEqual([1, 2, 3, 4]);
+
+    // Inserir nova parada 'b' com targetOrder: 1 (no início)
+    const insertedStart = run(s3, {
+      type: "CREATE_STOP",
+      seedPointId: "b",
+      memberIds: [],
+      vehicleStop: { lat: b.lat, lng: b.lng },
+      radiusMeters: 30,
+      targetOrder: 1,
+    });
+    expect(insertedStart.stops.map((s) => s.id)).toEqual(["stop_b", "stop_a", "stop_c", "stop_d"]);
+    expect(insertedStart.stops.map((s) => s.order)).toEqual([1, 2, 3, 4]);
+  });
+});
+
+describe("REORDER_STOP (reordenacao de paradas)", () => {
+  it("REORDER_STOP reposiciona parada e normaliza sequencia 1..n", () => {
+    const s1 = run(initial(), { type: "CREATE_STOP", seedPointId: "a", memberIds: [], vehicleStop: { lat: a.lat, lng: a.lng }, radiusMeters: 30 });
+    const s2 = run(s1, { type: "CREATE_STOP", seedPointId: "b", memberIds: [], vehicleStop: { lat: b.lat, lng: b.lng }, radiusMeters: 30 });
+    const s3 = run(s2, { type: "CREATE_STOP", seedPointId: "c", memberIds: [], vehicleStop: { lat: c.lat, lng: c.lng }, radiusMeters: 30 });
+    const s4 = run(s3, { type: "CREATE_STOP", seedPointId: "d", memberIds: [], vehicleStop: { lat: d.lat, lng: d.lng }, radiusMeters: 30 });
+    expect(s4.stops.map((s) => s.id)).toEqual(["stop_a", "stop_b", "stop_c", "stop_d"]);
+
+    // Mover stop_d (ordem 4) para ordem 2
+    const movedTo2 = run(s4, { type: "REORDER_STOP", stopId: "stop_d", targetOrder: 2 });
+    expect(movedTo2.stops.map((s) => s.id)).toEqual(["stop_a", "stop_d", "stop_b", "stop_c"]);
+    expect(movedTo2.stops.map((s) => s.order)).toEqual([1, 2, 3, 4]);
+
+    // Mover stop_a (ordem 1) para ordem 4 (ao final)
+    const movedToEnd = run(s4, { type: "REORDER_STOP", stopId: "stop_a", targetOrder: 4 });
+    expect(movedToEnd.stops.map((s) => s.id)).toEqual(["stop_b", "stop_c", "stop_d", "stop_a"]);
+    expect(movedToEnd.stops.map((s) => s.order)).toEqual([1, 2, 3, 4]);
+
+    // No-op para ordem idêntica, stopId inexistente ou targetOrder fora de faixa
+    expect(run(s4, { type: "REORDER_STOP", stopId: "stop_b", targetOrder: 2 })).toBe(s4);
+    expect(run(s4, { type: "REORDER_STOP", stopId: "stop_unknown", targetOrder: 1 })).toBe(s4);
+    expect(run(s4, { type: "REORDER_STOP", stopId: "stop_b", targetOrder: 0 })).toBe(s4);
+    expect(run(s4, { type: "REORDER_STOP", stopId: "stop_b", targetOrder: 5 })).toBe(s4);
+  });
 });
 
 describe("stop draft lifecycle", () => {

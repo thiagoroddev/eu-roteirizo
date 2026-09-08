@@ -1,0 +1,119 @@
+{
+  "id": "TASK-RF-035",
+  "tipo": "RF",
+  "titulo": "Permitir insercao de parada em posicao arbitraria e reordenacao no rascunho",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "RF-50",
+  "requisitos": [
+    "RF-50"
+  ],
+  "criada_em": "08/09/26 08:25",
+  "iniciada_em": "08/09/26 08:26",
+  "commit_base": "64e5c9d641065eaab7587f7b4a4920536baa4df8",
+  "concluida_em": "08/09/26 08:54",
+  "plano": {
+    "muda": [
+      "src/utils/routing/builder.ts - Atualizar acao CREATE_STOP para aceitar targetOrder opcional (inserindo no indice correto antes de normalizar ordens); adicionar acao REORDER_STOP para reposicionar qualquer parada mantendo sequencia 1..N.",
+      "src/constants/uiLabels.ts - Adicionar rotulos acessiveis e amigaveis para seletor de posicao de insercao e acoes de mover paradas.",
+      "src/components/map/panel/RoteiroPointSection.tsx - Adicionar seletor de posicao na secao Previa de parada quando ja existirem paradas criadas, permitindo escolher em qual posicao inserir a nova parada.",
+      "src/components/map/panel/RoteiroOverviewSection.tsx - Adicionar botoes/controles para subir e descer paradas na lista de paradas confirmadas, disparando a reordenacao.",
+      "src/pages/MapPage.tsx - Conectar targetOrder no dispatch de CREATE_STOP e adicionar callback de reordenacao para RoteiroOverviewSection.",
+      "src/__tests__/utils/routing/builder.test.ts - Testes unitarios para insercao de parada no inicio, meio e fim, alem de reordenacao de paradas existentes.",
+      "src/__tests__/components/map/panel/RoteiroPointSection.test.tsx - Testes para selecao de posicao de insercao na previa.",
+      "src/__tests__/components/map/panel/RoteiroOverviewSection.test.tsx - Testes para controles de mover paradas na lista da vista geral."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Dado um conjunto de paradas existentes 1..N, quando criar uma nova parada informando targetOrder no meio ou inicio, entao a nova parada assume essa ordem e as ordens das paradas subsequentes sao incrementadas automaticamente sem lacunas.",
+        "teste": "builder.test.ts > CREATE_STOP insere em posicao arbitraria e renumera paradas subsequentes"
+      },
+      {
+        "texto": "Dada uma parada existente em ordem A, quando reordenar para targetOrder B, entao a parada assume ordem B e as demais paradas sao deslocadas mantendo a sequencia contigua 1..N.",
+        "teste": "builder.test.ts > REORDER_STOP reposiciona parada e normaliza sequencia 1..n"
+      },
+      {
+        "texto": "Na secao Previa de parada, quando existirem paradas anteriores, o usuario pode selecionar em qual posicao a nova parada sera criada e o numero exibido reflete a posicao escolhida.",
+        "teste": "RoteiroPointSection.test.tsx > permite selecionar posicao de insercao e passa targetOrder"
+      },
+      {
+        "texto": "Na lista de paradas confirmadas da vista geral, cada parada oferece acoes para mover para cima ou para baixo respeitando os limites da rota.",
+        "teste": "RoteiroOverviewSection.test.tsx > permite mover parada para cima e para baixo"
+      }
+    ],
+    "impacto": "Resolve o esquecimento de enderecos no fluxo manual de criacao de rotas, permitindo inserir paradas retroativamente na ordem correta sem precisar recomecar o rascunho ou perder o sequenciamento.",
+    "riscos": [
+      "Usuario selecionar ordem invalida fora dos limites: mitigado com clamping automatico e fallback para fim da rota no reducer.",
+      "Impacto no calculo de distancias/estimativas: normalizeOrders garante paradas 1..N contiguas, permitindo recalcular percursos e pernas sem inconsistencias."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram capacidade de inserir uma nova parada entre paradas existentes e reordenar paradas no rascunho. A proposta estende a acao CREATE_STOP e adiciona REORDER_STOP no reducer puro existente, acompanhado de seletor na previa e botoes subir/descer na vista geral. A solucao e do tamanho do pedido porque resolve a insercao em qualquer posicao e a reordenacao diretamente no reducer ja existente, sem bibliotecas pesadas de drag-and-drop ou reestruturacoes desnecessarias."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "08/09/26 08:29",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest\n\n\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.9 \u001b[39m\u001b[90mE:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\u001b[39m\n\n \u001b[32m✓\u001b[39m src/__tests__/components/RouteTable.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1652\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m deve renderizar o título usando UI_LABELS.ROUTE_TABLE.TITLE \u001b[33m 566\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m deve renderizar o número correto de linhas (header + data rows) \u001b[33m 315\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/RouteSimpleTable.test.tsx \u001b[2m(\u001b[22m\u001b[2m8 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1880\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders the correct title using UI_LABELS \u001b[33m 508\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders the column headers using UI_LABELS \u001b[33m 632\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroStopSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 2104\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m kind='vehicle' = SEMPRE o veículo: glifo do carro + badge, SEM pacote, NÃO tocável, com 'Editar local' (RF-006.16/.18) \u001b[33m 755\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m NÃO tem gestos de âncora — editar âncora = 'Editar parada' (RF-006.15 reverteu a .5) \u001b[33m 548\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroOverviewSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1963\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renderiza o botão 'Exportar roteiro' quando há paradas e onExportRoute é fornecido \u001b[33m 955\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m permite mover parada para cima e para baixo \u001b[33m 622\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/__tests__/components/map/panel/RoteiroDraftSection.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 2590\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m header: edit-mode label, stop number, metric CHIPS, the FIXED radius card and ALWAYS-VISIBLE CTAs — no global remaining (RF-006.4.25) \u001b[33m 674\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b\n[...recortado...]\n-BV7QT456.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)\n\n\u001b[90mstderr\u001b[2m | src/__tests__/pages/MapPage.test.tsx\u001b[2m > \u001b[22m\u001b[2mMapPage (focus screen)\u001b[2m > \u001b[22m\u001b[2mo círculo do preview segue o stepper de raio (RF-006.4.6)\n\u001b[22m\u001b[39mWarning: An update to MapScreen inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\n    at MapScreen (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:150:22)\n    at div\n    at MapPage (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:111:119)\n    at RenderedRoute (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)",
+      "executado_em": "08/09/26 08:39",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "08/09/26 08:38",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "08/09/26 08:39",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1954 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-Bl2XUrh7.css   \u001b[39m\u001b[1m\u001b[2m 27.87 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.13 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-ClgI_np-.js    \u001b[39m\u001b[1m\u001b[33m526.00 kB\u001b[39m\u001b[22m\u001b[2m │ gzip:  99.31 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-CN27Pq0A.js   \u001b[39m\u001b[1m\u001b[33m803.85 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.73 kB\u001b[22m\n\u001b[32m✓ built in 11.91s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1779.98 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "08/09/26 08:40",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    }
+  },
+  "achados": [],
+  "validacao": "aprovado",
+  "validado_em": "08/09/26 08:54",
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-08--08h54--TASK-RF-035.md"
+}

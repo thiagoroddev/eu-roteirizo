@@ -206,6 +206,10 @@ export const UI_LABELS = {
       PROGRESS_ARIA: "Progresso do roteiro (endereços atribuídos)",
       NO_STOPS: "Nenhuma parada confirmada ainda.",
       STOP_ARIA: (order: number) => `Parada ${order} — ver endereços`,
+      MOVE_UP: "Mover para cima",
+      MOVE_DOWN: "Mover para baixo",
+      MOVE_UP_ARIA: (order: number) => `Mover Parada ${order} para cima`,
+      MOVE_DOWN_ARIA: (order: number) => `Mover Parada ${order} para baixo`,
       // Cards de somatória (RF-006.20): Duração e Distância abrem um popup de
       // decomposição ("Detalhes"); Comercial é só contagem, sem popup.
       CARD_DURATION: "Duração total",
@@ -281,6 +285,8 @@ export const UI_LABELS = {
     // Ponto livre selecionado (tela 8 — TASK-RF-006.4/.4.1, fluxo §9).
     ROTEIRO_POINT: {
       CREATE_STOP: "Criar parada",
+      INSERT_POSITION_LABEL: "Posição da parada",
+      INSERT_POSITION_OPTION: (order: number, isLast: boolean) => (order === 1 ? "1 — No início" : isLast ? `${order} — Ao final` : `${order} — Após Parada ${order - 1}`),
       // O destino é escolhido num POPUP aberto pelo botão (rev. 15/07 — era select inline).
       INCORPORATE_OTHER: "Incorporar em outra parada",
       INCORPORATE_HINT: "Escolha a parada que receberá este endereço.",

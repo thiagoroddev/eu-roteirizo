@@ -10,6 +10,7 @@ import type { StopItemData } from "../../../utils/markers/panelModels";
 import { UI_LABELS } from "../../../constants/uiLabels";
 
 const POINT = UI_LABELS.MAP_PANEL.ROTEIRO_POINT;
+const START = UI_LABELS.MAP_PANEL.ROTEIRO_START;
 
 /** A committed stop the orphan can join, plus its RN-17 distance hint. */
 export interface StopOption {
@@ -58,7 +59,9 @@ interface Props {
   stopOptions: StopOption[];
   /** Pre-selected target (the nearest stop); null without stops. */
   defaultStopId: string | null;
-  onCreateStop: () => void;
+  /** Total existing stops, used to offer insertion options (defaults to stops length). */
+  totalStops?: number;
+  onCreateStop: (targetOrder?: number) => void;
   onIncorporate: (stopId: string) => void;
   /** This address IS the route's start (RF-006.11): flag + start gestures beside it. */
   isStart?: boolean;
@@ -72,6 +75,7 @@ export const RoteiroPointSection = ({
   expanded,
   onTapCard,
   suggestedOrder,
+  totalStops,
   suggestedPlace,
   suggestedMetrics,
   vehicleDistanceLabel,
@@ -85,6 +89,8 @@ export const RoteiroPointSection = ({
   onDeleteStart,
   onRepositionStart,
 }: Props) => {
+  const stopsCount = totalStops ?? (stopOptions.length > 0 ? stopOptions.length : suggestedOrder > 1 ? suggestedOrder - 1 : 0);
+  const [chosenOrder, setChosenOrder] = useState<number>(suggestedOrder);
   /** The target is chosen in a POPUP (rev. 15/07 — was an inline select). */
   const [incorporating, setIncorporating] = useState(false);
   const [targetStopId, setTargetStopId] = useState<string | null>(defaultStopId);
@@ -101,40 +107,29 @@ export const RoteiroPointSection = ({
         <p className="px-4 text-xs text-muted-foreground">{UI_LABELS.MAP_PANEL.ROTEIRO_NO_STOP_YET}</p>
         {/* Highlighted by default — it IS the selected address (RF-006.4.13).
             pb-2 like every other section's last block: without it the highlighted
-            row's `bg-accent` runs into the next section's `border-t`, and a
-            light divider over a light accent reads as no divider at all. */}
-        <div className="flex items-center pb-2">
-          <div className="min-w-0 flex-1">
-            <StopItemRow item={item} onTap={onTapCard} highlighted expanded={expanded} neon isStart={isStart} />
-          </div>
-          {/* Start gestures beside the row (RF-006.14) — siblings, never nested
-              (the row itself is a button): reposition arms a map tap, delete
-              drops the start. */}
-          {isStart && onDeleteStart && onRepositionStart && (
-            <div className="mr-2 flex shrink-0 items-center gap-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                data-vaul-no-drag
-                aria-label={UI_LABELS.MAP_PANEL.ROTEIRO_START.REPOSITION_START}
-                title={UI_LABELS.MAP_PANEL.ROTEIRO_START.REPOSITION_START}
-                onClick={onRepositionStart}
-              >
-                <Move aria-hidden />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                data-vaul-no-drag
-                aria-label={UI_LABELS.MAP_PANEL.ROTEIRO_START.DELETE_START}
-                title={UI_LABELS.MAP_PANEL.ROTEIRO_START.DELETE_START}
-                onClick={onDeleteStart}
-              >
-                <Trash2 aria-hidden />
-              </Button>
+            row sat flush on the next section's divider. */}
+        <div className="pb-2">
+          {isStart ? (
+            /* Address that IS the start: mini blue-car icon + start gestures (RF-006.11/.14). */
+            <div className="flex items-center">
+              <div className="min-w-0 flex-1">
+                <StopItemRow item={item} onTap={onTapCard} highlighted expanded={expanded} neon isStart={isStart} />
+              </div>
+              <div className="mr-2 flex shrink-0 items-center gap-1">
+                {onRepositionStart && (
+                  <Button type="button" variant="ghost" size="icon" data-vaul-no-drag aria-label={START.REPOSITION_START} title={START.REPOSITION_START} onClick={onRepositionStart}>
+                    <Move aria-hidden />
+                  </Button>
+                )}
+                {onDeleteStart && (
+                  <Button type="button" variant="ghost" size="icon" data-vaul-no-drag aria-label={START.DELETE_START} title={START.DELETE_START} onClick={onDeleteStart}>
+                    <Trash2 aria-hidden />
+                  </Button>
+                )}
+              </div>
             </div>
+          ) : (
+            <StopItemRow item={item} onTap={onTapCard} highlighted expanded={expanded} neon />
           )}
         </div>
         {/* Its packages drill down RIGHT HERE (RF-006.15 bug fix): the detail
@@ -158,7 +153,7 @@ export const RoteiroPointSection = ({
                 {POINT.INCORPORATE_OTHER}
               </Button>
             )}
-            <Button type="button" size="sm" data-vaul-no-drag onClick={onCreateStop}>
+            <Button type="button" size="sm" data-vaul-no-drag onClick={() => onCreateStop(chosenOrder)}>
               {POINT.CREATE_STOP}
             </Button>
           </>
@@ -171,7 +166,30 @@ export const RoteiroPointSection = ({
             <span className="sr-only">{POINT.VEHICLE_QUALIFIER}</span>
           </p>
         )}
-        <PanelTitle stopNumber={String(suggestedOrder)} neighborhoods={suggestedPlace.neighborhoods} zipcodes={suggestedPlace.zipcodes} metrics={suggestedMetrics} />
+        <PanelTitle stopNumber={String(chosenOrder)} neighborhoods={suggestedPlace.neighborhoods} zipcodes={suggestedPlace.zipcodes} metrics={suggestedMetrics} />
+
+        {/* Position picker when there are previous stops (TASK-RF-035) */}
+        {stopsCount > 0 && (
+          <div className="flex items-center justify-between gap-2 px-4 pb-2">
+            <label htmlFor="insert-position-select" className="text-xs text-muted-foreground whitespace-nowrap">
+              {POINT.INSERT_POSITION_LABEL}
+            </label>
+            <select
+              id="insert-position-select"
+              aria-label={POINT.INSERT_POSITION_LABEL}
+              value={chosenOrder}
+              onChange={(e) => setChosenOrder(Number(e.target.value))}
+              className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+              data-vaul-no-drag
+            >
+              {Array.from({ length: stopsCount + 1 }, (_, i) => i + 1).map((order) => (
+                <option key={order} value={order}>
+                  {POINT.INSERT_POSITION_OPTION(order, order === stopsCount + 1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Radius adjustable BEFORE creating (RF-006.4.6): the members that
             enter on "Criar parada" are exactly what this radius includes. */}
