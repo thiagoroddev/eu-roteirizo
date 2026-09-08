@@ -49,53 +49,38 @@ const renderSection = (extra: Partial<React.ComponentProps<typeof RoteiroStopSec
   return handlers;
 };
 
-describe("RoteiroStopSection (parada firmada — TASK-RF-006.4.2/.4.7/.4.16, revisto na .15)", () => {
-  it("título SEMPRE bairro (CEPs) e seção 'Endereço selecionado' — sem 'Veículo (âncora)' (RF-006.15)", () => {
-    renderSection();
+describe("RoteiroStopSection (parada firmada — RF-53 / TASK-RF-038)", () => {
+  it("oculta a seção 'Endereço selecionado' quando isExpanded é falso (parada agrupada) e exibe badge P2", () => {
+    renderSection({ isExpanded: false, stopColor: { top: "#00E5FF", bottom: "#0088FF", glow: "#00D1FF", numberInk: "#0B1528" } });
 
     expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_STOP)).toBeInTheDocument();
-    // O título voltou ao padrão bairro/CEP (a .5 tinha trocado por "Veículo (âncora)").
+    expect(screen.getByText("P2")).toBeInTheDocument();
     expect(screen.getByText(`${UI_LABELS.MAP_PANEL.STOP_PREFIX} 2 — Botafogo (22290-000)`)).toBeInTheDocument();
     expect(screen.getByText("~12 min · 850 m a pé")).toBeInTheDocument();
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).toBeInTheDocument();
+    // Parada agrupada: o card Endereço selecionado NÃO aparece (RF-53)
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).not.toBeInTheDocument();
   });
 
-  it("kind='vehicle' = SEMPRE o veículo: glifo do carro + badge, SEM pacote, NÃO tocável, com 'Editar local' (RF-006.16/.18)", () => {
-    const handlers = renderSection({ selectedKind: "vehicle" });
-
-    // Glifo do veículo (não o ordinal) + o badge de texto "Parada do veículo".
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).toBeInTheDocument();
-    expect(screen.queryByText("1º")).not.toBeInTheDocument();
-    // Sem badge de pacote na row do veículo (não é uma entrega).
-    expect(screen.queryByLabelText(UI_LABELS.MAP_PANEL.METRIC_PACKAGES(1))).not.toBeInTheDocument();
-    // Tocar a row não faz nada (informacional, sem pacotes)…
-    fireEvent.click(screen.getByRole("button", { name: /Rua Mapa, 10/ }));
-    expect(handlers.onTapCard).not.toHaveBeenCalled();
-    // …mas o atalho "Editar local do veículo" reabre a edição (RF-006.18).
-    fireEvent.click(screen.getByRole("button", { name: STOP.EDIT_VEHICLE }));
-    expect(handlers.onEdit).toHaveBeenCalledTimes(1);
+  it("renderiza layout em 2 linhas com titleOverride e subtitleOverride", () => {
+    renderSection({
+      titleOverride: "Avenida Epitácio Pessoa, 4224",
+      subtitleOverride: "Lagoa, 22061-000",
+    });
+    expect(screen.getByText("P2")).toBeInTheDocument();
+    expect(screen.getByText("Avenida Epitácio Pessoa, 4224")).toBeInTheDocument();
+    expect(screen.getByText("Lagoa, 22061-000")).toBeInTheDocument();
   });
 
-  it("kind='coincident' (o endereço onde o veículo para): ordinal + pacote + badge 'Parada do veículo', TOCÁVEL (RF-006.18)", () => {
-    const handlers = renderSection({ selectedItem: memberItem, selectedKind: "coincident" });
-
-    // Continua sendo uma entrega: ordinal + pacotes, tocável…
-    expect(screen.getByText("2º")).toBeInTheDocument();
-    expect(screen.getByLabelText(UI_LABELS.MAP_PANEL.METRIC_PACKAGES(2))).toBeInTheDocument();
-    // …com o badge de texto "Parada do veículo" (igual à row do carro).
-    expect(screen.getByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Av\. Membro, 200/ }));
-    expect(handlers.onTapCard).toHaveBeenCalledTimes(1);
-  });
-
-  it("kind='member': ordinal + complemento + pacote, e é TOCÁVEL (RF-006.4.16)", () => {
-    const handlers = renderSection({ selectedItem: memberItem, selectedKind: "member" });
+  it("exibe a seção 'Endereço selecionado' sem badge de veículo quando isExpanded é verdadeiro", () => {
+    const handlers = renderSection({ isExpanded: true, selectedItem: memberItem, selectedKind: "member" });
 
     expect(screen.getByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).toBeInTheDocument();
+    // Sem o selo 'Parada do veículo' (RF-53)
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).not.toBeInTheDocument();
+    expect(screen.getByText("2º")).toBeInTheDocument();
     expect(screen.getByText(`${UI_LABELS.ROUTE_MAP.ADDRESS_SHEET.COMPLEMENT} Loja 4`)).toBeInTheDocument();
-    expect(screen.getByLabelText(UI_LABELS.MAP_PANEL.METRIC_PACKAGES(2))).toBeInTheDocument(); // pacote visível
+    expect(screen.getByLabelText(UI_LABELS.MAP_PANEL.METRIC_PACKAGES(2))).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Av\. Membro, 200/ }));
     expect(handlers.onTapCard).toHaveBeenCalledTimes(1);
   });
@@ -116,15 +101,15 @@ describe("RoteiroStopSection (parada firmada — TASK-RF-006.4.2/.4.7/.4.16, rev
     expect(handlers.onDissolve).toHaveBeenCalledTimes(1);
   });
 
-  it("com a lista aberta: o toggle vira 'Esconder lista' e a row do endereço some (a lista É os endereços)", () => {
-    renderSection({ listOpen: true });
+  it("com a lista aberta: o toggle vira 'Esconder lista' e a row do endereço some", () => {
+    renderSection({ isExpanded: true, listOpen: true });
 
     expect(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.HIDE_FULL_LIST })).toBeInTheDocument();
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.SECTION_SELECTED)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: STOP.EDIT })).toBeInTheDocument();
   });
 
-  it("botao de exclusao usa rotulo Deletar parada", () => {
+  it("botão de exclusão usa rótulo Deletar parada", () => {
     const handlers = renderSection();
     const deleteBtn = screen.getByRole("button", { name: "Deletar parada" });
     expect(deleteBtn).toBeInTheDocument();

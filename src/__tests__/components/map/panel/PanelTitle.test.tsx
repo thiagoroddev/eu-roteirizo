@@ -27,4 +27,33 @@ describe("PanelTitle", () => {
     const { container } = render(<PanelTitle stopNumber="1" metrics={[]} />);
     expect(container.querySelectorAll(".rounded-full").length).toBe(0);
   });
+
+  it("renderiza layout em 2 linhas quando titleOverride é fornecido (RF-53 / TASK-RF-038)", () => {
+    render(<PanelTitle stopNumber="26" titleOverride="Avenida Epitácio Pessoa, 4224" neighborhoods={["Lagoa"]} zipcodes={["22061-000"]} metrics={[{ label: "2 endereços" }]} />);
+
+    expect(screen.getByText("Avenida Epitácio Pessoa, 4224")).toBeInTheDocument();
+    expect(screen.getByText("Lagoa, 22061-000")).toBeInTheDocument();
+    expect(screen.getByText("2 endereços")).toBeInTheDocument();
+  });
+
+  it("suporta subtitleOverride customizado", () => {
+    render(<PanelTitle stopNumber="26" titleOverride="Rua Barão da Torre, 123" subtitleOverride="Ipanema" metrics={[]} />);
+
+    expect(screen.getByText("Rua Barão da Torre, 123")).toBeInTheDocument();
+    expect(screen.getByText("Ipanema")).toBeInTheDocument();
+  });
+
+  it("estiliza badges de contagem comercial (azul), residencial (verde) e indefinido (cinza)", () => {
+    render(<PanelTitle stopNumber="1" metrics={[{ label: "1 endereço" }, { label: "Residencial: 2 pacotes" }, { label: "Comercial: 1 pacote" }, { label: "Indefinido: 1 pacote" }]} />);
+
+    const resBadge = screen.getByText("Residencial: 2 pacotes");
+    const comBadge = screen.getByText("Comercial: 1 pacote");
+    const indBadge = screen.getByText("Indefinido: 1 pacote");
+    const endBadge = screen.getByText("1 endereço");
+
+    expect(resBadge.style.backgroundColor).toBe("rgb(14, 140, 73)");
+    expect(comBadge.style.backgroundColor).toBe("rgb(21, 89, 201)");
+    expect(indBadge.style.backgroundColor).toBe("rgb(226, 232, 240)");
+    expect(endBadge.style.backgroundColor).toBe("");
+  });
 });

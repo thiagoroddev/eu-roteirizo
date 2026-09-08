@@ -179,14 +179,16 @@ describe("SummaryPage (focus screen)", () => {
     renderPage();
 
     await screen.findByText(UI_LABELS.ROTEIRO_INFO.CARD_ADDRESSES);
-    // Em Info Meu Roteiro: Tabela Original NÃO aparece
+    // Em Info Meu Roteiro: Tabela Original NÃO aparece, aparece Tabela Meu Roteiro
     expect(screen.queryByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.ORIGINAL_TABLE })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.SIMPLE_TABLE })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.ROTEIRO_TABLE })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.SIMPLE_TABLE })).not.toBeInTheDocument();
 
-    // Alterna para Info Original: Tabela Original aparece
+    // Alterna para Info Original: Tabela Original aparece, sem tabela simplificada/roteiro
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.SECTION_ORIGINAL }));
     expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.ORIGINAL_TABLE })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.SIMPLE_TABLE })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.ROTEIRO_TABLE })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.SIMPLE_TABLE })).not.toBeInTheDocument();
 
     routeStorageState.saved = null;
   });

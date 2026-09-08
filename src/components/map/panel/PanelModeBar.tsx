@@ -40,9 +40,16 @@ const StopStepper = ({ onPrevStop, onNextStop }: { onPrevStop: () => void; onNex
 export const PanelModeBar = ({ modeLabel, progress, actions, onPrevStop, onNextStop }: Props) => (
   <div>
     <div className="flex min-h-10 items-center justify-between gap-2 px-4">
-      <span className="min-w-0 truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">{modeLabel}</span>
+      <div className="flex min-w-0 items-center gap-1.5 truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <span className="truncate">{modeLabel}</span>
+        {progress !== undefined && (
+          <>
+            <span aria-hidden>-</span>
+            <span className="shrink-0 font-semibold tabular-nums text-foreground">{UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.PERCENT(progress)}</span>
+          </>
+        )}
+      </div>
       <div className="flex shrink-0 items-center gap-2">
-        {progress !== undefined && <span className="text-xs font-semibold tabular-nums">{UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.PERCENT(progress)}</span>}
         {actions}
         {onPrevStop && onNextStop && <StopStepper onPrevStop={onPrevStop} onNextStop={onNextStop} />}
       </div>

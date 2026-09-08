@@ -25,15 +25,19 @@
 
 import type { RowData } from "../../types";
 import type { DeliveryPoint, LatLng, RouteStop, StopLeg } from "../../types/routing";
+import type { RoadGraph } from "../routing/graph";
+import { nearestWayName } from "../routing/match";
 import type { StopDraft } from "../routing/builder";
 import type { StopWalkEstimate } from "../routing/estimates";
 import type { MarkerModel } from "./markerModels";
 import type { StopItemData, PackageRowData } from "./panelModels";
+import type { MarkerColor } from "./markerSvg";
 import { roteiroColorForLocationType } from "./markerColors";
 import { dominantType } from "./stopGrouping";
 import { extractRowComplement, locationTypeLabel } from "./markerModels";
 import { resolveLocationType } from "../inferLocationType";
 import { indexPointsById, unassignedPoints } from "../routing/selectors";
+import { haversine } from "../routing/geo";
 import { escapeHtml } from "../escapeHtml";
 import { formatMeters } from "../formatters";
 import { COLUMN_NAMES, ICON_KEYS, UI_LABELS } from "../../constants";
@@ -85,9 +89,26 @@ export interface RoteiroModelOptions {
   draftSelectedPointId?: string | null;
 }
 
-/** Committed-stop color: dominant type over ALL its points' rows, neon register. */
-const stopColor = (stop: RouteStop, pointsById: Map<string, DeliveryPoint>) =>
-  roteiroColorForLocationType(dominantType(stop.pointIds.flatMap((id) => (pointsById.get(id) ? pointRows(pointsById.get(id)!) : []))));
+/**
+ * Committed-stop color:
+ * - Se contiver entrega comercial: mantém azul (commercial).
+ * - Caso contrário: tipo dominante sobre todas as linhas dos seus pontos.
+ */
+export const stopColor = (stop: RouteStop, pointsById: Map<string, DeliveryPoint>): MarkerColor => {
+  const rows = stop.pointIds.flatMap((id) => (pointsById.get(id) ? pointRows(pointsById.get(id)!) : []));
+  let hasCommercial = false;
+  for (const row of rows) {
+    const type = resolveLocationType(row);
+    if (type === ICON_KEYS.OFFICE || type === ICON_KEYS.OFFICE_CORRECTED) {
+      hasCommercial = true;
+      break;
+    }
+  }
+  if (hasCommercial) {
+    return roteiroColorForLocationType(ICON_KEYS.OFFICE);
+  }
+  return roteiroColorForLocationType(dominantType(rows));
+};
 
 /**
  * Builds the markers of the Meu roteiro mode.
@@ -156,7 +177,7 @@ export const computeRoteiroMarkerModels = (points: DeliveryPoint[], stops: Route
       iconProps: {
         shape: "square",
         color: stopColor(stop, pointsById),
-        number: stop.order,
+        number: `P${stop.order}`,
         badge: stop.pointIds.length > 1 ? { kind: "addresses", count: stop.pointIds.length } : packageTotal > 1 ? { kind: "packages", count: packageTotal } : null,
         // The selected stop stands out (ring + glow + enlarge/raise — RF-006.4.14).
         selected: opts.selectedStopId === stop.id,
@@ -219,6 +240,133 @@ export const computeRoteiroMarkerModels = (points: DeliveryPoint[], stops: Route
  * @returns A Google Maps directions URL.
  */
 export const mapsDirectionsUrl = (p: LatLng): string => `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`;
+
+/**
+ * Normaliza o nome de uma via/logradouro para comparação de equivalência.
+ * Remove acentos, caracteres não-alfanuméricos e prefixos comuns brasileiros.
+ */
+export const normalizeStreetName = (name: string): string => {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\./g, " ")
+    .replace(/\b(rua|r|avenida|av|travessa|tv|alameda|al|praca|praça|pc|estrada|est|rodovia|rod|via|beco|largo)\b/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
+};
+
+export const isSameStreetName = (streetA: string, streetB: string): boolean => {
+  const normA = normalizeStreetName(streetA);
+  const normB = normalizeStreetName(streetB);
+  if (!normA || !normB) return true;
+  return normA === normB || normA.includes(normB) || normB.includes(normA);
+};
+
+export interface FormattedVehicleStopAddress {
+  /** Linha 1 do endereço do veículo com distância (ex: "Rua tal, 23" ou "Próximo à Rua tal, 23 (13m)") */
+  streetLine: string;
+  /** Linha 1 base sem o sufixo de distância (ex: "Próximo à Rua tal, 23") */
+  baseStreetLine: string;
+  /** Sufixo de distância textual (ex: "(13m)" ou "") */
+  distLabel: string;
+  /** Linha 2 do endereço do veículo (ex: "Lagoa, 22290-000") */
+  placeLine: string;
+  /** Distância em metros do veículo à primeira entrega (co-âncora) */
+  distanceMeters: number;
+  /** Se o veículo está na mesma rua da primeira entrega */
+  isSameStreet: boolean;
+  /** Se o veículo foi editado/afastado */
+  isEdited: boolean;
+  /** Logradouro da primeira entrega */
+  deliveryStreet: string;
+  /** Número da primeira entrega */
+  deliveryNumber: string;
+  /** Título completo para uso textual / listas / compatibilidade */
+  fullTitle: string;
+}
+
+export const formatVehicleStopAddress = (stop: RouteStop, pointsById: Map<string, DeliveryPoint>, graph?: RoadGraph | null): FormattedVehicleStopAddress => {
+  const coAnchor = pointsById.get(stop.pointIds[0]);
+  if (!coAnchor) {
+    return {
+      streetLine: `P${stop.order}`,
+      baseStreetLine: `P${stop.order}`,
+      distLabel: "",
+      placeLine: "",
+      distanceMeters: 0,
+      isSameStreet: true,
+      isEdited: false,
+      deliveryStreet: "",
+      deliveryNumber: "",
+      fullTitle: `P${stop.order}`,
+    };
+  }
+
+  const parts = (coAnchor.address || "")
+    .split(",")
+    .map((p) => p.trim())
+    .filter((p) => p !== "");
+  const deliveryStreet = parts[0] ?? "";
+  const deliveryNumber = parts[1]?.split("-")[0]?.trim() ?? "";
+
+  const distanceMeters = Math.round(haversine(stop.vehicleStop, { lat: coAnchor.lat, lng: coAnchor.lng }));
+  const isDefault = stop.vehicleStopIsDefault !== false;
+  const isEdited = !isDefault && distanceMeters >= 5;
+
+  let isSame = true;
+  if (graph && stop.vehicleStop) {
+    const way = nearestWayName(graph, stop.vehicleStop);
+    if (way) {
+      isSame = isSameStreetName(deliveryStreet, way);
+    }
+  }
+
+  const distLabel = isEdited ? `(${distanceMeters}m)` : "";
+  let baseStreetLine = deliveryStreet;
+
+  if (!isEdited && isSame) {
+    baseStreetLine = deliveryNumber ? `${deliveryStreet}, ${deliveryNumber}` : deliveryStreet;
+  } else if (isSame) {
+    baseStreetLine = deliveryNumber ? `${deliveryStreet}, próximo ao número ${deliveryNumber}` : `${deliveryStreet}, próximo`;
+  } else {
+    baseStreetLine = deliveryNumber ? `Próximo à ${deliveryStreet}, ${deliveryNumber}` : `Próximo à ${deliveryStreet}`;
+  }
+
+  const streetLine = distLabel ? `${baseStreetLine} ${distLabel}` : baseStreetLine;
+
+  const neighborhood = String(coAnchor.packages[0]?.rawData?.[COLUMN_NAMES.NEIGHBORHOOD] ?? "").trim();
+  const zipcode = String(coAnchor.packages[0]?.rawData?.[COLUMN_NAMES.ZIPCODE] ?? "").trim();
+  const placeLine = [neighborhood, zipcode].filter(Boolean).join(", ");
+
+  const fullAddress = [streetLine, neighborhood].filter(Boolean).join(", ");
+  const fullTitle = fullAddress ? `P${stop.order} - ${fullAddress}` : `P${stop.order}`;
+
+  return {
+    streetLine,
+    baseStreetLine,
+    distLabel,
+    placeLine,
+    distanceMeters,
+    isSameStreet: isSame,
+    isEdited,
+    deliveryStreet,
+    deliveryNumber,
+    fullTitle,
+  };
+};
+
+/**
+ * Formata o título da parada do Meu Roteiro (RF-53 / TASK-RF-038).
+ *
+ * Herda o endereço completo da primeira entrega (co-âncora).
+ * - Padrão: "P{N} - {Rua}, {Número}, {Bairro}"
+ * - Editado na mesma rua: "P{N} - {Rua}, próximo ao número {Número} ({dist}m), {Bairro}"
+ * - Editado em outra rua: "P{N} - Próximo à {Rua}, {Número} ({dist}m), {Bairro}"
+ */
+export const formatRoteiroStopTitle = (stop: RouteStop, pointsById: Map<string, DeliveryPoint>, graph?: RoadGraph | null): string => {
+  return formatVehicleStopAddress(stop, pointsById, graph).fullTitle;
+};
 
 /** Street + number: the first two comma terms of the raw address (display rule). */
 export const addressLineOf = (address: string): string => {

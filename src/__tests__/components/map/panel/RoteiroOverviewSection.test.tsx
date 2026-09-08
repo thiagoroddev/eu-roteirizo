@@ -73,8 +73,7 @@ describe("RoteiroOverviewSection (TASK-RF-013 Exportar Roteiro)", () => {
     expect(screen.queryByRole("button", { name: OVERVIEW.EXPORT_ROUTE_ARIA })).not.toBeInTheDocument();
   });
 
-  it("permite mover parada para cima e para baixo", () => {
-    const onReorderStop = vi.fn();
+  it("não renderiza botões de reordenar paradas na visão geral", () => {
     const twoStops = [
       {
         id: "stop_1",
@@ -95,22 +94,28 @@ describe("RoteiroOverviewSection (TASK-RF-013 Exportar Roteiro)", () => {
         vehicleStopKey: null,
       },
     ];
-    render(<RoteiroOverviewSection {...defaultProps} stops={twoStops} onReorderStop={onReorderStop} />);
+    render(<RoteiroOverviewSection {...defaultProps} stops={twoStops} />);
 
-    const upStop1 = screen.getByRole("button", { name: OVERVIEW.MOVE_UP_ARIA(1) });
-    expect(upStop1).toBeDisabled();
+    expect(screen.queryByRole("button", { name: OVERVIEW.MOVE_UP_ARIA(1) })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: OVERVIEW.MOVE_DOWN_ARIA(1) })).not.toBeInTheDocument();
+  });
 
-    const downStop1 = screen.getByRole("button", { name: OVERVIEW.MOVE_DOWN_ARIA(1) });
-    expect(downStop1).not.toBeDisabled();
-    fireEvent.click(downStop1);
-    expect(onReorderStop).toHaveBeenCalledWith("stop_1", 2);
+  it("exibe o título da parada com P{N} e o endereço do veículo (RF-53 / TASK-RF-038)", () => {
+    const stopsWithTitle = [
+      {
+        id: "stop_1",
+        order: 1,
+        titleOverride: "P1 - Rua Barão da Torre, 123",
+        neighborhoods: ["Ipanema"],
+        zipcodes: ["22410-000"],
+        metrics: [{ label: "3 entregas" }],
+        items: [],
+        vehicleStopKey: null,
+      },
+    ];
+    render(<RoteiroOverviewSection {...defaultProps} stops={stopsWithTitle} />);
 
-    const downStop2 = screen.getByRole("button", { name: OVERVIEW.MOVE_DOWN_ARIA(2) });
-    expect(downStop2).toBeDisabled();
-
-    const upStop2 = screen.getByRole("button", { name: OVERVIEW.MOVE_UP_ARIA(2) });
-    expect(upStop2).not.toBeDisabled();
-    fireEvent.click(upStop2);
-    expect(onReorderStop).toHaveBeenCalledWith("stop_2", 1);
+    expect(screen.getByText("P1 - Rua Barão da Torre, 123")).toBeInTheDocument();
+    expect(screen.getByText("Ipanema, 22410-000")).toBeInTheDocument();
   });
 });
