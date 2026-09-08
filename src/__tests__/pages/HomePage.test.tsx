@@ -4,7 +4,7 @@
  * persists and NAVIGATES (fluxo §15.2 — RN-23 for duplicates).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { UI_LABELS } from "../../constants/uiLabels";
 import type { ManifestMeta } from "../../types/manifest";
@@ -21,6 +21,24 @@ const uploaderState = {
   loadManifest: vi.fn(),
 };
 vi.mock("../../hooks/useRouteUploader", () => ({ useRouteUploader: () => uploaderState }));
+
+vi.mock("../../services/routeExport", () => ({
+  readFileAsText: vi.fn((file: File) => Promise.resolve(file.name === "bad.json" ? "invalido" : '{"schema":"eu-roteirizo/roteiro/v1"}')),
+  parseAndValidateRouteJson: vi.fn((text: string) => {
+    if (text.includes("invalido")) return { ok: false, error: "Arquivo JSON inválido" };
+    return {
+      ok: true,
+      payload: {
+        schema: "eu-roteirizo/roteiro/v1",
+        manifestId: "man-123",
+        routeName: "Rota A",
+        route: { id: "r1", stops: [] },
+        points: [],
+      },
+    };
+  }),
+  importRoutePayload: vi.fn(() => Promise.resolve({ ok: true, manifestId: "man-123", routeName: "Rota A", isStandalone: true })),
+}));
 
 import HomePage from "../../pages/HomePage";
 
@@ -52,6 +70,7 @@ const renderHome = () =>
         <Route path="/" element={<HomePage />} />
         <Route path="/rotas" element={<LocationProbe />} />
         <Route path="/sumario" element={<LocationProbe />} />
+        <Route path="/mapa" element={<LocationProbe />} />
       </Routes>
     </MemoryRouter>
   );
@@ -96,5 +115,31 @@ describe("HomePage (upload-only)", () => {
 
     expect(screen.queryByTestId("location-probe")).not.toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.FILE_UPLOADER.UPLOAD)).toBeInTheDocument();
+  });
+
+  it("navigates directly to Meu Roteiro on map when importing a valid JSON route (RF-013)", async () => {
+    const { container } = renderHome();
+
+    const jsonInput = container.querySelector("#json-file-input") as HTMLInputElement;
+    expect(jsonInput).toBeInTheDocument();
+
+    const file = new File(['{"schema":"eu-roteirizo/roteiro/v1"}'], "meu-roteiro.json", { type: "application/json" });
+    fireEvent.change(jsonInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location-probe")).toHaveTextContent("/mapa?romaneio=man-123&rota=Rota%20A&modo=roteiro");
+    });
+  });
+
+  it("displays error message when importing an invalid JSON file (RF-013)", async () => {
+    const { container } = renderHome();
+
+    const jsonInput = container.querySelector("#json-file-input") as HTMLInputElement;
+    const file = new File(["invalido"], "bad.json", { type: "application/json" });
+    fireEvent.change(jsonInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText("Arquivo JSON inválido")).toBeInTheDocument();
+    });
   });
 });

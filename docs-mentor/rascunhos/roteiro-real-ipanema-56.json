@@ -1,0 +1,444 @@
+[
+  {
+    "manifestId": "d262c252af65c836f69ae6c8a8b81741518b1d5c9e0abbfdd38b0b7f579eb1c5",
+    "routeName": "Minha rota",
+    "route": {
+      "id": "route_mtrm61qc",
+      "startPoint": {
+        "lat": -22.978930172816064,
+        "lng": -43.20107460021973
+      },
+      "stops": [
+        {
+          "id": "stop_pt_-22.98615,-43.20859",
+          "order": 1,
+          "vehicleStop": {
+            "lat": -22.986263820193948,
+            "lng": -43.20859494398821
+          },
+          "pointIds": [
+            "pt_-22.98615,-43.20859"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98603,-43.21035",
+          "order": 2,
+          "vehicleStop": {
+            "lat": -22.985918062299074,
+            "lng": -43.21033919303722
+          },
+          "pointIds": [
+            "pt_-22.98603,-43.21035",
+            "pt_-22.98585,-43.21083"
+          ],
+          "radiusMeters": 60,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98594,-43.21163",
+          "order": 3,
+          "vehicleStop": {
+            "lat": -22.986095033696557,
+            "lng": -43.211768964113375
+          },
+          "pointIds": [
+            "pt_-22.98594,-43.21163",
+            "pt_-22.98591,-43.21189"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": false
+        },
+        {
+          "id": "stop_pt_-22.98598,-43.21446",
+          "order": 4,
+          "vehicleStop": {
+            "lat": -22.986040152229133,
+            "lng": -43.21445503382969
+          },
+          "pointIds": [
+            "pt_-22.98598,-43.21446"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98388,-43.21423",
+          "order": 5,
+          "vehicleStop": {
+            "lat": -22.98374889428141,
+            "lng": -43.21411608704925
+          },
+          "pointIds": [
+            "pt_-22.98388,-43.21423"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": false
+        },
+        {
+          "id": "stop_pt_-22.98385,-43.21386",
+          "order": 6,
+          "vehicleStop": {
+            "lat": -22.983764090850613,
+            "lng": -43.21385715329863
+          },
+          "pointIds": [
+            "pt_-22.98385,-43.21386",
+            "pt_-22.98392,-43.21366"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98382,-43.21334",
+          "order": 7,
+          "vehicleStop": {
+            "lat": -22.9837977962711,
+            "lng": -43.21333941291644
+          },
+          "pointIds": [
+            "pt_-22.98382,-43.21334",
+            "pt_-22.98370,-43.21322"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98400,-43.21280",
+          "order": 8,
+          "vehicleStop": {
+            "lat": -22.98382260404892,
+            "lng": -43.21278969441069
+          },
+          "pointIds": [
+            "pt_-22.98380,-43.21270",
+            "pt_-22.98393,-43.21259",
+            "pt_-22.98400,-43.21280"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98380,-43.21220",
+          "order": 9,
+          "vehicleStop": {
+            "lat": -22.983849083061987,
+            "lng": -43.212202764801795
+          },
+          "pointIds": [
+            "pt_-22.98380,-43.21220",
+            "pt_-22.98364,-43.21221"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98400,-43.21160",
+          "order": 10,
+          "vehicleStop": {
+            "lat": -22.983876512691143,
+            "lng": -43.211594763987186
+          },
+          "pointIds": [
+            "pt_-22.98400,-43.21160",
+            "pt_-22.98408,-43.21158",
+            "pt_-22.98416,-43.21156",
+            "pt_-22.98360,-43.21170"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98380,-43.21080",
+          "order": 11,
+          "vehicleStop": {
+            "lat": -22.983893814962038,
+            "lng": -43.21121868135047
+          },
+          "pointIds": [
+            "pt_-22.98385,-43.21122",
+            "pt_-22.98380,-43.21080",
+            "pt_-22.98386,-43.21103",
+            "pt_-22.98413,-43.21067"
+          ],
+          "radiusMeters": 50,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98408,-43.21003",
+          "order": 12,
+          "vehicleStop": {
+            "lat": -22.98395885981549,
+            "lng": -43.21001999780425
+          },
+          "pointIds": [
+            "pt_-22.98408,-43.21003"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98426,-43.20883",
+          "order": 13,
+          "vehicleStop": {
+            "lat": -22.984028270170857,
+            "lng": -43.208916866649375
+          },
+          "pointIds": [
+            "pt_-22.98407,-43.20892",
+            "pt_-22.98426,-43.20883",
+            "pt_-22.98383,-43.20872"
+          ],
+          "radiusMeters": 60,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98410,-43.20824",
+          "order": 14,
+          "vehicleStop": {
+            "lat": -22.984062326422094,
+            "lng": -43.20828315259531
+          },
+          "pointIds": [
+            "pt_-22.98410,-43.20824",
+            "pt_-22.98400,-43.20820",
+            "pt_-22.98393,-43.20827"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98410,-43.20747",
+          "order": 15,
+          "vehicleStop": {
+            "lat": -22.984095633078777,
+            "lng": -43.20766338689404
+          },
+          "pointIds": [
+            "pt_-22.98410,-43.20747",
+            "pt_-22.98371,-43.20724",
+            "pt_-22.98374,-43.20738",
+            "pt_-22.98371,-43.20740",
+            "pt_-22.98384,-43.20765",
+            "pt_-22.98453,-43.20713"
+          ],
+          "radiusMeters": 60,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98531,-43.20662",
+          "order": 16,
+          "vehicleStop": {
+            "lat": -22.9851980591622,
+            "lng": -43.207383817269616
+          },
+          "pointIds": [
+            "pt_-22.98540,-43.20720",
+            "pt_-22.98540,-43.20690",
+            "pt_-22.98531,-43.20662"
+          ],
+          "radiusMeters": 70,
+          "reversed": false,
+          "vehicleStopIsDefault": false
+        },
+        {
+          "id": "stop_pt_-22.98509,-43.21000",
+          "order": 17,
+          "vehicleStop": {
+            "lat": -22.985052485714075,
+            "lng": -43.21000061213307
+          },
+          "pointIds": [
+            "pt_-22.98509,-43.21000"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98489,-43.21222",
+          "order": 18,
+          "vehicleStop": {
+            "lat": -22.984882866413564,
+            "lng": -43.212262623362896
+          },
+          "pointIds": [
+            "pt_-22.98489,-43.21222",
+            "pt_-22.98500,-43.21230"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98527,-43.21428",
+          "order": 19,
+          "vehicleStop": {
+            "lat": -22.984826143378882,
+            "lng": -43.214346108260834
+          },
+          "pointIds": [
+            "pt_-22.98527,-43.21428"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": false
+        },
+        {
+          "id": "stop_pt_-22.98240,-43.21210",
+          "order": 20,
+          "vehicleStop": {
+            "lat": -22.98226054880272,
+            "lng": -43.21209249653852
+          },
+          "pointIds": [
+            "pt_-22.98227,-43.21207",
+            "pt_-22.98240,-43.21210"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98236,-43.20979",
+          "order": 21,
+          "vehicleStop": {
+            "lat": -22.982380826118792,
+            "lng": -43.209786494358994
+          },
+          "pointIds": [
+            "pt_-22.98236,-43.20979",
+            "pt_-22.98234,-43.20958"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98292,-43.20698",
+          "order": 22,
+          "vehicleStop": {
+            "lat": -22.982915656920557,
+            "lng": -43.20701662509275
+          },
+          "pointIds": [
+            "pt_-22.98292,-43.20698"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98285,-43.20774",
+          "order": 23,
+          "vehicleStop": {
+            "lat": -22.983015133391113,
+            "lng": -43.207754865746764
+          },
+          "pointIds": [
+            "pt_-22.98285,-43.20774"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98284,-43.21095",
+          "order": 24,
+          "vehicleStop": {
+            "lat": -22.982849087741315,
+            "lng": -43.21094565620416
+          },
+          "pointIds": [
+            "pt_-22.98284,-43.21095",
+            "pt_-22.98314,-43.21133"
+          ],
+          "radiusMeters": 60,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98132,-43.21363",
+          "order": 25,
+          "vehicleStop": {
+            "lat": -22.98127097619358,
+            "lng": -43.213616485267096
+          },
+          "pointIds": [
+            "pt_-22.98132,-43.21363"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98199,-43.21032",
+          "order": 26,
+          "vehicleStop": {
+            "lat": -22.981814023664334,
+            "lng": -43.21031294173608
+          },
+          "pointIds": [
+            "pt_-22.98199,-43.21032"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        },
+        {
+          "id": "stop_pt_-22.98140,-43.21080",
+          "order": 27,
+          "vehicleStop": {
+            "lat": -22.98111770288607,
+            "lng": -43.21114708205298
+          },
+          "pointIds": [
+            "pt_-22.98140,-43.21080"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": false
+        },
+        {
+          "id": "stop_pt_-22.98078,-43.21104",
+          "order": 28,
+          "vehicleStop": {
+            "lat": -22.98079278802041,
+            "lng": -43.211114178694245
+          },
+          "pointIds": [
+            "pt_-22.98078,-43.21104"
+          ],
+          "radiusMeters": 30,
+          "reversed": false,
+          "vehicleStopIsDefault": true
+        }
+      ],
+      "config": {
+        "walkingSpeedKmh": 5,
+        "deliveryBaseSeconds": 120,
+        "deliveryPerPackageSeconds": 30,
+        "vehicleSpeedKmh": 25,
+        "autoRadiusMeters": 30
+      },
+      "createdAt": "2026-09-07T19:08:38.340Z"
+    },
+    "updatedAt": "2026-09-07T20:12:16.106Z"
+  }
+]

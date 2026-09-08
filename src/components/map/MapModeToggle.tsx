@@ -20,6 +20,8 @@ interface Props {
    * (RF-006) exists. The contract is ready so callers don't change shape.
    */
   roteiroEnabled?: boolean;
+  /** Whether the "Original" side is available (disabled for standalone imported routes, RF-20). */
+  originalEnabled?: boolean;
   /** Texts (TASK-REF-017): defaults are the MAP's; the Sumário reuses the same
    *  control with its own wording ("Info Original"/"Info Meu Roteiro"). */
   originalLabel?: string;
@@ -27,6 +29,8 @@ interface Props {
   ariaLabel?: string;
   /** Hint shown when the roteiro side is disabled. */
   disabledHint?: string;
+  /** Hint shown when the original side is disabled. */
+  originalDisabledHint?: string;
 }
 
 /**
@@ -42,10 +46,12 @@ export const MapModeToggle = ({
   mode,
   onModeChange,
   roteiroEnabled = false,
+  originalEnabled = true,
   originalLabel = UI_LABELS.MAP_MODE.ORIGINAL,
   roteiroLabel = UI_LABELS.MAP_MODE.MY_ROTEIRO,
   ariaLabel = UI_LABELS.MAP_MODE.ARIA,
   disabledHint = UI_LABELS.MAP_MODE.MY_ROTEIRO_SOON,
+  originalDisabledHint = UI_LABELS.MAP_MODE.ORIGINAL_DISABLED_STANDALONE,
 }: Props) => {
   const segment = (target: MapMode, label: string, disabled: boolean, title?: string) => (
     <button
@@ -68,7 +74,7 @@ export const MapModeToggle = ({
 
   return (
     <div role="group" aria-label={ariaLabel} className="flex w-fit min-w-64 rounded-full border border-input bg-background/95 p-1 shadow-md backdrop-blur-sm">
-      {segment("original", originalLabel, false)}
+      {segment("original", originalLabel, !originalEnabled, originalEnabled ? undefined : originalDisabledHint)}
       {segment("roteiro", roteiroLabel, !roteiroEnabled, roteiroEnabled ? undefined : disabledHint)}
     </div>
   );

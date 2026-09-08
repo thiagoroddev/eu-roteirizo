@@ -2,7 +2,7 @@ import "fake-indexeddb/auto";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import * as XLSX from "xlsx";
 
-import { saveManifest, listManifests, getManifest, getRouteRows, backfillRouteRows, deleteManifest, clearManifests } from "../../services/manifestStorage";
+import { saveManifest, listManifests, getManifest, getRouteRows, backfillRouteRows, deleteManifest, clearManifests, saveStandaloneManifest } from "../../services/manifestStorage";
 import { processExcelFile } from "../../utils/excelProcessor";
 import { sha256Hex } from "../../utils/hash";
 import { COLUMN_NAMES } from "../../constants";
@@ -198,5 +198,21 @@ describe("manifestStorage", () => {
   it("backfillRouteRows is a no-op (no throw) for null routes or an unknown id", async () => {
     await expect(backfillRouteRows("qualquer", processedFixture({ routes: null }))).resolves.toBeUndefined();
     await expect(backfillRouteRows("id-desconhecido", processedFixture())).resolves.toBeUndefined();
+  });
+
+  it("saveStandaloneManifest saves route rows and derives availableCols and at (RF-013)", async () => {
+    const rows = [{ [COLUMN_NAMES.LATITUDE]: -22.98, [COLUMN_NAMES.LONGITUDE]: -43.2, [COLUMN_NAMES.PLANNED_AT]: "AT_STANDALONE", [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua 1" }];
+    const ok = await saveStandaloneManifest("man_std_1", "Rota Standalone", rows);
+    expect(ok).toBe(true);
+
+    const record = await getManifest("man_std_1");
+    expect(record).not.toBeNull();
+    expect(record?.availableCols).toContain(COLUMN_NAMES.LATITUDE);
+    expect(record?.availableCols).toContain(COLUMN_NAMES.LONGITUDE);
+    expect(record?.availableCols).toContain(COLUMN_NAMES.PLANNED_AT);
+    expect(record?.routes).toEqual([{ name: "Rota Standalone", rowCount: 1, at: "AT_STANDALONE" }]);
+
+    const storedRows = await getRouteRows("man_std_1", "Rota Standalone");
+    expect(storedRows).toEqual(rows);
   });
 });

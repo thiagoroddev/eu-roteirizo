@@ -167,4 +167,27 @@ describe("SummaryPage (focus screen)", () => {
     expect(screen.getByTestId("rotas-page-stub")).toBeInTheDocument();
     expect(uploaderState.loadManifest).not.toHaveBeenCalled();
   });
+
+  it("oculta o botão 'Tabela Original' quando em 'Info Meu Roteiro' e exibe quando em 'Info Original' (RF-013)", async () => {
+    routeStorageState.saved = {
+      id: "route_saved",
+      startPoint: { lat: -22.9, lng: -43.1 },
+      stops: [{ id: "s1", order: 1, vehicleStop: { lat: -22.9, lng: -43.1 }, pointIds: ["pt_-22.90000,-43.10000"], radiusMeters: 30 }],
+      config: { walkingSpeedKmh: 5, deliveryBaseSeconds: 40, deliveryPerPackageSeconds: 15, vehicleSpeedKmh: 25, autoRadiusMeters: 30 },
+      createdAt: "2026-07-10T10:00:00.000Z",
+    };
+    renderPage();
+
+    await screen.findByText(UI_LABELS.ROTEIRO_INFO.CARD_ADDRESSES);
+    // Em Info Meu Roteiro: Tabela Original NÃO aparece
+    expect(screen.queryByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.ORIGINAL_TABLE })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.SIMPLE_TABLE })).toBeInTheDocument();
+
+    // Alterna para Info Original: Tabela Original aparece
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.SECTION_ORIGINAL }));
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.ORIGINAL_TABLE })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.SIMPLE_TABLE })).toBeInTheDocument();
+
+    routeStorageState.saved = null;
+  });
 });

@@ -5,6 +5,7 @@ import type { SaveManifestResult } from "../services/manifestStorage";
 interface Props {
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void; // Handler from useRouteUploader hook
   onTryExample?: () => void; // Loads the bundled example manifest (TASK-RF-014)
+  onImportRouteFile?: (file: File) => void | Promise<void>; // Imports ready-made JSON route (TASK-RF-013)
   loading: boolean; // Shows spinner when true
   hasRoutes: boolean; // Hides instructions after successful upload
   error: string | null; // Error message to display
@@ -30,18 +31,32 @@ import { Button } from "./ui/button";
  * @param {string | null} error - Error message to display, null if no error
  * @returns {JSX.Element} The rendered FileUploader component
  */
-export const FileUploader: React.FC<Props> = ({ onFileUpload, onTryExample, loading, hasRoutes, error, missingCols = [], manifestSave = null }) => {
+export const FileUploader: React.FC<Props> = ({ onFileUpload, onTryExample, onImportRouteFile, loading, hasRoutes, error, missingCols = [], manifestSave = null }) => {
   // State to track selected file name
   const [fileName, setFileName] = useState<string | null>(null);
+  const jsonInputRef = React.useRef<HTMLInputElement>(null);
 
   // Handle file selection - update fileName and call parent's onFileUpload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFileName(e.target.files[0].name);
+      const file = e.target.files[0];
+      setFileName(file.name);
+      if (file.name.toLowerCase().endsWith(".json") && onImportRouteFile) {
+        void onImportRouteFile(file);
+        return;
+      }
     } else {
       setFileName(null);
     }
     onFileUpload(e);
+  };
+
+  const handleJsonFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (onImportRouteFile) {
+      void onImportRouteFile(file);
+    }
   };
 
   // `w-full min-w-0` no container raiz (TASK-BG-010): ele é FLEX ITEM da HomePage e nasce
@@ -54,7 +69,7 @@ export const FileUploader: React.FC<Props> = ({ onFileUpload, onTryExample, load
       <input
         id="file-input"
         type="file"
-        accept=".xlsx, .csv"
+        accept=".xlsx, .csv, .json, application/json"
         className="hidden"
         onChange={handleFileChange}
         // Reset value to allow re-uploading the same file
@@ -80,8 +95,20 @@ export const FileUploader: React.FC<Props> = ({ onFileUpload, onTryExample, load
         </div>
       )}
 
-      {/* Import a ready-made roteiro (JSON) — disabled stub until TASK-RF-013 wires it */}
-      <Button variant="outline" size="sm" disabled title={UI_LABELS.FILE_UPLOADER.IMPORT_JSON_SOON} aria-label={UI_LABELS.FILE_UPLOADER.IMPORT_JSON_SOON} className="mb-4">
+      {/* Hidden JSON file input (TASK-RF-013) */}
+      <input id="json-file-input" ref={jsonInputRef} type="file" accept=".json,application/json" className="hidden" onChange={handleJsonFileChange} onClick={(e) => (e.currentTarget.value = "")} />
+
+      {/* Import a ready-made roteiro (JSON) — TASK-RF-013 */}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={loading}
+        onClick={() => jsonInputRef.current?.click()}
+        title={UI_LABELS.FILE_UPLOADER.IMPORT_JSON}
+        aria-label={UI_LABELS.FILE_UPLOADER.IMPORT_JSON}
+        className="mb-4"
+      >
         {UI_LABELS.FILE_UPLOADER.IMPORT_JSON}
       </Button>
 

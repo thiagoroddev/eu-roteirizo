@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react";
 import { processExcelFile } from "../utils/excelProcessor";
 import { hasValidFileExtension } from "../utils/validators";
-import { saveManifest, getManifest, getRouteRows, backfillRouteRows, type SaveManifestResult } from "../services/manifestStorage";
+import { saveManifest, getManifest, getRouteRows, backfillRouteRows, deriveAvailableColsFromRows, findRouteAt, saveStandaloneManifest, type SaveManifestResult } from "../services/manifestStorage";
+import { parseAndValidateRouteJson, extractAllRowsFromPayload } from "../services/routeExport";
 import type { RoutesMap } from "../types";
 import type { RouteUploaderReturn } from "../types/hooks";
 import { EXAMPLE_MANIFEST, FILE_CONFIG, UI_LABELS } from "../constants";
@@ -211,17 +212,48 @@ export function useRouteUploader(): RouteUploaderReturn {
       return false;
     }
 
-    // Fast path: rows already grouped (REF-018). `availableCols` present on the
-    // meta is the marker that this manifest was saved/backfilled post-REF-018.
-    if (routeName && record.availableCols) {
+    // Fast path: rows already grouped (REF-018).
+    if (routeName) {
       const rows = await getRouteRows(id, routeName);
-      if (rows) {
+      if (rows && rows.length > 0) {
+        const effectiveCols = record.availableCols && record.availableCols.length > 0 ? record.availableCols : deriveAvailableColsFromRows(rows);
         setRoutes({ [routeName]: rows });
-        setAvailableCols(record.availableCols);
+        setAvailableCols(effectiveCols);
         setMissingCols(record.missingCols ?? []);
         setIsSingleRoute(record.kind === "single");
         setLoading(false);
+        if (!record.availableCols || record.availableCols.length === 0) {
+          void saveStandaloneManifest(id, routeName, rows, effectiveCols, findRouteAt(rows), record.bytes);
+        }
         return true;
+      }
+    }
+
+    // JSON fallback for exported routes (RF-013)
+    if (record.fileName.endsWith(".json") || record.fileType === "application/json") {
+      try {
+        const text = new TextDecoder().decode(record.bytes);
+        const parseResult = parseAndValidateRouteJson(text);
+        if (parseResult.ok) {
+          const payload = parseResult.payload;
+          const rows =
+            Array.isArray(payload.rows) && payload.rows.length > 0
+              ? payload.rows
+              : payload.routes && payload.routes[payload.routeName]
+                ? payload.routes[payload.routeName]
+                : extractAllRowsFromPayload(payload);
+          const effectiveCols = Array.isArray(payload.availableCols) && payload.availableCols.length > 0 ? payload.availableCols : deriveAvailableColsFromRows(rows);
+          const effectiveRouteName = routeName ?? payload.routeName;
+          setRoutes({ [effectiveRouteName]: rows });
+          setAvailableCols(effectiveCols);
+          setMissingCols(payload.missingCols ?? []);
+          setIsSingleRoute(payload.isSingleRoute ?? true);
+          setLoading(false);
+          await saveStandaloneManifest(id, effectiveRouteName, rows, effectiveCols, payload.meta?.at, record.bytes);
+          return true;
+        }
+      } catch {
+        // Fallback to SheetJS below
       }
     }
 
