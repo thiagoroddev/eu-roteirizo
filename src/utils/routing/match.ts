@@ -160,12 +160,15 @@ export const matchToGraph = (graph: RoadGraph, target: LatLng): GraphMatch | nul
 
   /** Replaces edge x→y with x→synthetic (wXS) and synthetic→y (wSY). */
   const split = (x: NodeId, y: NodeId, wXS: number, wSY: number): void => {
-    adj.set(x, [...(adj.get(x) ?? []).filter((e) => e.to !== y), { to: synthetic, weight: wXS, wayName }]);
-    adj.set(synthetic, [...(adj.get(synthetic) ?? []), { to: y, weight: wSY, wayName }]);
+    const existing = (graph.adj.get(x) ?? []).find((e) => e.to === y);
+    const highway = existing?.highway;
+    const isRoundabout = existing?.isRoundabout;
+    adj.set(x, [...(adj.get(x) ?? []).filter((e) => e.to !== y), { to: synthetic, weight: wXS, wayName, ...(highway ? { highway } : {}), ...(isRoundabout ? { isRoundabout } : {}) }]);
+    adj.set(synthetic, [...(adj.get(synthetic) ?? []), { to: y, weight: wSY, wayName, ...(highway ? { highway } : {}), ...(isRoundabout ? { isRoundabout } : {}) }]);
   };
 
   if ((graph.adj.get(from) ?? []).some((e) => e.to === to)) split(from, to, wFromS, wSTo);
   if ((graph.adj.get(to) ?? []).some((e) => e.to === from)) split(to, from, wSTo, wFromS);
 
-  return { graph: { coords, adj }, node: synthetic };
+  return { graph: { coords, adj, ...(graph.isPedestrian ? { isPedestrian: true } : {}) }, node: synthetic };
 };

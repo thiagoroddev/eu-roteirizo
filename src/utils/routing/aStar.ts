@@ -13,8 +13,29 @@
  */
 
 import type { NodeId, RoadGraph } from "./graph";
+import type { LatLng } from "../../types/routing";
 import { haversine } from "./geo";
 import { MinHeap } from "./minHeap";
+
+const DEG_TO_RAD = Math.PI / 180;
+
+/**
+ * Calculates the deflection turn angle (in degrees) between incoming vector p1→p2
+ * and outgoing vector p2→p3.
+ * 0° = straight ahead, 90° = perpendicular turn, 180° = complete U-turn / reversal.
+ */
+export const turnAngle = (p1: LatLng, p2: LatLng, p3: LatLng): number => {
+  const v1x = (p2.lng - p1.lng) * Math.cos(p1.lat * DEG_TO_RAD);
+  const v1y = p2.lat - p1.lat;
+  const v2x = (p3.lng - p2.lng) * Math.cos(p2.lat * DEG_TO_RAD);
+  const v2y = p3.lat - p2.lat;
+  const dot = v1x * v2x + v1y * v2y;
+  const mag1 = Math.hypot(v1x, v1y);
+  const mag2 = Math.hypot(v2x, v2y);
+  if (mag1 === 0 || mag2 === 0) return 0;
+  const cos = Math.max(-1, Math.min(1, dot / (mag1 * mag2)));
+  return (Math.acos(cos) * 180) / Math.PI;
+};
 
 /** Result of an A* search: the node path (null if unreachable) and total meters. */
 export interface AStarResult {
@@ -22,18 +43,23 @@ export interface AStarResult {
   distance: number;
 }
 
-/** A frontier entry: a node and its f-score (g + heuristic). */
+/** A frontier entry: a node, its incoming node, and its f-score (g + heuristic). */
 interface Frontier {
   node: NodeId;
+  fromNode: NodeId | null;
   priority: number;
 }
 
 /**
  * Finds the shortest directed path from `startId` to `goalId`.
  *
+ * Employs turn-aware state `(node, fromNode)` to penalize acute-angle U-turns
+ * (> 110°) and through-traffic on service ways (e.g. gas stations/alleys)
+ * for vehicle routing, while respecting roundabouts and allowing pedestrians
+ * unrestricted movement. Returns the real physical distance along the route.
+ *
  * Returns `{ path: null, distance: Infinity }` when there is no path — including
- * when either endpoint is absent from the graph (guards the prototype's latent
- * crash where a missing goal made the heuristic dereference `undefined`).
+ * when either endpoint is absent from the graph.
  *
  * @param graph - The directed road graph.
  * @param startId - Start node id.
@@ -51,40 +77,89 @@ export const aStar = (graph: RoadGraph, startId: NodeId, goalId: NodeId): AStarR
     return c ? haversine(c, goal) : 0;
   };
 
-  const gScore = new Map<NodeId, number>([[startId, 0]]);
-  const cameFrom = new Map<NodeId, NodeId>();
-  const settled = new Set<NodeId>();
+  const stateKey = (node: NodeId, from: NodeId | null): string => `${node}|${from ?? ""}`;
+
+  const gScore = new Map<string, number>([[stateKey(startId, null), 0]]);
+  const cameFrom = new Map<string, { node: NodeId; fromNode: NodeId | null }>();
+  const settled = new Set<string>();
   const open = new MinHeap<Frontier>((a, b) => a.priority - b.priority);
-  open.push({ node: startId, priority: heuristic(startId) });
+  open.push({ node: startId, fromNode: null, priority: heuristic(startId) });
+
+  let bestEndState: Frontier | null = null;
 
   while (open.size > 0) {
     const current = open.pop();
     if (!current) break;
-    const node = current.node;
-    /** Lazy deletion: an outdated duplicate of an already-settled node. */
-    if (settled.has(node)) continue;
+    const { node, fromNode } = current;
+    const curKey = stateKey(node, fromNode);
+    /** Lazy deletion: an outdated duplicate of an already-settled state. */
+    if (settled.has(curKey)) continue;
 
     if (node === goalId) {
-      const path: NodeId[] = [node];
-      let step: NodeId = node;
-      while (cameFrom.has(step)) {
-        step = cameFrom.get(step) as NodeId;
-        path.unshift(step);
-      }
-      return { path, distance: gScore.get(goalId) ?? Infinity };
+      bestEndState = current;
+      break;
     }
 
-    settled.add(node);
+    settled.add(curKey);
+    const curG = gScore.get(curKey) ?? Infinity;
+    const curCoord = coords.get(node);
+    const fromCoord = fromNode !== null ? coords.get(fromNode) : null;
+
     for (const edge of adj.get(node) ?? []) {
-      if (settled.has(edge.to)) continue;
-      const tentative = (gScore.get(node) ?? Infinity) + edge.weight;
-      if (tentative < (gScore.get(edge.to) ?? Infinity)) {
-        cameFrom.set(edge.to, node);
-        gScore.set(edge.to, tentative);
-        open.push({ node: edge.to, priority: tentative + heuristic(edge.to) });
+      const nextNode = edge.to;
+      const nextKey = stateKey(nextNode, node);
+      if (settled.has(nextKey)) continue;
+
+      const nextCoord = coords.get(nextNode);
+      if (!nextCoord) continue;
+
+      let penalty = 0;
+      if (!graph.isPedestrian) {
+        if (fromCoord && curCoord && !edge.isRoundabout) {
+          const angle = turnAngle(fromCoord, curCoord, nextCoord);
+          if (angle > 110) {
+            penalty += 1500;
+          }
+        }
+        if (edge.highway === "service" || edge.wayName === "service") {
+          penalty += 300;
+        }
+      }
+
+      const tentative = curG + edge.weight + penalty;
+      if (tentative < (gScore.get(nextKey) ?? Infinity)) {
+        cameFrom.set(nextKey, { node, fromNode });
+        gScore.set(nextKey, tentative);
+        open.push({
+          node: nextNode,
+          fromNode: node,
+          priority: tentative + heuristic(nextNode),
+        });
       }
     }
   }
 
-  return { path: null, distance: Infinity };
+  if (!bestEndState) return { path: null, distance: Infinity };
+
+  const path: NodeId[] = [bestEndState.node];
+  let curr: { node: NodeId; fromNode: NodeId | null } = bestEndState;
+  while (curr.fromNode !== null) {
+    const prev = cameFrom.get(stateKey(curr.node, curr.fromNode));
+    if (!prev) break;
+    path.unshift(prev.node);
+    curr = prev;
+  }
+
+  // Recalculate true physical distance (meters) along the path
+  let distance = 0;
+  for (let i = 0; i < path.length - 1; i++) {
+    const u = path[i];
+    const v = path[i + 1];
+    const edges = (adj.get(u) ?? []).filter((e) => e.to === v);
+    if (edges.length > 0) {
+      distance += Math.min(...edges.map((e) => e.weight));
+    }
+  }
+
+  return { path, distance };
 };

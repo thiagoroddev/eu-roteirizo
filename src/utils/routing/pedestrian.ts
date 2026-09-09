@@ -28,11 +28,17 @@ export const pedestrianGraph = (graph: RoadGraph): RoadGraph => {
       const back = adj.get(edge.to);
       const hasReverse = back?.some((e) => e.to === from) ?? false;
       if (hasReverse) continue;
-      const reversed: Edge = { to: from, weight: edge.weight, wayName: edge.wayName };
+      const reversed: Edge = {
+        to: from,
+        weight: edge.weight,
+        wayName: edge.wayName,
+        ...(edge.highway ? { highway: edge.highway } : {}),
+        ...(edge.isRoundabout ? { isRoundabout: edge.isRoundabout } : {}),
+      };
       if (back) back.push(reversed);
       else adj.set(edge.to, [reversed]);
     }
   }
 
-  return { coords, adj };
+  return { coords, adj, isPedestrian: true };
 };

@@ -71,15 +71,19 @@ describe("buildGraph", () => {
     expect(squareGraph.coords.get(D)).toEqual(COORDS[D]);
   });
 
-  it("derives wayName from name, then highway, then 'via'", () => {
+  it("derives wayName from name, then highway, then 'via', and preserves highway and isRoundabout", () => {
     const g = buildGraph([
       { type: "way", nodes: [201, 202], geometry: [pt(-22.98, -43.2), pt(-22.98, -43.199)], tags: { name: "Av Principal", highway: "primary" } },
       { type: "way", nodes: [203, 204], geometry: [pt(-22.97, -43.2), pt(-22.97, -43.199)], tags: { highway: "residential" } },
       { type: "way", nodes: [205, 206], geometry: [pt(-22.96, -43.2), pt(-22.96, -43.199)], tags: {} },
+      { type: "way", nodes: [207, 208], geometry: [pt(-22.95, -43.2), pt(-22.95, -43.199)], tags: { junction: "roundabout", highway: "secondary" } },
     ]);
     expect(g.adj.get(201)?.[0].wayName).toBe("Av Principal");
+    expect(g.adj.get(201)?.[0].highway).toBe("primary");
     expect(g.adj.get(203)?.[0].wayName).toBe("residential");
+    expect(g.adj.get(203)?.[0].highway).toBe("residential");
     expect(g.adj.get(205)?.[0].wayName).toBe("via");
+    expect(g.adj.get(207)?.[0].isRoundabout).toBe(true);
   });
 
   it("ignores non-way elements and ways missing geometry/nodes", () => {
