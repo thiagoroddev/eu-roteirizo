@@ -150,4 +150,28 @@ describe("RoteiroPointSection (tela 8 — TASK-RF-006.4.1/.4.2/.4.3, Original vi
     fireEvent.click(screen.getByRole("button", { name: POINT.CREATE_STOP }));
     expect(handlers.onCreateStop).toHaveBeenCalledWith(2);
   });
+
+  it("renderiza o botão 'Ignorar endereço' e chama onToggleIgnore ao clicar", () => {
+    const onToggleIgnore = vi.fn();
+    renderSection({ isIgnored: false, onToggleIgnore });
+
+    const btn = screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.IGNORE_ADDRESS });
+    expect(btn).toBeInTheDocument();
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.IGNORED_BADGE)).not.toBeInTheDocument();
+
+    fireEvent.click(btn);
+    expect(onToggleIgnore).toHaveBeenCalledTimes(1);
+  });
+
+  it("renderiza badge 'Ignorado' e botão 'Restaurar endereço' quando isIgnored é true", () => {
+    const onToggleIgnore = vi.fn();
+    renderSection({ isIgnored: true, onToggleIgnore });
+
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.IGNORED_BADGE)).toBeInTheDocument();
+    const btn = screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.UNIGNORE_ADDRESS });
+    expect(btn).toBeInTheDocument();
+
+    fireEvent.click(btn);
+    expect(onToggleIgnore).toHaveBeenCalledTimes(1);
+  });
 });

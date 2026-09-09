@@ -324,7 +324,7 @@ export const fetchRoadGraph = async (bbox: BBox, options: FetchRoadGraphOptions 
         nodes: graph.coords.size,
         edges: countEdges(graph),
       };
-      if (import.meta.env.DEV) console.info(`fetchRoadGraph: nós=${stats.nodes}, arestas=${stats.edges}, tentativas=${attempt}`);
+      if (import.meta.env?.DEV) console.info(`fetchRoadGraph: nós=${stats.nodes}, arestas=${stats.edges}, tentativas=${attempt}`);
       return { graph, stats, diagnostics };
     }
     if (!retryable || attempt === maxAttempts || options.signal?.aborted) break;

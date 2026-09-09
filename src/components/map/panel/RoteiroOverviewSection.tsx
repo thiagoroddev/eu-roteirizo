@@ -4,6 +4,7 @@ import { Button } from "../../ui/button";
 import { PanelSection } from "./PanelSection";
 import { PanelTitle, type PanelMetric } from "./PanelTitle";
 import { StopItemList } from "./StopItemList";
+import { StopItemRow } from "./StopItem";
 import { RouteProgressCard } from "./RouteProgressCard";
 import { SuggestedStopSection, type SuggestedStopView } from "./SuggestedStopCard";
 import { ROTEIRO_MARKER_COLORS } from "../../../utils/markers/markerColors";
@@ -100,6 +101,10 @@ interface Props {
   onCreateSuggested: () => void;
   /** Export the current route to a JSON file (TASK-RF-013). */
   onExportRoute?: () => void;
+  /** Endereços ignorados pelo usuário (aparecem em último lugar). */
+  ignoredItems?: StopItemData[];
+  onShowPointOnMap?: (pointId: string) => void;
+  onUnignorePoint?: (pointId: string) => void;
 }
 
 export const RoteiroOverviewSection = ({
@@ -117,6 +122,9 @@ export const RoteiroOverviewSection = ({
   onShowSuggestedOnMap,
   onCreateSuggested,
   onExportRoute,
+  ignoredItems,
+  onShowPointOnMap,
+  onUnignorePoint,
 }: Props) => {
   /** One drill-down open at a time — the overview is a scan, not an editor. */
   const [openStopId, setOpenStopId] = useState<string | null>(null);
@@ -194,6 +202,42 @@ export const RoteiroOverviewSection = ({
 
       {/* LAST, and only while incomplete: the algorithm's next pick, as a CARD. */}
       {suggestion && <SuggestedStopSection suggestion={suggestion} onShowOnMap={onShowSuggestedOnMap} onCreate={onCreateSuggested} />}
+
+      {/* Endereços ignorados aparecem em último lugar na lista geral */}
+      {ignoredItems && ignoredItems.length > 0 && (
+        <PanelSection label={UI_LABELS.MAP_PANEL.SECTION_IGNORED(ignoredItems.length)}>
+          <ul>
+            {ignoredItems.map((item) => (
+              <li key={item.addressKey} className="border-b border-input last:border-b-0">
+                <div className="flex items-center">
+                  <div className="min-w-0 flex-1">
+                    <StopItemRow item={item} onTap={() => onShowPointOnMap?.(item.addressKey)} highlighted={false} neon />
+                  </div>
+                  {onUnignorePoint && (
+                    <Button type="button" variant="outline" size="sm" className="mr-2 h-7 px-2 text-xs shrink-0" data-vaul-no-drag onClick={() => onUnignorePoint(item.addressKey)}>
+                      {UI_LABELS.MAP_PANEL.UNIGNORE_ADDRESS}
+                    </Button>
+                  )}
+                  {onShowPointOnMap && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      data-vaul-no-drag
+                      aria-label={UI_LABELS.MAP_PANEL.VIEW_ON_MAP}
+                      title={UI_LABELS.MAP_PANEL.VIEW_ON_MAP}
+                      className="mr-2 shrink-0"
+                      onClick={() => onShowPointOnMap(item.addressKey)}
+                    >
+                      <MapPin aria-hidden />
+                    </Button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </PanelSection>
+      )}
     </div>
   );
 };

@@ -548,3 +548,62 @@ describe("counters, completeness and persistence bridge", () => {
     expect(JSON.parse(JSON.stringify(before))).toEqual(snapshot);
   });
 });
+
+describe("ignored points", () => {
+  it("IGNORE_POINT adds point to ignoredPointIds and UNIGNORE_POINT removes it", () => {
+    const state = initial();
+    const ignored = run(state, { type: "IGNORE_POINT", pointId: "d" });
+    expect(ignored.ignoredPointIds).toEqual(["d"]);
+
+    // Idempotent
+    const ignoredAgain = run(ignored, { type: "IGNORE_POINT", pointId: "d" });
+    expect(ignoredAgain.ignoredPointIds).toEqual(["d"]);
+
+    const unignored = run(ignored, { type: "UNIGNORE_POINT", pointId: "d" });
+    expect(unignored.ignoredPointIds).toEqual([]);
+  });
+
+  it("IGNORE_POINT removes the point from committed stops and cleans empty stops", () => {
+    const state = withStopAB(initial()); // stop_a with ["a", "b"]
+    const ignoredB = run(state, { type: "IGNORE_POINT", pointId: "b" });
+    expect(ignoredB.stops[0]?.pointIds).toEqual(["a"]);
+
+    const ignoredA = run(ignoredB, { type: "IGNORE_POINT", pointId: "a" });
+    expect(ignoredA.stops).toEqual([]);
+  });
+
+  it("IGNORE_POINT cancels draft if the seed is ignored", () => {
+    const state = openDraftOnA(initial());
+    const ignored = run(state, { type: "IGNORE_POINT", pointId: "a" });
+    expect(ignored.draft).toBeNull();
+  });
+
+  it("remainingCounts and isComplete disregard ignored points", () => {
+    // POINTS: [a, b, c, d, e] (5 points)
+    // Create stop with a, b, c, e (4 points)
+    let state = run(
+      openDraftOnA(initial()),
+      { type: "TOGGLE_DRAFT_POINT", pointId: "b" },
+      { type: "TOGGLE_DRAFT_POINT", pointId: "c" },
+      { type: "TOGGLE_DRAFT_POINT", pointId: "e" },
+      { type: "COMMIT_STOP" }
+    );
+    // Only d remains unassigned
+    expect(remainingCounts(state).addresses).toBe(1);
+    expect(isComplete(state)).toBe(false);
+
+    // Ignore d
+    state = run(state, { type: "IGNORE_POINT", pointId: "d" });
+    expect(remainingCounts(state).addresses).toBe(0);
+    expect(isComplete(state)).toBe(true);
+  });
+
+  it("toPlannedRoute persists ignoredPointIds and HYDRATE restores them", () => {
+    const state = run(initial(), { type: "IGNORE_POINT", pointId: "d" });
+    const planned = toPlannedRoute(state);
+    expect(planned.ignoredPointIds).toEqual(["d"]);
+
+    const hydrated = run(initial(), { type: "HYDRATE", route: planned });
+    expect(hydrated.ignoredPointIds).toEqual(["d"]);
+  });
+});

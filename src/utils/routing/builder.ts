@@ -54,6 +54,8 @@ export interface RouteBuilderState {
   /** Point id the user pointed the next-stop suggestion at; null = automatic. */
   nextSuggestionOverride: string | null;
   config: RoutingConfig;
+  /** Endereços ignorados pelo usuário (não contam para a conclusão do roteiro). */
+  ignoredPointIds: string[];
 }
 
 export type RouteBuilderAction =
@@ -74,6 +76,8 @@ export type RouteBuilderAction =
   | { type: "CANCEL_DRAFT" }
   | { type: "DISSOLVE_STOP"; stopId: string }
   | { type: "ADD_POINT_TO_STOP"; stopId: string; pointId: string }
+  | { type: "IGNORE_POINT"; pointId: string }
+  | { type: "UNIGNORE_POINT"; pointId: string }
   | { type: "HYDRATE"; route: PlannedRoute }
   | { type: "CLEAR_STOPS" }
   | { type: "RESET" };
@@ -91,6 +95,7 @@ export const createInitialBuilderState = (points: DeliveryPoint[], config: Routi
   draft: null,
   nextSuggestionOverride: null,
   config,
+  ignoredPointIds: [],
 });
 
 /** Keeps `order` contiguous 1..n after any insertion/removal. */
@@ -318,6 +323,39 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
       return { ...state, stops };
     }
 
+    case "IGNORE_POINT": {
+      if (state.ignoredPointIds.includes(action.pointId)) return state;
+      const ignoredPointIds = [...state.ignoredPointIds, action.pointId];
+
+      let draft = state.draft;
+      if (draft && draft.pointIds.includes(action.pointId)) {
+        const remainingIds = draft.pointIds.filter((id) => id !== action.pointId);
+        if (remainingIds.length === 0 || draft.seedPointId === action.pointId) {
+          draft = null;
+        } else {
+          draft = { ...draft, pointIds: remainingIds };
+        }
+      }
+
+      const stops = state.stops.map((s) => ({ ...s, pointIds: s.pointIds.filter((id) => id !== action.pointId) })).filter((s) => s.pointIds.length > 0);
+
+      const nextSuggestionOverride = state.nextSuggestionOverride === action.pointId ? null : state.nextSuggestionOverride;
+
+      return {
+        ...state,
+        ignoredPointIds,
+        stops: normalizeOrders(stops),
+        draft,
+        nextSuggestionOverride,
+      };
+    }
+
+    case "UNIGNORE_POINT": {
+      if (!state.ignoredPointIds.includes(action.pointId)) return state;
+      const ignoredPointIds = state.ignoredPointIds.filter((id) => id !== action.pointId);
+      return { ...state, ignoredPointIds };
+    }
+
     case "HYDRATE": {
       const byId = indexPointsById(state.points);
       /** Defensive: drop ids the current spreadsheet doesn't have, then empty
@@ -335,6 +373,7 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
         draft: null,
         nextSuggestionOverride: null,
         config: action.route.config,
+        ignoredPointIds: action.route.ignoredPointIds?.filter((id) => byId.has(id)) ?? [],
       };
     }
 
@@ -345,7 +384,7 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
 
     case "RESET":
       /** Start construction over; route identity and config survive (RN-21: the roteiro of this rota). */
-      return { ...state, startPoint: null, stops: [], draft: null, nextSuggestionOverride: null };
+      return { ...state, startPoint: null, stops: [], draft: null, nextSuggestionOverride: null, ignoredPointIds: [] };
   }
 };
 
@@ -421,7 +460,8 @@ export const previousAnchorOrigin = (state: RouteBuilderState, stopId: string | 
  */
 export const suggestionCandidates = (state: RouteBuilderState): DeliveryPoint[] => {
   const inRadius = idsWithinDraftRadius(state);
-  return unassignedPoints(state.points, state.stops).filter((p) => !state.draft?.pointIds.includes(p.id) && !inRadius.has(p.id));
+  const ignored = new Set(state.ignoredPointIds);
+  return unassignedPoints(state.points, state.stops).filter((p) => !ignored.has(p.id) && !state.draft?.pointIds.includes(p.id) && !inRadius.has(p.id));
 };
 
 /**
@@ -456,7 +496,8 @@ export const suggestedNextPointId = (state: RouteBuilderState): string | null =>
 
 /** HUD counters (RF-32): addresses/packages not yet in a COMMITTED stop. */
 export const remainingCounts = (state: RouteBuilderState): { addresses: number; packages: number } => {
-  const free = unassignedPoints(state.points, state.stops);
+  const ignored = new Set(state.ignoredPointIds);
+  const free = unassignedPoints(state.points, state.stops).filter((p) => !ignored.has(p.id));
   return { addresses: free.length, packages: free.reduce((sum, p) => sum + p.packageCount, 0) };
 };
 
@@ -464,7 +505,11 @@ export const remainingCounts = (state: RouteBuilderState): { addresses: number; 
  * True when every point is committed to a stop and nothing is being edited.
  * Gates ONLY the "Iniciar rota" button (RF-009) — never saving (RF-33).
  */
-export const isComplete = (state: RouteBuilderState): boolean => state.draft === null && state.stops.length > 0 && unassignedPoints(state.points, state.stops).length === 0;
+export const isComplete = (state: RouteBuilderState): boolean => {
+  const ignored = new Set(state.ignoredPointIds);
+  const free = unassignedPoints(state.points, state.stops).filter((p) => !ignored.has(p.id));
+  return state.draft === null && state.stops.length > 0 && free.length === 0;
+};
 
 /** The persistable shape (RF-008/RF-33 bridge; HYDRATE is the way back). */
 export const toPlannedRoute = (state: RouteBuilderState): PlannedRoute => ({
@@ -473,4 +518,5 @@ export const toPlannedRoute = (state: RouteBuilderState): PlannedRoute => ({
   stops: state.stops,
   config: state.config,
   createdAt: state.createdAt,
+  ignoredPointIds: state.ignoredPointIds,
 });

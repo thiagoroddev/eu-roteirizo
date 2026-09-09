@@ -31,6 +31,10 @@ export interface Edge {
   weight: number;
   /** Human-readable street name (OSM `name`, else `highway`, else "via"). */
   wayName: string;
+  /** OSM highway tag class (e.g. "service", "residential", "secondary"). */
+  highway?: string;
+  /** True when the edge is part of a roundabout or circular junction. */
+  isRoundabout?: boolean;
 }
 
 /** A node together with its id (returned by `nodeAt`; used by map matching, 005.5). */
@@ -44,6 +48,8 @@ export interface RoadGraph {
   coords: Map<NodeId, LatLng>;
   /** Node id → outgoing edges. */
   adj: Map<NodeId, Edge[]>;
+  /** True for pedestrian walking graphs where vehicle turn restrictions do not apply. */
+  isPedestrian?: boolean;
 }
 
 /**
@@ -123,10 +129,17 @@ export const buildGraph = (elements: OsmElement[]): RoadGraph => {
   const coords = new Map<NodeId, LatLng>();
   const adj = new Map<NodeId, Edge[]>();
 
-  const addEdge = (from: NodeId, to: NodeId, weight: number, wayName: string): void => {
+  const addEdge = (from: NodeId, to: NodeId, weight: number, wayName: string, highway?: string, isRoundabout?: boolean): void => {
+    const edge: Edge = {
+      to,
+      weight,
+      wayName,
+      ...(highway ? { highway } : {}),
+      ...(isRoundabout ? { isRoundabout } : {}),
+    };
     const edges = adj.get(from);
-    if (edges) edges.push({ to, weight, wayName });
-    else adj.set(from, [{ to, weight, wayName }]);
+    if (edges) edges.push(edge);
+    else adj.set(from, [edge]);
   };
 
   for (const el of elements) {
@@ -134,6 +147,9 @@ export const buildGraph = (elements: OsmElement[]): RoadGraph => {
 
     const dir = onewayDirection(el.tags);
     const wayName = el.tags?.name ?? el.tags?.highway ?? "via";
+    const highway = el.tags?.highway?.toLowerCase();
+    const junction = el.tags?.junction?.toLowerCase();
+    const isRoundabout = junction === "roundabout" || junction === "circular";
 
     for (let i = 0; i < el.nodes.length; i++) {
       const g = el.geometry[i];
@@ -148,8 +164,8 @@ export const buildGraph = (elements: OsmElement[]): RoadGraph => {
       if (!ga || !gb) continue;
 
       const w = haversine({ lat: ga.lat, lng: ga.lon }, { lat: gb.lat, lng: gb.lon });
-      if (dir === "both" || dir === "forward") addEdge(a, b, w, wayName);
-      if (dir === "both" || dir === "backward") addEdge(b, a, w, wayName);
+      if (dir === "both" || dir === "forward") addEdge(a, b, w, wayName, highway, isRoundabout);
+      if (dir === "both" || dir === "backward") addEdge(b, a, w, wayName, highway, isRoundabout);
     }
   }
 

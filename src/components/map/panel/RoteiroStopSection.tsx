@@ -47,6 +47,10 @@ interface Props {
   isExpanded?: boolean;
   /** Color tokens of the stop marker for the P{N} badge (RF-53 / TASK-RF-038). */
   stopColor?: MarkerColor;
+  /** Se o endereço selecionado está ignorado. */
+  isIgnored?: boolean;
+  /** Callback para alternar entre ignorar e restaurar o endereço. */
+  onToggleIgnore?: () => void;
 }
 
 export const RoteiroStopSection = ({
@@ -65,6 +69,8 @@ export const RoteiroStopSection = ({
   subtitleOverride,
   isExpanded = false,
   stopColor,
+  isIgnored = false,
+  onToggleIgnore,
 }: Props) => {
   const badgeStyle = stopColor
     ? {
@@ -111,7 +117,23 @@ export const RoteiroStopSection = ({
       {/* O card "Endereço selecionado" só aparece quando a parada está desagrupada (isExpanded === true)
           e a lista não está aberta (RF-53 / TASK-RF-038). */}
       {isExpanded && !listOpen && selectedItem && (
-        <PanelSection label={UI_LABELS.MAP_PANEL.SECTION_SELECTED}>
+        <PanelSection
+          label={UI_LABELS.MAP_PANEL.SECTION_SELECTED}
+          meta={
+            isIgnored ? (
+              <Badge variant="outline" className="border-orange-500/60 bg-orange-500/10 text-orange-600 dark:text-orange-400 px-1.5 py-0 text-[10px] font-semibold">
+                {UI_LABELS.MAP_PANEL.IGNORED_BADGE}
+              </Badge>
+            ) : undefined
+          }
+          actions={
+            onToggleIgnore && (
+              <Button type="button" variant="outline" size="sm" className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground" data-vaul-no-drag onClick={onToggleIgnore}>
+                {isIgnored ? UI_LABELS.MAP_PANEL.UNIGNORE_ADDRESS : UI_LABELS.MAP_PANEL.IGNORE_ADDRESS}
+              </Button>
+            )
+          }
+        >
           <StopItemRow item={selectedItem} onTap={onTapCard} highlighted expanded={expanded} neon />
           {/* A member drills its packages down right here (RF-006.15). */}
           {expanded && <StopItemDetail item={selectedItem} />}

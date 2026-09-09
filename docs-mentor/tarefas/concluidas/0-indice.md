@@ -17,3 +17,4 @@
 | 08/09/26 13:06 | [`TASK-RF-037`](./2026-09-08--13h06--TASK-RF-037.md) | RF | Preservar endereco escolhido pelo usuario como ancora e primeiro ponto ao criar parada com membros englobados | - | concluida | pendente |
 | 08/09/26 17:44 | [`TASK-RF-038`](./2026-09-08--17h44--TASK-RF-038.md) | RF | Mutirao de UI do Meu Roteiro: resumo da parada em 2 linhas, badge P{N} estilizado, porcentagem no cabecalho, cores das paradas, tabelas no sumario e remocao de reordenacao | - | concluida | pendente |
 | 08/09/26 18:34 | [`TASK-RF-039`](./2026-09-08--18h34--TASK-RF-039.md) | RF | Nome unico para arquivos JSON exportados com data do romaneio, 4 ultimos digitos do AT e bairro predominante | - | concluida | pendente |
+| 08/09/26 21:37 | [`TASK-BG-013`](./2026-09-08--21h37--TASK-BG-013.md) | BG | Impedir retornos em angulo agudo e conversoes proibidas em contramao | - | concluida | aprovado |

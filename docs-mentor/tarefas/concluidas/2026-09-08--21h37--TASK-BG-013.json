@@ -1,0 +1,108 @@
+{
+  "id": "TASK-BG-013",
+  "tipo": "BG",
+  "titulo": "Impedir retornos em angulo agudo e conversoes proibidas em contramao",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "criada_em": "08/09/26 20:53",
+  "iniciada_em": "08/09/26 20:54",
+  "commit_base": "16260974526d0ea45929d7ccca7e13defdc1a938",
+  "concluida_em": "08/09/26 21:37",
+  "plano": {
+    "muda": [
+      "src/utils/routing/graph.ts - registrar highway e isRoundabout nas arestas para guiar penalidades de roteamento veicular",
+      "src/utils/routing/aStar.ts - implementar busca turn-aware no A* com penalidade de retorno em angulo agudo (>110°) e penalidade para travessia em vias de servico",
+      "src/__tests__/utils/routing/aStar.test.ts - cobrir rejeicao de retornos agudos, priorizacao de vias principais sobre service e suporte a rotatorias",
+      "src/__tests__/utils/routing/graph.test.ts - testar registro de highway e isRoundabout nas arestas"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "O A* nao realiza retornos em 'V' (>110°) quando ha rota viaria regular em frente ou por contorno legal",
+        "teste": "src/__tests__/utils/routing/aStar.test.ts > evita retornos em angulo agudo quando ha rota viaria alternativa"
+      },
+      {
+        "texto": "Vias de servico (postos de combustivel/garagens) recebem penalidade de transito, impedindo que sirvam de atalho para U-turns espurios",
+        "teste": "src/__tests__/utils/routing/aStar.test.ts > penaliza transito de passagem por vias de servico"
+      },
+      {
+        "texto": "Rotatorias oficiais (roundabout/circular) continuam operando normalmente sem penalidade indevida de curva",
+        "teste": "src/__tests__/utils/routing/aStar.test.ts > permite curvas em rotatorias sem penalidade de U-turn"
+      }
+    ],
+    "impacto": "Motor de roteamento veicular local (A*, grafo viario e tracos da rota)",
+    "riscos": [
+      "Rotas em becos sem saida estritos precisam manter saida mesmo com penalidade de retorno (resolvido usando penalidade finita em vez de bloqueio absoluto)"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram impedir retornos proibidos em contramao e curvas em 'V' forçadas; proponho calcular o angulo de deflexao e penalizar vias de servico no A*, que e a solucao exata no algoritmo sem alterar dados ou servicos externos."
+  },
+  "gates": {
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "08/09/26 21:31",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "08/09/26 21:31",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "08/09/26 21:35",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.9 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  76 passed (76)\n      Tests  863 passed (863)\n   Start at  21:35:40\n   Duration  35.44s (transform 9.95s, setup 31.12s, import 20.28s, tests 65.82s, environment 115.99s)\n\n(node:33332) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "08/09/26 21:36",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1954 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CYMBXH50.css   \u001b[39m\u001b[1m\u001b[2m 28.24 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-CA8dcakn.js    \u001b[39m\u001b[1m\u001b[33m538.06 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.23 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-B6etagQ-.js   \u001b[39m\u001b[1m\u001b[33m803.28 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.49 kB\u001b[22m\n\u001b[32m✓ built in 6.90s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1791.56 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "08/09/26 21:33",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    }
+  },
+  "achados": [],
+  "validacao": "aprovado",
+  "validado_em": "08/09/26 21:30",
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-08--21h37--TASK-BG-013.md"
+}

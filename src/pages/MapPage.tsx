@@ -218,7 +218,7 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
       An emptied builder deletes the record, so the chip/button turn off too. */
   useEffect(() => {
     if (!persistReady || builderState.draft !== null) return;
-    const meaningful = builderState.startPoint !== null || builderState.stops.length > 0;
+    const meaningful = builderState.startPoint !== null || builderState.stops.length > 0 || builderState.ignoredPointIds.length > 0;
     const timer = setTimeout(() => {
       if (meaningful) {
         void saveRoteiro(manifestId, routeName, toPlannedRoute(builderState)).then((result) => {
@@ -329,10 +329,11 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
         expandedStopId: expandedRoteiroStopId,
         selectedMemberId: effectiveSelectedMemberId,
         draftSelectedPointId,
+        ignoredPointIds: builderState.ignoredPointIds,
       }),
     // candidateIds is derived fresh each render; its CONTENT tracks draft/points.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [points, builderState.stops, draft, selectedAddressId, selectedStopId, expandedRoteiroStopId, effectiveSelectedMemberId, draftSelectedPointId, candidateIds.join("|")]
+    [points, builderState.stops, draft, selectedAddressId, selectedStopId, expandedRoteiroStopId, effectiveSelectedMemberId, draftSelectedPointId, builderState.ignoredPointIds, candidateIds.join("|")]
   );
 
   // Road graph — lazy on the roteiro enter (ADR-009 decision B); everything
@@ -521,6 +522,31 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
     setPanelView("selected");
     setPanelSnap("collapsed");
   };
+
+  const handleToggleIgnorePoint = useCallback(
+    (pointId: string) => {
+      if (builderState.ignoredPointIds.includes(pointId)) {
+        dispatch({ type: "UNIGNORE_POINT", pointId });
+      } else {
+        dispatch({ type: "IGNORE_POINT", pointId });
+      }
+    },
+    [builderState.ignoredPointIds, dispatch]
+  );
+
+  const handleFocusIgnoredPointOnMap = useCallback(
+    (pointId: string) => {
+      setSelectedPointId(pointId);
+      setSelectedStopId(null);
+      setExpandedRoteiroStopId(null);
+      setSelectedMemberId(null);
+      setStartSelected(false);
+      setCardExpanded(false);
+      setPanelView("selected");
+      setPanelSnap("collapsed");
+    },
+    [setCardExpanded, setPanelSnap, setPanelView]
+  );
 
   /** Tap on a marker, by context (RF-006.4): during a draft it toggles the
       point in/out (spec §4 p.4 — map taps choose candidates); without a start
@@ -1102,6 +1128,14 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
     ? { addressLine: startAddressPoint ? addressLineOf(startAddressPoint.address) : UI_LABELS.MAP_PANEL.ROTEIRO_START.DEFINED }
     : null;
 
+  /** Endereços ignorados pelo usuário (aparecem em último lugar no overview). */
+  const overviewIgnoredItems: StopItemData[] = useMemo(() => {
+    return (builderState.ignoredPointIds ?? [])
+      .map((id) => pointsById.get(id))
+      .filter((p): p is DeliveryPoint => p !== undefined)
+      .map((p) => pointToStopItemData(p));
+  }, [builderState.ignoredPointIds, pointsById]);
+
   /** Overview CTA (RF-006.8): commits the SUGGESTED stop — the exact commit
       tela 8's "Criar parada" performs (seed + default-radius candidates,
       create-time snapped anchor), no tap required. The overview already shows
@@ -1471,6 +1505,8 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
                   subtitleOverride={stopSubtitle}
                   isExpanded={expandedRoteiroStopId === selectedStop.id}
                   stopColor={selectedStopColor}
+                  isIgnored={stopSelectedItem ? builderState.ignoredPointIds.includes(stopSelectedItem.addressKey) : false}
+                  onToggleIgnore={stopSelectedItem ? () => handleToggleIgnorePoint(stopSelectedItem.addressKey) : undefined}
                 />
               </div>
             ) : roteiroContext === "point-selected" && selectedPointItem ? (
@@ -1503,6 +1539,8 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
                   isStart={startAddressPoint !== null && selectedPoint?.id === startAddressPoint.id}
                   onDeleteStart={handleDeleteStart}
                   onRepositionStart={handleRepositionStart}
+                  isIgnored={selectedPoint ? builderState.ignoredPointIds.includes(selectedPoint.id) : false}
+                  onToggleIgnore={selectedPoint ? () => handleToggleIgnorePoint(selectedPoint.id) : undefined}
                 />
               </div>
             ) : (
@@ -1573,6 +1611,9 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
               onShowSuggestedOnMap={handleShowSuggestedOnMap}
               onCreateSuggested={handleCreateSuggested}
               onExportRoute={handleExportRoute}
+              ignoredItems={overviewIgnoredItems}
+              onShowPointOnMap={handleFocusIgnoredPointOnMap}
+              onUnignorePoint={handleToggleIgnorePoint}
             />
           ) : roteiroContext === "start-flow" && !startSelected ? (
             // Idle (RF-006.11): ONLY the suggested-next-stop card — the lean
