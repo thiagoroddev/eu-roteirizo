@@ -1,0 +1,69 @@
+{
+  "id": "TASK-SPIKE-002",
+  "tipo": "SPIKE",
+  "titulo": "Validar roteiros por pontos fundamentais e circuito de agrupamento configuravel",
+  "fatia_de": null,
+  "estado": "aberta",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "G"
+  },
+  "depende_de": [
+    "TASK-RF-030"
+  ],
+  "fila": "reserva",
+  "ordem": null,
+  "origem": "RF-34",
+  "requisitos": [
+    "RF-34",
+    "RF-52"
+  ],
+  "criada_em": "10/09/26 11:09",
+  "iniciada_em": null,
+  "commit_base": null,
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "Plano aprovado para execucao em docs-mentor/tarefas/TASK-SPIKE-002-plano.md; experimento ainda nao iniciado. Nao adaptar o restante do epico antes de resultado favoravel e aprovacao.",
+      "__utilidades-back-office__/auto-roteirizacao/fundamentals.ts (novo): referencias de estacionamento e identidade virtual conservadora, sem alterar DeliveryPoints/pacotes originais.",
+      "__utilidades-back-office__/auto-roteirizacao/experimentPaths.ts (novo): caminhos, cache, circuito limitado, caminhada completa e incertezas explicitamente separados.",
+      "__utilidades-back-office__/auto-roteirizacao/fundamentalExperiment.ts (novo): circuito configuravel de 120m, extremos livres e variantes individual, grupos fixos e revisavel; heuristicas com trabalho limitado.",
+      "__utilidades-back-office__/auto-roteirizacao/fundamentalExperiment.test.ts (novo): contratos previos, excecao individual, limites, conservacao, determinismo, topologia e oraculos pequenos.",
+      "__utilidades-back-office__/auto-roteirizacao/experimentArtifacts.ts e experimentArtifacts.test.ts (novos): JSONs v1 independentes, importacao real isolada e mapa HTML privado da geometria avaliada, sem mudar o app.",
+      "__utilidades-back-office__/auto-roteirizacao/fundamental.arnes.ts (novo): corpus real completo, variantes, referencias humanas avaliadoras, metricas e artefatos reproduziveis sem rede.",
+      "vitest.corpus.config.ts e README.md do arnes; package.json: modo/comando test:auto-fundamentals separado do ensaio historico e guia de parametros/inspecao. Nenhuma dependencia nova."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Usar pontos fundamentais, circuito configuravel e agrupamentos/ancoras revisaveis elimina orfaos causados apenas por pinos afastados e produz roteiros completos com trocas vantajosas entre veiculo, caminhada e tempo modelado? Responder com validade tecnica, resultados por caso/agregado e inspecao humana; negativo/inconclusivo e resultado legitimo, nao autoriza adaptar o epico.",
+        "teste": "nao se aplica: pergunta de SPIKE; contratos conhecidos terao TDD e bateria real descritos em TASK-SPIKE-002-plano.md"
+      }
+    ],
+    "impacto": "Experimento local Standard M/G, sem alterar src, schema/importador, UI, defaults manuais, worker ou planos das demais fatias. Fontes e evidencias da RF-030 preservadas no fechamento autorizado, sem push. Configuracao nova somente no arnes; viabilidade e qualidade ainda nao demonstradas. Plano aprovado, execucao ainda nao iniciada. Apos resultado favoravel e aprovacao humana, propor adaptacao do epico. Dependencia RF-030 concluida; iniciar somente apos salvar seu commit e respeitar WIP. Ao usar task iniciar, repor o plano deste documento porque o comando escreve esqueleto. Fechamento/commit do spike exige autorizacao propria.",
+    "riscos": [
+      "Fundamental e projecao estimada, nao portaria/estacionamento certificado; malha derivada nao representa todas as passagens, sinais ou restricoes. Ausencia de caminho nao pode virar economia nem perda de entrega.",
+      "Raio de busca/aproximacao, circuito limitado e caminhada completa sao medidas distintas. 120m nao pode ser gravado como radiusMeters manual nem prometido como maximo da caminhada completa.",
+      "Identidade textual ambigua e coordenadas divergentes podem fundir entregas diferentes. Camada virtual deve manter rastreabilidade, diagnosticar ambiguidade e preservar IDs/pacotes.",
+      "Heuristicas e poda podem perder boas ruas ou grupos; limites de trabalho, variantes comparaveis e oraculos pequenos nao certificam otimo global.",
+      "App v1 recalcula geometria com sua malha; exportacao de paradas nao prova igualdade com trajetos medidos. Preservar geometria em evidencia e mapa local independente.",
+      "Corpus/cache/artefatos privados ficam ignorados, nao criptografados. Logs com IDs opacos; sem dados reais em repositorio, URLs ou visualizador externo."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram experimentar e testar antes de adaptar o epico. Uma tarefa exploratoria local reaproveita leitor, grafos, funcoes e importador, com pequeno mapa de evidencia para conferir caminhos sem alterar UI. O codigo e descartavel e nenhum contrato de producao e migrado. Se exceder uma fatia G, dividir antes da execucao."
+  },
+  "gates": {},
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

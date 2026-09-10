@@ -11,6 +11,6 @@
 | `RN-21` | RN | Cada rota pode ter no maximo um Roteiro vinculado; roteiro importado sem romaneio vira standalone. | essencial | TASK-RF-013 |
 | `RF-50` | RF | Permitir inserir nova parada em posicao arbitraria e reordenar paradas existentes no rascunho do roteiro | importante | TASK-RF-035 |
 | `RF-51` | RF | Permitir recomecar rascunho no cabecalho e focar ultima parada ao deletar com rotulo Deletar parada | importante | TASK-RF-036 |
-| `RF-52` | RF | Garantir que o ponto semente escolhido pelo usuario seja a ancora e primeiro ponto da parada | importante | TASK-RF-037 |
+| `RF-52` | RF | Garantir que o ponto semente escolhido pelo usuario seja a ancora e primeiro ponto da parada | importante | TASK-RF-037, TASK-RF-030, TASK-SPIKE-002 |
 | `RF-53` | RF | Resumo da parada agrupada com endereco completo do veiculo no titulo e selecao automatica da primeira entrega ao desagrupar | importante | TASK-RF-038 |
 | `RF-54` | RF | Nome unico para exportacao de roteiros em JSON composto por data do romaneio, 4 ultimos caracteres do AT e bairro predominante | importante | TASK-RF-039 |

@@ -28,11 +28,12 @@
     "muda": [
       "src/workers/autoRoute.worker.ts (novo) - executar o motor fora da thread da interface, com contrato de progresso, resultado e falha.",
       "src/hooks/useAutoRoute.ts (novo) - iniciar e encerrar o worker, cancelar e descartar respostas de snapshots obsoletos.",
-      "src/utils/routing/builder.ts - aplicar paradas e criterio em lote, preservando identidade, pacotes e o estado anterior ate a aplicacao.",
-      "src/types/routing.ts - persistir opcionalmente a politica de custo e normalizar roteiros antigos sem alterar seu comportamento.",
+      "src/utils/routing/builder.ts - aplicar paradas em lote e preservar seedPointId original ao mover, reabrir, resetar e salvar; ancora otimizada nao pode ser sobrescrita pela reprojecao de ancora padrao.",
+      "src/types/routing.ts - persistir opcionalmente a politica de custo e seedPointId da parada; compatibilidade declarada para legados sem inventar semente historica.",
       "src/utils/routing/routePath.ts - manter o criterio e a geometria de veiculo ao aplicar, editar ou reabrir um roteiro automatico.",
       "src/__tests__/hooks/useAutoRoute.test.ts e workers/autoRoute.worker.test.ts (novos) - execucao assíncrona, mensagens, cancelamento e descarte de resultado antigo.",
-      "src/__tests__/utils/routing/builder.test.ts, routePath.test.ts e services/routeStorage.test.ts - aplicacao atomica, edicao da ancora e round-trip compativel."
+      "src/__tests__/utils/routing/builder.test.ts, routePath.test.ts e services/routeStorage.test.ts - aplicacao atomica, edicao da ancora e round-trip compativel.",
+      "src/types/routeExport.ts e src/services/routeExport.ts - somente se necessario para o round-trip dos campos opcionais da parada; os JSONs reais antigos continuam aceitos."
     ],
     "criterios_aceite": [
       {
@@ -54,9 +55,13 @@
       {
         "texto": "Dada geometria otimizada, quando integrá-la ao builder e ao caminho de veiculo, entao nao reverte para o A* de menor distancia nem usa pontos de entrega como paradas do carro.",
         "teste": "routePath.test.ts > mantem caminho e ancora do motor automatico"
+      },
+      {
+        "texto": "Dada ancora automatica em outra rua, mover/reabrir/resetar/salvar/importar conserva membros e semente original quando conhecida. O reset usa essa referencia; carregar a malha nao troca silenciosamente a ancora otimizada. Legados sem semente usam fallback declarado.",
+        "teste": "builder.test.ts > preserva semente e ancora independente; routeStorage.test.ts e routeExport.test.ts > round-trip da semente"
       }
     ],
-    "impacto": "Integracao tecnica depois da validacao do motor e antes do botao. Web Worker nativo, sem dependencia nova. Registrar ADR curta sobre worker e persistencia opcional antes de implementar. O store atual recebe PlannedRoute genericamente; confirmar necessidade de migracao pelo formato final, sem bump automatico.",
+    "impacto": "Integracao tecnica depois da validacao do motor e antes do botao. Web Worker nativo, sem dependencia nova. Registrar ADR curta sobre worker e persistencia opcional antes de implementar. O store atual recebe PlannedRoute genericamente; confirmar necessidade de migracao pelo formato final, sem bump automatico. Detalhamento e evidencias: docs-mentor/tarefas/TASK-RF-030-plano.md. Evidencia atual: REOPEN_STOP reconstrui seedPointId a partir de pointIds[0]. O contrato proposto corrige essa ambiguidade ao integrar o motor.",
     "riscos": [
       "Autosave nao pode persistir uma sequencia intermediaria de paradas.",
       "Clonagem de grafo e transferencia de resultado podem custar memoria/tempo; medir alem da busca.",

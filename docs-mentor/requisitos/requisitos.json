@@ -600,7 +600,8 @@
       "Ao resetar a ancora da parada em edicao, a ancora padrao respeita o ponto semente que originou a parada"
     ],
     "tarefas": [
-      "TASK-RF-037"
+      "TASK-RF-037",
+      "TASK-RF-030"
     ],
     "adr": null,
     "criado_em": "08/09/26 12:04",

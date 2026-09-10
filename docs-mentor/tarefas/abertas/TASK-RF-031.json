@@ -28,9 +28,10 @@
     "muda": [
       "src/utils/routing/turnCost.ts (novo) - definicao D3 do spike e opcoes tipadas; distinguir quantidade de manobras, penalidade D3 e metros.",
       "src/utils/routing/turnAwarePath.ts (novo) - busca por aresta de chegada, map matching consistente, geometria e custos de trechos dirigidos.",
-      "src/utils/routing/autoRouteOrder.ts (novo) - ordenar ancoras a partir do inicio informado, comparando candidatos pelo custo distancia + 400 * penalidade D3; cachear consultas reutilizaveis.",
+      "src/utils/routing/autoRouteOrder.ts (novo) - escolher ancora e ordem conjuntamente a partir das alternativas RF-030; avaliar chegada e saida, custo distancia + 400 * D3 e olhar adiante limitado; cachear consultas por segmento/posicao/direcao.",
       "src/__tests__/utils/routing/turnCost.test.ts, turnAwarePath.test.ts e autoRouteOrder.test.ts (novos) - limiares D3, vias de mao unica, partida, escolha do caminho e ordem das paradas.",
-      "src/types/autoRouting.ts - completar o contrato de trechos, politica de custo e contagem; reutilizar graph/match/minHeap, preservando a busca por distancia do modo manual."
+      "src/types/autoRouting.ts - completar o contrato de trechos, politica de custo e contagem; reutilizar graph/match/minHeap, preservando a busca por distancia do modo manual.",
+      "__utilidades-back-office__/auto-roteirizacao/anchors.arnes.ts - ampliar o arnes real para comparar as transicoes entre alternativas de rua sobre os mesmos snapshots."
     ],
     "criterios_aceite": [
       {
@@ -56,9 +57,13 @@
       {
         "texto": "Dado um candidato desconectado entre os mais proximos, quando escolher o proximo, entao tenta candidatos viaveis e nao usa Infinity como se fosse custo valido; trabalho tem limite e informa pendencias.",
         "teste": "autoRouteOrder.test.ts > nao escolhe trecho impossivel por fallback"
+      },
+      {
+        "texto": "Dados candidatos que atendem entregas equivalentes em ruas diferentes, escolher considerando chegada E saida para as proximas paradas. Manter configuracao e relatar caminhada separadamente; validar em casos reais sem injetar ancoras humanas nem fixar distancias de relatos antigos.",
+        "teste": "autoRouteOrder.test.ts > escolhe ancora com olhar adiante; anchors.arnes.ts > compara transicoes reais entre ruas"
       }
     ],
-    "impacto": "Segundo modulo do motor: trajetos de veiculo e ordem das paradas. Default de 400m por unidade D3 aprovado pelo humano; estrategia permanece parametrizavel internamente. Nao promete minimo global da rota.",
+    "impacto": "Segundo modulo do motor: trajetos de veiculo e ordem das paradas. Default de 400m por unidade D3 aprovado pelo humano; estrategia permanece parametrizavel internamente. Nao promete minimo global da rota. Detalhamento e evidencias: docs-mentor/tarefas/TASK-RF-030-plano.md. O agrupamento RF-030 e provisorio: escolher a rua tambem pertence a esta fatia. Variantes por corredores/olhar adiante sao experimentos medidos, nao garantia de otimo.",
     "riscos": [
       "O spike usa pre-filtro TOP_N e busca gulosa; otimizar cada trecho nao prova otimizar a rota inteira.",
       "O spike nao considera o inicio externo e zera a manobra na ancora; os numeros antigos precisam ser medidos novamente apos corrigir essas limitacoes.",

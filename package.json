@@ -27,6 +27,8 @@
   "scripts": {
     "dev": "vite",
     "test": "vitest run",
+    "test:auto-anchors": "vitest run --config __utilidades-back-office__/auto-roteirizacao/vitest.corpus.config.ts",
+    "prepare:auto-anchors": "vitest run --config __utilidades-back-office__/auto-roteirizacao/vitest.corpus.config.ts --mode prepare",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b",
     "lint": "eslint .",
