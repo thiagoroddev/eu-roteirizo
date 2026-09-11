@@ -41,5 +41,13 @@
     "impedimentos": [
       "metodo \"tdd\" exige o gate \"testes\" visto vermelho antes do verde. Registre com: task gate TASK-BG-013 testes --esperando-vermelho"
     ]
+  },
+  {
+    "quando": "11/09/26 18:35",
+    "comando": "task finalizar",
+    "alvo": "TASK-RF-040",
+    "impedimentos": [
+      "metodo \"tdd\" exige o gate \"testes\" visto vermelho antes do verde. Registre com: task gate TASK-RF-040 testes --esperando-vermelho"
+    ]
   }
 ]
