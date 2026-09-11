@@ -339,7 +339,7 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
 
   // Road graph — lazy on the roteiro enter (ADR-009 decision B); everything
   // below works with graph === null (straight-line fallbacks).
-  const { graph, status: graphLoadStatus, error: graphError, retry: retryGraph } = useRoadGraph(points, mode === "roteiro");
+  const { graph, status: graphLoadStatus, error: graphError, retry: retryGraph } = useRoadGraph(points, mode === "roteiro", builderState.startPoint);
   const pedGraph = useMemo(() => (graph ? pedestrianGraph(graph) : null), [graph]);
 
   // ------- Start-definition flow (RF-21) — ephemeral UI state, never in the reducer -------
