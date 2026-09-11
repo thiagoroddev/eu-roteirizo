@@ -64,6 +64,9 @@ const sampleRoute: PlannedRoute = {
   ],
   config: DEFAULT_ROUTING_CONFIG,
   createdAt: "2026-09-07T12:00:00.000Z",
+  // RF-55 (TASK-RF-042): endereco ignorado precisa sobreviver ao arquivo exportado,
+  // senao reimportar o roteiro ressuscita entregas que o usuario tinha descartado.
+  ignoredPointIds: ["pt_-22.98700,-43.21100"],
 };
 
 beforeEach(async () => {
@@ -90,6 +93,9 @@ describe("routeExport", () => {
     if (parseResult.ok) {
       expect(parseResult.payload.manifestId).toBe("man_123");
       expect(parseResult.payload.route.stops[1].vehicleStopIsDefault).toBe(false);
+      // O roteiro exportado carrega os ignorados: o arquivo e a unica memoria
+      // que sobra quando o roteiro volta noutro aparelho (RF-55 / TASK-RF-042).
+      expect(parseResult.payload.route.ignoredPointIds).toEqual(["pt_-22.98700,-43.21100"]);
       expect(parseResult.payload.points[0].address).toBe("Avenida Vieira Souto, 100");
     }
   });
