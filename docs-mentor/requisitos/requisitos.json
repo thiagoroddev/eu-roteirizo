@@ -650,5 +650,24 @@
     "criado_em": "08/09/26 18:02",
     "implementado_em": "08/09/26 18:34",
     "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-55",
+    "tipo": "RF",
+    "enunciado": "Permitir ignorar enderecos perigosos ou fora de rota excluindo-os da conclusao do roteiro e agrupando-os no painel",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Alternar status de um endereco entre ativo e ignorado no painel do Meu Roteiro",
+      "Enderecos ignorados nao contam para a conclusao nem distancia do roteiro",
+      "Enderecos ignorados aparecem agrupados ao final do painel geral com restauracao e localizacao",
+      "Marcador do endereco ignorado utiliza cor e estilo diferenciado no mapa"
+    ],
+    "tarefas": [],
+    "adr": null,
+    "criado_em": "09/09/26 17:40",
+    "implementado_em": null,
+    "pendente_de_validacao": false
   }
 ]
