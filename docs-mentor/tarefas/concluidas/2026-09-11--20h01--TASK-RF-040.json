@@ -3,7 +3,7 @@
   "tipo": "RF",
   "titulo": "Reconciliar RF-55 (ignorar enderecos) com o catalogo: atestar entrega e fechar a lacuna de teste do marcador",
   "fatia_de": null,
-  "estado": "em-execucao",
+  "estado": "concluida",
   "cerimonia": "Standard",
   "valor": "importante",
   "urgencia": "normal",
@@ -21,7 +21,7 @@
   "criada_em": "11/09/26 18:31",
   "iniciada_em": "11/09/26 18:32",
   "commit_base": "d9dd4f510244cab2d98d54f67b057c4ede3db302",
-  "concluida_em": null,
+  "concluida_em": "11/09/26 20:01",
   "plano": {
     "muda": [
       "src/__tests__/utils/markers/roteiroModels.test.ts - teste novo para o UNICO criterio de aceite do RF-55 sem cobertura: o marcador do endereco ignorado usa IGNORED_MARKER_COLOR em vez da cor do tipo. Os outros 3 criterios ja tem teste e nao se toca neles",
@@ -62,8 +62,9 @@
       "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.9 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  932 passed (932)\n   Start at  18:33:43\n   Duration  39.33s (transform 14.50s, setup 28.33s, import 30.32s, tests 81.98s, environment 149.45s)\n\n(node:28392) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
       "executado_em": "11/09/26 18:34",
       "evidencia_url": null,
-      "motivo": null,
-      "ressalva": null
+      "motivo": "Trabalho retroativo: o RF-55 foi entregue no commit 1626097, sem ID de tarefa, entao o codigo ja existia e a suite ja passava quando a tarefa nasceu. Vermelho impossivel: --esperando-vermelho se recusa com a suite verde. Evidencia equivalente: checagem de MUTACAO documentada na narrativa (quebrei o ramo isIgnored ? IGNORED_MARKER_COLOR : ... , confirmei que o teste novo falha, restaurei), que prova o que o vermelho prova - que o teste acusa quando a regra e violada. Os outros 3 criterios ja tinham teste anterior a esta tarefa.",
+      "ressalva": null,
+      "vermelho_dispensado_em": "11/09/26 20:00"
     },
     "tipos": {
       "rotulo": "APROVADO",
@@ -100,7 +101,7 @@
     }
   },
   "achados": [],
-  "validacao": "nao_requer",
+  "validacao": "pendente",
   "validado_em": null,
   "validacao_motivo": null,
   "tarefas_geradas": [],
@@ -109,5 +110,5 @@
   "riscos_aceitos": [],
   "absorvida_por": null,
   "cancelamento_motivo": null,
-  "narrativa": null
+  "narrativa": "2026-09-11--20h01--TASK-RF-040.md"
 }

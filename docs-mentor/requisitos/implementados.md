@@ -14,3 +14,5 @@
 | `RF-52` | RF | Garantir que o ponto semente escolhido pelo usuario seja a ancora e primeiro ponto da parada | importante | TASK-RF-037, TASK-RF-030, TASK-SPIKE-002 |
 | `RF-53` | RF | Resumo da parada agrupada com endereco completo do veiculo no titulo e selecao automatica da primeira entrega ao desagrupar | importante | TASK-RF-038 |
 | `RF-54` | RF | Nome unico para exportacao de roteiros em JSON composto por data do romaneio, 4 ultimos caracteres do AT e bairro predominante | importante | TASK-RF-039 |
+| `RF-55` | RF | Permitir ignorar enderecos perigosos ou fora de rota excluindo-os da conclusao do roteiro e agrupando-os no painel | importante | TASK-RF-040, TASK-RF-042 |
+| `RF-56` | RF | Inclusao do ponto inicial na malha viaria do mapa para roteirizacao completa ate a primeira parada | importante | TASK-RF-041 |

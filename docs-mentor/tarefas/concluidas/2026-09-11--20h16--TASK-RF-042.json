@@ -1,0 +1,113 @@
+{
+  "id": "TASK-RF-042",
+  "tipo": "RF",
+  "titulo": "Completar os criterios do RF-55 com badge Ignorado e persistencia no roteiro exportado",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "desejavel",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "RF-55",
+  "requisitos": [
+    "RF-55"
+  ],
+  "criada_em": "11/09/26 20:13",
+  "iniciada_em": "11/09/26 20:13",
+  "commit_base": "f90709e31f619335811c18898ac9b2af2d96fdb6",
+  "concluida_em": "11/09/26 20:16",
+  "plano": {
+    "muda": [
+      "docs-mentor/requisitos/requisitos.json - RF-55 recebe os 2 criterios que existiam no RF-56 da branch perdida e faltavam aqui: badge Ignorado, e persistencia de ignoredPointIds no roteiro salvo E exportado",
+      "src/__tests__/services/routeExport.test.ts - o fixture passa a ter um endereco ignorado e o teste de ida-e-volta afirma que ele sobrevive ao arquivo. Era a unica das 6 regras sem rede",
+      "NENHUM arquivo de producao muda: os dois criterios ja eram cumpridos pelo codigo; o que faltava era o criterio escrito e, num deles, o teste"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Badge Ignorado ao lado de Endereco selecionado",
+        "teste": "RoteiroPointSection.test.tsx > renderiza badge 'Ignorado' e botao 'Restaurar endereco' quando isIgnored e true (teste anterior a esta tarefa)"
+      },
+      {
+        "texto": "Persistencia de ignoredPointIds no roteiro SALVO",
+        "teste": "builder.test.ts > toPlannedRoute persists ignoredPointIds and HYDRATE restores them (teste anterior a esta tarefa)"
+      },
+      {
+        "texto": "Persistencia de ignoredPointIds no roteiro EXPORTADO",
+        "teste": "routeExport.test.ts > gera JSON versionado v1 reimportavel com rota e pontos (asercao NOVA)"
+      }
+    ],
+    "impacto": "So' o catalogo e a suite. O RF-55 passa de 4 para 6 criterios, todos com teste nomeado. Nenhuma mudanca de comportamento.",
+    "riscos": [
+      "Trabalho retroativo de novo: o codigo ja cumpria os dois criterios, entao a asercao nova nasce verde e nao ha vermelho possivel. Usado o mecanismo criado hoje (--vermelho-dispensado --motivo) com checagem de MUTACAO como evidencia equivalente"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram incorporar os 2 criterios melhores que a branch perdida tinha; acrescento os 2 no catalogo e a unica asercao que faltava (2 linhas num teste que ja existia). Nenhum arquivo de producao, nenhum teste novo criado do zero."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "vermelho_dispensado_em": "11/09/26 20:15",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.9 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  934 passed (934)\n   Start at  20:14:55\n   Duration  39.77s (transform 16.51s, setup 33.05s, import 32.79s, tests 78.49s, environment 134.53s)\n\n(node:31208) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "11/09/26 20:15",
+      "evidencia_url": null,
+      "motivo": "Trabalho retroativo: os dois criterios ja eram cumpridos pelo codigo entregue em 1626097; esta tarefa escreve o criterio que faltava no catalogo e a asercao que faltava no teste de export. Vermelho impossivel - a suite ja passava. Evidencia equivalente: checagem de MUTACAO. Quebrei o createRouteExportPayload (route: { ...route, ignoredPointIds: undefined }), confirmei que o teste de ida-e-volta FALHA, e restaurei. Prova que a asercao acusa quando a regra e violada.",
+      "ressalva": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "vermelho_dispensado_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "11/09/26 20:15",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "vermelho_dispensado_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "11/09/26 20:16",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "vermelho_dispensado_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1955 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CYMBXH50.css   \u001b[39m\u001b[1m\u001b[2m 28.24 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-DTQcApuK.js    \u001b[39m\u001b[1m\u001b[33m539.56 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.73 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-B6etagQ-.js   \u001b[39m\u001b[1m\u001b[33m803.28 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.49 kB\u001b[22m\n\u001b[32m✓ built in 5.91s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1793.03 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "11/09/26 20:16",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    }
+  },
+  "achados": [],
+  "validacao": "pendente",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-11--20h16--TASK-RF-042.md"
+}

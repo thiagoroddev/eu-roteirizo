@@ -23,3 +23,6 @@
 | 11/09/26 06:04 | [`TASK-BG-014`](./2026-09-11--06h04--TASK-BG-014.md) | BG | Sumario e painel do mapa mostram distancia e tempo diferentes para o mesmo roteiro | - | concluida | aprovado |
 | 11/09/26 06:44 | [`TASK-BG-015`](./2026-09-11--06h44--TASK-BG-015.md) | BG | Proximo aparece no endereco da parada do veiculo mesmo quando a ancora nao foi movida | - | concluida | aprovado |
 | 11/09/26 16:56 | [`TASK-BG-016`](./2026-09-11--16h56--TASK-BG-016.md) | BG | Parada padrao do veiculo cai em via de servico dentro do quarteirao em vez da rua do endereco | - | concluida | aprovado |
+| 11/09/26 20:01 | [`TASK-RF-040`](./2026-09-11--20h01--TASK-RF-040.md) | RF | Reconciliar RF-55 (ignorar enderecos) com o catalogo: atestar entrega e fechar a lacuna de teste do marcador | - | concluida | pendente |
+| 11/09/26 20:07 | [`TASK-RF-041`](./2026-09-11--20h07--TASK-RF-041.md) | RF | Recuperar o conserto do envelope da malha viaria: incluir o ponto inicial no bbox do useRoadGraph | - | concluida | pendente |
+| 11/09/26 20:16 | [`TASK-RF-042`](./2026-09-11--20h16--TASK-RF-042.md) | RF | Completar os criterios do RF-55 com badge Ignorado e persistencia no roteiro exportado | - | concluida | pendente |

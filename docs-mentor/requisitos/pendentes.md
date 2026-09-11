@@ -21,4 +21,3 @@
 | `RNF-16` | RNF | Preparar empacotamento TWA para distribuicao Android/Play Store mantendo origem web/PWA como base. | importante | - |
 | `RNF-17` | RNF | Integrar Play Billing e entitlement premium com estrategia de validacao adequada ao MVP e ao risco de cobranca real. | importante | - |
 | `RNF-20` | RNF | Cumprir LGPD e consentimento de anuncios: dados de terceiros ficam locais e UMP/consentimento ocorre antes de carregar SDK de ads. | essencial | - |
-| `RF-55` | RF | Permitir ignorar enderecos perigosos ou fora de rota excluindo-os da conclusao do roteiro e agrupando-os no painel | importante | TASK-RF-040 |
