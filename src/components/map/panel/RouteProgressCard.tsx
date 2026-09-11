@@ -20,7 +20,11 @@ const OVERVIEW = UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW;
  * a "Detalhes" popup decomposing the total (duration → vehicle/walking/delivery,
  * the RF-007.1 split; distance → vehicle/on-foot), while "Comercial" is a plain
  * count of commercial-hours packages. The totals are `plannedRouteTotals`, the
- * SAME function the Sumário uses, so the two screens can never disagree.
+ * SAME function the Sumário uses — but until TASK-BG-014 the two callers passed
+ * DIFFERENT arguments (this panel passed the road graphs, RF-006.7; the Sumário
+ * didn't), so the same pure function returned different numbers for the same
+ * roteiro. Both callers now load the graph the same way (cache-first,
+ * `useRoadGraph`) and pass it here too, so the screens agree again.
  */
 /** A summary card whose "Detalhes" button opens a breakdown popup. */
 const DetailDialogCard = ({ label, value, title, children }: { label: string; value: string; title: string; children: ReactNode }) => (

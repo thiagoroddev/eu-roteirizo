@@ -10,8 +10,10 @@ import { Badge } from "../components/ui/badge";
 import { MapModeToggle, MODE_QUERY_PARAM, MODE_QUERY_ROTEIRO, type MapMode } from "../components/map/MapModeToggle";
 import { useManifestFromUrl } from "../hooks/useManifestFromUrl";
 import { useDeliverySettings } from "../contexts/DeliverySettingsContext";
+import { useRoadGraph } from "../hooks/useRoadGraph";
 import { getRoteiro } from "../services/routeStorage";
 import { buildDeliveryPoints } from "../utils/routing/points";
+import { pedestrianGraph } from "../utils/routing/pedestrian";
 import { plannedRouteTotals } from "../utils/routing/estimates";
 import { plannedRouteStatus, type RoteiroStatus } from "../utils/routing/status";
 import { assignedPointIds } from "../utils/routing/selectors";
@@ -64,13 +66,10 @@ function SummaryPage() {
     };
   }, [manifestId, routeName]);
 
-  /** Coarse totals (straight-line vehicle legs + walk circuits) — RF-006.7/007
-      refine them; the section's shape stays. */
-  const roteiroInfo = useMemo(() => {
-    if (!savedRoteiro || savedRoteiro.stops.length === 0) return null;
-    // Delivery times come from the GLOBAL preference (RF-007.2), not the stored route.
-    return plannedRouteTotals({ ...savedRoteiro, config: { ...savedRoteiro.config, ...deliverySettings } }, buildDeliveryPoints(currentRows));
-  }, [savedRoteiro, currentRows, deliverySettings]);
+  /** Pontos do romaneio atual — memoizados uma vez e reusados pelos totais, o
+      estado do roteiro e a ordenação da tabela (antes eram 3 chamadas separadas
+      de `buildDeliveryPoints` a cada render). */
+  const points = useMemo(() => buildDeliveryPoints(currentRows), [currentRows]);
 
   /** Seção visível (REF-017). `null` = o usuário ainda não escolheu → segue o
       dado: abre em "Meu Roteiro" quando a rota já tem roteiro salvo. Como o
@@ -78,11 +77,27 @@ function SummaryPage() {
   const [pickedMode, setPickedMode] = useState<MapMode | null>(null);
   const infoMode: MapMode = pickedMode ?? (savedRoteiro ? "roteiro" : "original");
 
+  /** Grafo de ruas (RF-006.7/TASK-BG-014): carregado só quando a seção Meu
+      Roteiro está em foco com um roteiro salvo — cache-first (IndexedDB 7d),
+      igual ao mapa (`useRoadGraph`), então uma área já visitada no mapa não
+      bate na rede de novo aqui. Sem grafo, os totais caem para linha reta
+      (nunca bloqueia a tela) — é a MESMA fonte que o painel do mapa usa, então
+      as duas telas não podem mais divergir. */
+  const { graph } = useRoadGraph(points, infoMode === "roteiro" && savedRoteiro !== null);
+  const pedGraph = useMemo(() => (graph ? pedestrianGraph(graph) : null), [graph]);
+  /** Se os totais mostrados vieram do grafo (ruas reais) ou da reta — decide a legenda. */
+  const viaStreets = graph !== null;
+
+  const roteiroInfo = useMemo(() => {
+    if (!savedRoteiro || savedRoteiro.stops.length === 0) return null;
+    // Delivery times come from the GLOBAL preference (RF-007.2), not the stored route.
+    return plannedRouteTotals({ ...savedRoteiro, config: { ...savedRoteiro.config, ...deliverySettings } }, points, { graph, pedGraph });
+  }, [savedRoteiro, points, deliverySettings, graph, pedGraph]);
+
   /** Estado do roteiro (rascunho × completo) e quantos pacotes são comerciais
       DENTRO dele — ambos derivados dos pontos do romaneio atual (REF-017). */
   const roteiroFacts = useMemo(() => {
     if (!savedRoteiro) return null;
-    const points = buildDeliveryPoints(currentRows);
     const assigned = assignedPointIds(savedRoteiro.stops);
     const committed = points.filter((point) => assigned.has(point.id));
     return {
@@ -91,12 +106,11 @@ function SummaryPage() {
       packages: committed.reduce((sum, point) => sum + point.packageCount, 0),
       commercialPackages: packagesByTypeFromPoints(committed).commercial,
     };
-  }, [savedRoteiro, currentRows]);
+  }, [savedRoteiro, points]);
 
   /** Linhas ordenadas pela sequência do roteiro planejado (ordem das paradas e entregas). */
   const roteiroRows = useMemo(() => {
     if (!savedRoteiro || savedRoteiro.stops.length === 0) return currentRows;
-    const points = buildDeliveryPoints(currentRows);
     const pointMap = new Map(points.map((p) => [p.id, p]));
     const sortedStops = [...savedRoteiro.stops].sort((a, b) => a.order - b.order);
     const result: RowData[] = [];
@@ -115,7 +129,7 @@ function SummaryPage() {
       }
     }
     return result;
-  }, [savedRoteiro, currentRows]);
+  }, [savedRoteiro, currentRows, points]);
 
   const displayedSimpleRows = infoMode === "roteiro" ? roteiroRows : currentRows;
 
@@ -171,7 +185,7 @@ function SummaryPage() {
           </div>
 
           {infoMode === "roteiro" ? (
-            <PlannedRouteInfo info={roteiroInfo} packages={roteiroFacts?.packages ?? 0} commercialPackages={roteiroFacts?.commercialPackages ?? 0} />
+            <PlannedRouteInfo info={roteiroInfo} packages={roteiroFacts?.packages ?? 0} commercialPackages={roteiroFacts?.commercialPackages ?? 0} viaStreets={viaStreets} />
           ) : (
             <OriginalInfo rows={currentRows} availableCols={availableCols} isSingleRoute={isSingleRoute} vehicleType={vehicleType} />
           )}

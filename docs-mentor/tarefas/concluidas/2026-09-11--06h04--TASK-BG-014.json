@@ -1,0 +1,112 @@
+{
+  "id": "TASK-BG-014",
+  "tipo": "BG",
+  "titulo": "Sumario e painel do mapa mostram distancia e tempo diferentes para o mesmo roteiro",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "criada_em": "11/09/26 05:25",
+  "iniciada_em": "11/09/26 05:25",
+  "commit_base": "b76eea1cbea13a10fa733f868f48e6487e8bf430",
+  "concluida_em": "11/09/26 06:04",
+  "plano": {
+    "muda": [
+      "src/pages/SummaryPage.tsx - carregar o grafo (useRoadGraph) e o grafo pedestre quando ha roteiro salvo; passar {graph, pedGraph} para plannedRouteTotals; memoizar buildDeliveryPoints",
+      "src/components/summary/PlannedRouteInfo.tsx - receber viaStreets e renderizar a legenda honesta (ruas x linha reta); corrigir comentario que afirma que as telas nunca divergem",
+      "src/constants/uiLabels.ts - rotulos da legenda em ROTEIRO_INFO (reuso do texto ja validado em MAP_PANEL.ROTEIRO_OVERVIEW)",
+      "src/utils/routing/estimates.ts - so docstring: parar de afirmar que o Sumario chama sem grafos",
+      "src/components/map/panel/RouteProgressCard.tsx - so docstring: mesma correcao",
+      "src/__tests__/pages/SummaryPage.test.tsx - 2 testes novos: com grafo (totais por ruas, iguais ao painel) e sem grafo (linha reta com legenda)",
+      "src/__tests__/utils/routing/estimates.test.ts - corrigir comentario que descreve a divergencia como esperada"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Com grafo disponivel (cache ou rede, RF-006.7), o Sumario renderiza os totais pelas ruas - iguais aos do painel do mapa para o mesmo roteiro",
+        "teste": "SummaryPage.test.tsx > usa as distancias pelas ruas quando o grafo esta disponivel"
+      },
+      {
+        "texto": "Sem grafo (cache ausente e rede falha), o Sumario mostra os totais em linha reta COM a legenda que avisa disso",
+        "teste": "SummaryPage.test.tsx > cai para linha reta com legenda honesta quando nao ha grafo"
+      },
+      {
+        "texto": "plannedRouteTotals sem o 3o argumento continua puro e haversine (contrato existente nao muda)",
+        "teste": "estimates.test.ts > suite existente de plannedRouteTotals (RF-008), mantida verde"
+      }
+    ],
+    "impacto": "SummaryPage passa a depender de useRoadGraph/pedestrianGraph (mesmos modulos que MapPage ja usa); nenhum esquema persistido muda; export/routeStorage intactos",
+    "riscos": [
+      "1a visita sem cache pode disparar Overpass a partir do Sumario (opcao 1 aprovada pelo humano); mitigado pela mesma chave de bbox do mapa (cache 7d) e por nunca bloquear a tela - linha reta com legenda enquanto carrega",
+      "Custo de CPU adicional no Sumario (cadeia A* + circuitos a pe), igual ao que o painel do mapa ja paga; confirmar no smoke que nao trava a tela"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram consertar a divergencia entre duas telas; proponho reusar o hook de grafo que ja existe no mapa (useRoadGraph + pedestrianGraph), uma legenda e dois testes. Nao crio modulo, servico, dependencia nem campo persistido novo - 4 arquivos de producao (2 so docstring) e 2 de teste, do tamanho do bug."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "11/09/26 05:35",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.9 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  915 passed (915)\n   Start at  05:35:16\n   Duration  34.59s (transform 10.84s, setup 27.10s, import 21.29s, tests 66.15s, environment 105.22s)\n\n(node:31832) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "11/09/26 05:35",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "11/09/26 05:36",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "11/09/26 05:36",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1954 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CYMBXH50.css   \u001b[39m\u001b[1m\u001b[2m 28.24 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-QmuQZGf8.js    \u001b[39m\u001b[1m\u001b[33m538.34 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.18 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-B6etagQ-.js   \u001b[39m\u001b[1m\u001b[33m803.28 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.49 kB\u001b[22m\n\u001b[32m✓ built in 5.77s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1791.84 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "11/09/26 05:36",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    }
+  },
+  "achados": [],
+  "validacao": "pendente",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-11--06h04--TASK-BG-014.md"
+}

@@ -5,6 +5,10 @@ import { StatTile } from "../ui/stat-tile";
 import { FlowBar } from "./FlowBar";
 
 const INFO = UI_LABELS.ROTEIRO_INFO;
+/** Mesmo par de legendas do painel do mapa (RouteProgressCard) — TASK-BG-014:
+ *  reusado em vez de duplicado, para as duas telas nunca poderem discordar no
+ *  texto do jeito que discordavam no número. */
+const OVERVIEW = UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW;
 
 /**
  * Totais do Roteiro planejado exibidos no Sumário. É exatamente o retorno de
@@ -18,6 +22,10 @@ interface Props {
   packages?: number;
   /** Quantos desses pacotes são de horário comercial. */
   commercialPackages?: number;
+  /** Se `info` veio do grafo de ruas (RF-006.7) ou da reta — TASK-BG-014: a
+   *  chamada em SummaryPage decide, então essa tela precisa declarar qual das
+   *  duas ela está mostrando, igual ao painel do mapa. */
+  viaStreets?: boolean;
 }
 
 /**
@@ -30,10 +38,14 @@ interface Props {
  * dão o total E a composição, então um card repetindo o número era ruído
  * (smoke 19/07).
  *
- * A fonte é `plannedRouteTotals` — a MESMA função do painel do mapa —, então as
- * duas telas nunca divergem.
+ * A fonte é `plannedRouteTotals` — a MESMA função do painel do mapa —, mas até
+ * a TASK-BG-014 o Sumário chamava sem os grafos de ruas (RF-006.7) enquanto o
+ * mapa chamava COM eles: a função era a mesma, os argumentos não, e as duas
+ * telas mostravam números diferentes para o mesmo roteiro. Agora `viaStreets`
+ * vem de SummaryPage (que carrega o mesmo grafo cacheado que o mapa usa) e a
+ * legenda abaixo das barras diz qual fonte gerou o número mostrado.
  */
-export const PlannedRouteInfo = ({ info, packages = 0, commercialPackages = 0 }: Props) => {
+export const PlannedRouteInfo = ({ info, packages = 0, commercialPackages = 0, viaStreets = false }: Props) => {
   if (!info) return null;
 
   return (
@@ -65,6 +77,8 @@ export const PlannedRouteInfo = ({ info, packages = 0, commercialPackages = 0 }:
           { key: "walk", label: INFO.FLOW_WALK, value: info.distanceWalkKm, className: "bg-violet-500" },
         ]}
       />
+
+      <p className="text-[10px] text-muted-foreground">{viaStreets ? OVERVIEW.TOTALS_NOTE_STREETS : OVERVIEW.TOTALS_NOTE}</p>
     </div>
   );
 };

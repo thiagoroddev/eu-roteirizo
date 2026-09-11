@@ -168,8 +168,10 @@ describe("plannedRouteTotals (RF-008 — o 'Info Meu Roteiro' do Sumário)", () 
     expect(totals.vehicleStops).toBe(2); // a parada continua contada; só o ponto órfão sai
   });
 
-  // RF-006.7: com os grafos, os totais viram distância REAL pelas ruas (o Sumário
-  // segue chamando sem o 3º arg — os testes acima são a prova de que não muda).
+  // RF-006.7: com os grafos, os totais viram distância REAL pelas ruas — a função
+  // continua pura (o CALLER decide se passa grafos ou não; os testes acima são a
+  // prova de que a chamada sem grafos continua haversine, inalterada). Quem chama
+  // com/sem grafo é coberto em SummaryPage.test.tsx e MapPage.test.tsx (TASK-BG-014).
   it("com os grafos, a perna de veículo respeita mão única (detour) — difere do haversine (RF-006.7)", () => {
     const walk = pedestrianGraph(squareGraph);
     const p = pt("pc", COORDS[C].lat, COORDS[C].lng);

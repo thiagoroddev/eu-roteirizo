@@ -143,8 +143,10 @@ export interface PlannedRouteTotalsGraphs {
  * legs straight-line (start → anchor → anchor…, haversine) at `vehicleSpeedKmh`,
  * walking the per-stop haversine circuit. WITH `graphs` (RF-006.7): real street
  * distances (vehicle over the directed graph, walking over the pedestrian graph),
- * same shape. The Sumário (RF-008) calls it without graphs → unchanged. Pure —
- * points the spreadsheet no longer has are skipped (mirrors HYDRATE).
+ * same shape. Both the map panel and the Sumário (RF-008/TASK-BG-014) pass the
+ * graphs when they have one loaded, and fall back to no `graphs` while it's
+ * unavailable — the CALLER decides which source is live, this function stays
+ * pure either way. Points the spreadsheet no longer has are skipped (mirrors HYDRATE).
  */
 export const plannedRouteTotals = (route: PlannedRoute, points: DeliveryPoint[], graphs?: PlannedRouteTotalsGraphs): PlannedRouteTotals => {
   const byId = new Map(points.map((p) => [p.id, p]));
