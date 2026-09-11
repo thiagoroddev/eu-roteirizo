@@ -607,3 +607,55 @@ describe("ignored points", () => {
     expect(hydrated.ignoredPointIds).toEqual(["d"]);
   });
 });
+
+describe("REPROJECT_DEFAULT_ANCHORS (TASK-BG-016)", () => {
+  /** Duas paradas firmadas: stop_a (a+b) e stop_e (e). */
+  const twoStops = (): RouteBuilderState => run(withStopAB(initial()), { type: "OPEN_STOP_DRAFT", seedPointId: "e", suggestedVehicleStop: { lat: e.lat, lng: e.lng } }, { type: "COMMIT_STOP" });
+  const NEW_A: LatLng = { lat: -22.9799, lng: -43.2001 };
+  const NEW_E: LatLng = { lat: -22.9799, lng: -43.1999 };
+
+  it("reancora as paradas ainda marcadas como padrão", () => {
+    const reprojected = run(twoStops(), { type: "REPROJECT_DEFAULT_ANCHORS", positions: { stop_a: NEW_A, stop_e: NEW_E } });
+    expect(reprojected.stops.find((s) => s.id === "stop_a")?.vehicleStop).toEqual(NEW_A);
+    expect(reprojected.stops.find((s) => s.id === "stop_e")?.vehicleStop).toEqual(NEW_E);
+    // Continuam padrão: reprojetar é recalcular o padrão, não editar.
+    expect(reprojected.stops.every((s) => s.vehicleStopIsDefault !== false)).toBe(true);
+  });
+
+  // A posição que o usuário escolheu à mão é decisão dele — corrigir a raiz do
+  // padrão nunca pode desfazer uma edição explícita.
+  it("NÃO toca em parada que o usuário moveu à mão", () => {
+    const moved = run(twoStops(), { type: "REOPEN_STOP", stopId: "stop_a" }, { type: "MOVE_VEHICLE_STOP", position: { lat: -22.99, lng: -43.21 } }, { type: "COMMIT_STOP" });
+    const reprojected = run(moved, { type: "REPROJECT_DEFAULT_ANCHORS", positions: { stop_a: NEW_A, stop_e: NEW_E } });
+    const stopA = reprojected.stops.find((s) => s.id === "stop_a");
+    expect(stopA?.vehicleStop).toEqual({ lat: -22.99, lng: -43.21 }); // intacta
+    expect(stopA?.vehicleStopIsDefault).toBe(false);
+    expect(reprojected.stops.find((s) => s.id === "stop_e")?.vehicleStop).toEqual(NEW_E); // a padrão corrigiu
+  });
+
+  it("parada sem posição nova no mapa de posições fica como está", () => {
+    const before = twoStops();
+    const reprojected = run(before, { type: "REPROJECT_DEFAULT_ANCHORS", positions: { stop_a: NEW_A } });
+    expect(reprojected.stops.find((s) => s.id === "stop_e")?.vehicleStop).toEqual(before.stops.find((s) => s.id === "stop_e")?.vehicleStop);
+  });
+
+  it("sem nenhuma mudança efetiva, devolve o MESMO estado (não dispara auto-save à toa)", () => {
+    const before = twoStops();
+    const anchorA = before.stops.find((s) => s.id === "stop_a")!.vehicleStop;
+    expect(run(before, { type: "REPROJECT_DEFAULT_ANCHORS", positions: { stop_a: anchorA } })).toBe(before);
+    expect(run(before, { type: "REPROJECT_DEFAULT_ANCHORS", positions: {} })).toBe(before);
+  });
+
+  // A âncora padrão É a projeção do endereço-semente na rua, então reprojetar
+  // não pode trocar quem é a semente: `formatVehicleStopAddress` herda o
+  // endereço de `pointIds[0]`, e o rótulo mudaria de endereço sozinho. Mesma
+  // convenção de `resweepDraft` e `ADD_POINT_TO_STOP` para âncora padrão.
+  it("re-varre a ordem a pé mantendo o endereço-semente em 1º", () => {
+    const nearB: LatLng = { lat: b.lat, lng: b.lng };
+    const reprojected = run(twoStops(), { type: "REPROJECT_DEFAULT_ANCHORS", positions: { stop_a: nearB } });
+    const stopA = reprojected.stops.find((s) => s.id === "stop_a");
+    expect(stopA?.vehicleStop).toEqual(nearB);
+    expect(stopA?.pointIds[0]).toBe("a");
+    expect([...(stopA?.pointIds ?? [])].sort()).toEqual(["a", "b"]); // nenhum membro se perdeu
+  });
+});

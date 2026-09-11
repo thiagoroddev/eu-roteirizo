@@ -571,6 +571,56 @@ describe("formatVehicleStopAddress & formatRoteiroStopTitle (RF-53 / TASK-RF-038
     expect(formatRoteiroStopTitle(s, pointsById, mockGraph)).toBe(`P26 - Próximo à Avenida Epitácio Pessoa, 4224 (${res.distanceMeters}m), Lagoa`);
   });
 
+  // TASK-BG-016 fim-a-fim: prédio recuado, âncora na projeção da AVENIDA (a
+  // parada padrão que defaultVehicleStop agora escolhe, em vez da via interna
+  // do condomínio). O rótulo tem de sair puro — nem "próximo", nem distância —
+  // e a via mais próxima da âncora tem nome de verdade, não o "Ponto na rua".
+  it("âncora na rua do endereço (prédio recuado) mostra o endereço puro", () => {
+    const p1: DeliveryPoint = {
+      id: "p1",
+      lat: -22.9804, // pino dentro do lote, ~44 m da avenida
+      lng: -43.2,
+      address: "Avenida Epitácio Pessoa, 2566",
+      packageCount: 1,
+      packages: [{ id: "pkg_1", rawData: { [COLUMN_NAMES.NEIGHBORHOOD]: "Lagoa" } }],
+    };
+    const pointsById = new Map([["p1", p1]]);
+    const s: RouteStop = {
+      id: "stop_1",
+      order: 1,
+      vehicleStop: { lat: -22.98, lng: -43.2 }, // sobre a avenida
+      pointIds: ["p1"],
+      radiusMeters: 30,
+      vehicleStopIsDefault: true,
+    };
+    const graph = buildGraph([
+      {
+        type: "way",
+        nodes: [1, 2],
+        geometry: [
+          { lat: -22.98, lon: -43.201 },
+          { lat: -22.98, lon: -43.199 },
+        ],
+        tags: { highway: "primary", name: "Avenida Epitácio Pessoa" },
+      },
+      {
+        type: "way",
+        nodes: [3, 4],
+        geometry: [
+          { lat: -22.9803, lon: -43.2005 },
+          { lat: -22.9803, lon: -43.1995 },
+        ],
+        tags: { highway: "service" }, // via interna do condomínio, sem nome
+      },
+    ]);
+
+    const res = formatVehicleStopAddress(s, pointsById, graph);
+    expect(res.distanceMeters).toBeGreaterThan(40); // o recuo é real
+    expect(res.isEdited).toBe(false);
+    expect(res.distLabel).toBe("");
+    expect(res.streetLine).toBe("Avenida Epitácio Pessoa, 2566");
+  });
+
   it("fallback quando a co-âncora não é encontrada", () => {
     const s: RouteStop = {
       id: "stop_1",

@@ -22,3 +22,4 @@
 | 11/09/26 03:11 | [`TASK-SPIKE-002`](./2026-09-11--03h11--TASK-SPIKE-002.md) | SPIKE | Validar roteiros por pontos fundamentais e circuito de agrupamento configuravel | - | concluida | pendente |
 | 11/09/26 06:04 | [`TASK-BG-014`](./2026-09-11--06h04--TASK-BG-014.md) | BG | Sumario e painel do mapa mostram distancia e tempo diferentes para o mesmo roteiro | - | concluida | pendente |
 | 11/09/26 06:44 | [`TASK-BG-015`](./2026-09-11--06h44--TASK-BG-015.md) | BG | Proximo aparece no endereco da parada do veiculo mesmo quando a ancora nao foi movida | - | concluida | pendente |
+| 11/09/26 16:56 | [`TASK-BG-016`](./2026-09-11--16h56--TASK-BG-016.md) | BG | Parada padrao do veiculo cai em via de servico dentro do quarteirao em vez da rua do endereco | - | concluida | pendente |

@@ -245,27 +245,12 @@ export const computeRoteiroMarkerModels = (points: DeliveryPoint[], stops: Route
  */
 export const mapsDirectionsUrl = (p: LatLng): string => `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`;
 
-/**
- * Normaliza o nome de uma via/logradouro para comparação de equivalência.
- * Remove acentos, caracteres não-alfanuméricos e prefixos comuns brasileiros.
- */
-export const normalizeStreetName = (name: string): string => {
-  return name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\./g, " ")
-    .replace(/\b(rua|r|avenida|av|travessa|tv|alameda|al|praca|praça|pc|estrada|est|rodovia|rod|via|beco|largo)\b/g, "")
-    .replace(/[^a-z0-9]/g, "")
-    .trim();
-};
-
-export const isSameStreetName = (streetA: string, streetB: string): boolean => {
-  const normA = normalizeStreetName(streetA);
-  const normB = normalizeStreetName(streetB);
-  if (!normA || !normB) return true;
-  return normA === normB || normA.includes(normB) || normB.includes(normA);
-};
+/** Comparação de logradouros mora em `routing/streets.ts` desde a TASK-BG-016
+ *  (é lógica de domínio de rua, e `routing` também precisa dela para escolher a
+ *  parada padrão — `routing` não pode depender de `markers`). Reexportado aqui
+ *  para não quebrar quem já importava deste módulo. */
+export { normalizeStreetName, isSameStreetName } from "../routing/streets";
+import { isSameStreetName } from "../routing/streets";
 
 export interface FormattedVehicleStopAddress {
   /** Linha 1 do endereço do veículo com distância (ex: "Rua tal, 23" ou "Próximo à Rua tal, 23 (13m)") */

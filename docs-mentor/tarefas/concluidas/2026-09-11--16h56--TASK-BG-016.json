@@ -1,0 +1,125 @@
+{
+  "id": "TASK-BG-016",
+  "tipo": "BG",
+  "titulo": "Parada padrao do veiculo cai em via de servico dentro do quarteirao em vez da rua do endereco",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "criada_em": "11/09/26 07:25",
+  "iniciada_em": "11/09/26 07:25",
+  "commit_base": "28ca6f7bca106406d26e87caa948248b28d841cf",
+  "concluida_em": "11/09/26 16:56",
+  "plano": {
+    "muda": [
+      "src/utils/routing/streets.ts - recebe normalizeStreetName e isSameStreetName, movidas de utils/markers/roteiroModels.ts (sao logica de dominio de rua dentro de um modulo de view-model; routing nao pode depender de markers)",
+      "src/utils/markers/roteiroModels.ts - importa as duas de routing/streets e reexporta, mantendo a superficie publica atual intacta",
+      "src/utils/routing/match.ts - nearestEdge ganha um filtro opcional sobre a aresta (um unico laco reusado pelos tres niveis); assinatura atual preservada",
+      "src/utils/routing/vehicleStop.ts - suggestVehicleStop passa a receber o logradouro do endereco e aplica 3 niveis: (a) via cujo nome casa com o logradouro dentro de um teto de distancia; (b) senao, via nomeada que NAO seja highway=service; (c) senao, aresta mais proxima (comportamento de hoje). Teto como constante MANUAL KNOB",
+      "src/pages/MapPage.tsx e src/utils/routing/overview.ts - os 5 pontos que chamam suggestVehicleStop passam o logradouro do ponto semente",
+      "src/utils/routing/builder.ts - acao nova REPROJECT_DEFAULT_ANCHORS, que recebe as posicoes JA calculadas (reducer continua puro, mesmo padrao de RESET_VEHICLE_STOP) e reancora TODA parada ainda marcada como padrao; paradas movidas pelo usuario nao sao tocadas",
+      "src/pages/MapPage.tsx - efeito que, quando o grafo chega, reprojeta em lote as paradas padrao do roteiro ja carregado (corrige retroativamente roteiro salvo e importado; o auto-save persiste)",
+      "src/__tests__/utils/routing/vehicleStop.test.ts - fixture de condominio (avenida nomeada + service interna mais perto do pino) cobrindo os 3 niveis e o caso sem grafo",
+      "src/__tests__/utils/markers/roteiroModels.test.ts - com a ancora na rua do endereco, o rotulo sai sem 'proximo' (amarra com a TASK-BG-015)"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Endereco recuado cuja via mais proxima e' uma service interna de condominio ancora na RUA DO ENDERECO, nao na via interna",
+        "teste": "vehicleStop.test.ts > prefere a via cujo nome casa com o logradouro do endereco, ignorando a service mais proxima"
+      },
+      {
+        "texto": "Sem nenhuma via com nome casando dentro do teto, ancora na via NOMEADA nao-service mais proxima (degradacao suave, nunca volta para a service)",
+        "teste": "vehicleStop.test.ts > sem casar o nome, evita service e usa a via nomeada mais proxima"
+      },
+      {
+        "texto": "Com a ancora na rua do endereco, o rotulo mostra o endereco puro, sem 'proximo' e sem distancia",
+        "teste": "roteiroModels.test.ts > ancora projetada na rua do endereco nao vira 'proximo'"
+      },
+      {
+        "texto": "Sem grafo, suggestVehicleStop devolve o proprio ponto como hoje (nao bloqueia o app offline)",
+        "teste": "vehicleStop.test.ts > suite existente sem grafo, mantida"
+      },
+      {
+        "texto": "Roteiro JA salvo (inclusive importado de export antigo) tem as paradas ainda marcadas como padrao reancoradas quando o grafo carrega; parada movida pelo usuario NAO e' tocada",
+        "teste": "builder.test.ts > REPROJECT_DEFAULT_ANCHORS reancora so' as paradas padrao"
+      }
+    ],
+    "impacto": "A escolha da posicao padrao da parada do veiculo E a correcao retroativa dos roteiros ja salvos (decisao do humano 11/09: 'corrigir da raiz', projeto ainda em teste so' com ele). Grafo, A*, cache (sem bump de versao) e consulta ao Overpass ficam intactos - highway=service continua navegavel para o roteamento, so' deixa de ser candidata a estacionamento padrao. O arquivo .json ja exportado nao muda (e' instantaneo), mas ao ser importado e aberto e' corrigido pelo mesmo caminho.",
+    "riscos": [
+      "A reprojecao em lote MOVE ancoras de roteiro ja salvo sem o usuario pedir - aceito explicitamente pelo humano (11/09), que e' o unico usuario e esta' em teste; limitado a paradas marcadas como padrao, nunca as movidas a mao",
+      "Custo: a reprojecao em lote roda uma varredura do grafo por parada quando o grafo chega (nearestEdge e' O(arestas)); mitigado fazendo os 3 niveis em UMA passada por parada, e roda uma vez por carga de grafo, nao por render",
+      "Endereco que realmente fica numa via de servico (galpao, condominio industrial) passa a ancorar na rua nomeada mais proxima; mitigado porque o usuario continua podendo arrastar o carro e o nivel (c) preserva o comportamento antigo quando nao ha via nomeada por perto",
+      "Nome do romaneio divergente do OSM (abreviacao que normalizeStreetName nao cobre) cai no nivel (b), que ainda evita a via interna - degradacao suave, nao reintroduz o bug",
+      "Teto de distancia para o casamento de nome: se a rua do endereco estiver mais longe que o teto e' sinal de geocodigo ruim, e forcar a projecao la seria pior que o nivel (b). Declarado como MANUAL KNOB"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram que a parada padrao fique na rua do endereco, e nao na rua interna do condominio; proponho ensinar suggestVehicleStop a conhecer o logradouro (hoje ela so' conhece coordenada) e a preferir via nomeada nao-service. O sinal (edge.highway === 'service') JA existe no grafo, entao nao mudo consulta ao Overpass, esquema nem versao de cache, e nao toco no A* nem em roteiro ja salvo. 4 arquivos de producao, 2 de teste, mais uma funcao de comparacao de ruas que muda de casa por ja estar no modulo errado."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "11/09/26 08:00",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.9 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  931 passed (931)\n   Start at  08:00:31\n   Duration  37.55s (transform 13.02s, setup 27.99s, import 25.44s, tests 74.92s, environment 110.66s)\n\n(node:8556) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "11/09/26 08:01",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "11/09/26 08:01",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "11/09/26 08:01",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1955 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CYMBXH50.css   \u001b[39m\u001b[1m\u001b[2m 28.24 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-C-CnN16n.js    \u001b[39m\u001b[1m\u001b[33m539.40 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.63 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-B6etagQ-.js   \u001b[39m\u001b[1m\u001b[33m803.28 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.49 kB\u001b[22m\n\u001b[32m✓ built in 7.91s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1792.88 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "11/09/26 08:02",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    }
+  },
+  "achados": [],
+  "validacao": "pendente",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-11--16h56--TASK-BG-016.md"
+}
