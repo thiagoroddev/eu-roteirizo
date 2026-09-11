@@ -657,17 +657,42 @@
     "enunciado": "Permitir ignorar enderecos perigosos ou fora de rota excluindo-os da conclusao do roteiro e agrupando-os no painel",
     "historia": null,
     "prioridade": "importante",
-    "status": "pendente",
+    "status": "implementado",
     "criterios_aceite": [
       "Alternar status de um endereco entre ativo e ignorado no painel do Meu Roteiro",
       "Enderecos ignorados nao contam para a conclusao nem distancia do roteiro",
       "Enderecos ignorados aparecem agrupados ao final do painel geral com restauracao e localizacao",
-      "Marcador do endereco ignorado utiliza cor e estilo diferenciado no mapa"
+      "Marcador do endereco ignorado utiliza cor e estilo diferenciado no mapa",
+      "Badge Ignorado ao lado de Endereco selecionado",
+      "Persistencia de ignoredPointIds no roteiro salvo e exportado"
     ],
-    "tarefas": [],
+    "tarefas": [
+      "TASK-RF-040",
+      "TASK-RF-042"
+    ],
     "adr": null,
     "criado_em": "09/09/26 17:40",
-    "implementado_em": null,
+    "implementado_em": "11/09/26 20:16",
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-56",
+    "tipo": "RF",
+    "enunciado": "Inclusao do ponto inicial na malha viaria do mapa para roteirizacao completa ate a primeira parada",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "implementado",
+    "criterios_aceite": [
+      "useRoadGraph considera startPoint no calculo do bounding box da malha",
+      "trajeto do inicio ate a parada 1 segue malha viaria em vez de linha reta",
+      "redefinicao do ponto inicial atualiza malha se estiver fora do bbox"
+    ],
+    "tarefas": [
+      "TASK-RF-041"
+    ],
+    "adr": null,
+    "criado_em": "11/09/26 19:55",
+    "implementado_em": "11/09/26 20:07",
     "pendente_de_validacao": false
   }
 ]

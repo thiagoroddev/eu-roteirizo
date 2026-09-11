@@ -10,12 +10,12 @@
  * fallbacks) — this hook never blocks anything.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { DeliveryPoint } from "../types/routing";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { DeliveryPoint, LatLng } from "../types/routing";
 import type { RoadGraph } from "../utils/routing/graph";
 import { bboxFromPoints } from "../utils/routing/osm";
 import { UI_LABELS } from "../constants/uiLabels";
-import { loadRoadGraph } from "../services/graphCache";
+import { bboxKey, loadRoadGraph } from "../services/graphCache";
 
 /** Margin (meters) around the points' envelope: street context for map
  *  matching/A* at border points without inflating the bbox (DT-005). */
@@ -32,42 +32,46 @@ export interface RoadGraphReturn {
   retry: () => void;
 }
 
-export const useRoadGraph = (points: DeliveryPoint[], enabled: boolean): RoadGraphReturn => {
+export const useRoadGraph = (points: DeliveryPoint[], enabled: boolean, startPoint?: LatLng | null): RoadGraphReturn => {
   const [graph, setGraph] = useState<RoadGraph | null>(null);
   const [status, setStatus] = useState<RoadGraphStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  /** Attempt whose load is in flight (set at start). */
-  const startedAttemptRef = useRef(-1);
-  /** Attempt whose load has completed (graph or error). */
-  const completedAttemptRef = useRef(-1);
+
+  const coords = useMemo(() => (startPoint ? [...points, startPoint] : points), [points, startPoint]);
+  const bbox = useMemo(() => bboxFromPoints(coords, BBOX_MARGIN_METERS), [coords]);
+  const currentBboxKey = bbox ? bboxKey(bbox) : null;
+
+  const loadedBboxKeyRef = useRef<string | null>(null);
+  const inFlightBboxKeyRef = useRef<string | null>(null);
+  const lastAttemptRef = useRef(attempt);
 
   useEffect(() => {
-    // Load once per attempt: skip if it already completed or is currently in
-    // flight. A run cancelled BEFORE completing releases `startedAttemptRef` in
-    // the cleanup, so re-entering the mode restarts it — this fixes the
-    // "Carregando ruas…" forever wedge (TASK-BG-006): a shared cancel flag used
-    // to swallow the result while the start-only guard blocked the restart.
-    if (!enabled || completedAttemptRef.current === attempt || startedAttemptRef.current === attempt) return;
-    const bbox = bboxFromPoints(points, BBOX_MARGIN_METERS);
-    if (!bbox) return;
-    startedAttemptRef.current = attempt;
+    const isRetry = attempt !== lastAttemptRef.current;
+    if (isRetry) {
+      lastAttemptRef.current = attempt;
+      loadedBboxKeyRef.current = null;
+    }
 
-    // `cancelled` is LOCAL to this run (captured by the cleanup closure), never a
-    // shared ref — a stale run resolving late is ignored without wedging the next.
+    if (!enabled || !bbox || !currentBboxKey) return;
+    if (currentBboxKey === loadedBboxKeyRef.current && !isRetry) return;
+    if (currentBboxKey === inFlightBboxKeyRef.current && !isRetry) return;
+
+    inFlightBboxKeyRef.current = currentBboxKey;
+
     let cancelled = false;
     const controller = new AbortController();
-    // Canonical fetch-in-effect: the synchronous "loading" transition is the
-    // effect's own lifecycle state, not derivable from props/state — the rule's
-    // alternatives (derived state/event handler) don't apply to a URL-driven load.
+
     /* eslint-disable react-hooks/set-state-in-effect */
     setStatus("loading");
     setError(null);
     /* eslint-enable react-hooks/set-state-in-effect */
+
     void loadRoadGraph(bbox, { signal: controller.signal }).then((result) => {
       if (cancelled) return;
-      completedAttemptRef.current = attempt;
+      inFlightBboxKeyRef.current = null;
       if (result.graph && result.graph.coords.size > 0) {
+        loadedBboxKeyRef.current = currentBboxKey;
         setGraph(result.graph);
         setStatus("ready");
       } else {
@@ -79,13 +83,11 @@ export const useRoadGraph = (points: DeliveryPoint[], enabled: boolean): RoadGra
     return () => {
       cancelled = true;
       controller.abort();
-      // Only an incomplete run releases the in-flight guard; a completed attempt
-      // keeps its marker so a ready graph is not refetched on the next toggle.
-      if (startedAttemptRef.current === attempt && completedAttemptRef.current !== attempt) {
-        startedAttemptRef.current = -1;
+      if (inFlightBboxKeyRef.current === currentBboxKey) {
+        inFlightBboxKeyRef.current = null;
       }
     };
-  }, [enabled, attempt, points]);
+  }, [enabled, attempt, bbox, currentBboxKey]);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 

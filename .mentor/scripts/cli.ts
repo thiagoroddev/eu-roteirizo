@@ -44,6 +44,9 @@ mentor <comando>
   task iniciar <ID>                    escreve o esqueleto do plano e da narrativa
   task gate <ID> <gate>                executa o comando declarado e grava a evidencia
        [--esperando-vermelho]          registra o gate falhando ANTES de implementar (tdd/bdd)
+       [--vermelho-dispensado --motivo "..."] so para trabalho RETROATIVO, onde o
+                                      vermelho e' impossivel: o codigo ja existe e a suite
+                                      ja passa. Exige o gate ja executado e motivo escrito
        [--arquivo <caminho> [--codigo-saida <n>]] registra evidencia de saida capturada em arquivo
        [--rotulo "..." --motivo "..."] so para os rotulos que nao nascem de execucao
        [--ressalva "..." --url "..."]
