@@ -17,7 +17,7 @@ import {
   NO_STOP_INDEX,
   stopColor,
 } from "../../../utils/markers/roteiroModels";
-import { ROTEIRO_TYPE_COLORS } from "../../../utils/markers/markerColors";
+import { ROTEIRO_TYPE_COLORS, IGNORED_MARKER_COLOR } from "../../../utils/markers/markerColors";
 import type { StopDraft } from "../../../utils/routing/builder";
 import { buildGraph } from "../../../utils/routing/graph";
 import { COLUMN_NAMES, UI_LABELS } from "../../../constants";
@@ -84,6 +84,21 @@ describe("computeRoteiroMarkerModels", () => {
     expect(computeRoteiroMarkerModels([], [])).toEqual([]);
     const models = computeRoteiroMarkerModels([a], [stop("stop_a", ["pt_a"])]);
     expect(models.map((m) => m.kind)).toEqual(["stop"]);
+  });
+
+  // RF-55 (TASK-RF-040), 4º criterio de aceite: o endereco ignorado precisa ser
+  // distinguivel NO MAPA. A cor existia e era aplicada, mas nada travava isso
+  // contra regressao — era a unica das quatro regras do requisito sem teste.
+  it("marcador de endereço ignorado usa a cor de ignorado, não a do tipo (RF-55)", () => {
+    const models = computeRoteiroMarkerModels([a, b], [], { ignoredPointIds: ["pt_a"] });
+    const ignored = models.find((m) => m.key === "pt_a")!;
+    const normal = models.find((m) => m.key === "pt_b")!;
+
+    expect(ignored.iconProps.color).toBe(IGNORED_MARKER_COLOR);
+    expect(normal.iconProps.color).not.toBe(IGNORED_MARKER_COLOR);
+    // Só a cor muda: o endereço ignorado continua um ponto livre comum.
+    expect(ignored.iconProps.shape).toBe("circle");
+    expect(ignored.iconProps.number).toBeNull();
   });
 
   it("tooltip shows address and package count", () => {
