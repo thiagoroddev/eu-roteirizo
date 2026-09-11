@@ -93,8 +93,8 @@
     }
   },
   "achados": [],
-  "validacao": "pendente",
-  "validado_em": null,
+  "validacao": "aprovado",
+  "validado_em": "11/09/26 17:48",
   "validacao_motivo": null,
   "tarefas_geradas": [],
   "adrs": [],
