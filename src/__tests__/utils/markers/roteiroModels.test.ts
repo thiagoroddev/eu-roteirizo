@@ -401,6 +401,96 @@ describe("formatVehicleStopAddress & formatRoteiroStopTitle (RF-53 / TASK-RF-038
     expect(formatRoteiroStopTitle(s, pointsById)).toBe("P26 - Avenida Epitácio Pessoa, 4224, Lagoa");
   });
 
+  // TASK-BG-015: o pino do endereço pode ficar recuado da rua (prédio com jardim/
+  // garagem) sem que ISSO signifique que a parada do veículo foi editada — a
+  // parada padrão já nasce projetada na rua (suggestVehicleStop), longe do pino,
+  // então medir distância até o pino para decidir "editada" confundia recuo
+  // arquitetônico com edição do usuário. `vehicleStopIsDefault` já é o estado
+  // correto (mantido pelo reducer em MOVE/MAKE_POINT_ANCHOR/RESET) — o rótulo
+  // deve CONFIAR nele, não recalcular por geometria.
+  it("pino recuado da rua não vira 'próximo' quando a âncora não foi editada", () => {
+    const p1: DeliveryPoint = {
+      id: "p1",
+      lat: -22.98,
+      lng: -43.2, // pino dentro do prédio/recuo
+      address: "Avenida Epitácio Pessoa, 4224",
+      packageCount: 1,
+      packages: [
+        {
+          id: "pkg_1",
+          rawData: {
+            [COLUMN_NAMES.NEIGHBORHOOD]: "Lagoa",
+          },
+        },
+      ],
+    };
+    const pointsById = new Map([["p1", p1]]);
+    const s: RouteStop = {
+      id: "stop_1",
+      order: 26,
+      // A parada padrão (projeção na rua) pode ficar a dezenas de metros do
+      // pino recuado — isso sozinho NUNCA deve virar "próximo".
+      vehicleStop: { lat: -22.9803, lng: -43.2003 },
+      pointIds: ["p1"],
+      radiusMeters: 30,
+      vehicleStopIsDefault: true,
+    };
+
+    const res = formatVehicleStopAddress(s, pointsById);
+    expect(res.distanceMeters).toBeGreaterThan(30); // confirma que o recuo é real, não ruído
+    expect(res.isEdited).toBe(false);
+    expect(res.streetLine).toBe("Avenida Epitácio Pessoa, 4224");
+    expect(res.distLabel).toBe("");
+    expect(formatRoteiroStopTitle(s, pointsById)).toBe("P26 - Avenida Epitácio Pessoa, 4224, Lagoa");
+  });
+
+  // D2: o nome da via mais próxima no grafo pode divergir do texto do romaneio
+  // (nome OSM diferente, esquina, via de serviço) mesmo sem a âncora ter sido
+  // tocada — isso também não é "outra rua" para o usuário, e não editada não
+  // pode virar "Próximo à X" só porque o grafo discorda do texto.
+  it("não editada com nome de via divergente no grafo ainda assim não vira 'Próximo à'", () => {
+    const p1: DeliveryPoint = {
+      id: "p1",
+      lat: -22.98,
+      lng: -43.2,
+      address: "Avenida Epitácio Pessoa, 4224",
+      packageCount: 1,
+      packages: [
+        {
+          id: "pkg_1",
+          rawData: {
+            [COLUMN_NAMES.NEIGHBORHOOD]: "Lagoa",
+          },
+        },
+      ],
+    };
+    const pointsById = new Map([["p1", p1]]);
+    const s: RouteStop = {
+      id: "stop_1",
+      order: 26,
+      vehicleStop: { lat: -22.981, lng: -43.201 },
+      pointIds: ["p1"],
+      radiusMeters: 30,
+      vehicleStopIsDefault: true, // NÃO editada
+    };
+    const mockGraph = buildGraph([
+      {
+        type: "way",
+        nodes: [1, 2],
+        geometry: [
+          { lat: -22.981, lon: -43.201 },
+          { lat: -22.982, lon: -43.202 },
+        ],
+        tags: { name: "Rua Maria Quitéria" },
+      },
+    ]);
+
+    const res = formatVehicleStopAddress(s, pointsById, mockGraph);
+    expect(res.isEdited).toBe(false);
+    expect(res.streetLine).toBe("Avenida Epitácio Pessoa, 4224");
+    expect(formatRoteiroStopTitle(s, pointsById, mockGraph)).toBe("P26 - Avenida Epitácio Pessoa, 4224, Lagoa");
+  });
+
   it("quando vehicleStopIsDefault === false na mesma rua, formata com próximo ao número e distância", () => {
     const p1: DeliveryPoint = {
       id: "p1",

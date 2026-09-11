@@ -1,0 +1,106 @@
+{
+  "id": "TASK-BG-015",
+  "tipo": "BG",
+  "titulo": "Proximo aparece no endereco da parada do veiculo mesmo quando a ancora nao foi movida",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "criada_em": "11/09/26 06:34",
+  "iniciada_em": "11/09/26 06:34",
+  "commit_base": "dddde8f7f4dd51951ccad9c164cbd492f070d721",
+  "concluida_em": "11/09/26 06:44",
+  "plano": {
+    "muda": [
+      "src/utils/markers/roteiroModels.ts - formatVehicleStopAddress: isEdited passa a ser SO' stop.vehicleStopIsDefault===false (remove a condicao extra 'distanceMeters >= 5' que media contra o pino); os 3 ramos do rotulo reordenados para isEdited decidir 'aparece próximo ou não' e isSame decidir só QUAL forma; isSame so' varre o grafo quando isEdited (isSame nao importa fora disso)",
+      "src/__tests__/utils/markers/roteiroModels.test.ts - teste novo: pino recuado (longe da rua) com vehicleStopIsDefault true não mostra 'próximo' nem distância; corrige o teste de 'outra rua' (linha ~477) cujo fixture hoje tem a ancora exatamente na projecao (nao deveria ser 'próximo' por medida, so' por estar vehicleStopIsDefault:false, que ja e' o caso do fixture) e adiciona o caso 'não editada mas nearestWayName diverge do texto do endereço' (D2) para confirmar que NAO vira 'Próximo à'"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Ancora intocada (vehicleStopIsDefault !== false) nunca mostra 'próximo' nem distância, mesmo com o pino recuado dezenas de metros da rua (predio com recuo/jardim)",
+        "teste": "roteiroModels.test.ts > pino recuado da rua não vira 'próximo' quando a âncora não foi editada"
+      },
+      {
+        "texto": "Ancora intocada cuja rua mais próxima no grafo diverge do texto do endereço (nome OSM diferente/esquina) tambem nao mostra 'Próximo à' - o desvio de nome so' importa quando editada",
+        "teste": "roteiroModels.test.ts > não editada com nome de via divergente no grafo ainda assim não vira 'Próximo à'"
+      },
+      {
+        "texto": "Ancora editada (vehicleStopIsDefault===false) continua mostrando 'próximo'/distância exatamente como antes - mesma rua vs rua diferente",
+        "teste": "roteiroModels.test.ts > testes existentes de vehicleStopIsDefault===false (ajustados)"
+      }
+    ],
+    "impacto": "So' o rotulo textual da parada do veiculo (formatVehicleStopAddress/formatRoteiroStopTitle), usados no painel do mapa (MapPage.tsx). vehicleStopIsDefault nao muda de significado em lugar nenhum - so' passa a ser CONFIADO em vez de recalculado por distancia ao pino.",
+    "riscos": [
+      "nenhum identificado - a mudanca remove uma heuristica de distancia por uma leitura direta de um estado que ja existe e ja e' mantido corretamente pelo reducer (MOVE_VEHICLE_STOP/MAKE_POINT_ANCHOR/RESET_VEHICLE_STOP) e pela auto-roteirizacao (RF-030), confirmado lendo os pontos onde vehicleStopIsDefault:true e' atribuido: todos usam suggestVehicleStop/projecao na rua, nunca o pino cru"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram distinguir 'movida' de 'pino recuado'; a correcao do humano mostrou que nao precisa de heuristica nenhuma - so' parar de recalcular um estado que ja existe certo. Troca de uma condicao por outra mais simples, reordena 3 ifs e ajusta/acrescenta testes num unico arquivo de producao. Encolhe em relacao a proposta original (nenhuma constante de tolerancia nova)."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "11/09/26 06:41",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.9 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  917 passed (917)\n   Start at  06:41:48\n   Duration  42.82s (transform 16.59s, setup 32.11s, import 32.62s, tests 92.46s, environment 129.60s)\n\n(node:21032) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "11/09/26 06:42",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "11/09/26 06:42",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "11/09/26 06:43",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1954 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CYMBXH50.css   \u001b[39m\u001b[1m\u001b[2m 28.24 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-CYlA4-3H.js    \u001b[39m\u001b[1m\u001b[33m538.33 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.17 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-B6etagQ-.js   \u001b[39m\u001b[1m\u001b[33m803.28 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.49 kB\u001b[22m\n\u001b[32m✓ built in 8.21s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1791.83 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "11/09/26 06:43",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    }
+  },
+  "achados": [],
+  "validacao": "pendente",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-11--06h44--TASK-BG-015.md"
+}

@@ -276,11 +276,17 @@ export interface FormattedVehicleStopAddress {
   distLabel: string;
   /** Linha 2 do endereço do veículo (ex: "Lagoa, 22290-000") */
   placeLine: string;
-  /** Distância em metros do veículo à primeira entrega (co-âncora) */
+  /** Distância em metros do veículo à primeira entrega (co-âncora) — informativa
+   *  (mostrada quando `isEdited`); não decide o rótulo (TASK-BG-015). */
   distanceMeters: number;
-  /** Se o veículo está na mesma rua da primeira entrega */
+  /** Se a via mais próxima do veículo (grafo) é a mesma da primeira entrega — só
+   *  importa quando `isEdited`: escolhe qual forma de "próximo" usar, nunca se. */
   isSameStreet: boolean;
-  /** Se o veículo foi editado/afastado */
+  /** Se a parada do veículo foi movida pelo usuário (`stop.vehicleStopIsDefault
+   *  === false`) — é o ÚNICO sinal de "editada" (TASK-BG-015). Um pino recuado
+   *  da rua (prédio com jardim/garagem) NÃO é edição: a parada padrão já nasce
+   *  na rua, longe do pino, então medir distância até o pino misturava as duas
+   *  situações. */
   isEdited: boolean;
   /** Logradouro da primeira entrega */
   deliveryStreet: string;
@@ -315,11 +321,24 @@ export const formatVehicleStopAddress = (stop: RouteStop, pointsById: Map<string
   const deliveryNumber = parts[1]?.split("-")[0]?.trim() ?? "";
 
   const distanceMeters = Math.round(haversine(stop.vehicleStop, { lat: coAnchor.lat, lng: coAnchor.lng }));
-  const isDefault = stop.vehicleStopIsDefault !== false;
-  const isEdited = !isDefault && distanceMeters >= 5;
+  // TASK-BG-015: "editada" é o estado que o reducer já mantém corretamente
+  // (MOVE_VEHICLE_STOP/MAKE_POINT_ANCHOR marcam false; RESET/CREATE marcam true
+  // com a posição projetada na rua — suggestVehicleStop — nunca o pino cru).
+  // Antes, esta função ignorava esse estado e recalculava "editada" medindo a
+  // distância até o PINO: um pino recuado da rua (prédio com jardim/garagem)
+  // virava "próximo" mesmo com a âncora intocada, porque a distância ao pino
+  // confunde recuo arquitetônico com edição do usuário. A distância continua
+  // calculada (mostrada quando editada — quão longe o veículo ficou do número),
+  // mas não decide mais o QUE mostrar.
+  const isEdited = stop.vehicleStopIsDefault === false;
 
+  // A via mais próxima no grafo só importa quando editada: ela escolhe QUAL
+  // forma de "próximo" usar (mesma rua × outra rua), nunca SE mostra "próximo" —
+  // isso é o `isEdited` sozinho (mesma correção acima: nome de via divergente
+  // no grafo não vira "Próximo à" para uma âncora intocada). Também evita
+  // varrer o grafo inteiro (nearestWayName é O(arestas)) no caso comum, não editado.
   let isSame = true;
-  if (graph && stop.vehicleStop) {
+  if (isEdited && graph && stop.vehicleStop) {
     const way = nearestWayName(graph, stop.vehicleStop);
     if (way) {
       isSame = isSameStreetName(deliveryStreet, way);
@@ -329,7 +348,7 @@ export const formatVehicleStopAddress = (stop: RouteStop, pointsById: Map<string
   const distLabel = isEdited ? `(${distanceMeters}m)` : "";
   let baseStreetLine = deliveryStreet;
 
-  if (!isEdited && isSame) {
+  if (!isEdited) {
     baseStreetLine = deliveryNumber ? `${deliveryStreet}, ${deliveryNumber}` : deliveryStreet;
   } else if (isSame) {
     baseStreetLine = deliveryNumber ? `${deliveryStreet}, próximo ao número ${deliveryNumber}` : `${deliveryStreet}, próximo`;
