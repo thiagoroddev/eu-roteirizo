@@ -1,10 +1,12 @@
 # TASK-SPIKE-002 — experimento com pontos fundamentais
 
-Estado: plano aprovado pelo “prossiga” do mantenedor; experimento ainda não iniciado.
+Estado: plano aprovado e bateria experimental executada; resultado global inconclusivo
+e validação humana pendente. Finalização e commit autorizados expressamente pelo mantenedor;
+o registro de encerramento é localizado pelo índice de tarefas concluídas. Sem autorização de push.
 Pedido: aplicar e testar a ideia isoladamente; só depois de evidência favorável propor a
 adaptação do restante do épico. A aprovação permite executar este plano, não fechar/commitar
 o spike, publicar ou migrar dados. A RF-030 foi concluída com autorização específica de
-fechamento e commit, sem push. A tarefa experimental permanece aberta na reserva.
+fechamento e commit, sem push. A autorização posterior do spike não aprova sua promoção ao app.
 
 ## Pergunta do experimento
 
@@ -244,8 +246,8 @@ Os fontes e entradas desse run foram reconferidos por hash ao preparar este plan
 Os dados em `__utilidades-back-office__/romaneios/` e a `.cache/` do arnês são privados,
 ignorados e necessários para repetir a bateria. Não precisam ser reinseridos no chat.
 
-A TASK-SPIKE-002 está aberta na reserva, com plano aprovado e dependência RF-030 concluída.
-Nenhum código do experimento foi implementado. Antes de iniciar, conferir que o commit
+Registro histórico de preparação (anterior ao início): a TASK-SPIKE-002 estava aberta na reserva,
+com plano aprovado e dependência RF-030 concluída. Antes de iniciar, conferir que o commit
 autorizado da RF-030 está salvo e criar ramo do spike a partir dele, preservando o WIP de uma
 tarefa. Não executar a antiga matriz de 90/120 m; seguir os parâmetros deste plano.
 

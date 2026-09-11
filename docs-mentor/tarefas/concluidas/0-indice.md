@@ -19,3 +19,4 @@
 | 08/09/26 18:34 | [`TASK-RF-039`](./2026-09-08--18h34--TASK-RF-039.md) | RF | Nome unico para arquivos JSON exportados com data do romaneio, 4 ultimos digitos do AT e bairro predominante | - | concluida | pendente |
 | 08/09/26 21:37 | [`TASK-BG-013`](./2026-09-08--21h37--TASK-BG-013.md) | BG | Impedir retornos em angulo agudo e conversoes proibidas em contramao | - | concluida | aprovado |
 | 10/09/26 16:33 | [`TASK-RF-030`](./2026-09-10--16h33--TASK-RF-030.md) | RF | Gerar ancoras livres e cobertura de entregas dentro do raio | 1/6 de TASK-RF-029 | concluida | pendente |
+| 11/09/26 03:11 | [`TASK-SPIKE-002`](./2026-09-11--03h11--TASK-SPIKE-002.md) | SPIKE | Validar roteiros por pontos fundamentais e circuito de agrupamento configuravel | - | concluida | pendente |

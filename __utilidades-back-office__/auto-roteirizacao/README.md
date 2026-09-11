@@ -120,3 +120,52 @@ no manifesto local. A malha atual não certifica estacionamento, todas as restri
 acesso aos imóveis ou passagens de pedestres. A RF-031/RF-032 precisa validar os trajetos antes
 de declarar uma solução completa. Para JSONs futuros, `seedPointId` persistido é o incremento
 prioritário; a evolução compatível do formato fica em RF-034, sem reescrever suas referências.
+
+## Experimento de pontos fundamentais
+
+O spike usa o mesmo corpus e snapshots, mas roda separado da matriz histórica:
+
+```powershell
+npm run test:auto-fundamentals
+```
+
+Cada execução cruza procura fundamental de 30/60 m com circuito limitado de 120 m e uma
+sensibilidade de 60 m. As variantes são `individual`, `fixed-groups` e `revisable`; cada uma
+é avaliada pelos objetivos independentes `vehicleDistance` e `modeledTime`, sem peso oculto.
+O início e o fim veiculares são livres em todas as variantes e referências humanas da bateria.
+A aproximação de uma origem externa do manual é informada separadamente, nunca somada só a ele.
+
+Antes da bateria, o arnês fixa passo de 10 m, até 8.000 candidatas espaciais, 12 âncoras por
+grupo, 24 ordens por seleção, 24 alternativas revisáveis, três passadas e 48 movimentos locais por variante/objetivo.
+O teto de movimentos é global à variante/objetivo, não reiniciado por alternativa. Limites
+atingidos são gravados em `definitionLimitReached`, `workLimitReached` e nos diagnósticos;
+eles delimitam a heurística e não afirmam ótimo global.
+
+O circuito limitado mede âncora → fundamentais → âncora e precisa de caminho validado na malha.
+A caminhada completa usa o mesmo circuito de fundamentais e soma, em campo separado, os acessos
+estimados fundamental ↔ pino. A distância completa pode ultrapassar 120 m; o teto não é gravado
+em `radiusMeters` nem em `autoRadiusMeters`.
+
+As saídas ficam em `.mentor-saidas/auto-fundamentals/<run-id>/`: `report.json`, `summary.md`,
+`manifest.json`, `details.json`, mapas HTML locais e JSONs v1 em `importaveis/`. Os mapas embutem
+o Leaflet instalado e não usam tiles, API, rede ou JavaScript remoto. Os JSONs são cópias de
+inspeção: o schema v1 não persiste fundamental, circuito ou geometria avaliada. Pendências ficam
+livres, não ignoradas. Resultado completo do motor ainda não é certificação de estacionamento,
+passagem de pedestre, restrições ausentes ou desempenho Android.
+
+O cache usa entradas imutáveis, até 20.000 caminhos por grafo e 2.000 ordens por contexto,
+e é limpo antes de cada configuração. O relatório separa uma execução fria de três repetições
+com cache aquecido (mediana/p95 empíricos), sem leitura, renderização e importação no tempo do motor.
+O A* existente escolhe trajetos com penalidades de conversão/serviço; os metros relatados são
+físicos, mas não certificam o caminho de menor distância física em cada trecho. A caminhada
+recalculada pelo app atual é outro diagnóstico, não a base para alegar economia experimental.
+
+`status` descreve a execução; `technicalValidity` descreve a validade das soluções. Comparações
+excluem pares incompletos, sem converter ausência de caminho em economia. `manualComparisons`
+identifica também a compatibilidade dos manuais inalterados com cada teto de circuito.
+O manifesto inclui hashes dos JSONs e mapas. A inspeção visual humana permanece pendente.
+
+A rodada `2026-09-10T20-45-35-415Z` é histórica e inválida como evidência de viabilidade: expôs
+falhas no adaptador de projeções e na conservação de membros durante a poda revisável.
+Os testes de regressão cobrem essas falhas; use somente a nova rodada identificada no registro
+da tarefa. Nenhum resultado autoriza promoção ao produto ou fechamento automático do spike.
