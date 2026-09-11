@@ -4,7 +4,8 @@ import type { DeliveryPoint } from "../../types/routing";
 import type { RoadGraph } from "../../utils/routing/graph";
 import type { FetchRoadGraphResult } from "../../utils/routing/osm";
 
-vi.mock("../../services/graphCache", () => ({
+vi.mock("../../services/graphCache", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   loadRoadGraph: vi.fn(),
 }));
 
@@ -49,6 +50,33 @@ describe("useRoadGraph (lazy, ADR-009 decision B)", () => {
     expect(bbox.north).toBeGreaterThan(-22.979);
     expect(bbox.west).toBeLessThan(-43.2);
     expect(bbox.east).toBeGreaterThan(-43.199);
+  });
+
+  it("expande o bbox da malha viaria para cobrir o startPoint quando fornecido", async () => {
+    vi.mocked(loadRoadGraph).mockResolvedValue({ graph: GRAPH });
+    const startPoint = { lat: -22.95, lng: -43.15 };
+    renderHook(() => useRoadGraph(POINTS, true, startPoint));
+
+    await waitFor(() => expect(loadRoadGraph).toHaveBeenCalled());
+    const bbox = vi.mocked(loadRoadGraph).mock.calls[0][0];
+    expect(bbox.north).toBeGreaterThan(-22.95);
+    expect(bbox.east).toBeGreaterThan(-43.15);
+  });
+
+  it("recarrega a malha quando o startPoint e definido ou movido para fora do envelope atual", async () => {
+    vi.mocked(loadRoadGraph).mockResolvedValue({ graph: GRAPH });
+    const { rerender } = renderHook(({ startPoint }: { startPoint: { lat: number; lng: number } | null }) => useRoadGraph(POINTS, true, startPoint), {
+      initialProps: { startPoint: null as { lat: number; lng: number } | null },
+    });
+
+    await waitFor(() => expect(loadRoadGraph).toHaveBeenCalledTimes(1));
+
+    rerender({ startPoint: { lat: -22.95, lng: -43.15 } });
+
+    await waitFor(() => expect(loadRoadGraph).toHaveBeenCalledTimes(2));
+    const bbox = vi.mocked(loadRoadGraph).mock.calls[1][0];
+    expect(bbox.north).toBeGreaterThan(-22.95);
+    expect(bbox.east).toBeGreaterThan(-43.15);
   });
 
   it("does not wedge: disabling mid-load then re-enabling reaches ready (TASK-BG-006)", async () => {

@@ -96,6 +96,21 @@ export interface RegistroGate {
    * asercao fraca, dublê que devolve o esperado, ramo que nem executa, tudo isso passa de primeira.
    */
   vermelho_em: string | null
+  /**
+   * Quando o vermelho foi **dispensado por impossibilidade**, com motivo escrito.
+   *
+   * Existe para o unico caso em que o vermelho nao pode existir: trabalho
+   * RETROATIVO, em que o codigo ja foi entregue antes da tarefa (reconciliar
+   * catalogo, atestar entrega de outra sessao). Ali a suite ja passa, entao
+   * `--esperando-vermelho` se recusa — com razao — e a tarefa fica sem saida.
+   *
+   * NAO e' atalho para "nao deu tempo": a dispensa exige motivo escrito e o
+   * fechamento passa a depender dele. A evidencia equivalente esperada e' a
+   * checagem de MUTACAO (quebrar a implementacao de proposito e provar que o
+   * teste acusa), que prova o mesmo que o vermelho: o teste falha quando a
+   * regra e' violada. Ver docs-mentor/melhorias-do-pacote.md.
+   */
+  vermelho_dispensado_em: string | null
   comando: string | null
   codigo_saida: number | null
   saida: string | null

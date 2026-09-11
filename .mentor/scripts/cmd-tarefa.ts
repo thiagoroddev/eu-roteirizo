@@ -179,6 +179,32 @@ export function registrarGate(id: string, gate: string, flags: Flags): void {
   const ctx = carregarContexto()
   const rotuloPedido = flags.rotulo as Rotulo | undefined
 
+  /**
+   * Dispensa do vermelho, por IMPOSSIBILIDADE, com motivo escrito.
+   *
+   * Trabalho retroativo (atestar entrega de outra sessao, reconciliar catalogo)
+   * nao tem vermelho possivel: o codigo ja existe e a suite ja passa, entao
+   * `--esperando-vermelho` se recusa e a tarefa fica sem saida — nao fecha, nao
+   * guarda, e ainda trava o limite de tarefas em execucao.
+   *
+   * Nao afrouxa a lei: exige motivo escrito, so' vale para o gate `testes`, e o
+   * gate PRECISA ter rodado verde antes (sem execucao nao ha o que dispensar).
+   * A evidencia equivalente esperada e' a checagem de MUTACAO. Espelha o
+   * mecanismo que o pacote ja usa em `task validar --dispensado --motivo`.
+   */
+  if (flags['vermelho-dispensado']) {
+    if (gate !== 'testes') throw new Error('--vermelho-dispensado so se aplica ao gate "testes".')
+    if (!flags.motivo) throw new Error('--vermelho-dispensado exige --motivo: por que o vermelho e IMPOSSIVEL nesta tarefa, e qual evidencia o substitui.')
+    const registro = tarefa.gates[gate]
+    if (!registro) throw new Error(`O gate "${gate}" ainda nao foi executado. Rode "task gate ${id} ${gate}" antes: dispensar o vermelho de um gate que nunca rodou nao dispensa nada.`)
+    if (registro.vermelho_em) throw new Error(`O gate "${gate}" ja tem vermelho registrado em ${registro.vermelho_em}. Nao ha o que dispensar.`)
+    registro.vermelho_dispensado_em = agora().log
+    registro.motivo = flags.motivo as string
+    escreverJson(caminho, tarefa)
+    console.log(`${id} · ${gate}: vermelho dispensado por impossibilidade. O motivo vai para o registro e para a auditoria.`)
+    return
+  }
+
   if (rotuloPedido) {
     if (!ROTULOS.includes(rotuloPedido)) throw new Error(`Rotulo fora do vocabulario: "${rotuloPedido}".`)
     if (ROTULOS_DE_EXECUCAO.includes(rotuloPedido)) {
@@ -189,6 +215,7 @@ export function registrarGate(id: string, gate: string, flags: Flags): void {
     }
     tarefa.gates[gate] = {
       rotulo: rotuloPedido, vermelho_em: tarefa.gates[gate]?.vermelho_em ?? null,
+      vermelho_dispensado_em: tarefa.gates[gate]?.vermelho_dispensado_em ?? null,
       comando: null, codigo_saida: null, saida: null,
       executado_em: agora().log, evidencia_url: flags.url ?? null,
       motivo: flags.motivo ?? null, ressalva: null,
@@ -237,7 +264,7 @@ export function registrarGate(id: string, gate: string, flags: Flags): void {
     }
     const anterior = tarefa.gates[gate]
     tarefa.gates[gate] = {
-      rotulo: 'FALHOU', vermelho_em: agora().log, comando: comandoExecutado, codigo_saida: codigoSaida, saida,
+      rotulo: 'FALHOU', vermelho_em: agora().log, vermelho_dispensado_em: null, comando: comandoExecutado, codigo_saida: codigoSaida, saida,
       executado_em: agora().log, evidencia_url: anterior?.evidencia_url ?? null,
       motivo: null, ressalva: null,
     }
@@ -254,6 +281,7 @@ export function registrarGate(id: string, gate: string, flags: Flags): void {
   }
   tarefa.gates[gate] = {
     rotulo, vermelho_em: tarefa.gates[gate]?.vermelho_em ?? null,
+    vermelho_dispensado_em: tarefa.gates[gate]?.vermelho_dispensado_em ?? null,
     comando: comandoExecutado, codigo_saida: codigoSaida, saida: saida || null,
     executado_em: agora().log, evidencia_url: flags.url ?? null,
     motivo, ressalva: flags.ressalva ?? null,
@@ -298,9 +326,13 @@ export function finalizar(id: string): void {
   const metodo = (ctx['qualidade'] as { metodo_de_teste?: MetodoDeTeste } | undefined)?.metodo_de_teste
   if (metodo && METODOS_COM_VERMELHO.includes(metodo) && tarefa.tipo !== 'SPIKE') {
     const gateTestes = tarefa.gates['testes']
-    if (ctx.gates['testes']?.comando && gateTestes && !gateTestes.vermelho_em) {
+    // A dispensa escrita (--vermelho-dispensado --motivo) satisfaz a exigencia:
+    // existe para trabalho retroativo, onde o vermelho nao pode existir. O motivo
+    // fica no registro e a auditoria le. Sem motivo a dispensa nem e' gravada.
+    if (ctx.gates['testes']?.comando && gateTestes && !gateTestes.vermelho_em && !gateTestes.vermelho_dispensado_em) {
       impedimentos.push(
-        `metodo "${metodo}" exige o gate "testes" visto vermelho antes do verde. Registre com: task gate ${id} testes --esperando-vermelho`,
+        `metodo "${metodo}" exige o gate "testes" visto vermelho antes do verde. Registre com: task gate ${id} testes --esperando-vermelho` +
+          ` (trabalho retroativo, sem vermelho possivel: task gate ${id} testes --vermelho-dispensado --motivo "...")`,
       )
     }
   }
