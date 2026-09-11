@@ -1,0 +1,113 @@
+{
+  "id": "TASK-RF-040",
+  "tipo": "RF",
+  "titulo": "Reconciliar RF-55 (ignorar enderecos) com o catalogo: atestar entrega e fechar a lacuna de teste do marcador",
+  "fatia_de": null,
+  "estado": "em-execucao",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "RF-55",
+  "requisitos": [
+    "RF-55"
+  ],
+  "criada_em": "11/09/26 18:31",
+  "iniciada_em": "11/09/26 18:32",
+  "commit_base": "d9dd4f510244cab2d98d54f67b057c4ede3db302",
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "src/__tests__/utils/markers/roteiroModels.test.ts - teste novo para o UNICO criterio de aceite do RF-55 sem cobertura: o marcador do endereco ignorado usa IGNORED_MARKER_COLOR em vez da cor do tipo. Os outros 3 criterios ja tem teste e nao se toca neles",
+      "NENHUM arquivo de producao muda: o RF-55 ja esta implementado e entregue no commit 1626097 (IGNORE_POINT/UNIGNORE_POINT, ignoredPointIds, IGNORED_MARKER_COLOR, secao de ignorados no painel). Esta tarefa ATESTA a entrega e liga o requisito ao registro, nao reimplementa"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Alternar status de um endereco entre ativo e ignorado no painel do Meu Roteiro",
+        "teste": "builder.test.ts > IGNORE_POINT adds point to ignoredPointIds and UNIGNORE_POINT removes it; RoteiroPointSection.test.tsx > renderiza o botao 'Ignorar endereco' e chama onToggleIgnore ao clicar"
+      },
+      {
+        "texto": "Enderecos ignorados nao contam para a conclusao nem distancia do roteiro",
+        "teste": "builder.test.ts > remainingCounts and isComplete disregard ignored points; overview.test.ts > reaches 100% when active points are committed and remaining points are ignored"
+      },
+      {
+        "texto": "Enderecos ignorados aparecem agrupados ao final do painel geral com restauracao e localizacao",
+        "teste": "RoteiroOverviewSection.test.tsx > renderiza a secao de enderecos ignorados em ultimo lugar com acoes de restaurar e ver no mapa"
+      },
+      {
+        "texto": "Marcador do endereco ignorado utiliza cor e estilo diferenciado no mapa",
+        "teste": "roteiroModels.test.ts > marcador de endereco ignorado usa a cor de ignorado (NOVO - era a unica lacuna)"
+      }
+    ],
+    "impacto": "Só o catalogo de requisitos e a suite de testes. Nenhuma mudanca de comportamento: o codigo do RF-55 ja esta em producao desde 1626097 (e na main via PR #26). Ao finalizar como tipo RF, o script grava RF-55 como implementado e vincula a tarefa - o elo que hoje nao existe porque o commit saiu sem ID.",
+    "riscos": [
+      "A tarefa e RETROATIVA e o projeto e tdd: o gate de testes exige vermelho antes do verde (cmd-tarefa.ts:299) e o comando se recusa a registrar vermelho com a suite verde. Nao ha caminho honesto pelo task finalizar, e forjar o vermelho esta fora de questao. Levantado ao humano antes de executar",
+      "Atestar entrega de codigo que outra sessao escreveu depende de leitura do codigo e dos testes existentes, nao de execucao original; o atestado vale pelo que os testes cobrem, e a lacuna do criterio 4 foi encontrada justamente assim"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram registrar oficialmente um RF ja entregue; proponho atestar os 4 criterios contra codigo e testes existentes e escrever UM teste de ~10 linhas para o unico criterio descoberto. Nenhum arquivo de producao muda, nenhum teste existente e reescrito."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.9 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  932 passed (932)\n   Start at  18:33:43\n   Duration  39.33s (transform 14.50s, setup 28.33s, import 30.32s, tests 81.98s, environment 149.45s)\n\n(node:28392) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "11/09/26 18:34",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "11/09/26 18:34",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "11/09/26 18:34",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1955 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CYMBXH50.css   \u001b[39m\u001b[1m\u001b[2m 28.24 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-C-CnN16n.js    \u001b[39m\u001b[1m\u001b[33m539.40 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.63 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-B6etagQ-.js   \u001b[39m\u001b[1m\u001b[33m803.28 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 261.49 kB\u001b[22m\n\u001b[32m✓ built in 6.03s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1792.88 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "11/09/26 18:35",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    }
+  },
+  "achados": [],
+  "validacao": "nao_requer",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

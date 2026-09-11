@@ -13,7 +13,8 @@ import type { RoadGraph } from "./graph";
 import type { RouteBuilderState } from "./builder";
 import { remainingCounts, suggestedNextPointId, suggestionCandidates, suggestionOrigin } from "./builder";
 import { totalPoints, totalPackages, assignedPointIds, pointsWithinRadius, indexPointsById } from "./selectors";
-import { suggestVehicleStop } from "./vehicleStop";
+import { defaultVehicleStop } from "./vehicleStop";
+import { streetNameOf } from "./streets";
 import { nearestByVehicleGraph } from "./suggestion";
 import { nearestFirstOrder } from "./walkOrder";
 
@@ -93,7 +94,7 @@ export const nextStopSuggestion = (state: RouteBuilderState, graph: RoadGraph | 
   const candidates = pointsWithinRadius(seed, state.points, state.config.autoRadiusMeters).filter((p) => p.id !== seed.id && !assigned.has(p.id));
   const members = [seed, ...candidates];
   /** The anchor the stop would be BORN with: projected directly in front of the seed (RF-52). */
-  const anchor = suggestVehicleStop(graph, seed);
+  const anchor = defaultVehicleStop(graph, seed, streetNameOf(seed.address));
   const byId = indexPointsById(members);
   const ordered = nearestFirstOrder(anchor, members, false, seed.id)
     .map((id) => byId.get(id))

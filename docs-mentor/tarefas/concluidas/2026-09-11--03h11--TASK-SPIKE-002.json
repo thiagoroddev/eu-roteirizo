@@ -1,0 +1,127 @@
+{
+  "id": "TASK-SPIKE-002",
+  "tipo": "SPIKE",
+  "titulo": "Validar roteiros por pontos fundamentais e circuito de agrupamento configuravel",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "G"
+  },
+  "depende_de": [
+    "TASK-RF-030"
+  ],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "RF-34",
+  "requisitos": [
+    "RF-34",
+    "RF-52"
+  ],
+  "criada_em": "10/09/26 11:09",
+  "iniciada_em": "10/09/26 16:46",
+  "commit_base": "48ef57bd78e5db22a102decb060c60b99a3c86bd",
+  "concluida_em": "11/09/26 03:11",
+  "plano": {
+    "muda": [
+      "Plano aprovado em docs-mentor/tarefas/TASK-SPIKE-002-plano.md; bateria executada com resultado global inconclusivo e validacao humana pendente. Finalizacao e commit autorizados; sem promocao ao produto ou adaptacao do epico.",
+      "__utilidades-back-office__/auto-roteirizacao/fundamentals.ts (novo): referencias de estacionamento e identidade virtual conservadora, sem alterar DeliveryPoints/pacotes originais.",
+      "__utilidades-back-office__/auto-roteirizacao/experimentPaths.ts (novo): caminhos, cache, circuito limitado, caminhada completa e incertezas explicitamente separados.",
+      "__utilidades-back-office__/auto-roteirizacao/fundamentalExperiment.ts (novo): circuito configuravel de 120m, extremos livres e variantes individual, grupos fixos e revisavel; heuristicas com trabalho limitado.",
+      "__utilidades-back-office__/auto-roteirizacao/fundamentalExperiment.test.ts (novo): contratos previos, excecao individual, limites, conservacao, determinismo, topologia e oraculos pequenos.",
+      "__utilidades-back-office__/auto-roteirizacao/experimentArtifacts.ts e experimentArtifacts.test.ts (novos): JSONs v1 independentes, importacao real isolada e mapa HTML privado da geometria avaliada, sem mudar o app.",
+      "__utilidades-back-office__/auto-roteirizacao/fundamental.arnes.ts (novo): corpus real completo, variantes, referencias humanas avaliadoras, metricas e artefatos reproduziveis sem rede.",
+      "vitest.corpus.config.ts e README.md do arnes; package.json: modo/comando test:auto-fundamentals separado do ensaio historico e guia de parametros/inspecao. Nenhuma dependencia nova."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Usar pontos fundamentais, circuito configuravel e agrupamentos/ancoras revisaveis elimina orfaos causados apenas por pinos afastados e produz roteiros completos com trocas vantajosas entre veiculo, caminhada e tempo modelado? Responder com validade tecnica, resultados por caso/agregado e inspecao humana; negativo/inconclusivo e resultado legitimo, nao autoriza adaptar o epico.",
+        "teste": "nao se aplica como assercao de ganho: pergunta de SPIKE. Contratos em fundamentalExperiment.test.ts e experimentArtifacts.test.ts; bateria completa em fundamental.arnes.ts, run 2026-09-11T01-13-25-882Z. Resultado inconclusivo e validacao humana pendente."
+      }
+    ],
+    "impacto": "Experimento local Standard M/G, sem alterar src, schema/importador, UI, defaults manuais, worker ou planos das demais fatias. Fontes e evidencias da RF-030 preservadas. Configuracao nova somente no arnes. Bateria executada: 478/480 solucoes completas, nenhuma entrega perdida, resultado global inconclusivo para adocao. Finalizacao e commit expressamente autorizados pelo mantenedor; validacao humana pendente, sem promocao ao produto, migracao ou push.",
+    "riscos": [
+      "Fundamental e projecao estimada, nao portaria/estacionamento certificado; malha derivada nao representa todas as passagens, sinais ou restricoes. Ausencia de caminho nao pode virar economia nem perda de entrega.",
+      "Raio de busca/aproximacao, circuito limitado e caminhada completa sao medidas distintas. 120m nao pode ser gravado como radiusMeters manual nem prometido como maximo da caminhada completa.",
+      "Identidade textual ambigua e coordenadas divergentes podem fundir entregas diferentes. Camada virtual deve manter rastreabilidade, diagnosticar ambiguidade e preservar IDs/pacotes.",
+      "Heuristicas e poda podem perder boas ruas ou grupos; limites de trabalho, variantes comparaveis e oraculos pequenos nao certificam otimo global.",
+      "App v1 recalcula geometria com sua malha; exportacao de paradas nao prova igualdade com trajetos medidos. Preservar geometria em evidencia e mapa local independente.",
+      "Corpus/cache/artefatos privados ficam ignorados, nao criptografados. Logs com IDs opacos; sem dados reais em repositorio, URLs ou visualizador externo."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram experimentar e testar antes de adaptar o epico. Uma tarefa exploratoria local reaproveita leitor, grafos, funcoes e importador, com pequeno mapa de evidencia para conferir caminhos sem alterar UI. O codigo e descartavel e nenhum contrato de producao e migrado. Se exceder uma fatia G, dividir antes da execucao."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "10/09/26 16:54",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.9 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  913 passed (913)\n   Start at  03:09:24\n   Duration  39.11s (transform 21.52s, setup 32.60s, import 38.48s, tests 77.72s, environment 114.72s)\n\n(node:31420) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "11/09/26 03:10",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b\n\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "11/09/26 03:06",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .\n\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "11/09/26 03:07",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\nvite v7.3.5 building client environment for production...\ntransforming...\n✓ 1954 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/registerSW.js                 0.13 kB\ndist/manifest.webmanifest          0.75 kB\ndist/index.html                    2.79 kB │ gzip:   1.15 kB\ndist/assets/vendor-Dgihpmma.css   15.04 kB │ gzip:   6.38 kB\ndist/assets/index-CYMBXH50.css    28.24 kB │ gzip:   6.22 kB\ndist/assets/index-CA8dcakn.js    538.06 kB │ gzip: 103.23 kB\ndist/assets/vendor-B6etagQ-.js   803.28 kB │ gzip: 261.49 kB\n✓ built in 8.43s\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1791.56 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "11/09/26 03:08",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    }
+  },
+  "achados": [
+    {
+      "classe": 4,
+      "descricao": "A rodada inicial do spike perdeu membros durante a poda revisavel e produziu trajetos ausentes por dividir incorretamente duas projecoes do mesmo segmento. Rodada historica invalidada como prova de viabilidade; regressoes adicionadas e adaptador corrigido no escopo experimental.",
+      "destino": "tarefa",
+      "ref": "TASK-SPIKE-002"
+    },
+    {
+      "classe": 5,
+      "descricao": "O status da primeira bateria descrevia termino da execucao sem exigir solucoes completas. Relatorio corrigido para separar execucao de validade tecnica e excluir pares parciais de deltas de economia.",
+      "destino": "tarefa",
+      "ref": "TASK-SPIKE-002"
+    }
+  ],
+  "validacao": "pendente",
+  "validado_em": null,
+  "validacao_motivo": "Inspecao visual humana dos mapas e roteiros experimentais, e decisao sobre utilidade, pendentes. O navegador automatizado bloqueou URLs file locais; sem contorno da politica. Testes de geometria/importacao nao substituem validacao manual.",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-11--03h11--TASK-SPIKE-002.md"
+}

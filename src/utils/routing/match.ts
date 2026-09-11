@@ -75,8 +75,31 @@ export const projectPointOnSegment = (p: LatLng, a: LatLng, b: LatLng): Projecti
  * @param target - The point to match.
  * @returns The nearest edge + projection, or `null` for an empty graph.
  */
-export const nearestEdge = (graph: RoadGraph, target: LatLng): EdgeMatch | null => {
-  let best: EdgeMatch | null = null;
+export const nearestEdge = (graph: RoadGraph, target: LatLng): EdgeMatch | null => nearestEdgeByTiers(graph, target, [() => true])[0];
+
+/**
+ * Predicado que qualifica uma aresta como candidata de um nível (TASK-BG-016).
+ *
+ * @param edge - A aresta candidata (traz `highway` e `wayName`).
+ * @param distance - Distância em metros de `target` à projeção nessa aresta.
+ */
+export type EdgeTier = (edge: Edge, distance: number) => boolean;
+
+/**
+ * Melhor projeção por NÍVEL de preferência, em UMA varredura do grafo
+ * (TASK-BG-016). Existe porque escolher a parada padrão do veículo é uma
+ * pergunta em camadas — "a rua do endereço, senão uma rua nomeada, senão
+ * qualquer asfalto" — e responder cada camada com sua própria varredura
+ * multiplicaria um laço que já é O(arestas) e roda por parada.
+ *
+ * @param graph - O grafo de ruas.
+ * @param target - O ponto a projetar.
+ * @param tiers - Os níveis, do mais desejável ao menos.
+ * @returns Um resultado por nível, alinhado 1:1 com `tiers` (`null` onde nenhuma
+ *          aresta qualificou). O chamador pega o primeiro não-nulo.
+ */
+export const nearestEdgeByTiers = (graph: RoadGraph, target: LatLng, tiers: readonly EdgeTier[]): (EdgeMatch | null)[] => {
+  const best: (EdgeMatch | null)[] = tiers.map(() => null);
   for (const [from, edges] of graph.adj) {
     const a = graph.coords.get(from);
     if (!a) continue;
@@ -84,8 +107,11 @@ export const nearestEdge = (graph: RoadGraph, target: LatLng): EdgeMatch | null 
       const b = graph.coords.get(edge.to);
       if (!b) continue;
       const proj = projectPointOnSegment(target, a, b);
-      if (!best || proj.distance < best.distance) {
-        best = { from, to: edge.to, point: proj.point, distance: proj.distance };
+      for (let i = 0; i < tiers.length; i++) {
+        const current = best[i];
+        if (current && proj.distance >= current.distance) continue;
+        if (!tiers[i](edge, proj.distance)) continue;
+        best[i] = { from, to: edge.to, point: proj.point, distance: proj.distance };
       }
     }
   }
@@ -110,6 +136,17 @@ export const wayNameOfEdge = (graph: RoadGraph, from: NodeId, to: NodeId): strin
  * classes of osm.ts NAVIGABLE_HIGHWAYS.
  */
 const GENERIC_WAY_LABELS = new Set(["motorway", "trunk", "primary", "secondary", "tertiary", "residential", "unclassified", "living_street", "service", "via"]);
+
+/**
+ * Se a aresta tem nome REAL de logradouro (e não o token que `buildGraph` grava
+ * quando a via não tem `name` no OSM). Usado para escolher a parada padrão do
+ * veículo (TASK-BG-016): via sem nome é, na prática, acesso interno/garagem, e
+ * não é endereço de ninguém.
+ *
+ * @param edge - A aresta a classificar.
+ * @returns `true` quando `wayName` é um nome de rua de verdade.
+ */
+export const hasRealStreetName = (edge: Edge): boolean => !GENERIC_WAY_LABELS.has(edge.wayName);
 
 /**
  * Real street name of the road nearest to `target`, from the ALREADY-loaded graph

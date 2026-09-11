@@ -2,7 +2,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { UI_LABELS, COLUMN_NAMES } from "../../constants";
+import { haversine } from "../../utils/routing/geo";
+import { vehicleRoutePath } from "../../utils/routing/routePath";
+import { formatMeters } from "../../utils/formatters";
+import { squareGraph, COORDS, A, B } from "../utils/routing/__fixtures__/syntheticGraph";
+import type { LatLng } from "../../types/routing";
 import type { RowData } from "../../types";
+
+/** A point a hair off a fixture node, so matching lands it on the street
+ *  (same convention as estimates.test.ts, which exercises the same fixture). */
+const nearNode = (n: number): LatLng => ({ lat: COORDS[n as keyof typeof COORDS].lat + 0.00002, lng: COORDS[n as keyof typeof COORDS].lng + 0.00002 });
 
 const rowsA1: RowData[] = [
   {
@@ -40,6 +49,19 @@ vi.mock("../../services/routeStorage", () => ({
   getRoteiro: vi.fn(() => Promise.resolve(routeStorageState.saved)),
 }));
 
+// Road graph (RF-006.7 / TASK-BG-014): controlado pelo teste — sem ele os
+// totais caem para linha reta; com ele, distâncias reais pelas ruas. Espelha
+// o mock de MapPage.test.tsx (mesmo hook).
+const roadGraphState = {
+  graph: null as import("../../utils/routing/graph").RoadGraph | null,
+  status: "ready" as "idle" | "loading" | "ready" | "error",
+  error: null as string | null,
+  retry: vi.fn(),
+};
+vi.mock("../../hooks/useRoadGraph", () => ({
+  useRoadGraph: () => roadGraphState,
+}));
+
 import SummaryPage from "../../pages/SummaryPage";
 
 /** The /mapa stub also exposes the search string, so navigation params are assertable. */
@@ -62,6 +84,7 @@ describe("SummaryPage (focus screen)", () => {
     uploaderState.routes = { "A-1": rowsA1 };
     uploaderState.error = null;
     uploaderState.loading = false;
+    roadGraphState.graph = null;
   });
 
   it("loads the manifest from the URL and shows the summary of the requested route", () => {
@@ -189,6 +212,60 @@ describe("SummaryPage (focus screen)", () => {
     expect(screen.getByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.ORIGINAL_TABLE })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.ROTEIRO_TABLE })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: UI_LABELS.ROUTE_SUMMARY.SIMPLE_TABLE })).not.toBeInTheDocument();
+
+    routeStorageState.saved = null;
+  });
+
+  // TASK-BG-014: o Sumário e o painel do mapa chamavam a MESMA função de totais
+  // (plannedRouteTotals) mas com argumentos diferentes — o mapa passava o grafo
+  // de ruas, o Sumário não. As duas telas mostravam números diferentes para o
+  // MESMO roteiro. O fixture é a rua de mão única (squareGraph): ir de B para A
+  // reto é ~111 m; pelas ruas (respeitando a contramão) é o desvio B→D→C→A,
+  // ~316 m — se a tela mostrar a reta com o grafo carregado, a asserção abaixo
+  // falha, denunciando a divergência.
+  it("usa as distâncias pelas ruas quando o grafo está disponível (RF-006.7)", async () => {
+    roadGraphState.graph = squareGraph;
+    routeStorageState.saved = {
+      id: "route_streets",
+      startPoint: nearNode(B),
+      stops: [{ id: "s1", order: 1, vehicleStop: nearNode(A), pointIds: [], radiusMeters: 30 }],
+      config: { walkingSpeedKmh: 5, deliveryBaseSeconds: 40, deliveryPerPackageSeconds: 15, vehicleSpeedKmh: 25, autoRadiusMeters: 30 },
+      createdAt: "2026-07-10T10:00:00.000Z",
+    };
+    renderPage();
+
+    await screen.findByText(UI_LABELS.ROTEIRO_INFO.CARD_ADDRESSES);
+
+    const straightMeters = haversine(nearNode(B), nearNode(A));
+    const streetMeters = vehicleRoutePath(squareGraph, nearNode(B), [nearNode(A)]).distanceMeters;
+    expect(streetMeters).toBeGreaterThan(straightMeters * 2); // confere que o fixture realmente diverge
+
+    expect(screen.getByText(formatMeters(streetMeters))).toBeInTheDocument();
+    expect(screen.queryByText(formatMeters(straightMeters))).not.toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.TOTALS_NOTE_STREETS)).toBeInTheDocument();
+
+    roadGraphState.graph = null;
+    routeStorageState.saved = null;
+  });
+
+  it("cai para linha reta com legenda honesta quando não há grafo (RF-006.7)", async () => {
+    // roadGraphState.graph já é null no beforeEach — mimetiza cache ausente e
+    // rede indisponível: o hook fica com o graph nulo (sem quebrar a tela).
+    routeStorageState.saved = {
+      id: "route_straight",
+      startPoint: nearNode(B),
+      stops: [{ id: "s1", order: 1, vehicleStop: nearNode(A), pointIds: [], radiusMeters: 30 }],
+      config: { walkingSpeedKmh: 5, deliveryBaseSeconds: 40, deliveryPerPackageSeconds: 15, vehicleSpeedKmh: 25, autoRadiusMeters: 30 },
+      createdAt: "2026-07-10T10:00:00.000Z",
+    };
+    renderPage();
+
+    await screen.findByText(UI_LABELS.ROTEIRO_INFO.CARD_ADDRESSES);
+
+    const straightMeters = haversine(nearNode(B), nearNode(A));
+    expect(screen.getByText(formatMeters(straightMeters))).toBeInTheDocument();
+    expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.TOTALS_NOTE)).toBeInTheDocument();
+    expect(screen.queryByText(UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.TOTALS_NOTE_STREETS)).not.toBeInTheDocument();
 
     routeStorageState.saved = null;
   });

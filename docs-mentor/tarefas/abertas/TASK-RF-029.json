@@ -24,17 +24,17 @@
   "concluida_em": null,
   "plano": {
     "muda": [
-      "TASK-RF-030: candidatos de parada de veiculo livres nas ruas e cobertura por raio.",
-      "TASK-RF-031: custo D3 e ordem/caminhos por distancia + 400m por unidade de penalidade de conversao, conforme escolha humana.",
-      "TASK-RF-032: motor completo headless, circuitos a pe, geometria coerente e tratamento de inviabilidade.",
-      "TASK-TEST-004: regressao sintetica e medicao local com os romaneios reais antes da interface.",
+      "TASK-RF-030: alternativas de ancora por semente/ruas proximas, cobertura por limites configuraveis e testes reais desde a primeira fatia.",
+      "TASK-RF-031: escolha conjunta de ancora e ordem, considerando chegada/saida e custo D3 (distancia + 400m por unidade); nao congelar a cobertura gulosa.",
+      "TASK-RF-032: motor completo, circuitos a pe e refinamento limitado de ancoras/agrupamentos com viabilidade verificavel.",
+      "TASK-TEST-004: ampliar o corpus/arnes iniciado na RF-030, comparar roteiros humanos e variantes completas antes da interface.",
       "TASK-RF-034: integrar motor em worker, aplicacao atomica, edicao e persistencia compativel.",
       "TASK-RF-033: botao, feedback de progresso/cancelamento/erro e smoke no Samsung M35."
     ],
     "criterios_aceite": [
       {
-        "texto": "Motor calcula paradas independentes dos enderecos, inclusive em outra rua, com membros dentro do raio geometrico da ancora.",
-        "teste": "autoRouteAnchors.test.ts > ancora em rua paralela cobre varias entregas"
+        "texto": "Motor parte da referencia de endereco da semente e considera ancoras livres, inclusive em outra rua. Conserva alternativas para escolher o roteiro e respeita o limite geometrico de cada execucao.",
+        "teste": "anchors.arnes.ts > oferece alternativas reais em outra rua sem consultar o roteiro humano"
       },
       {
         "texto": "Padrao Menos conversoes usa o equilibrio de custo aprovado e caminho de veiculo dirigido, desde o inicio informado.",
@@ -49,19 +49,75 @@
         "teste": "MapPage.test.tsx e routeStorage.test.ts"
       }
     ],
-    "impacto": "Planejamento autorizado nesta sessao; implementacao ainda nao iniciada. Fonte: TASK-SPIKE-001 e esclarecimento do humano sobre veiculo independente, raio e motor antes do botao. Camadas: dominio puro, validacao local, worker e integracao com builder/IndexedDB. Reversibilidade: modulos aditivos e leitura compativel de roteiros antigos; aplicar resultado existente exige confirmacao do usuario.",
+    "impacto": "Planejamento autorizado nesta sessao; implementacao ainda nao iniciada. Fonte: TASK-SPIKE-001 e esclarecimento do humano sobre veiculo independente, raio e motor antes do botao. Camadas: dominio puro, validacao local, worker e integracao com builder/IndexedDB. Reversibilidade: modulos aditivos e leitura compativel de roteiros antigos; aplicar resultado existente exige confirmacao do usuario. Replanejamento detalhado em docs-mentor/tarefas/TASK-RF-030-plano.md. Humano escolheu comparar limites configuraveis primeiro (30/60/90/120m); manter referencias manuais intactas. Preservar a relacao semente/ancora inicial/ancora movida.",
     "riscos": [
       "O spike demonstrou viabilidade, nao motor pronto: L-31 registrou um trecho sem caminho em todas as variantes; nao usar suas metricas como aceite de rota completa.",
       "O spike usa 120m, enquanto o produto configura o raio; nao alterar o default do produto para reproduzir uma tabela.",
       "A* com penalidade e cobertura/ordem gulosas nao garantem minimo global de conversoes. O compromisso de produto e preferir menos conversoes no equilibrio aprovado.",
       "O modelo OSM disponivel nao garante permissao real de estacionar ou todas as restricoes viarias; o resultado continua editavel.",
-      "As medidas reais de desempenho e offline no Samsung M35 permanecem parte do aceite futuro, sem usar a estimativa 4x como prova."
+      "As medidas reais de desempenho e offline no Samsung M35 permanecem parte do aceite futuro, sem usar a estimativa 4x como prova.",
+      "Referencia humana pode incluir entregas fora do raio manual salvo; relatar restricoes comparaveis, sem tratar proximidade ao humano como prova de otimo ou injetar suas ancoras no gerador."
     ],
     "dependencias_novas": [],
     "proporcionalidade": "Pediram construir o motor e depois expor num botao, aproveitando spike e romaneios reais. Sao tres fatias de motor, uma de validacao, uma de integracao tecnica e uma visual. A separacao evita que worker, estado, persistencia e interface formem uma tarefa XG. Nenhuma implementacao, backend ou dependencia nova e criada neste planejamento."
   },
   "gates": {},
-  "achados": [],
+  "achados": [
+    {
+      "classe": 4,
+      "descricao": "Diretriz mais recente do mantenedor: proximos testes padrao somente ate 60m (cenarios 30/60m); acima disso apenas configuracao manual explicita. Artefatos anteriores 90/120m sao historicos e nao devem ser apagados. O arnes ainda declara a matriz antiga; ajustar no replanejamento, sem confundir com alteracao do default atual de 30m.",
+      "destino": "tarefa",
+      "ref": "TASK-TEST-004"
+    },
+    {
+      "classe": 4,
+      "descricao": "O mantenedor autoriza inicio e termino livres nos testes, escolhidos pela qualidade do roteiro completo, nao pela proximidade da origem. O plano RF-031 fixa inicio e RF-032 rejeita inicio ausente: precisam distinguir politica livre/fixa. Para produto futuro, considerar deslocamento ate o inicio escolhido no total quando a origem for conhecida; nao fabricar ganho omitindo aproximacao em so uma alternativa.",
+      "destino": "tarefa",
+      "ref": "TASK-RF-031"
+    },
+    {
+      "classe": 4,
+      "descricao": "Objetivo esclarecido: reduzir km de veiculo, caminhada, sinais e tempo total. Menos conversoes nao garante menor distancia; a regra planejada metros + 400*D3 pode preferir desvio maior. Reavaliar a funcao de custo com metricas diretas e explicitar trocas entre objetivos; a prioridade/pesos ainda requerem aprovacao, nao foram alterados nesta inspecao.",
+      "destino": "tarefa",
+      "ref": "TASK-RF-031"
+    },
+    {
+      "classe": 4,
+      "descricao": "O grafo/snapshot atual guarda geometria, distancia, classe de via, nome, sentido e rotatoria, mas nao conserva semaforos/espera nem todas as travessias/passagens a pe. A parada mostrada pelo mantenedor tem membros em lados diferentes da avenida; cobertura geometrica nao avalia o custo de atravessar. Planejar enriquecimento da malha e declarar dados ausentes como desconhecidos, nao zero ou viabilidade comprovada.",
+      "destino": "tarefa",
+      "ref": "TASK-RF-032"
+    },
+    {
+      "classe": 4,
+      "descricao": "O mantenedor nao consegue avaliar a qualidade sem otimizacao completa. A proxima entrega avaliavel deve escolher ancoras, agrupamentos, sequencia, inicio/fim e circuitos conjuntamente, com JSONs importaveis cuja geometria exibida corresponda aos custos comparados. RF-030 comprovou alternativas espaciais e importacao, nao economia de km, tempo ou sinais.",
+      "destino": "tarefa",
+      "ref": "TASK-TEST-004"
+    },
+    {
+      "classe": 4,
+      "descricao": "Proposta em analise do mantenedor: referencias virtuais de parada individual por endereco, agrupamentos provisórios, ancora final escolhida pela rota e limite proprio de caminhada total por parada. A RF-030 atual aplica limite entre ancora e pino original, deixando pendente inclusive endereco isolado afastado da malha. Distinguir referencia projetada, acesso efetivo e ancora final; conservar alternativa individual sem certificar acesso desconhecido nem omitir caminhada interna. Analise registrada no rascunho existente sobre raciocinio do entregador; sem alteracao de codigo ou regra aprovada nesta etapa.",
+      "destino": "tarefa",
+      "ref": "TASK-RF-032"
+    },
+    {
+      "classe": 4,
+      "descricao": "A proposta de identidade por rua/numero difere de buildDeliveryPoints, que hoje agrupa por coordenadas aproximadas. Replanejamento deve preservar IDs, pacotes, complementos, coordenadas e roteiros antigos; contexto geografico e acessos distintos impedem fusao cega por texto. Considerar camada virtual para o experimento antes de alterar a identidade persistida; contrato/schema novos ainda nao aprovados.",
+      "destino": "tarefa",
+      "ref": "TASK-RF-034"
+    },
+    {
+      "classe": 4,
+      "descricao": "Esclarecimento aprovado pelo mantenedor: ponto fundamental de estacionamento por endereco e obrigatorio; pre-agrupamento e opcional e revisavel. Agrupar usa as referencias fundamentais, nunca a distancia destas aos pinos originais. Essa distancia nao pode deixar entrega orfa: preservar parada individual quando nao agrupar. Substitui a rejeicao atual no-candidate-in-radius causada apenas por pino distante; falta de malha deve continuar explicita sem apagar entregas. Regras consolidadas no rascunho existente; codigo e planos detalhados ainda nao adaptados.",
+      "destino": "tarefa",
+      "ref": "TASK-RF-030"
+    },
+    {
+      "classe": 4,
+      "descricao": "Limite automatico aprovado de 120m configuraveis para circuito entre ancora final e pontos fundamentais, incluindo retorno ao veiculo e ordem calculada. Trechos entre fundamentais e pinos ficam fora desse limite, mas entram na caminhada completa apresentada ao usuario. Total exibido pode exceder 120m sem violacao: nao confundir com raio, nem prometer caminhada completa limitada. Exemplo manual 30m motiva o default, nao prova equivalencia geral. Recalcular limite ao mover ancora ou alterar grupo; regressao deve preservar entrega isolada com pino distante e medir ambos os percursos. Default manual de 30m e cenarios de raio ate 60m permanecem distintos.",
+      "destino": "tarefa",
+      "ref": "TASK-RF-032"
+    }
+  ],
   "validacao": "nao_requer",
   "validado_em": null,
   "validacao_motivo": null,

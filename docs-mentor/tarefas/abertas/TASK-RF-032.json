@@ -26,11 +26,12 @@
   "concluida_em": null,
   "plano": {
     "muda": [
-      "src/utils/routing/autoRoute.ts (novo) - orquestrar cobertura, ordem, caminhos e circuitos; validar resultado completo antes de entrega ao chamador.",
+      "src/utils/routing/autoRoute.ts (novo) - orquestrar candidatas, cobertura, escolha de ancoras/ordem e circuitos; tentar reparo limitado por troca de ancora, transferencia/uniao/divisao de grupos quando necessario e validar o resultado.",
       "src/types/autoRouting.ts - estados completo/parcial/erro/cancelado, motivos de pendencias, progresso por etapas e resultado serializavel.",
       "src/utils/routing/routePath.ts - acrescentar caminho que consome os trechos do novo motor; nao substituir sua geometria pelo A* de menor distancia ao exibir o resultado.",
       "src/__tests__/utils/routing/autoRoute.test.ts e autoRouteIntegration.test.ts (novos) - motor completo headless, ilha de mao unica, conectividade a pe, consistencia de geometria e cancelamento.",
-      "src/__tests__/utils/routing/routePath.test.ts - cobrir a geometria otimizada e manter o comportamento do modo manual."
+      "src/__tests__/utils/routing/routePath.test.ts - cobrir a geometria otimizada e manter o comportamento do modo manual.",
+      "__utilidades-back-office__/auto-roteirizacao/anchors.arnes.ts - ampliar a avaliacao real para veiculo/circuitos completos e produzir payload separado compativel com o importador existente, sem substituir a referencia humana."
     ],
     "criterios_aceite": [
       {
@@ -56,9 +57,13 @@
       {
         "texto": "Dados parametros iguais e o mesmo grafo, quando repetir, entao obtem os mesmos grupos e custos; progresso usa etapas/trabalho realizado, sem percentual ficticio.",
         "teste": "autoRoute.test.ts > resultado reproduzivel e progresso verificavel"
+      },
+      {
+        "texto": "Se a primeira combinacao de ancora/grupo for inviavel mas uma alternativa avaliada for viavel, tentar o reparo antes de retornar parcial. Se atingir limite, informar busca incompleta. Comparar variantes com mesmo raio, grafo e custo, exibindo caminhada e regressao por caso.",
+        "teste": "autoRouteIntegration.test.ts > repara ancora e membros sem perder entregas; anchors.arnes.ts > compara roteiros completos"
       }
     ],
-    "impacto": "Fecha o motor antes da interface. Circuitos usam a regra de ordem a pe existente e o grafo pedestre; o raio continua geometrico. Proposta de execucao sem DOM permite worker na integracao posterior.",
+    "impacto": "Fecha o motor antes da interface. Circuitos usam a regra de ordem a pe existente e o grafo pedestre; o raio continua geometrico. Proposta de execucao sem DOM permite worker na integracao posterior. Detalhamento e evidencias: docs-mentor/tarefas/TASK-RF-030-plano.md. A escolha espacial pode ser refinada durante a montagem; nao assumir grupos gulosos imutaveis. Relatorio distingue referencia humana fora do limite automatico e inclui alternativas importaveis para inspecao.",
     "riscos": [
       "O grafo pedestre atual e derivado do grafo de veiculo e nao contem todas as passagens exclusivas para pedestres; cobertura representa o grafo disponivel.",
       "Completar a cobertura espacial nao prova a viabilidade do encadeamento de veiculo. A falta de caminho da L-31 e uma regressao obrigatoria.",

@@ -161,3 +161,122 @@ O entregador questionou: *"será que tem informações que aparecem na tela mas 
 3. Anotado o bug de bounding box do `startPoint` para correção em tarefa oportuna.
 4. Anotado o insight de agrupamento por calçada/conectividade para evitar a armadilha do raio circular cego.
 
+## Revisão em discussão: referências por endereço, grupos provisórios e âncora livre
+
+Estado: análise da proposta mais recente do mantenedor, não aprovação de implementação,
+migração de schema ou substituição dos planos do épico. As conclusões históricas acima
+não certificam um ótimo global, a qualidade da malha ou o estado atual das funcionalidades.
+
+### Proposta recebida e o que ela resolve
+
+Representar cada endereço por uma parada virtual individual e sua posição padrão de
+veículo, sem criar paradas na interface. Usar essas referências para explorar agrupamentos;
+quem não agrupar mantém a alternativa individual. A âncora final e a sequência a pé ficam
+livres até a avaliação da rota veicular, que pode atender o grupo por uma rua próxima.
+
+Isso separa o problema do pino original no interior do imóvel do problema de escolher
+onde parar; não exige uma semente selecionada pelo usuário e preserva a opção de parada
+única. Porém, posição padrão projetada na via é somente uma referência geométrica: não
+confirma portaria, passagem, acesso de veículo ou permissão de estacionamento.
+
+O código atual agrupa os registros por coordenadas aproximadas em `points.ts`, não por
+rua e número. Uma futura identidade de endereço deve considerar contexto geográfico,
+normalização, número e acessos distintos; preservar pacotes, complementos, IDs e coordenadas
+originais. Mesmo endereço escrito com pinos divergentes exige sinalização, não fusão cega.
+A primeira implementação pode manter uma camada virtual de agrupamento sem reescrever
+os DeliveryPoints ou os roteiros manuais. Isso limita a mudança ao experimento.
+
+### Limites que não devem compartilhar um único parâmetro
+
+- Vizinhança de busca: aproxima referências para gerar alternativas; não certifica caminhada
+  e não deve encadear indefinidamente vizinhos de vizinhos.
+- Caminhada da âncora final ao primeiro acesso do grupo: limite próprio, com cenários
+  padrão até 60 m. Confirmar a semântica de acesso estimado versus destino real antes
+  de substituir a medição atual até o pino original.
+- Caminhada total por parada: saída do veículo, atendimento dos acessos e retorno ao
+  mesmo veículo. Seu teto próprio impede formar grupos extensos mesmo quando o primeiro
+  endereço está perto. Não é outro raio de agrupamento; valor ainda não decidido.
+
+Distâncias devem seguir conexões pedestres disponíveis, incluindo travessias e barreiras.
+Geometria reta serve como filtro preliminar; caminho desconhecido não vale zero nem
+comprova acesso. Se o atendimento exigir entrar até o pino, esse trecho não pode desaparecer
+do custo: separar caminhada externa, acesso interno e incerteza. A alternativa individual
+deve existir, mas um acesso inviável ou sem dados continua identificado para revisão.
+
+### Ajuste essencial: as etapas precisam permitir revisão
+
+Agrupar antes é uma forma de construir uma solução inicial, não de congelar a partição.
+Na avaliação completa, permitir dividir/unir grupos, transferir endereços, mover âncoras e
+reordenar tanto paradas quanto entregas. Caso contrário, grupos próximos por geometria
+podem impor desvios ao veículo que a segunda etapa já não consegue remover.
+
+O objetivo deve avaliar veículo e caminhada conjuntamente, com métricas separadas de km,
+tempo, conversões e sinais conhecidos. Economizar somente km veiculares pode aumentar a
+caminhada ou o tempo total. A escolha da prioridade/pesos permanece em discussão.
+O endereço mais próximo pode iniciar a busca da sequência a pé, mas fixá-lo definitivamente
+é uma restrição de produto, não uma garantia do melhor circuito. Início/fim veiculares
+continuam livres nos experimentos, conforme a diretriz anterior do mantenedor.
+
+A figura ilustra a comparação entre parar no acesso interno e parar na avenida próxima;
+não demonstra por si só a legalidade da parada ou a existência de passagem a pé. A rota
+avaliada deve ser um caminho veicular dirigido, não uma linha ideal atravessando obstáculos.
+
+### Evidência necessária para avaliar a proposta
+
+Comparar, nos mesmos romaneios e malhas, a base individual, grupos fixos seguidos de rota,
+e grupos/âncoras/rota refinados conjuntamente. Medir cobertura, km veiculares, caminhada
+total e máxima por parada, tempo estimado, conversões, sinais conhecidos e acessos incertos.
+Calibrar o teto de caminhada com referências manuais avaliadas na mesma malha, sem usar
+as âncoras humanas como entrada do gerador. Nenhuma nova bateria foi executada nesta análise.
+
+Há pesquisa diretamente relacionada: o [Park-and-Loop Routing Problem with Parking
+Selection](https://www.sciencedirect.com/science/article/abs/pii/S0377221723000085)
+combina direção, escolha de estacionamento e circuitos de entrega a pé, removendo a
+obrigação de estacionar em frente a cada cliente. É uma referência metodológica, não prova
+de ganho neste corpus ou indicação de copiar seus parâmetros. A implementação proposta
+para o protótipo continua dependente das limitações dos dados locais e de aprovação.
+
+## Esclarecimento aprovado pelo mantenedor: ponto fundamental e dois percursos
+
+Estas diretrizes substituem as dúvidas da revisão anterior sobre a base geométrica,
+a necessidade de pré-agrupamento e o padrão do limite automático. Registram a decisão
+de produto; não afirmam que o motor, a configuração ou o schema já foram alterados.
+
+- Cada endereço tem um ponto fundamental de estacionamento: a referência de onde o
+  veículo pararia por padrão. Essa referência deve existir independentemente de criar
+  uma parada na interface ou formar um grupo. Preservar a coordenada original do pino;
+  não substituir o ponto fundamental quando a âncora final for movida pelo otimizador.
+- O agrupamento usa os pontos fundamentais, não a distância até os pinos originais.
+  A âncora final pode ser escolhida em outro lugar. O circuito limitado sai dessa
+  âncora, visita os pontos fundamentais na ordem calculada e retorna à mesma âncora;
+  seu custo deve ser reavaliado sempre que âncora, membros ou ordem mudarem.
+- O limite padrão desse circuito automático é 120 m, configurável pelo usuário.
+  Não é um raio de 120 m. Os raios de busca/aproximação até 60 m continuam distintos,
+  e o raio manual padrão de 30 m não é alterado por essa decisão.
+- O exemplo manual de 30 m em cada direção, com retornos, motiva o padrão de 120 m.
+  Isso não estabelece equivalência matemática geral: outros arranjos, quantidade de
+  endereços e obstáculos podem produzir circuitos maiores dentro do mesmo raio.
+- A caminhada completa mostrada ao usuário inclui também os trechos até os pinos e
+  a volta ao veículo. Esses trechos devem ser distinguidos dos usados no agrupamento,
+  sem dupla contagem e com indicação de estimativa/ausência de caminho quando cabível.
+  O total exibido pode ultrapassar 120 m sem violar o limite automático, porque as
+  métricas têm escopos diferentes. Nunca apresentar o teto como promessa de caminhada
+  completa máxima. Métricas comparativas de caminhada não devem omitir esses trechos.
+- Exceção obrigatória: a distância entre o ponto fundamental e o pino de entrega,
+  qualquer que seja, não impede atender o endereço nem o deixa órfão. Se não integrar
+  um grupo, conservar uma parada individual no ponto fundamental; nesse caso o
+  circuito entre âncora e referência é nulo, embora a caminhada completa possa ser longa.
+  Falta de dados de malha deve ser identificada como incerteza técnica, sem apagar a
+  entrega ou confundir uma parada lógica com percurso viável já demonstrado.
+- Pré-agrupamento é opcional e apenas orienta uma primeira rota. A otimização pode
+  construir/revisar grupos, mover âncoras e recalcular ordens. Não é uma etapa obrigatória
+  nem uma partição definitiva. A existência das referências fundamentais é obrigatória.
+
+Impacto no plano ainda a aplicar: RF-030 deve substituir a rejeição baseada na distância
+ao pino; RF-031/RF-032 devem avaliar o circuito limitado e a rota conjuntamente;
+TEST-004 deve comprovar conservação das entregas e medir os dois percursos; RF-034/RF-033
+devem prever configuração compatível e apresentação inequívoca do total ao usuário.
+Regressões necessárias incluem entrega isolada com pino distante, grupos com circuito
+acima do teto, retorno ao veículo, âncora movida, limite configurado e total exibido
+superior ao teto apenas pelos trechos que não entram no agrupamento. Os originais e
+os resultados históricos continuam preservados. Nenhum teste novo foi executado aqui.

@@ -5,7 +5,7 @@
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-09T00:37:12.563Z",
+    "atualizado_em": "2026-09-11T21:32:28.144Z",
     "gerado_por": "script"
   },
   "projeto": {
@@ -616,14 +616,14 @@
   },
   "contagens": {
     "_gerado_por_script": true,
-    "tarefas_concluidas": 13,
+    "tarefas_concluidas": 18,
     "tarefas_abertas": 20,
     "tarefas_no_ciclo": 1,
     "tarefas_na_reserva": 19,
-    "validacoes_pendentes": 3,
-    "requisitos_total": 27,
+    "validacoes_pendentes": 5,
+    "requisitos_total": 28,
     "requisitos_implementados": 10,
-    "requisitos_pendentes": 17,
+    "requisitos_pendentes": 18,
     "divida_tecnica_aberta": 0,
     "riscos_aceitos_ativos": 0,
     "riscos_aceitos_vencidos": 0,
@@ -682,8 +682,8 @@
     "bloqueio_em_tarefas": 40
   },
   "lembretes": [
-    "3 validacao(oes) manual(is) pendente(s): TASK-RF-037, TASK-RF-038, TASK-RF-039",
-    "12 tarefas sem auditoria (cadencia 10). Rode: mentor auditar preparar"
+    "5 validacao(oes) manual(is) pendente(s): TASK-RF-037, TASK-RF-038, TASK-RF-039, TASK-RF-030, TASK-SPIKE-002",
+    "15 tarefas sem auditoria (cadencia 10). Rode: mentor auditar preparar"
   ],
   "_lembretes_nota": "GERADO pelo doctor a cada execucao. Nao digite aqui: campo livre acumula prosa como qualquer outro.",
   "offsets_de_id": {

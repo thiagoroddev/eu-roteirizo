@@ -76,3 +76,7 @@ __utilidades-back-office__/spike-conversoes/.cache/
 
 # Logs e saidas temporarias do mentor
 .mentor-saidas/
+
+# Private real manifests and reproducible routing snapshots (TASK-RF-030).
+__utilidades-back-office__/romaneios/
+__utilidades-back-office__/auto-roteirizacao/.cache/

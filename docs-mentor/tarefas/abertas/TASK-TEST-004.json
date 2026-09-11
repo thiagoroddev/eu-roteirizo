@@ -26,10 +26,10 @@
   "concluida_em": null,
   "plano": {
     "muda": [
-      "__utilidades-back-office__/auto-roteirizacao/validar.arnes.ts (novo) - executar baseline e motor sobre a mesma entrada, inicio, raio e grafo local; emitir apenas metricas agregadas e identificadores anonimos.",
+      "__utilidades-back-office__/auto-roteirizacao/anchors.arnes.ts e corpus.ts - ampliar o arnes real iniciado na RF-030 para baseline por distancia, variantes e referencias humanas usando as mesmas entradas e malhas.",
       "src/__tests__/utils/routing/autoRouteCorpus.test.ts (novo) - regressao determinista em grafos/casos sinteticos versionados, sem rede ou planilhas reais.",
       "src/__tests__/utils/routing/__fixtures__/autoRouteCases.ts (novo) - cenarios construidos de rua paralela, mao unica, multiplos pacotes, raio-limite e desconexao; nao copiar linhas de planilhas reais.",
-      "__utilidades-back-office__/auto-roteirizacao/README.md (novo) - comando local, pre-condicoes, metricas, identificacao de versao/configuracao e separacao entre corpus privado e CI.",
+      "__utilidades-back-office__/auto-roteirizacao/README.md - ampliar protocolo ja criado na RF-030, com comparacao completa, regressao por caso, revisao humana e separacao entre corpus local e CI.",
       ".mentor-saidas/ - resultados locais com nome/data gerados pelo arnes; manter dados, coordenadas, codigos de pacote e conteudo de planilhas fora dos relatorios versionados."
     ],
     "criterios_aceite": [
@@ -42,8 +42,8 @@
         "teste": "autoRouteCorpus.test.ts > melhora a metrica de conversoes no corpus de referencia"
       },
       {
-        "texto": "Dadas as planilhas reais locais, quando validar, entao o arnes inventaria todos os arquivos e distingue executado, invalido e nao medido; falta de grafo nao vira sucesso. Registrar linhas, pontos unicos e pacotes como medidas diferentes.",
-        "teste": "nao se aplica: execucao local do arnes com os romaneios reais e relatorio agregado"
+        "texto": "Dados todos os XLSX locais e JSONs humanos das pastas numeradas, validar com coordenadas reais, preservar originais e reconciliar pontos/pacotes. Falta de caso esperado ou grafo invalida a execucao correspondente; nao medido nunca conta como aprovado.",
+        "teste": "anchors.arnes.ts > executa corpus completo e compara referencias humanas"
       },
       {
         "texto": "Dado qualquer run, quando gerar evidencia, entao registra versao do codigo, configuracao, identidade do corpus/grafo, cobertura, duplicatas, pendencias, conversoes/penalidade D3, km de veiculo, paradas, caminhada, tempo e estados expandidos sem dados de entrega.",
@@ -56,14 +56,23 @@
       {
         "texto": "Dado o run no desktop, quando relatar desempenho, entao identifica maquina, quantidade de pontos e repeticoes; a estimativa 4x do spike nao e rotulada como medicao em celular.",
         "teste": "nao se aplica: relatorio de medicao, com smoke Samsung M35 previsto na integracao"
+      },
+      {
+        "texto": "Comparar cenarios de 30/60/90/120m sem alterar o default do app. Mostrar cobertura, paradas, D3, metros de veiculo, circuito a pe, maior afastamento, tempo estimado e computacional por caso. Referencia humana fora do limite e identificada, nao corrigida ou descartada.",
+        "teste": "anchors.arnes.ts > compara limites e distingue restricoes humanas"
+      },
+      {
+        "texto": "Gerar resultado completo importavel separado do roteiro humano e evidencia da comparacao sobre o mesmo snapshot. Parear paradas por membros/posicao, nao por numero ordinal, para permitir inspecao pelo mantenedor.",
+        "teste": "anchors.arnes.ts > exporta alternativa e conserva referencia"
       }
     ],
-    "impacto": "Etapa de validacao do motor concluido, antes do botao. Foram encontrados 20 XLSX locais, todos ignorados pelo Git; a contagem de linhas XML inclui cabecalhos e nao representa enderecos. Reutilizar parser do produto e grafos cacheados quando disponiveis.",
+    "impacto": "Validacao completa antes do botao, ampliando os testes reais que ja comecam na RF-030. Detalhamento e evidencias: docs-mentor/tarefas/TASK-RF-030-plano.md. Referencias humanas sao baselines razoaveis, nao resposta unica. Reservar Humaita para comparar variantes sem calibracao nele; nao alegar generalizacao ampla.",
     "riscos": [
       "Romaneios contem dados reais: nao incluir conteudo, localizacoes, nomes ou codigos em logs compartilhados ou commits.",
       "Sem grafo disponivel para um arquivo, declarar nao medido; nao reduzir silenciosamente o corpus para os casos faceis.",
       "Tempos dependem de hardware e tamanho do grafo: nao impor limite de CI baseado no desktop do spike.",
-      "AGENTS do back-office aponta para dois guias legados ausentes; preservar a regra explicita de nao expor PII e conferir instrucoes vigentes antes de criar o arnes."
+      "AGENTS do back-office aponta para dois guias legados ausentes; preservar a regra explicita de nao expor PII e conferir instrucoes vigentes antes de criar o arnes.",
+      "Ajustar o motor para copiar os mesmos cinco roteiros produz evidencia fraca; separar dados do gerador das referencias do avaliador e reportar regressao por caso."
     ],
     "dependencias_novas": [],
     "proporcionalidade": "Pediram usar romaneios reais e entregar o motor antes do botao; uma etapa de validacao concentra comparabilidade, regressao e medidas, sem criar uma tarefa por planilha."

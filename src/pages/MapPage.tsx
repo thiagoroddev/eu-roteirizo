@@ -55,7 +55,8 @@ import { routeProgress, nextStopSuggestion, suggestedNextSeed } from "../utils/r
 import { stopWalkEstimate, plannedRouteTotals, stopLegs } from "../utils/routing/estimates";
 import { assignedPointIds, pointsWithinRadius } from "../utils/routing/selectors";
 import { indexPointsById, nearestStopTo } from "../utils/routing/selectors";
-import { suggestVehicleStop } from "../utils/routing/vehicleStop";
+import { suggestVehicleStop, defaultVehicleStop } from "../utils/routing/vehicleStop";
+import { streetNameOf } from "../utils/routing/streets";
 import { nearestWayName } from "../utils/routing/match";
 import { nearestFirstOrder } from "../utils/routing/walkOrder";
 import { pedestrianGraph } from "../utils/routing/pedestrian";
@@ -727,11 +728,37 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
     const members = draft.pointIds.map((id) => pointsById.get(id)).filter((p): p is DeliveryPoint => p !== undefined);
     const seed = members.find((m) => m.id === draft.seedPointId) ?? members[0];
     if (!seed) return;
-    const projected = suggestVehicleStop(graph, seed);
+    const projected = defaultVehicleStop(graph, seed, streetNameOf(seed.address));
     if (projected.lat === draft.vehicleStop.lat && projected.lng === draft.vehicleStop.lng) return;
     dispatch({ type: "RESET_VEHICLE_STOP", suggestedVehicleStop: projected });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fires on graph arrival / membership change; the default flag + the equality guard above stop it from looping
   }, [graph, draftAnchorIsDefault, draftPointsSignature, pointsById, dispatch]);
+
+  /**
+   * O mesmo, para as paradas JÁ FIRMADAS (TASK-BG-016): quando o grafo chega,
+   * toda parada ainda no padrão é reancorada na rua do endereço. Sem isto, um
+   * roteiro salvo (ou importado de um export antigo) ficaria para sempre com a
+   * âncora na via interna do condomínio, porque a regra do padrão mudou depois
+   * de ele ter sido criado. Decisão do humano em 11/09: corrigir da raiz, já que
+   * o projeto ainda está em teste com um usuário só.
+   *
+   * Parada movida à mão não é tocada (o reducer garante), o auto-save persiste a
+   * correção, e o REPROJECT devolve o mesmo estado quando nada muda — então isto
+   * não fica gravando a cada carga de grafo.
+   */
+  const stopsSignature = builderState.stops.map((s) => s.id).join("|");
+  useEffect(() => {
+    if (!graph || builderState.draft || builderState.stops.length === 0) return;
+    const positions: Record<string, LatLng> = {};
+    for (const stop of builderState.stops) {
+      if (stop.vehicleStopIsDefault === false) continue;
+      const seed = pointsById.get(stop.pointIds[0]);
+      if (!seed) continue;
+      positions[stop.id] = defaultVehicleStop(graph, seed, streetNameOf(seed.address));
+    }
+    if (Object.keys(positions).length > 0) dispatch({ type: "REPROJECT_DEFAULT_ANCHORS", positions });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- roda na chegada do grafo e quando o conjunto de paradas muda; o reducer devolve o MESMO estado sem mudança efetiva, então não há laço
+  }, [graph, stopsSignature, pointsById, dispatch]);
 
   const handleConfirmPoint = () => {
     if (!pendingPoint) return;
@@ -841,7 +868,7 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
     const members = draft.pointIds.map((id) => pointsById.get(id)).filter((p): p is DeliveryPoint => p !== undefined);
     const seed = members.find((m) => m.id === draft.seedPointId) ?? members[0];
     if (!seed) return;
-    dispatch({ type: "RESET_VEHICLE_STOP", suggestedVehicleStop: suggestVehicleStop(graph, seed) });
+    dispatch({ type: "RESET_VEHICLE_STOP", suggestedVehicleStop: defaultVehicleStop(graph, seed, streetNameOf(seed.address)) });
   };
   const handleReverseDraftOrder = () => dispatch({ type: "REVERSE_DRAFT_ORDER" });
   const handleMakeDraftAnchor = (pointId: string) => dispatch({ type: "MAKE_POINT_ANCHOR", pointId });
@@ -990,7 +1017,7 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
   /** The anchor this stop is BORN with (RF-52): the address chosen by the user
       (selectedPoint) — projected onto the street in front of it. */
   const suggestedAnchor = useMemo(() => {
-    return selectedPoint ? suggestVehicleStop(graph, selectedPoint) : null;
+    return selectedPoint ? defaultVehicleStop(graph, selectedPoint, streetNameOf(selectedPoint.address)) : null;
   }, [graph, selectedPoint]);
   const suggestedPoints = useMemo(() => {
     if (!suggestedAnchor || previewMembers.length === 0) return [];

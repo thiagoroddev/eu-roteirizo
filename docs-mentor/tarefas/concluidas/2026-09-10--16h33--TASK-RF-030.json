@@ -1,0 +1,194 @@
+{
+  "id": "TASK-RF-030",
+  "tipo": "RF",
+  "titulo": "Gerar ancoras livres e cobertura de entregas dentro do raio",
+  "fatia_de": "TASK-RF-029",
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "G"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": 2,
+  "origem": "RF-34, RF-52",
+  "requisitos": [
+    "RF-34",
+    "RF-52"
+  ],
+  "criada_em": "06/09/26 04:03",
+  "iniciada_em": "09/09/26 20:46",
+  "commit_base": "2bc790c9c441f6658baeb63ba55736e2fce8b191",
+  "concluida_em": "10/09/26 16:33",
+  "plano": {
+    "muda": [
+      "src/types/autoRouting.ts (novo) - contrato de candidatas com semente, ancora padrao, segmento/acessos dirigidos, cobertura, grupos provisorios, ignorados, pendencias e metricas; reutilizar tipos existentes.",
+      "src/utils/routing/autoRouteAnchors.ts (novo) - gerar candidatas multivia, indexar segmentos, deduplicar sem perder topologia e calcular cobertura; agrupamento guloso e referencia, nao escolha final.",
+      "src/__tests__/utils/routing/autoRouteAnchors.test.ts (novo) - contratos e bordas sinteticas complementares; ampliar syntheticGraph.ts apenas se faltar cenario.",
+      "__utilidades-back-office__/auto-roteirizacao/corpus.ts e prepareGraph.ts (novos) - ler romaneios locais com parser/normalizacao existentes, reconciliar JSONs e preparar snapshot OSM explicito; testes sem rede. corpus.test.ts complementa com testes de descoberta do leitor e integridade usando arquivos sinteticos, sem substituir o corpus real.",
+      "__utilidades-back-office__/auto-roteirizacao/anchors.arnes.ts, vitest.corpus.config.ts e README.md (novos) - suite real obrigatoria, matriz de raios/passos, comparacao humana e evidencia local reproduzivel.",
+      "package.json - comando test:auto-anchors para a suite real; .gitignore - proteger corpus JSON/XLSX e snapshots privados. Detalhamento e evidencias: docs-mentor/tarefas/TASK-RF-030-plano.md.",
+      "Extensao aprovada para inspecao no app: corpus.ts converte com exportador v1 existente; corpus.test.ts testa parser/importador/IndexedDB isolado/hidratacao; anchors.arnes.ts exporta cenarios e indice local; README.md explica importacao e limites. Sem mudanca de schema, UI ou otimizacao."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Dada uma semente real, gerar sua ancora padrao pela mesma projecao usada em MapPage/overview, preservando seu ID como referencia. Alternativas movidas nao alteram endereco/coordenadas/pacotes da entrega; defaultAnchorSeed legado nao define a regra.",
+        "teste": "anchors.arnes.ts > case-*: compares configured radii and alternative streets (suggestVehicleStop); autoRouteAnchors.test.ts > reproduces the selected seed default and preserves source addresses and packages"
+      },
+      {
+        "texto": "Dados casos reais de outra rua selecionados apos validar a malha, gerar alternativas nesses segmentos sem ler ancoras humanas como entrada. Manter ruas distintas com cobertura equivalente para a RF-031 escolher pela chegada/saida.",
+        "teste": "anchors.arnes.ts > case-*: compares configured radii and alternative streets (manualComparison); autoRouteAnchors.test.ts > keeps alternatives on a parallel road instead of only the nearest street"
+      },
+      {
+        "texto": "Dado cada R em 30, 60, 90 e 120m, todo membro automatico satisfaz haversine(ancora,ponto) <= R. Nao modificar o default do app ou o roteiro humano. Projecao padrao fora de R e diagnosticada e nao aprovada por excecao.",
+        "teste": "anchors.arnes.ts > case-*: compares configured radii and alternative streets (assertCoverage); autoRouteAnchors.test.ts > enforces the configured %im radius for every candidate member; distinguishes the exact boundary from just outside it"
+      },
+      {
+        "texto": "Dados os romaneios reais, cada ponto ativo fica uma vez no agrupamento provisorio ou pendente com motivo; ignorados separados, pacotes preservados e entradas intactas. A lista de candidatas pode ter coberturas sobrepostas sem duplicar atribuicoes finais.",
+        "teste": "anchors.arnes.ts > case-*: compares configured radii and alternative streets (assertCoverage e hash das entradas); autoRouteAnchors.test.ts > keeps ignored deliveries separate from covered or pending points"
+      },
+      {
+        "texto": "Dados segmentos dirigidos, paralelos ou geometricamente coincidentes mas desconectados, manter referencia do segmento e acessos de chegada/saida. Nao unir topologias diferentes nem limitar busca a nearestEdge de cada entrega.",
+        "teste": "autoRouteAnchors.test.ts > preserves disconnected overlapping segments and one-way accesses; keeps alternatives on a parallel road instead of only the nearest street"
+      },
+      {
+        "texto": "Dadas entradas invalidas, grafo vazio/insuficiente ou limite de trabalho atingido, informar causa e estado incompleto. Busca truncada nao prova ausencia de cobertura; fallback reto nao e caminho confirmado.",
+        "teste": "autoRouteAnchors.test.ts > does not approve a default anchor outside the radius or fall back without a graph; reports candidate budget exhaustion explicitly; respects the %s work limit; rejects invalid coordinates, repeated ids, invalid options and pedestrian-only graphs"
+      },
+      {
+        "texto": "Com mesmos dados/configuracao/grafo, repetir e permutar enumeracao produz a mesma ordenacao canonica, candidatas e referencia gulosa; nao depender de ID aleatorio, horario ou ordem de Map.",
+        "teste": "autoRouteAnchors.test.ts > is deterministic across input and graph enumeration without mutation; anchors.arnes.ts > case-*: compares configured radii and alternative streets (repeticoes por hash)"
+      },
+      {
+        "texto": "A suite real inventaria todos os XLSX e referencias numeradas, reconcilia pacotes/coordenadas e falha se caso esperado nao executar. Referencias humanas fora do raio sao preservadas e reportadas por cenario, nao ajustadas para favorecer o motor.",
+        "teste": "anchors.arnes.ts > reconciles every workbook with its available human reference; case-*: compares configured radii and alternative streets (manualComparison); afterAll verifica inventario completo; corpus.test.ts > inventories all original files and detects missing reference pairs"
+      },
+      {
+        "texto": "O run real usa snapshot local identificado, nao faz rede e registra configuracao, hashes, medidas de cobertura, trabalho e tempo por caso. Dados detalhados ficam locais, sem coordenadas ou IDs derivados delas em logs compartilhados.",
+        "teste": "anchors.arnes.ts > case-*: compares configured radii and alternative streets (fetch proibido e logs opacos); corpus.test.ts > checks snapshot hashes, input inventory and bounds without a network fallback"
+      },
+      {
+        "texto": "Comparar raios configuraveis e passos 5/10/20m, exibindo cobertura e custo computacional. Nao chamar distancia reta de caminhada nem prometer economia de veiculo antes da RF-031/RF-032.",
+        "teste": "anchors.arnes.ts > case-*: compares configured radii and alternative streets (RADII x STEPS, metrics e relatorio espacial)"
+      },
+      {
+        "texto": "Os JSONs de inspecao abrem pelo schema v1 existente e preservam ancoras, membros, todos os pacotes e pendencias livres. A ordem e rotulada nao otimizada; criar a exportacao nao altera entradas.",
+        "teste": "corpus.test.ts > inspection exports; anchors.arnes.ts > case-*: compares configured radii and alternative streets (importacao de cada variante de inspecao)"
+      },
+      {
+        "texto": "Variantes e execucoes recebem identidade propria sem sobrescrever roteiros manuais; importar, hidratar e editar preserva as outras copias. Arquivos e indice permanecem privados.",
+        "teste": "corpus.test.ts > imports variants without overwriting the manual reference and remains editable; anchors.arnes.ts > inventario de JSONs importaveis"
+      }
+    ],
+    "impacto": "Plano historico implementado; fechamento e commit autorizados pelo mantenedor, sem push. Detalhamento e evidencias: docs-mentor/tarefas/TASK-RF-030-plano.md. A semente fornece referencia de endereco e ancora inicial; o veiculo pode mudar de rua. Preservar alternativas evita a cobertura gulosa decidir prematuramente o roteiro. Comparar limites configuraveis primeiro foi escolhido pelo humano. Dominio puro e arnes local, sem mudar fluxo manual ou exportador. Extensao de inspecao aprovada: reutilizar o formato v1 do produto no arnes; roteirizacao completa e novas regras ficam para o experimento TASK-SPIKE-002 antes de adaptar o epico.",
+    "riscos": [
+      "Amostragem pode perder intervalos estreitos de cobertura; combinar projecoes/extremidades, limites de intervalos e refinamento, com haversine na verificacao final.",
+      "Podar candidata so por cobrir menos pontos pode eliminar rua melhor para o veiculo; preservar diversidade topologica e reportar limites de busca.",
+      "Os roteiros manuais admitem membros fora do raio salvo. Comparacao deve explicitar viabilidade por limite sem reescrever a referencia.",
+      "Caches de Copacabana nao cobrem integralmente Ipanema/Humaita e nao identificam coleta; preparar snapshot adequado antes de validar.",
+      "Raio geometrico nao comprova caminho a pe ou estacionamento permitido. Viabilidade dos circuitos e trajetos pertence a RF-031/RF-032.",
+      "JSONs de romaneios ainda aparecem como nao rastreados; proteger os arquivos antes de qualquer commit de implementacao. IDs pt_/stop_ tambem revelam coordenadas.",
+      "Importacao faz upsert por manifestId/routeName: cenarios precisam de IDs separados. Trajetos que o app desenha nao sao comprovacao de otimizacao ou da mesma malha congelada do teste."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram ancoras livres reproduzindo o fluxo manual e testes reais comparaveis. O modulo espacial e um pequeno arnes compartilhado entregam isso; a escolha global, integracao e UI continuam nas fatias existentes."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "10/09/26 03:55",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.9 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  78 passed (78)\n      Tests  894 passed (894)\n   Start at  16:28:52\n   Duration  71.61s (transform 19.41s, setup 101.94s, import 47.81s, tests 56.53s, environment 451.85s)\n\n(node:30512) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "10/09/26 16:30",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b\n\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "10/09/26 16:27",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .\n\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "10/09/26 16:28",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\nvite v7.3.5 building client environment for production...\ntransforming...\n✓ 1954 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/registerSW.js                 0.13 kB\ndist/manifest.webmanifest          0.75 kB\ndist/index.html                    2.79 kB │ gzip:   1.15 kB\ndist/assets/vendor-Dgihpmma.css   15.04 kB │ gzip:   6.38 kB\ndist/assets/index-CYMBXH50.css    28.24 kB │ gzip:   6.22 kB\ndist/assets/index-CA8dcakn.js    538.06 kB │ gzip: 103.23 kB\ndist/assets/vendor-B6etagQ-.js   803.28 kB │ gzip: 261.49 kB\n✓ built in 8.06s\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1791.56 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "10/09/26 16:30",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null
+    },
+    "validacao_manual": {
+      "rotulo": "NÃO EXECUTADO",
+      "vermelho_em": null,
+      "comando": null,
+      "codigo_saida": null,
+      "saida": null,
+      "executado_em": "10/09/26 02:25",
+      "evidencia_url": null,
+      "motivo": "Fatia de dominio puro e arnes local, sem alteracao de UI, gestos, PWA ou deploy. A equivalencia da ancora e verificada por testes contra a funcao do app. Nao certifica uso Android; validacao de roteiro completo e integracao permanecem em RF-032/TEST-004/RF-034/RF-033.",
+      "ressalva": null
+    }
+  },
+  "achados": [
+    {
+      "classe": 4,
+      "descricao": "RouteStop nao preserva seedPointId explicitamente; REOPEN_STOP usa pointIds[0] e comentarios do helper defaultAnchorSeed descrevem regra antiga. O motor novo preserva a semente selecionada separadamente; a integracao precisa manter essa referencia.",
+      "destino": "tarefa",
+      "ref": "TASK-RF-034"
+    },
+    {
+      "classe": 2,
+      "descricao": "JSONs reais e IDs derivados de coordenadas poderiam entrar no repositorio ou logs. Mitigacao implementada: corpus/cache/saidas ignorados, registros opacos e detalhes apenas locais; ignore nao criptografa arquivos.",
+      "destino": "tarefa",
+      "ref": "TASK-RF-030"
+    },
+    {
+      "classe": 5,
+      "descricao": "Os caches anteriores sem identidade e com extensao insuficiente nao sustentam validacao do corpus real. O arnes exige snapshot proprio, hashes e inventario completo, falha por ausencia e nao usa fallback de rede. CI publica nao substitui esta evidencia privada.",
+      "destino": "tarefa",
+      "ref": "TASK-TEST-004"
+    },
+    {
+      "classe": 4,
+      "descricao": "Regras posteriores para TASK-SPIKE-002: fundamentais obrigatorios, pre-agrupamento opcional, circuito entre referencias de 120m configuraveis, caminhada completa exibida e nenhuma entrega orfa apenas por distancia fundamental-pino. Procura padrao em 30/60m. O mantenedor aprovou prosseguir com o plano isolado antes de adaptar as outras fatias. Spike ainda na reserva e sem implementacao. RF-030 e seus gates/resultados historicos nao comprovam essas regras novas.",
+      "destino": "tarefa",
+      "ref": "TASK-SPIKE-002"
+    }
+  ],
+  "validacao": "pendente",
+  "validado_em": null,
+  "validacao_motivo": "Fechamento da fatia espacial autorizado, sem certificar produto completo. Equivalencia da ancora padrao e importacao verificadas automaticamente; capturas do mantenedor sao inspecao pontual. Validacao manual integral permanece pendente; Android e comparacao de trajetos completos dependem das fatias posteriores.",
+  "tarefas_geradas": [
+    "TASK-SPIKE-002"
+  ],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-10--16h33--TASK-RF-030.md"
+}

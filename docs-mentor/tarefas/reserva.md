@@ -19,6 +19,7 @@
 | `TASK-RF-026` | [fatia de TASK-RF-009] Marcacao de entrega, insucesso e desfazer | 3/5 de TASK-RF-009 | RF | critico | M/M | RF-37, RF-48, RN-22 |
 | `TASK-RF-027` | [fatia de TASK-RF-009] Status visual da execucao no mapa | 4/5 de TASK-RF-009 | RF | critico | P/M | RF-37 |
 | `TASK-RF-028` | [fatia de TASK-RF-009] Sumario, retomada e modo lista da execucao | 5/5 de TASK-RF-009 | RF | critico | M/M | RF-37, RF-47, RF-49 |
+| `TASK-RF-029` | Auto-roteirizacao por menor numero de conversoes | epico, 5 fatias | RF | importante | XG/XG | RF-34 |
 | `TASK-RF-031` | Calcular caminhos e ordenar paradas com custo de conversao | 2/6 de TASK-RF-029 | RF | importante | M/G | RF-34 |
 | `TASK-RF-032` | Montar o roteiro automatico completo e tratar trechos inviaveis | 3/6 de TASK-RF-029 | RF | importante | M/G | RF-34 |
 | `TASK-RF-033` | Adicionar botao Auto-roteirizar e validar a experiencia no celular | 4/6 de TASK-RF-029 | RF | importante | M/G | RF-34 |

@@ -71,6 +71,7 @@ export type RouteBuilderAction =
   | { type: "MOVE_VEHICLE_STOP"; position: LatLng }
   | { type: "MAKE_POINT_ANCHOR"; pointId: string }
   | { type: "RESET_VEHICLE_STOP"; suggestedVehicleStop: LatLng }
+  | { type: "REPROJECT_DEFAULT_ANCHORS"; positions: Record<string, LatLng> }
   | { type: "REVERSE_DRAFT_ORDER" }
   | { type: "COMMIT_STOP" }
   | { type: "CANCEL_DRAFT" }
@@ -261,6 +262,37 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
       if (!state.draft) return state;
       const reset: StopDraft = { ...state.draft, vehicleStop: action.suggestedVehicleStop, vehicleStopIsDefault: true };
       return { ...state, draft: resweepDraft(state, reset) };
+    }
+
+    /**
+     * Reancora as paradas ainda no PADRÃO nas posições recalculadas (TASK-BG-016).
+     *
+     * Nasceu porque a regra do padrão mudou (a parada vai para a rua do endereço,
+     * não para a via interna do condomínio) e roteiro já salvo — inclusive
+     * importado de um export antigo — ficaria com a âncora velha para sempre.
+     * O reducer segue puro: quem tem o grafo calcula as posições e passa prontas,
+     * como em RESET_VEHICLE_STOP.
+     *
+     * Parada que o usuário moveu à mão (`vehicleStopIsDefault === false`) NUNCA é
+     * tocada: corrigir o padrão não pode desfazer decisão explícita de ninguém.
+     * Sem mudança efetiva devolve o MESMO objeto de estado, senão o auto-save
+     * (que observa `builderState`) gravaria a cada carga de grafo.
+     */
+    case "REPROJECT_DEFAULT_ANCHORS": {
+      let changed = false;
+      const stops = state.stops.map((stop) => {
+        if (stop.vehicleStopIsDefault === false) return stop;
+        const position = action.positions[stop.id];
+        if (!position || (position.lat === stop.vehicleStop.lat && position.lng === stop.vehicleStop.lng)) return stop;
+        changed = true;
+        return {
+          ...stop,
+          vehicleStop: position,
+          // A âncora nova re-varre a ordem a pé: o 1º endereço é o mais próximo dela.
+          pointIds: sweepWithSense(position, draftPoints(state, stop.pointIds), stop.reversed ?? false, stop.pointIds[0]),
+        };
+      });
+      return changed ? { ...state, stops } : state;
     }
 
     /** "Inverter ordem" (RF-006.6/.17): flips the walking SENSE. It RE-SWEEPS
