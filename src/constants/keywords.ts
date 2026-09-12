@@ -59,6 +59,7 @@ const residentialRaw = [
   "cbt",
   "do lado",
   "depois",
+  "edificio",
   "em frente",
   "enfrente",
   "entrar",
@@ -86,6 +87,7 @@ const residentialRaw = [
   "travessa do",
   "vila",
   "vizinho",
+  "zelador",
 ];
 
 const commercialRaw = [
@@ -157,6 +159,8 @@ const commercialRaw = [
   "distribuidora",
   "domingo",
   "drogaria",
+  "drogarias",
+  "emporio",
   "empresa",
   "ensino",
   "estacao",
@@ -176,6 +180,7 @@ const commercialRaw = [
   "galpao",
   "gasolina",
   "grafica",
+  "grill",
   "hort",
   "hortfrut",
   "hortifruti",
@@ -244,6 +249,7 @@ const commercialRaw = [
   "setor",
   "shopping",
   "shop",
+  "sobreloja",
   "solucoes",
   "sorveteira",
   "sorveteria",
@@ -252,6 +258,8 @@ const commercialRaw = [
   "supermercado",
   "sushi",
   "tabacaria",
+  "teatro",
+  "tech",
   "tijolinhos",
   "trailer",
   "upa",
@@ -259,6 +267,7 @@ const commercialRaw = [
   "vidraceiro",
   "vidracaria",
   "vila olimpica",
+  "vitrine",
   "xerox",
   "zig zag",
 ];

@@ -1,0 +1,107 @@
+{
+  "id": "TASK-BG-017",
+  "tipo": "BG",
+  "titulo": "titulo-autossuficiente: Adicionar keywords ausentes na classificacao comercial/residencial a partir de romaneios reais (edificio, zelador, emporio, drogarias, sobreloja, grill, vitrine, teatro, tech)",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "sem_requisito_motivo": null,
+  "criada_em": "12/09/26 05:53",
+  "iniciada_em": "12/09/26 05:53",
+  "commit_base": "8f4b23a971d419076a2571c82dce0ef37bfabe0f",
+  "concluida_em": "12/09/26 06:08",
+  "plano": {
+    "muda": [
+      "src/constants/keywords.ts - adicionar \"edificio\" e \"zelador\" a residentialRaw; adicionar \"tech\", \"emporio\", \"sobreloja\", \"drogarias\", \"grill\", \"vitrine\" e \"teatro\" a commercialRaw",
+      "src/__tests__/utils/inferLocationType.test.ts - novos casos cobrindo os 9 termos novos, incluindo o gap de \"drogarias\" (plural) nao bater com \"drogaria\""
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Endereco cujo complemento contem cada um dos 9 termos novos e classificado como HOME_CORRECTED ou OFFICE_CORRECTED, conforme a lista",
+        "teste": "inferLocationType.test.ts > \"detects keywords added from real romaneio analysis (TASK-BG-017)\""
+      },
+      {
+        "texto": "\"drogarias\" (plural) e reconhecido como comercial, corrigindo a lacuna de correspondencia exata com \"drogaria\" (singular)",
+        "teste": "inferLocationType.test.ts > mesmo bloco acima, caso especifico de plural"
+      }
+    ],
+    "impacto": "src/utils/inferLocationType.ts (consumidor das listas via COMMERCIAL_KEYWORDS/RESIDENTIAL_KEYWORDS), Sumario (countCommercialAddresses) e coluna \"Horario Comercial?\" na UI",
+    "riscos": [
+      "Termos ambiguos levantados na mesma varredura (andar, recepcao, administracao, studio, garagem, subsolo, vigilante) ficaram de fora por decisao do mantenedor humano, para nao arriscar falso positivo (ex.: \"andar\" na lista residencial capturaria enderecos comerciais tipo \"andar 5, sala 302\" antes da checagem de sala). Registrado como observacao, nao como pendencia bloqueante."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram para commitar uma keyword esquecida (\"tech\"); ao revisar os romaneios reais para justifica-la, o mantenedor pediu para levantar outras palavras faltantes na mesma varredura de dados. O tamanho da mudanca - 9 palavras somadas a duas listas ja existentes, sem novo arquivo, modulo ou mecanismo - e proporcional ao pedido original."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "12/09/26 06:01",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  937 passed (937)\n   Start at  06:04:25\n   Duration  35.79s (transform 10.83s, setup 29.11s, import 22.11s, tests 68.05s, environment 114.56s)\n\n(node:34312) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "12/09/26 06:05",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "12/09/26 06:05",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "12/09/26 06:05",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1999 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CYMBXH50.css   \u001b[39m\u001b[1m\u001b[2m 28.24 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-BzC2nj7O.js    \u001b[39m\u001b[1m\u001b[33m539.65 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.76 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-BH0bsWaq.js   \u001b[39m\u001b[1m\u001b[33m808.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 263.08 kB\u001b[22m\n\u001b[32m✓ built in 6.14s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1798.40 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "12/09/26 06:05",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    }
+  },
+  "achados": [],
+  "validacao": "dispensado",
+  "validado_em": "12/09/26 06:08",
+  "validacao_motivo": "Funcao pura (inferLocationType), sem UI/layout, persistencia ou calculo de rota envolvidos; testes unitarios cobrem exatamente os textos reais levantados na varredura de romaneios que motivaram cada palavra nova.",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-12--06h08--TASK-BG-017.md"
+}
