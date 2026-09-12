@@ -27,3 +27,4 @@
 | 11/09/26 20:07 | [`TASK-RF-041`](./2026-09-11--20h07--TASK-RF-041.md) | RF | Recuperar o conserto do envelope da malha viaria: incluir o ponto inicial no bbox do useRoadGraph | - | concluida | aprovado |
 | 11/09/26 20:16 | [`TASK-RF-042`](./2026-09-11--20h16--TASK-RF-042.md) | RF | Completar os criterios do RF-55 com badge Ignorado e persistencia no roteiro exportado | - | concluida | aprovado |
 | 11/09/26 23:44 | [`TASK-CHORE-015`](./2026-09-11--23h44--TASK-CHORE-015.md) | CHORE | Atualizar mentor-agent para v0.4.0 | - | concluida | dispensado |
+| 12/09/26 06:20 | [`TASK-CHORE-016`](./2026-09-12--06h20--TASK-CHORE-016.md) | CHORE | titulo-autossuficiente: Atualizar mentor-agent para v0.5.0 | - | concluida | dispensado |
