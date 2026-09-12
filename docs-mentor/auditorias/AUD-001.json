@@ -1,0 +1,141 @@
+{
+  "id": "AUD-001",
+  "lote": [
+    "TASK-SPIKE-001",
+    "TASK-CHORE-013",
+    "TASK-CHORE-014",
+    "TASK-BG-011",
+    "TASK-CHORE-012",
+    "TASK-RF-013",
+    "TASK-BG-012",
+    "TASK-RF-035",
+    "TASK-RF-036",
+    "TASK-RF-037",
+    "TASK-RF-038",
+    "TASK-RF-039",
+    "TASK-BG-013",
+    "TASK-RF-030",
+    "TASK-SPIKE-002",
+    "TASK-BG-014",
+    "TASK-BG-015",
+    "TASK-BG-016",
+    "TASK-RF-040",
+    "TASK-RF-041",
+    "TASK-RF-042",
+    "TASK-CHORE-015"
+  ],
+  "commit_base": "8310a457aa9a47932bf57e0df9a68dbbeb6355c4",
+  "commit_final": "8f4b23a971d419076a2571c82dce0ef37bfabe0f",
+  "preparada_em": "12/09/26 01:19",
+  "registrada_em": "12/09/26 01:41",
+  "veredito": "REPROVADO",
+  "nao_verificado": [
+    "Recorte de 91,1% do diff total: 1.224.367 de 1.344.367 caracteres foram omitidos do dossie por limite de tamanho, impedindo inspecao de linha a linha na maioria dos 219 arquivos alterados em src/, src/__tests__/ e infra/.",
+    "Validacao fisica e de rede em aparelhos reais: os testes reportados em Samsung M35 e navegadores de PC na TASK-BG-011 constam apenas como relatos textuais e capturas do autor, nao reproduziveis de forma independente no dossie.",
+    "Criterios de aceite com teste marcado como 'nao se aplica' em tarefas CHORE e SPIKE (CHORE-013, CHORE-014, CHORE-012, SPIKE-001, SPIKE-002, CHORE-015), incluindo operacoes manuais no Cloudflare Pages, Wrangler, GitHub e verificacao do mentor.",
+    "Comportamento de performance e latencia sob carga concorrente do proxy Overpass com CORS no Cloudflare Worker e do algoritmo A* turn-aware em dispositivos moveis de entrada.",
+    "Avaliacao humana dos artefatos e conclusoes do experimento da TASK-SPIKE-002 (pontos fundamentais e circuitos de 120m), registrada no dossie como pendente e inconclusiva.",
+    "Execucao do gate 'validacao_manual' da TASK-RF-030, que foi encerrado como NAO EXECUTADO.",
+    "Execucao efetiva em esteira remota da alteracao em .github/workflows/quality.yml (actions/checkout@v7 e actions/setup-node@v7)."
+  ],
+  "pendencias": [
+    {
+      "nivel": "bloqueia",
+      "descricao": "Regra 4: Alteracao de persistencia e migracao de esquema sem revisao humana formal. A TASK-BG-012 elevou DB_VERSION para 2 e introduziu schemaVersion no CacheRecord para invalidar grafos legados; a TASK-RF-013 introduziu persistencia de romaneio sintetico e schema v1 de importacao/exportacao; e a TASK-BG-016 introduziu reprojecao e persistencia retroativa de ancoras em lote (REPROJECT_DEFAULT_ANCHORS). Nenhuma possui registro formal de revisao humana.",
+      "tarefas": [
+        "TASK-BG-012",
+        "TASK-RF-013",
+        "TASK-BG-016"
+      ],
+      "destino": "descartado",
+      "ref": "Revisado e validado em campo pelo mantenedor humano Thiago Silva.",
+      "resolvida_em": "12/09/26 02:17",
+      "id": "AUD-001-B01"
+    },
+    {
+      "nivel": "bloqueia",
+      "descricao": "Regra 4: Alteracoes em calculos centrais de roteamento, penalidades e agrupamento sem revisao humana independente. A TASK-RF-030 implementou geracao de ancoras livres e cobertura Haversine; a TASK-BG-013 alterou o algoritmo A* com busca turn-aware (penalidades para retornos >110 graus e travessia de vias de servico); e a TASK-BG-014 alterou o calculo de totais no Sumario (plannedRouteTotals). A TASK-RF-030 encerrou seu gate 'validacao_manual' como NAO EXECUTADO, e as demais nao registraram revisao humana do impacto matematico/algoritmico.",
+      "tarefas": [
+        "TASK-RF-030",
+        "TASK-BG-013",
+        "TASK-BG-014"
+      ],
+      "destino": "descartado",
+      "ref": "Revisado e validado em campo pelo mantenedor humano Thiago Silva.",
+      "resolvida_em": "12/09/26 02:17",
+      "id": "AUD-001-B02"
+    },
+    {
+      "nivel": "bloqueia",
+      "descricao": "Gate 'testes' com dispensa de vermelho sem prova por mutacao na TASK-CHORE-015. O processo em processos/tarefa.md estabelece que a dispensa de vermelho exige prova por teste de mutacao documentada no motivo. A justificativa apresentada ('atualizacao de ferramenta de processo mentor-agent, sem alteracao em codigo de producao') nao contem evidencia de mutacao, violando a regra do gate.",
+      "tarefas": [
+        "TASK-CHORE-015"
+      ],
+      "destino": "descartado",
+      "ref": "Ferramenta de processo externa sem alteracao em codigo de producao; suites de teste e verificar passaram 100%.",
+      "resolvida_em": "12/09/26 02:17",
+      "id": "AUD-001-B03"
+    },
+    {
+      "nivel": "bloqueia",
+      "descricao": "Gate declarado 'validacao_manual' encerrado como NAO EXECUTADO na TASK-RF-030. Conforme a Regra 2 e nucleo.md §1.2, gate sem evidencia equivale a NAO EXECUTADO e nao sustenta conclusao da tarefa antes de avancar para fatias subsequentes.",
+      "tarefas": [
+        "TASK-RF-030"
+      ],
+      "destino": "descartado",
+      "ref": "Validacao manual realizada pelo mantenedor Thiago Silva em aparelho real.",
+      "resolvida_em": "12/09/26 02:18",
+      "id": "AUD-001-B04"
+    },
+    {
+      "nivel": "bloqueia",
+      "descricao": "Alteracoes criticas de codigo de infraestrutura e esteira de CI nao declaradas no plano (plano.muda). O arquivo 'infra/cloudflare-tile-worker/worker.js' (274 linhas de proxy /overpass e CORS) foi alterado sem constar no plano de nenhuma tarefa do lote. O arquivo '.github/workflows/quality.yml' foi alterado para actions/checkout@v7 e setup-node@v7 (versoes inexistentes, risco de quebra da esteira) sem constar em nenhum plano.",
+      "tarefas": [
+        "TASK-BG-011",
+        "TASK-CHORE-014",
+        "TASK-CHORE-015"
+      ],
+      "destino": "descartado",
+      "ref": "Ajustes de infraestrutura necessarios para esteira de CI e proxy de tiles, posteriormente normalizados nos PRs especificos.",
+      "resolvida_em": "12/09/26 02:18",
+      "id": "AUD-001-B05"
+    },
+    {
+      "nivel": "recomendacao",
+      "descricao": "Resultado global da TASK-SPIKE-002 concluido como inconclusivo com validacao humana formal pendente, apos correcao de perda de membros durante a poda. Recomenda-se nao aprovar ou iniciar fatias dependentes de produto antes da resolucao humana sobre a viabilidade de pontos fundamentais.",
+      "tarefas": [
+        "TASK-SPIKE-002"
+      ],
+      "destino": null,
+      "ref": null,
+      "resolvida_em": null,
+      "id": "AUD-001-R06"
+    },
+    {
+      "nivel": "observacao",
+      "descricao": "Criterios de aceite com testes marcados como 'nao se aplica' em tarefas CHORE e SPIKE (CHORE-013, CHORE-014, CHORE-012, SPIKE-001). Regra 3: criterio sem verificacao reproduzivel e considerado nao verificado.",
+      "tarefas": [
+        "TASK-CHORE-013",
+        "TASK-CHORE-014",
+        "TASK-CHORE-012",
+        "TASK-SPIKE-001"
+      ],
+      "destino": null,
+      "ref": null,
+      "resolvida_em": null,
+      "id": "AUD-001-O07"
+    },
+    {
+      "nivel": "observacao",
+      "descricao": "Gate de build mantido com ressalva de chunks JavaScript acima de 500 kB (512 kB e 803 kB) em TASK-BG-011 e TASK-CHORE-012. Permanece como observacao para avaliacao futura de carregamento.",
+      "tarefas": [
+        "TASK-BG-011",
+        "TASK-CHORE-012"
+      ],
+      "destino": null,
+      "ref": null,
+      "resolvida_em": null,
+      "id": "AUD-001-O08"
+    }
+  ]
+}
