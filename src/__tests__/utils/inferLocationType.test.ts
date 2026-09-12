@@ -97,6 +97,30 @@ describe("inferLocationType", () => {
     });
 
     // ========================================================================================
+    // 3.1 KEYWORDS LEVANTADAS EM ROMANEIOS REAIS (TASK-BG-017)
+    // ========================================================================================
+
+    describe("detects keywords added from real romaneio analysis (TASK-BG-017)", () => {
+      it("classifies new commercial keywords", () => {
+        expect(inferLocationType("Rua E, 50, Tech Solutions")).toBe(ICON_KEYS.OFFICE_CORRECTED);
+        expect(inferLocationType("Rua E, 50, Empório Central")).toBe(ICON_KEYS.OFFICE_CORRECTED);
+        expect(inferLocationType("Rua E, 50, Sobreloja")).toBe(ICON_KEYS.OFFICE_CORRECTED);
+        expect(inferLocationType("Rua E, 50, Grill do Zé")).toBe(ICON_KEYS.OFFICE_CORRECTED);
+        expect(inferLocationType("Rua E, 50, Vitrine da loja")).toBe(ICON_KEYS.OFFICE_CORRECTED);
+        expect(inferLocationType("Rua E, 50, Teatro Municipal")).toBe(ICON_KEYS.OFFICE_CORRECTED);
+      });
+
+      it('classifies "drogarias" (plural) as commercial, closing the gap with "drogaria" (singular)', () => {
+        expect(inferLocationType("Rua F, 60, Drogarias Rio")).toBe(ICON_KEYS.OFFICE_CORRECTED);
+      });
+
+      it("classifies new residential keywords", () => {
+        expect(inferLocationType("Rua G, 70, Edifício Cristal")).toBe(ICON_KEYS.HOME_CORRECTED);
+        expect(inferLocationType("Rua G, 70, Falar com o zelador")).toBe(ICON_KEYS.HOME_CORRECTED);
+      });
+    });
+
+    // ========================================================================================
     // 4. PROTECTION SCENARIOS (FALSE POSITIVES)
     // ========================================================================================
 
