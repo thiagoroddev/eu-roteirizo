@@ -14,15 +14,16 @@
 | 08/09/26 08:04 | [`TASK-BG-012`](./2026-09-08--08h04--TASK-BG-012.md) | BG | Corrigir conectividade de alcas viarias e regras de mao unica no grafo OSM | - | concluida | aprovado |
 | 08/09/26 08:54 | [`TASK-RF-035`](./2026-09-08--08h54--TASK-RF-035.md) | RF | Permitir insercao de parada em posicao arbitraria e reordenacao no rascunho | - | concluida | aprovado |
 | 08/09/26 10:08 | [`TASK-RF-036`](./2026-09-08--10h08--TASK-RF-036.md) | RF | Recomecar rascunho no cabecalho, foco na ultima parada ao deletar e rotulo Deletar parada | - | concluida | aprovado |
-| 08/09/26 13:06 | [`TASK-RF-037`](./2026-09-08--13h06--TASK-RF-037.md) | RF | Preservar endereco escolhido pelo usuario como ancora e primeiro ponto ao criar parada com membros englobados | - | concluida | pendente |
-| 08/09/26 17:44 | [`TASK-RF-038`](./2026-09-08--17h44--TASK-RF-038.md) | RF | Mutirao de UI do Meu Roteiro: resumo da parada em 2 linhas, badge P{N} estilizado, porcentagem no cabecalho, cores das paradas, tabelas no sumario e remocao de reordenacao | - | concluida | pendente |
-| 08/09/26 18:34 | [`TASK-RF-039`](./2026-09-08--18h34--TASK-RF-039.md) | RF | Nome unico para arquivos JSON exportados com data do romaneio, 4 ultimos digitos do AT e bairro predominante | - | concluida | pendente |
+| 08/09/26 13:06 | [`TASK-RF-037`](./2026-09-08--13h06--TASK-RF-037.md) | RF | Preservar endereco escolhido pelo usuario como ancora e primeiro ponto ao criar parada com membros englobados | - | concluida | aprovado |
+| 08/09/26 17:44 | [`TASK-RF-038`](./2026-09-08--17h44--TASK-RF-038.md) | RF | Mutirao de UI do Meu Roteiro: resumo da parada em 2 linhas, badge P{N} estilizado, porcentagem no cabecalho, cores das paradas, tabelas no sumario e remocao de reordenacao | - | concluida | aprovado |
+| 08/09/26 18:34 | [`TASK-RF-039`](./2026-09-08--18h34--TASK-RF-039.md) | RF | Nome unico para arquivos JSON exportados com data do romaneio, 4 ultimos digitos do AT e bairro predominante | - | concluida | aprovado |
 | 08/09/26 21:37 | [`TASK-BG-013`](./2026-09-08--21h37--TASK-BG-013.md) | BG | Impedir retornos em angulo agudo e conversoes proibidas em contramao | - | concluida | aprovado |
-| 10/09/26 16:33 | [`TASK-RF-030`](./2026-09-10--16h33--TASK-RF-030.md) | RF | Gerar ancoras livres e cobertura de entregas dentro do raio | 1/6 de TASK-RF-029 | concluida | pendente |
-| 11/09/26 03:11 | [`TASK-SPIKE-002`](./2026-09-11--03h11--TASK-SPIKE-002.md) | SPIKE | Validar roteiros por pontos fundamentais e circuito de agrupamento configuravel | - | concluida | pendente |
+| 10/09/26 16:33 | [`TASK-RF-030`](./2026-09-10--16h33--TASK-RF-030.md) | RF | Gerar ancoras livres e cobertura de entregas dentro do raio | 1/6 de TASK-RF-029 | concluida | aprovado |
+| 11/09/26 03:11 | [`TASK-SPIKE-002`](./2026-09-11--03h11--TASK-SPIKE-002.md) | SPIKE | Validar roteiros por pontos fundamentais e circuito de agrupamento configuravel | - | concluida | aprovado |
 | 11/09/26 06:04 | [`TASK-BG-014`](./2026-09-11--06h04--TASK-BG-014.md) | BG | Sumario e painel do mapa mostram distancia e tempo diferentes para o mesmo roteiro | - | concluida | aprovado |
 | 11/09/26 06:44 | [`TASK-BG-015`](./2026-09-11--06h44--TASK-BG-015.md) | BG | Proximo aparece no endereco da parada do veiculo mesmo quando a ancora nao foi movida | - | concluida | aprovado |
 | 11/09/26 16:56 | [`TASK-BG-016`](./2026-09-11--16h56--TASK-BG-016.md) | BG | Parada padrao do veiculo cai em via de servico dentro do quarteirao em vez da rua do endereco | - | concluida | aprovado |
-| 11/09/26 20:01 | [`TASK-RF-040`](./2026-09-11--20h01--TASK-RF-040.md) | RF | Reconciliar RF-55 (ignorar enderecos) com o catalogo: atestar entrega e fechar a lacuna de teste do marcador | - | concluida | pendente |
-| 11/09/26 20:07 | [`TASK-RF-041`](./2026-09-11--20h07--TASK-RF-041.md) | RF | Recuperar o conserto do envelope da malha viaria: incluir o ponto inicial no bbox do useRoadGraph | - | concluida | pendente |
-| 11/09/26 20:16 | [`TASK-RF-042`](./2026-09-11--20h16--TASK-RF-042.md) | RF | Completar os criterios do RF-55 com badge Ignorado e persistencia no roteiro exportado | - | concluida | pendente |
+| 11/09/26 20:01 | [`TASK-RF-040`](./2026-09-11--20h01--TASK-RF-040.md) | RF | Reconciliar RF-55 (ignorar enderecos) com o catalogo: atestar entrega e fechar a lacuna de teste do marcador | - | concluida | aprovado |
+| 11/09/26 20:07 | [`TASK-RF-041`](./2026-09-11--20h07--TASK-RF-041.md) | RF | Recuperar o conserto do envelope da malha viaria: incluir o ponto inicial no bbox do useRoadGraph | - | concluida | aprovado |
+| 11/09/26 20:16 | [`TASK-RF-042`](./2026-09-11--20h16--TASK-RF-042.md) | RF | Completar os criterios do RF-55 com badge Ignorado e persistencia no roteiro exportado | - | concluida | aprovado |
+| 11/09/26 23:44 | [`TASK-CHORE-015`](./2026-09-11--23h44--TASK-CHORE-015.md) | CHORE | Atualizar mentor-agent para v0.4.0 | - | concluida | dispensado |

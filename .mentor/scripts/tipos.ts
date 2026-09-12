@@ -89,6 +89,11 @@ export type NomeGate = (typeof NOMES_DE_GATE)[number]
 /** Marcador que o script escreve e a IA substitui. Nenhum pode sobreviver ao fechamento. */
 export const MARCADOR = 'PREENCHER:'
 
+export interface VermelhoDispensado {
+  dispensado_em: string
+  motivo: string
+}
+
 export interface RegistroGate {
   rotulo: Rotulo
   /**
@@ -96,21 +101,6 @@ export interface RegistroGate {
    * asercao fraca, dublê que devolve o esperado, ramo que nem executa, tudo isso passa de primeira.
    */
   vermelho_em: string | null
-  /**
-   * Quando o vermelho foi **dispensado por impossibilidade**, com motivo escrito.
-   *
-   * Existe para o unico caso em que o vermelho nao pode existir: trabalho
-   * RETROATIVO, em que o codigo ja foi entregue antes da tarefa (reconciliar
-   * catalogo, atestar entrega de outra sessao). Ali a suite ja passa, entao
-   * `--esperando-vermelho` se recusa — com razao — e a tarefa fica sem saida.
-   *
-   * NAO e' atalho para "nao deu tempo": a dispensa exige motivo escrito e o
-   * fechamento passa a depender dele. A evidencia equivalente esperada e' a
-   * checagem de MUTACAO (quebrar a implementacao de proposito e provar que o
-   * teste acusa), que prova o mesmo que o vermelho: o teste falha quando a
-   * regra e' violada. Ver docs-mentor/melhorias-do-pacote.md.
-   */
-  vermelho_dispensado_em: string | null
   comando: string | null
   codigo_saida: number | null
   saida: string | null
@@ -118,6 +108,11 @@ export interface RegistroGate {
   evidencia_url: string | null
   motivo: string | null
   ressalva: string | null
+  vermelho_dispensado?: VermelhoDispensado | null
+  /** @deprecated Legado plano para retrocompatibilidade com TASK-RF-040/042 */
+  vermelho_dispensado_em?: string | null
+  /** @deprecated Legado plano */
+  vermelho_motivo?: string | null
 }
 
 export interface Plano {
@@ -145,6 +140,7 @@ export interface Tarefa {
   ordem: number | null
   origem: string
   requisitos: string[]
+  sem_requisito_motivo?: string | null
   criada_em: string
   iniciada_em: string | null
   /** HEAD no momento do `iniciar`. E' a base do diff que a auditoria le'. `null` = projeto sem git. */

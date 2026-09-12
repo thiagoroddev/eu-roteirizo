@@ -159,7 +159,7 @@ Todos os portoes foram respondidos ou dispensados com motivo.
 - `configuracoes_de_plataforma.segredos_do_ambiente_de_esteira`: GitHub API, 2026-09-06: 0 segredos e 0 environments. quality.yml nao os usa; contents: read. Evidencia em TASK-CHORE-012.
 - `revisao_geral.ultima_em`: 2026-06-22
 - `revisao_geral.ultima_na_tarefa`: REV-001
-- `lembretes`: 2 item(s)
+- `lembretes`: 1 item(s)
 - `offsets_de_id.RF`: 28
 - `offsets_de_id.DOC`: 10
 - `offsets_de_id.REF`: 19
