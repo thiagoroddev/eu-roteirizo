@@ -179,9 +179,9 @@
       "ref": "TASK-SPIKE-002"
     }
   ],
-  "validacao": "pendente",
-  "validado_em": null,
-  "validacao_motivo": "Fechamento da fatia espacial autorizado, sem certificar produto completo. Equivalencia da ancora padrao e importacao verificadas automaticamente; capturas do mantenedor sao inspecao pontual. Validacao manual integral permanece pendente; Android e comparacao de trajetos completos dependem das fatias posteriores.",
+  "validacao": "aprovado",
+  "validado_em": "11/09/26 23:38",
+  "validacao_motivo": null,
   "tarefas_geradas": [
     "TASK-SPIKE-002"
   ],

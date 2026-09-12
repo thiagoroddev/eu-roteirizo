@@ -114,9 +114,9 @@
       "ref": "TASK-SPIKE-002"
     }
   ],
-  "validacao": "pendente",
-  "validado_em": null,
-  "validacao_motivo": "Inspecao visual humana dos mapas e roteiros experimentais, e decisao sobre utilidade, pendentes. O navegador automatizado bloqueou URLs file locais; sem contorno da politica. Testes de geometria/importacao nao substituem validacao manual.",
+  "validacao": "aprovado",
+  "validado_em": "11/09/26 23:38",
+  "validacao_motivo": null,
   "tarefas_geradas": [],
   "adrs": [],
   "divida_tecnica": [],
