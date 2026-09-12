@@ -39,7 +39,7 @@
     "extrair-complementos": "ts-node --esm __utilidades-back-office__/extrairComplementos.ts"
   },
   "dependencies": {
-    "@radix-ui/react-dialog": "^1.1.17",
+    "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-slot": "^1.3.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
