@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { inferLocationType, resolveLocationType, countCommercialAddresses } from "../../utils/inferLocationType";
-import { ICON_KEYS, EXCEL_EMPTY_VALUE, COLUMN_NAMES } from "../../constants";
+import { inferLocationType, resolveLocationType, countCommercialAddresses, getCommercialDisplayStatus } from "../../utils/inferLocationType";
+import { ICON_KEYS, EXCEL_EMPTY_VALUE, COLUMN_NAMES, UI_LABELS } from "../../constants";
 import type { RowData } from "../../types";
+import { ADDRESS_CLASSIFICATION_CASES, EXPECTED_LABEL_KEY, caseAddress, type AddressClassificationCase } from "./addressClassificationCases";
 
 describe("inferLocationType", () => {
   // ==========================================================================
@@ -113,11 +114,6 @@ describe("inferLocationType", () => {
       it('classifies "drogarias" (plural) as commercial, closing the gap with "drogaria" (singular)', () => {
         expect(inferLocationType("Rua F, 60, Drogarias Rio")).toBe(ICON_KEYS.OFFICE_CORRECTED);
       });
-
-      it("classifies new residential keywords", () => {
-        expect(inferLocationType("Rua G, 70, Edifício Cristal")).toBe(ICON_KEYS.HOME_CORRECTED);
-        expect(inferLocationType("Rua G, 70, Falar com o zelador")).toBe(ICON_KEYS.HOME_CORRECTED);
-      });
     });
 
     // ========================================================================================
@@ -143,6 +139,22 @@ describe("inferLocationType", () => {
         expect(inferLocationType("Rua C, 30, vizinho a oficina")).toBe(ICON_KEYS.HOME_CORRECTED);
       });
     });
+  });
+});
+
+// The same table generates the fake route the human imports (TASK-BG-021): code and screen are
+// checked against one list of cases, so they cannot drift apart.
+describe("address classification cases (TASK-BG-021)", () => {
+  const labelOf = (c: AddressClassificationCase) => UI_LABELS.COMMON[EXPECTED_LABEL_KEY[c.expected]];
+  const rowOf = (c: AddressClassificationCase): RowData => ({ [COLUMN_NAMES.DESTINATION_ADDRESS]: caseAddress(c, labelOf(c)) });
+
+  it.each(ADDRESS_CLASSIFICATION_CASES)("case $id: $complement is $expected ($reason)", (c) => {
+    expect(getCommercialDisplayStatus(resolveLocationType(rowOf(c)))).toBe(labelOf(c));
+  });
+
+  it("counts exactly the cases expected as commercial", () => {
+    const expected = ADDRESS_CLASSIFICATION_CASES.filter((c) => c.expected === "commercial").length;
+    expect(countCommercialAddresses(ADDRESS_CLASSIFICATION_CASES.map(rowOf))).toBe(String(expected));
   });
 });
 

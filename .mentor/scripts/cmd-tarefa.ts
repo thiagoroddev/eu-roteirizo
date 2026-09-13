@@ -457,7 +457,9 @@ export function finalizar(id: string, flags: Flags = {}): void {
     const arquivosModificados = [...diffFiles, ...untrackedFiles].map((s) => s.trim().replace(/\\/g, '/')).filter(Boolean)
     const declarados = new Set<string>()
     for (const linha of tarefa.plano.muda) {
-      const arq = linha.split(/[\s:—-]/)[0]?.trim().replace(/\\/g, '/')
+      // O caminho vai ate' o primeiro espaco. Cortar no hifen partia `__utilidades-back-office__/...`
+      // e `package-lock.json`, e o arquivo declarado era acusado de fantasma (AUD-002-R09).
+      const arq = linha.trim().split(/\s+/)[0]?.replace(/[:,;]+$/, '').replace(/\\/g, '/')
       if (arq && !arq.startsWith(MARCADOR)) declarados.add(arq)
     }
     const ignorados = [
