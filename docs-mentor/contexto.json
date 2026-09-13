@@ -5,7 +5,7 @@
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-13T03:01:23.540Z",
+    "atualizado_em": "2026-09-13T06:30:43.406Z",
     "gerado_por": "script"
   },
   "projeto": {
@@ -616,7 +616,7 @@
   },
   "contagens": {
     "_gerado_por_script": true,
-    "tarefas_concluidas": 25,
+    "tarefas_concluidas": 26,
     "tarefas_abertas": 21,
     "tarefas_no_ciclo": 0,
     "tarefas_na_reserva": 21,
@@ -624,7 +624,7 @@
     "requisitos_total": 29,
     "requisitos_implementados": 12,
     "requisitos_pendentes": 17,
-    "divida_tecnica_aberta": 0,
+    "divida_tecnica_aberta": 2,
     "riscos_aceitos_ativos": 0,
     "riscos_aceitos_vencidos": 0,
     "tarefas_desde_revisao_geral": null,
@@ -637,9 +637,9 @@
     "cadencia_em_tarefas": 10,
     "cadencia_em_caracteres": 80000,
     "cadencia_nota": "A cada N tarefas concluidas ou X caracteres de diff acumulados, 'mentor auditar preparar' monta o dossie do lote. O auditor le so o diff do lote, os registros e os requisitos citados: nunca o repositorio.",
-    "ultima_em": "12/09/26 01:41",
-    "ultima_na_tarefa": 22,
-    "ultimo_commit": "8f4b23a971d419076a2571c82dce0ef37bfabe0f",
+    "ultima_em": "13/09/26 01:02",
+    "ultima_na_tarefa": 25,
+    "ultimo_commit": "00921b69123c37ae01c09f9f7728af26b10e747a",
     "proxima_em_tarefa": 30,
     "pendencias_reportadas": []
   },

@@ -59,7 +59,6 @@ const residentialRaw = [
   "cbt",
   "do lado",
   "depois",
-  "edificio",
   "em frente",
   "enfrente",
   "entrar",
@@ -87,7 +86,6 @@ const residentialRaw = [
   "travessa do",
   "vila",
   "vizinho",
-  "zelador",
 ];
 
 const commercialRaw = [

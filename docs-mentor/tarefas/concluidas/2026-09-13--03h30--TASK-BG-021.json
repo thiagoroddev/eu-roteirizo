@@ -1,0 +1,143 @@
+{
+  "id": "TASK-BG-021",
+  "tipo": "BG",
+  "titulo": "Retirar edificio e zelador das palavras residenciais e gerar roteiro ficticio para validar a classificacao comercial/residencial (AUD-002-B01)",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "sem_requisito_motivo": null,
+  "criada_em": "13/09/26 02:34",
+  "iniciada_em": "13/09/26 02:35",
+  "commit_base": "00921b69123c37ae01c09f9f7728af26b10e747a",
+  "concluida_em": "13/09/26 03:30",
+  "plano": {
+    "muda": [
+      "src/constants/keywords.ts - retirar \"edificio\" e \"zelador\" de residentialRaw (decisao do humano: nao sao palavra-chave)",
+      "src/__tests__/utils/addressClassificationCases.ts - novo: tabela unica de casos (complemento, esperado, motivo), fonte dos testes e do roteiro ficticio",
+      "src/__tests__/utils/inferLocationType.test.ts - trocar o teste que exigia edificio/zelador residenciais por it.each sobre a tabela, mais a contagem de comerciais",
+      "__utilidades-back-office__/roteiros-ficticios/gerar-roteiro-classificacao.ts - novo: gera o roteiro ficticio a partir da tabela",
+      "__utilidades-back-office__/roteiros-ficticios/roteiro-classificacao.json - novo, gerado: roteiro importavel (eu-roteirizo/roteiro/v1), uma parada por caso, esperado visivel no endereco",
+      ".mentor/scripts/cmd-tarefa.ts - trava de escopo do finalizar le o caminho declarado ate o primeiro espaco, em vez de cortar no hifen (AUD-002-R09); divergencia local do pacote ate a correcao sair no mentor-agent",
+      ".mentor/scripts/cmd-auditar.ts - mesmo parser no fato mecanico de arquivos fora do plano.muda da auditoria (AUD-002-R09)"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Complemento com \"edificio\" ou \"zelador\" e sem outro sinal sai Indistinto; com sala ou loja numerada no mesmo complemento sai comercial; com apto numerado sai residencial.",
+        "teste": "src/__tests__/utils/inferLocationType.test.ts > address classification cases (TASK-BG-021) > case 10 a 17, 25 e 26 (vistos vermelhos antes da retirada das palavras)"
+      },
+      {
+        "texto": "Cada caso da tabela classifica no codigo com o rotulo que o app mostra na coluna Horario Comercial? (Sim, Nao, Indistinto).",
+        "teste": "src/__tests__/utils/inferLocationType.test.ts > address classification cases (TASK-BG-021) > case <id>: <complemento> is <esperado> (<motivo>), um it.each por linha da tabela"
+      },
+      {
+        "texto": "A contagem de comerciais do Sumario sobre as linhas do roteiro bate com o numero de casos esperados Sim.",
+        "teste": "src/__tests__/utils/inferLocationType.test.ts > address classification cases (TASK-BG-021) > counts exactly the cases expected as commercial"
+      },
+      {
+        "texto": "O roteiro gerado passa no validador de importacao do app e importa com uma parada por caso, com o numero do caso e o esperado no endereco.",
+        "teste": "nao se aplica como teste automatizado: arquivo de back-office que src/ nao importa. Verificado com parseAndValidateRouteJson sobre o JSON gerado (saida na narrativa) e na validacao manual de importacao."
+      }
+    ],
+    "impacto": "Classificacao comercial/residencial (inferLocationType): coluna Horario Comercial? (RouteSimpleTable), tooltip do marcador (markerModels) e contagem do Sumario (useRouteSummary). Endereco cujo unico sinal era edificio ou zelador deixa de sair residencial e cai para a coluna Location Type, se houver, ou Indistinto.",
+    "riscos": [
+      "Endereco residencial que so tinha \"Edificio X\" ou \"zelador\" como sinal passa a sair Indistinto. Aceito pelo humano: as duas palavras sao ambiguas.",
+      "Classificar por palavra-chave e ambiguo por natureza (observacao do humano); esta tarefa corrige a colisao achada, nao o metodo.",
+      "Correcao do parser (AUD-002-R09) feita dentro de .mentor/: o verificar do pacote acusa divergencia em cmd-tarefa.ts e cmd-auditar.ts ate o mentor-agent publicar a mesma correcao, e uma reinstalacao com --forcar a desfaz."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram um roteiro ficticio com as palavras a testar e a retirada de edificio/zelador; proponho uma tabela unica de casos que alimenta os testes e o gerador, mais o JSON gerado. E do tamanho do pedido porque, sem a tabela unica, o esperado do roteiro e o dos testes divergem na primeira mudanca de palavra; e o JSON repete cada parada em quatro lugares com IDs amarrados, o que so se mantem certo sendo gerado. A correcao do parser entrou por decisao do humano: sem ela o finalizar recusava os dois arquivos declarados em __utilidades-back-office__; sao duas linhas, uma em cada copia do mesmo parser."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "13/09/26 02:41",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  964 passed (964)\n   Start at  03:13:31\n   Duration  45.82s (transform 23.69s, setup 55.02s, import 44.00s, tests 67.90s, environment 209.36s)\n\n(node:35752) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "13/09/26 03:14",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "13/09/26 03:14",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "13/09/26 03:14",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1999 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CYMBXH50.css   \u001b[39m\u001b[1m\u001b[2m 28.24 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-CywrxhdV.js    \u001b[39m\u001b[1m\u001b[33m539.63 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.76 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-BH0bsWaq.js   \u001b[39m\u001b[1m\u001b[33m808.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 263.08 kB\u001b[22m\n\u001b[32m✓ built in 6.83s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1798.38 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "13/09/26 03:15",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "APROVADO",
+      "comando": null,
+      "codigo_saida": 0,
+      "saida": "Humano, 13/09/26: importou __utilidades-back-office__/roteiros-ficticios/roteiro-classificacao.json no app (26 paradas na Tijuca) e conferiu cada linha contra o 'Caso N esperado X' do endereco. Coluna Horario Comercial? igual ao esperado nas 26 (casos 12 a 17 Sim; 10, 11 e 25 Indistinto); Sumario contou 17 comerciais. Discordou do esperado dos casos 18 (Emporio da Vila e nome de empresa) e 19, que refletem o comportamento atual: registrado como DT-009, fora do escopo. Tooltip do mapa no modo roteiro mostra so Endereco e Pacotes, sem horario comercial (captura da parada P20 no chat): DT-010.",
+      "executado_em": "13/09/26 03:13",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [
+    {
+      "classe": 4,
+      "descricao": "Tooltip do marcador (buildStopTooltipHtml, src/utils/markers/markerModels.ts:97) chama getCommercialDisplayStatus(row) com a linha crua. Sem a coluna Location Type (rota unica, caso do roteiro ficticio e do romaneio real de teste), isRowData falha e o tooltip mostra 'Sem dados' em toda parada, enquanto a coluna Horario Comercial? mostra a inferencia. Contradiz a decisao da TASK-RF-016/RF-017 (a inferencia roda para todo romaneio). Medido nas 26 linhas do roteiro ficticio: 26 de 26 'Sem dados'. Encontrado ao verificar o roteiro gerado; nao corrigido aqui.",
+      "destino": "divida_tecnica",
+      "ref": "DT-010"
+    }
+  ],
+  "validacao": "aprovado",
+  "validado_em": "13/09/26 03:13",
+  "validacao_motivo": "Humano, 13/09/26: importou __utilidades-back-office__/roteiros-ficticios/roteiro-classificacao.json no app (26 paradas na Tijuca) e conferiu cada linha contra o 'Caso N esperado X' do endereco. Coluna Horario Comercial? igual ao esperado nas 26 (casos 12 a 17 Sim; 10, 11 e 25 Indistinto); Sumario contou 17 comerciais. Discordou do esperado dos casos 18 (Emporio da Vila e nome de empresa) e 19, que refletem o comportamento atual: registrado como DT-009, fora do escopo. Tooltip do mapa no modo roteiro mostra so Endereco e Pacotes, sem horario comercial (captura da parada P20 no chat): DT-010.",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [
+    "DT-009",
+    "DT-010"
+  ],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-13--03h30--TASK-BG-021.md"
+}
