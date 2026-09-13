@@ -128,7 +128,8 @@ function fatosMecanicos(lote: Tarefa[], arquivosDoDiff: string[], diffTotalChars
   const declarados = new Set<string>()
   for (const t of lote) {
     for (const linha of t.plano.muda) {
-      const arquivo = linha.split(/[\s:—-]/)[0]?.trim()
+      // Mesmo parser da trava de escopo do finalizar: caminho ate' o primeiro espaco (AUD-002-R09).
+      const arquivo = linha.trim().split(/\s+/)[0]?.replace(/[:,;]+$/, '')
       if (arquivo) declarados.add(arquivo)
     }
   }

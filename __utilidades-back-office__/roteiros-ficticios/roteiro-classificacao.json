@@ -1,0 +1,1689 @@
+{
+  "schema": "eu-roteirizo/roteiro/v1",
+  "version": 1,
+  "exportedAt": "2026-09-13T05:43:00.665Z",
+  "manifestId": "0113991bca89efb203b3636fe97a788026b0aa424bc7dcb37fb6b48a9a282595",
+  "routeName": "Minha rota",
+  "route": {
+    "id": "route_0113991b",
+    "startPoint": {
+      "lat": -22.923,
+      "lng": -43.235
+    },
+    "stops": [
+      {
+        "id": "stop_pt_-22.92300,-43.23500",
+        "order": 1,
+        "vehicleStop": {
+          "lat": -22.923,
+          "lng": -43.235
+        },
+        "pointIds": [
+          "pt_-22.92300,-43.23500"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92300,-43.23420",
+        "order": 2,
+        "vehicleStop": {
+          "lat": -22.923,
+          "lng": -43.2342
+        },
+        "pointIds": [
+          "pt_-22.92300,-43.23420"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92300,-43.23340",
+        "order": 3,
+        "vehicleStop": {
+          "lat": -22.923,
+          "lng": -43.2334
+        },
+        "pointIds": [
+          "pt_-22.92300,-43.23340"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92300,-43.23260",
+        "order": 4,
+        "vehicleStop": {
+          "lat": -22.923,
+          "lng": -43.2326
+        },
+        "pointIds": [
+          "pt_-22.92300,-43.23260"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92300,-43.23180",
+        "order": 5,
+        "vehicleStop": {
+          "lat": -22.923,
+          "lng": -43.2318
+        },
+        "pointIds": [
+          "pt_-22.92300,-43.23180"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92370,-43.23500",
+        "order": 6,
+        "vehicleStop": {
+          "lat": -22.9237,
+          "lng": -43.235
+        },
+        "pointIds": [
+          "pt_-22.92370,-43.23500"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92370,-43.23420",
+        "order": 7,
+        "vehicleStop": {
+          "lat": -22.9237,
+          "lng": -43.2342
+        },
+        "pointIds": [
+          "pt_-22.92370,-43.23420"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92370,-43.23340",
+        "order": 8,
+        "vehicleStop": {
+          "lat": -22.9237,
+          "lng": -43.2334
+        },
+        "pointIds": [
+          "pt_-22.92370,-43.23340"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92370,-43.23260",
+        "order": 9,
+        "vehicleStop": {
+          "lat": -22.9237,
+          "lng": -43.2326
+        },
+        "pointIds": [
+          "pt_-22.92370,-43.23260"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92370,-43.23180",
+        "order": 10,
+        "vehicleStop": {
+          "lat": -22.9237,
+          "lng": -43.2318
+        },
+        "pointIds": [
+          "pt_-22.92370,-43.23180"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92440,-43.23500",
+        "order": 11,
+        "vehicleStop": {
+          "lat": -22.9244,
+          "lng": -43.235
+        },
+        "pointIds": [
+          "pt_-22.92440,-43.23500"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92440,-43.23420",
+        "order": 12,
+        "vehicleStop": {
+          "lat": -22.9244,
+          "lng": -43.2342
+        },
+        "pointIds": [
+          "pt_-22.92440,-43.23420"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92440,-43.23340",
+        "order": 13,
+        "vehicleStop": {
+          "lat": -22.9244,
+          "lng": -43.2334
+        },
+        "pointIds": [
+          "pt_-22.92440,-43.23340"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92440,-43.23260",
+        "order": 14,
+        "vehicleStop": {
+          "lat": -22.9244,
+          "lng": -43.2326
+        },
+        "pointIds": [
+          "pt_-22.92440,-43.23260"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92440,-43.23180",
+        "order": 15,
+        "vehicleStop": {
+          "lat": -22.9244,
+          "lng": -43.2318
+        },
+        "pointIds": [
+          "pt_-22.92440,-43.23180"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92510,-43.23500",
+        "order": 16,
+        "vehicleStop": {
+          "lat": -22.9251,
+          "lng": -43.235
+        },
+        "pointIds": [
+          "pt_-22.92510,-43.23500"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92510,-43.23420",
+        "order": 17,
+        "vehicleStop": {
+          "lat": -22.9251,
+          "lng": -43.2342
+        },
+        "pointIds": [
+          "pt_-22.92510,-43.23420"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92510,-43.23340",
+        "order": 18,
+        "vehicleStop": {
+          "lat": -22.9251,
+          "lng": -43.2334
+        },
+        "pointIds": [
+          "pt_-22.92510,-43.23340"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92510,-43.23260",
+        "order": 19,
+        "vehicleStop": {
+          "lat": -22.9251,
+          "lng": -43.2326
+        },
+        "pointIds": [
+          "pt_-22.92510,-43.23260"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92510,-43.23180",
+        "order": 20,
+        "vehicleStop": {
+          "lat": -22.9251,
+          "lng": -43.2318
+        },
+        "pointIds": [
+          "pt_-22.92510,-43.23180"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92580,-43.23500",
+        "order": 21,
+        "vehicleStop": {
+          "lat": -22.9258,
+          "lng": -43.235
+        },
+        "pointIds": [
+          "pt_-22.92580,-43.23500"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92580,-43.23420",
+        "order": 22,
+        "vehicleStop": {
+          "lat": -22.9258,
+          "lng": -43.2342
+        },
+        "pointIds": [
+          "pt_-22.92580,-43.23420"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92580,-43.23340",
+        "order": 23,
+        "vehicleStop": {
+          "lat": -22.9258,
+          "lng": -43.2334
+        },
+        "pointIds": [
+          "pt_-22.92580,-43.23340"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92580,-43.23260",
+        "order": 24,
+        "vehicleStop": {
+          "lat": -22.9258,
+          "lng": -43.2326
+        },
+        "pointIds": [
+          "pt_-22.92580,-43.23260"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92580,-43.23180",
+        "order": 25,
+        "vehicleStop": {
+          "lat": -22.9258,
+          "lng": -43.2318
+        },
+        "pointIds": [
+          "pt_-22.92580,-43.23180"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      },
+      {
+        "id": "stop_pt_-22.92650,-43.23500",
+        "order": 26,
+        "vehicleStop": {
+          "lat": -22.9265,
+          "lng": -43.235
+        },
+        "pointIds": [
+          "pt_-22.92650,-43.23500"
+        ],
+        "radiusMeters": 30,
+        "reversed": false,
+        "vehicleStopIsDefault": true
+      }
+    ],
+    "config": {
+      "walkingSpeedKmh": 5,
+      "deliveryBaseSeconds": 120,
+      "deliveryPerPackageSeconds": 30,
+      "vehicleSpeedKmh": 25,
+      "autoRadiusMeters": 30
+    },
+    "createdAt": "2026-09-13T05:43:00.665Z"
+  },
+  "rows": [
+    {
+      "Sequence": 1,
+      "Stop": 1,
+      "SPX TN": "BR0000000000001",
+      "Destination Address": "Caso 1 esperado Sim, 10, Tech Solutions",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.923,
+      "Longitude": -43.235,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 2,
+      "Stop": 2,
+      "SPX TN": "BR0000000000002",
+      "Destination Address": "Caso 2 esperado Sim, 10, Empório Central",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.923,
+      "Longitude": -43.2342,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 3,
+      "Stop": 3,
+      "SPX TN": "BR0000000000003",
+      "Destination Address": "Caso 3 esperado Sim, 10, Sobreloja",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.923,
+      "Longitude": -43.2334,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 4,
+      "Stop": 4,
+      "SPX TN": "BR0000000000004",
+      "Destination Address": "Caso 4 esperado Sim, 10, Sobreloja 2",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.923,
+      "Longitude": -43.2326,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 5,
+      "Stop": 5,
+      "SPX TN": "BR0000000000005",
+      "Destination Address": "Caso 5 esperado Sim, 10, Grill do Zé",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.923,
+      "Longitude": -43.2318,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 6,
+      "Stop": 6,
+      "SPX TN": "BR0000000000006",
+      "Destination Address": "Caso 6 esperado Sim, 10, Vitrine Modas",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9237,
+      "Longitude": -43.235,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 7,
+      "Stop": 7,
+      "SPX TN": "BR0000000000007",
+      "Destination Address": "Caso 7 esperado Sim, 10, Teatro Municipal",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9237,
+      "Longitude": -43.2342,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 8,
+      "Stop": 8,
+      "SPX TN": "BR0000000000008",
+      "Destination Address": "Caso 8 esperado Sim, 10, Drogarias Rio",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9237,
+      "Longitude": -43.2334,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 9,
+      "Stop": 9,
+      "SPX TN": "BR0000000000009",
+      "Destination Address": "Caso 9 esperado Sim, 10, Drogaria Rio",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9237,
+      "Longitude": -43.2326,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 10,
+      "Stop": 10,
+      "SPX TN": "BR0000000000010",
+      "Destination Address": "Caso 10 esperado Indistinto, 10, Edifício Cristal",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9237,
+      "Longitude": -43.2318,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 11,
+      "Stop": 11,
+      "SPX TN": "BR0000000000011",
+      "Destination Address": "Caso 11 esperado Indistinto, 10, Falar com o zelador",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9244,
+      "Longitude": -43.235,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 12,
+      "Stop": 12,
+      "SPX TN": "BR0000000000012",
+      "Destination Address": "Caso 12 esperado Sim, 10, Edifício Central, sala 302",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9244,
+      "Longitude": -43.2342,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 13,
+      "Stop": 13,
+      "SPX TN": "BR0000000000013",
+      "Destination Address": "Caso 13 esperado Sim, 10, Sala 302, Edifício Central",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9244,
+      "Longitude": -43.2334,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 14,
+      "Stop": 14,
+      "SPX TN": "BR0000000000014",
+      "Destination Address": "Caso 14 esperado Sim, 10, Ed. Central, sala 302",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9244,
+      "Longitude": -43.2326,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 15,
+      "Stop": 15,
+      "SPX TN": "BR0000000000015",
+      "Destination Address": "Caso 15 esperado Sim, 10, Edifício Empresarial, loja 5",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9244,
+      "Longitude": -43.2318,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 16,
+      "Stop": 16,
+      "SPX TN": "BR0000000000016",
+      "Destination Address": "Caso 16 esperado Sim, 10, Zelador, sala 10",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9251,
+      "Longitude": -43.235,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 17,
+      "Stop": 17,
+      "SPX TN": "BR0000000000017",
+      "Destination Address": "Caso 17 esperado Sim, 10, Edifício Tech Tower",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9251,
+      "Longitude": -43.2342,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 18,
+      "Stop": 18,
+      "SPX TN": "BR0000000000018",
+      "Destination Address": "Caso 18 esperado Não, 10, Empório da Vila",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9251,
+      "Longitude": -43.2334,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 19,
+      "Stop": 19,
+      "SPX TN": "BR0000000000019",
+      "Destination Address": "Caso 19 esperado Não, 10, Ao lado do Teatro",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9251,
+      "Longitude": -43.2326,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 20,
+      "Stop": 20,
+      "SPX TN": "BR0000000000020",
+      "Destination Address": "Caso 20 esperado Sim, 10, Andar 5, sala 302",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9251,
+      "Longitude": -43.2318,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 21,
+      "Stop": 21,
+      "SPX TN": "BR0000000000021",
+      "Destination Address": "Caso 21 esperado Não, 10, apto 101",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9258,
+      "Longitude": -43.235,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 22,
+      "Stop": 22,
+      "SPX TN": "BR0000000000022",
+      "Destination Address": "Caso 22 esperado Sim, 10, sala 302",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9258,
+      "Longitude": -43.2342,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 23,
+      "Stop": 23,
+      "SPX TN": "BR0000000000023",
+      "Destination Address": "Caso 23 esperado Indistinto, 10, Farmácias Popular",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9258,
+      "Longitude": -43.2334,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 24,
+      "Stop": 24,
+      "SPX TN": "BR0000000000024",
+      "Destination Address": "Caso 24 esperado Indistinto, 10",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9258,
+      "Longitude": -43.2326,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 25,
+      "Stop": 25,
+      "SPX TN": "BR0000000000025",
+      "Destination Address": "Caso 25 esperado Indistinto, 10, Edifício 200",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9258,
+      "Longitude": -43.2318,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    },
+    {
+      "Sequence": 26,
+      "Stop": 26,
+      "SPX TN": "BR0000000000026",
+      "Destination Address": "Caso 26 esperado Não, 10, Edifício Cristal, apto 101",
+      "City": "Rio de Janeiro",
+      "Latitude": -22.9265,
+      "Longitude": -43.235,
+      "Neighborhood": "Tijuca",
+      "Zipcode": "20520-000",
+      "Planned AT": "AT202609130TEST"
+    }
+  ],
+  "routes": {
+    "Minha rota": [
+      {
+        "Sequence": 1,
+        "Stop": 1,
+        "SPX TN": "BR0000000000001",
+        "Destination Address": "Caso 1 esperado Sim, 10, Tech Solutions",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.923,
+        "Longitude": -43.235,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 2,
+        "Stop": 2,
+        "SPX TN": "BR0000000000002",
+        "Destination Address": "Caso 2 esperado Sim, 10, Empório Central",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.923,
+        "Longitude": -43.2342,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 3,
+        "Stop": 3,
+        "SPX TN": "BR0000000000003",
+        "Destination Address": "Caso 3 esperado Sim, 10, Sobreloja",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.923,
+        "Longitude": -43.2334,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 4,
+        "Stop": 4,
+        "SPX TN": "BR0000000000004",
+        "Destination Address": "Caso 4 esperado Sim, 10, Sobreloja 2",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.923,
+        "Longitude": -43.2326,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 5,
+        "Stop": 5,
+        "SPX TN": "BR0000000000005",
+        "Destination Address": "Caso 5 esperado Sim, 10, Grill do Zé",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.923,
+        "Longitude": -43.2318,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 6,
+        "Stop": 6,
+        "SPX TN": "BR0000000000006",
+        "Destination Address": "Caso 6 esperado Sim, 10, Vitrine Modas",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9237,
+        "Longitude": -43.235,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 7,
+        "Stop": 7,
+        "SPX TN": "BR0000000000007",
+        "Destination Address": "Caso 7 esperado Sim, 10, Teatro Municipal",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9237,
+        "Longitude": -43.2342,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 8,
+        "Stop": 8,
+        "SPX TN": "BR0000000000008",
+        "Destination Address": "Caso 8 esperado Sim, 10, Drogarias Rio",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9237,
+        "Longitude": -43.2334,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 9,
+        "Stop": 9,
+        "SPX TN": "BR0000000000009",
+        "Destination Address": "Caso 9 esperado Sim, 10, Drogaria Rio",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9237,
+        "Longitude": -43.2326,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 10,
+        "Stop": 10,
+        "SPX TN": "BR0000000000010",
+        "Destination Address": "Caso 10 esperado Indistinto, 10, Edifício Cristal",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9237,
+        "Longitude": -43.2318,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 11,
+        "Stop": 11,
+        "SPX TN": "BR0000000000011",
+        "Destination Address": "Caso 11 esperado Indistinto, 10, Falar com o zelador",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9244,
+        "Longitude": -43.235,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 12,
+        "Stop": 12,
+        "SPX TN": "BR0000000000012",
+        "Destination Address": "Caso 12 esperado Sim, 10, Edifício Central, sala 302",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9244,
+        "Longitude": -43.2342,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 13,
+        "Stop": 13,
+        "SPX TN": "BR0000000000013",
+        "Destination Address": "Caso 13 esperado Sim, 10, Sala 302, Edifício Central",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9244,
+        "Longitude": -43.2334,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 14,
+        "Stop": 14,
+        "SPX TN": "BR0000000000014",
+        "Destination Address": "Caso 14 esperado Sim, 10, Ed. Central, sala 302",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9244,
+        "Longitude": -43.2326,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 15,
+        "Stop": 15,
+        "SPX TN": "BR0000000000015",
+        "Destination Address": "Caso 15 esperado Sim, 10, Edifício Empresarial, loja 5",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9244,
+        "Longitude": -43.2318,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 16,
+        "Stop": 16,
+        "SPX TN": "BR0000000000016",
+        "Destination Address": "Caso 16 esperado Sim, 10, Zelador, sala 10",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9251,
+        "Longitude": -43.235,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 17,
+        "Stop": 17,
+        "SPX TN": "BR0000000000017",
+        "Destination Address": "Caso 17 esperado Sim, 10, Edifício Tech Tower",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9251,
+        "Longitude": -43.2342,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 18,
+        "Stop": 18,
+        "SPX TN": "BR0000000000018",
+        "Destination Address": "Caso 18 esperado Não, 10, Empório da Vila",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9251,
+        "Longitude": -43.2334,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 19,
+        "Stop": 19,
+        "SPX TN": "BR0000000000019",
+        "Destination Address": "Caso 19 esperado Não, 10, Ao lado do Teatro",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9251,
+        "Longitude": -43.2326,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 20,
+        "Stop": 20,
+        "SPX TN": "BR0000000000020",
+        "Destination Address": "Caso 20 esperado Sim, 10, Andar 5, sala 302",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9251,
+        "Longitude": -43.2318,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 21,
+        "Stop": 21,
+        "SPX TN": "BR0000000000021",
+        "Destination Address": "Caso 21 esperado Não, 10, apto 101",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9258,
+        "Longitude": -43.235,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 22,
+        "Stop": 22,
+        "SPX TN": "BR0000000000022",
+        "Destination Address": "Caso 22 esperado Sim, 10, sala 302",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9258,
+        "Longitude": -43.2342,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 23,
+        "Stop": 23,
+        "SPX TN": "BR0000000000023",
+        "Destination Address": "Caso 23 esperado Indistinto, 10, Farmácias Popular",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9258,
+        "Longitude": -43.2334,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 24,
+        "Stop": 24,
+        "SPX TN": "BR0000000000024",
+        "Destination Address": "Caso 24 esperado Indistinto, 10",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9258,
+        "Longitude": -43.2326,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 25,
+        "Stop": 25,
+        "SPX TN": "BR0000000000025",
+        "Destination Address": "Caso 25 esperado Indistinto, 10, Edifício 200",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9258,
+        "Longitude": -43.2318,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      },
+      {
+        "Sequence": 26,
+        "Stop": 26,
+        "SPX TN": "BR0000000000026",
+        "Destination Address": "Caso 26 esperado Não, 10, Edifício Cristal, apto 101",
+        "City": "Rio de Janeiro",
+        "Latitude": -22.9265,
+        "Longitude": -43.235,
+        "Neighborhood": "Tijuca",
+        "Zipcode": "20520-000",
+        "Planned AT": "AT202609130TEST"
+      }
+    ]
+  },
+  "availableCols": [
+    "Sequence",
+    "Stop",
+    "SPX TN",
+    "Destination Address",
+    "City",
+    "Latitude",
+    "Longitude",
+    "Neighborhood",
+    "Zipcode",
+    "Planned AT"
+  ],
+  "missingCols": [],
+  "isSingleRoute": true,
+  "points": [
+    {
+      "id": "pt_-22.92300,-43.23500",
+      "lat": -22.923,
+      "lng": -43.235,
+      "address": "Caso 1 esperado Sim, 10, Tech Solutions",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000001",
+          "rawData": {
+            "Sequence": 1,
+            "Stop": 1,
+            "SPX TN": "BR0000000000001",
+            "Destination Address": "Caso 1 esperado Sim, 10, Tech Solutions",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.923,
+            "Longitude": -43.235,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000001"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92300,-43.23420",
+      "lat": -22.923,
+      "lng": -43.2342,
+      "address": "Caso 2 esperado Sim, 10, Empório Central",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000002",
+          "rawData": {
+            "Sequence": 2,
+            "Stop": 2,
+            "SPX TN": "BR0000000000002",
+            "Destination Address": "Caso 2 esperado Sim, 10, Empório Central",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.923,
+            "Longitude": -43.2342,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000002"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92300,-43.23340",
+      "lat": -22.923,
+      "lng": -43.2334,
+      "address": "Caso 3 esperado Sim, 10, Sobreloja",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000003",
+          "rawData": {
+            "Sequence": 3,
+            "Stop": 3,
+            "SPX TN": "BR0000000000003",
+            "Destination Address": "Caso 3 esperado Sim, 10, Sobreloja",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.923,
+            "Longitude": -43.2334,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000003"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92300,-43.23260",
+      "lat": -22.923,
+      "lng": -43.2326,
+      "address": "Caso 4 esperado Sim, 10, Sobreloja 2",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000004",
+          "rawData": {
+            "Sequence": 4,
+            "Stop": 4,
+            "SPX TN": "BR0000000000004",
+            "Destination Address": "Caso 4 esperado Sim, 10, Sobreloja 2",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.923,
+            "Longitude": -43.2326,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000004"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92300,-43.23180",
+      "lat": -22.923,
+      "lng": -43.2318,
+      "address": "Caso 5 esperado Sim, 10, Grill do Zé",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000005",
+          "rawData": {
+            "Sequence": 5,
+            "Stop": 5,
+            "SPX TN": "BR0000000000005",
+            "Destination Address": "Caso 5 esperado Sim, 10, Grill do Zé",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.923,
+            "Longitude": -43.2318,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000005"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92370,-43.23500",
+      "lat": -22.9237,
+      "lng": -43.235,
+      "address": "Caso 6 esperado Sim, 10, Vitrine Modas",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000006",
+          "rawData": {
+            "Sequence": 6,
+            "Stop": 6,
+            "SPX TN": "BR0000000000006",
+            "Destination Address": "Caso 6 esperado Sim, 10, Vitrine Modas",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9237,
+            "Longitude": -43.235,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000006"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92370,-43.23420",
+      "lat": -22.9237,
+      "lng": -43.2342,
+      "address": "Caso 7 esperado Sim, 10, Teatro Municipal",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000007",
+          "rawData": {
+            "Sequence": 7,
+            "Stop": 7,
+            "SPX TN": "BR0000000000007",
+            "Destination Address": "Caso 7 esperado Sim, 10, Teatro Municipal",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9237,
+            "Longitude": -43.2342,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000007"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92370,-43.23340",
+      "lat": -22.9237,
+      "lng": -43.2334,
+      "address": "Caso 8 esperado Sim, 10, Drogarias Rio",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000008",
+          "rawData": {
+            "Sequence": 8,
+            "Stop": 8,
+            "SPX TN": "BR0000000000008",
+            "Destination Address": "Caso 8 esperado Sim, 10, Drogarias Rio",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9237,
+            "Longitude": -43.2334,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000008"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92370,-43.23260",
+      "lat": -22.9237,
+      "lng": -43.2326,
+      "address": "Caso 9 esperado Sim, 10, Drogaria Rio",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000009",
+          "rawData": {
+            "Sequence": 9,
+            "Stop": 9,
+            "SPX TN": "BR0000000000009",
+            "Destination Address": "Caso 9 esperado Sim, 10, Drogaria Rio",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9237,
+            "Longitude": -43.2326,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000009"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92370,-43.23180",
+      "lat": -22.9237,
+      "lng": -43.2318,
+      "address": "Caso 10 esperado Indistinto, 10, Edifício Cristal",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000010",
+          "rawData": {
+            "Sequence": 10,
+            "Stop": 10,
+            "SPX TN": "BR0000000000010",
+            "Destination Address": "Caso 10 esperado Indistinto, 10, Edifício Cristal",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9237,
+            "Longitude": -43.2318,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000010"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92440,-43.23500",
+      "lat": -22.9244,
+      "lng": -43.235,
+      "address": "Caso 11 esperado Indistinto, 10, Falar com o zelador",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000011",
+          "rawData": {
+            "Sequence": 11,
+            "Stop": 11,
+            "SPX TN": "BR0000000000011",
+            "Destination Address": "Caso 11 esperado Indistinto, 10, Falar com o zelador",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9244,
+            "Longitude": -43.235,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000011"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92440,-43.23420",
+      "lat": -22.9244,
+      "lng": -43.2342,
+      "address": "Caso 12 esperado Sim, 10, Edifício Central, sala 302",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000012",
+          "rawData": {
+            "Sequence": 12,
+            "Stop": 12,
+            "SPX TN": "BR0000000000012",
+            "Destination Address": "Caso 12 esperado Sim, 10, Edifício Central, sala 302",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9244,
+            "Longitude": -43.2342,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000012"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92440,-43.23340",
+      "lat": -22.9244,
+      "lng": -43.2334,
+      "address": "Caso 13 esperado Sim, 10, Sala 302, Edifício Central",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000013",
+          "rawData": {
+            "Sequence": 13,
+            "Stop": 13,
+            "SPX TN": "BR0000000000013",
+            "Destination Address": "Caso 13 esperado Sim, 10, Sala 302, Edifício Central",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9244,
+            "Longitude": -43.2334,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000013"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92440,-43.23260",
+      "lat": -22.9244,
+      "lng": -43.2326,
+      "address": "Caso 14 esperado Sim, 10, Ed. Central, sala 302",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000014",
+          "rawData": {
+            "Sequence": 14,
+            "Stop": 14,
+            "SPX TN": "BR0000000000014",
+            "Destination Address": "Caso 14 esperado Sim, 10, Ed. Central, sala 302",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9244,
+            "Longitude": -43.2326,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000014"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92440,-43.23180",
+      "lat": -22.9244,
+      "lng": -43.2318,
+      "address": "Caso 15 esperado Sim, 10, Edifício Empresarial, loja 5",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000015",
+          "rawData": {
+            "Sequence": 15,
+            "Stop": 15,
+            "SPX TN": "BR0000000000015",
+            "Destination Address": "Caso 15 esperado Sim, 10, Edifício Empresarial, loja 5",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9244,
+            "Longitude": -43.2318,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000015"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92510,-43.23500",
+      "lat": -22.9251,
+      "lng": -43.235,
+      "address": "Caso 16 esperado Sim, 10, Zelador, sala 10",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000016",
+          "rawData": {
+            "Sequence": 16,
+            "Stop": 16,
+            "SPX TN": "BR0000000000016",
+            "Destination Address": "Caso 16 esperado Sim, 10, Zelador, sala 10",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9251,
+            "Longitude": -43.235,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000016"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92510,-43.23420",
+      "lat": -22.9251,
+      "lng": -43.2342,
+      "address": "Caso 17 esperado Sim, 10, Edifício Tech Tower",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000017",
+          "rawData": {
+            "Sequence": 17,
+            "Stop": 17,
+            "SPX TN": "BR0000000000017",
+            "Destination Address": "Caso 17 esperado Sim, 10, Edifício Tech Tower",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9251,
+            "Longitude": -43.2342,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000017"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92510,-43.23340",
+      "lat": -22.9251,
+      "lng": -43.2334,
+      "address": "Caso 18 esperado Não, 10, Empório da Vila",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000018",
+          "rawData": {
+            "Sequence": 18,
+            "Stop": 18,
+            "SPX TN": "BR0000000000018",
+            "Destination Address": "Caso 18 esperado Não, 10, Empório da Vila",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9251,
+            "Longitude": -43.2334,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000018"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92510,-43.23260",
+      "lat": -22.9251,
+      "lng": -43.2326,
+      "address": "Caso 19 esperado Não, 10, Ao lado do Teatro",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000019",
+          "rawData": {
+            "Sequence": 19,
+            "Stop": 19,
+            "SPX TN": "BR0000000000019",
+            "Destination Address": "Caso 19 esperado Não, 10, Ao lado do Teatro",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9251,
+            "Longitude": -43.2326,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000019"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92510,-43.23180",
+      "lat": -22.9251,
+      "lng": -43.2318,
+      "address": "Caso 20 esperado Sim, 10, Andar 5, sala 302",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000020",
+          "rawData": {
+            "Sequence": 20,
+            "Stop": 20,
+            "SPX TN": "BR0000000000020",
+            "Destination Address": "Caso 20 esperado Sim, 10, Andar 5, sala 302",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9251,
+            "Longitude": -43.2318,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000020"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92580,-43.23500",
+      "lat": -22.9258,
+      "lng": -43.235,
+      "address": "Caso 21 esperado Não, 10, apto 101",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000021",
+          "rawData": {
+            "Sequence": 21,
+            "Stop": 21,
+            "SPX TN": "BR0000000000021",
+            "Destination Address": "Caso 21 esperado Não, 10, apto 101",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9258,
+            "Longitude": -43.235,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000021"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92580,-43.23420",
+      "lat": -22.9258,
+      "lng": -43.2342,
+      "address": "Caso 22 esperado Sim, 10, sala 302",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000022",
+          "rawData": {
+            "Sequence": 22,
+            "Stop": 22,
+            "SPX TN": "BR0000000000022",
+            "Destination Address": "Caso 22 esperado Sim, 10, sala 302",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9258,
+            "Longitude": -43.2342,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000022"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92580,-43.23340",
+      "lat": -22.9258,
+      "lng": -43.2334,
+      "address": "Caso 23 esperado Indistinto, 10, Farmácias Popular",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000023",
+          "rawData": {
+            "Sequence": 23,
+            "Stop": 23,
+            "SPX TN": "BR0000000000023",
+            "Destination Address": "Caso 23 esperado Indistinto, 10, Farmácias Popular",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9258,
+            "Longitude": -43.2334,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000023"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92580,-43.23260",
+      "lat": -22.9258,
+      "lng": -43.2326,
+      "address": "Caso 24 esperado Indistinto, 10",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000024",
+          "rawData": {
+            "Sequence": 24,
+            "Stop": 24,
+            "SPX TN": "BR0000000000024",
+            "Destination Address": "Caso 24 esperado Indistinto, 10",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9258,
+            "Longitude": -43.2326,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000024"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92580,-43.23180",
+      "lat": -22.9258,
+      "lng": -43.2318,
+      "address": "Caso 25 esperado Indistinto, 10, Edifício 200",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000025",
+          "rawData": {
+            "Sequence": 25,
+            "Stop": 25,
+            "SPX TN": "BR0000000000025",
+            "Destination Address": "Caso 25 esperado Indistinto, 10, Edifício 200",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9258,
+            "Longitude": -43.2318,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000025"
+        }
+      ]
+    },
+    {
+      "id": "pt_-22.92650,-43.23500",
+      "lat": -22.9265,
+      "lng": -43.235,
+      "address": "Caso 26 esperado Não, 10, Edifício Cristal, apto 101",
+      "packageCount": 1,
+      "packages": [
+        {
+          "id": "BR0000000000026",
+          "rawData": {
+            "Sequence": 26,
+            "Stop": 26,
+            "SPX TN": "BR0000000000026",
+            "Destination Address": "Caso 26 esperado Não, 10, Edifício Cristal, apto 101",
+            "City": "Rio de Janeiro",
+            "Latitude": -22.9265,
+            "Longitude": -43.235,
+            "Neighborhood": "Tijuca",
+            "Zipcode": "20520-000",
+            "Planned AT": "AT202609130TEST"
+          },
+          "tracking": "BR0000000000026"
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "manifestFileName": "roteiro-classificacao.json",
+    "importedAt": "2026-09-13T05:43:00.665Z",
+    "at": "AT202609130TEST"
+  }
+}
