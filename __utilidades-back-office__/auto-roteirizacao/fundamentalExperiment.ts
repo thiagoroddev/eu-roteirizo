@@ -5,12 +5,22 @@ import { pointDeliverySeconds } from "../../src/utils/routing/estimates";
 import { generateAnchorAlternatives } from "../../src/utils/routing/autoRouteAnchors";
 import { haversine } from "../../src/utils/routing/geo";
 import type { RoadGraph } from "../../src/utils/routing/graph";
-import { evaluateCompleteWalking, evaluateLimitedFundamentalCircuit, evaluateVehicleOrder, clearExperimentPathCache, type PathCollection } from "./experimentPaths";
+import {
+  evaluateCompleteWalking,
+  evaluateLimitedFundamentalCircuit,
+  evaluateStreetPath,
+  evaluateVehicleOrder,
+  clearExperimentPathCache,
+  type PathCollection,
+  type PathEndpoint,
+} from "./experimentPaths";
 import { buildFundamentalReferences, type FundamentalReference, type FundamentalReferenceSet } from "./fundamentals";
 import { pedestrianGraph as derivePedestrianGraph } from "../../src/utils/routing/pedestrian";
 
 export type FundamentalVariant = "individual" | "fixed-groups" | "revisable";
 export type FundamentalObjective = "vehicleDistance" | "modeledTime";
+export const MULTI_START_STRATEGIES = ["seeded-revisable", "unseeded-revisable", "individual"] as const;
+export type MultiStartStrategy = (typeof MULTI_START_STRATEGIES)[number];
 
 export interface FundamentalExperimentConfig {
   circuitLimitMeters: number;
@@ -129,10 +139,58 @@ export interface FundamentalExperimentResult {
   search: AnchorSearchResult | null;
 }
 
+export interface MultiStartAttempt {
+  strategy: MultiStartStrategy;
+  startPointId: string;
+  startPoint: LatLng;
+  initialGroupCount: number;
+  definitionsEvaluated: number;
+  definitionLimitReached: boolean;
+  solution: FundamentalSolution;
+}
+
+export interface MultiStartFundamentalExperimentResult {
+  status: "complete" | "partial" | "invalid";
+  config: FundamentalExperimentConfig;
+  fundamentals: FundamentalReference[];
+  attempts: MultiStartAttempt[];
+  winners: MultiStartAttempt[];
+  diagnostics: string[];
+  search: AnchorSearchResult | null;
+}
+
 const compare = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 const finite = (value: number): number => (Number.isFinite(value) ? value : Infinity);
 const sum = (values: number[]): number => (values.some((value) => !Number.isFinite(value)) ? Infinity : values.reduce((total, value) => total + value, 0));
 const normalizeConfig = (raw: Partial<FundamentalExperimentConfig> | undefined): FundamentalExperimentConfig => ({ ...DEFAULT_FUNDAMENTAL_EXPERIMENT_CONFIG, ...(raw ?? {}) });
+const VEHICLE_DISTANCE_EQUIVALENCE_METERS = 0.1;
+
+const compareMetric = (left: number, right: number, tolerance = 0): number => {
+  const finiteLeft = finite(left);
+  const finiteRight = finite(right);
+  if (finiteLeft < finiteRight - tolerance) return -1;
+  if (finiteLeft > finiteRight + tolerance) return 1;
+  return 0;
+};
+
+/** Vehicle-distance ties prefer fewer vehicle stops before consulting reported time. */
+const compareSolutions = (left: FundamentalSolution, right: FundamentalSolution, objective: FundamentalObjective): number => {
+  if (left.status !== right.status) return left.status === "complete" ? -1 : 1;
+  if (objective === "vehicleDistance") {
+    const distance = compareMetric(left.vehicleDistanceMeters, right.vehicleDistanceMeters, VEHICLE_DISTANCE_EQUIVALENCE_METERS);
+    if (distance) return distance;
+    if (left.groups.length !== right.groups.length) return left.groups.length - right.groups.length;
+    const time = compareMetric(left.modeledTimeSeconds, right.modeledTimeSeconds, 1e-6);
+    if (time) return time;
+  } else {
+    const time = compareMetric(left.modeledTimeSeconds, right.modeledTimeSeconds, 1e-6);
+    if (time) return time;
+    const distance = compareMetric(left.vehicleDistanceMeters, right.vehicleDistanceMeters, VEHICLE_DISTANCE_EQUIVALENCE_METERS);
+    if (distance) return distance;
+    if (left.groups.length !== right.groups.length) return left.groups.length - right.groups.length;
+  }
+  return compare(left.signature, right.signature);
+};
 
 /** Corpus inputs and snapshots are immutable; reuse their expensive spatial derivations by identity. */
 let referenceSetsByGraph = new WeakMap<RoadGraph, WeakMap<readonly DeliveryPoint[], FundamentalReferenceSet>>();
@@ -278,6 +336,8 @@ interface EvaluationCache {
 }
 
 let evaluationCachesByGraph = new WeakMap<RoadGraph, WeakMap<RoadGraph, WeakMap<readonly DeliveryPoint[], Map<string, EvaluationCache>>>>();
+let vehicleLegDistancesByGraph = new WeakMap<RoadGraph, Map<string, number>>();
+const MAX_CACHED_VEHICLE_LEG_DISTANCES = 200_000;
 
 /** The harness clears between cases; measured repetitions explicitly use warm caches. */
 export const clearFundamentalExperimentCaches = (): void => {
@@ -285,10 +345,24 @@ export const clearFundamentalExperimentCaches = (): void => {
   referenceSetsWithoutGraph = new WeakMap();
   anchorSearches = new WeakMap();
   evaluationCachesByGraph = new WeakMap();
+  vehicleLegDistancesByGraph = new WeakMap();
   clearExperimentPathCache();
 };
 
 const endpointKey = (position: LatLng, segment: FundamentalReference["segment"] | undefined | null = null): string => `${position.lat},${position.lng},${segment?.id ?? ""}`;
+
+const cachedVehicleLegDistance = (graph: RoadGraph | null, from: PathEndpoint, to: PathEndpoint): number => {
+  if (!graph) return Infinity;
+  const cache = vehicleLegDistancesByGraph.get(graph) ?? new Map<string, number>();
+  vehicleLegDistancesByGraph.set(graph, cache);
+  const key = `${endpointKey(from.position, from.segment)}>${endpointKey(to.position, to.segment)}`;
+  const cached = cache.get(key);
+  if (cached !== undefined) return cached;
+  const distance = evaluateStreetPath(graph, from, to).distanceMeters;
+  if (cache.size >= MAX_CACHED_VEHICLE_LEG_DISTANCES) cache.delete(cache.keys().next().value!);
+  cache.set(key, distance);
+  return distance;
+};
 
 const groupKey = (selected: SelectedGroup, refs: Map<string, FundamentalReference>): string =>
   `${endpointKey(selected.anchor.position, selected.anchor.segment)}|${selected.definition.pointIds
@@ -325,7 +399,6 @@ const evaluationCacheFor = (
   pedestrianGraph: RoadGraph | null,
   variant: FundamentalVariant,
   objective: FundamentalObjective,
-  startPoint: LatLng | null,
   config: FundamentalExperimentConfig
 ): EvaluationCache => {
   if (!graph || !pedestrianGraph) return newEvaluationCache(points, config);
@@ -335,7 +408,7 @@ const evaluationCacheFor = (
   byPedestrianGraph.set(pedestrianGraph, byPoints);
   const byContext = byPoints.get(sourcePoints) ?? new Map<string, EvaluationCache>();
   byPoints.set(sourcePoints, byContext);
-  const key = `${variant}|${objective}|${startPoint ? endpointKey(startPoint) : "free"}|${JSON.stringify(config)}`;
+  const key = `${variant}|${objective}|${JSON.stringify(config)}`;
   const cached = byContext.get(key);
   if (cached) return cached;
   const created = newEvaluationCache(points, config);
@@ -359,8 +432,8 @@ const cachedGroupResult = (
   return created;
 };
 
-const cachedVehicleOrder = (graph: RoadGraph | null, startPoint: LatLng | null, groups: readonly FundamentalGroupResult[], cache: EvaluationCache): PathCollection => {
-  const key = `${startPoint ? endpointKey(startPoint) : "free"}>${groups.map((group) => endpointKey(group.anchor.position, group.anchor.segment)).join(">")}`;
+const cachedVehicleOrder = (graph: RoadGraph | null, startPoint: PathEndpoint | null, groups: readonly FundamentalGroupResult[], cache: EvaluationCache): PathCollection => {
+  const key = `${startPoint ? endpointKey(startPoint.position, startPoint.segment) : "free"}>${groups.map((group) => endpointKey(group.anchor.position, group.anchor.segment)).join(">")}`;
   const cached = cache.vehicles.get(key);
   if (cached) return cached;
   const created = evaluateVehicleOrder(
@@ -397,9 +470,209 @@ const permutations = (ids: string[], maximum: number): string[][] => {
   return result;
 };
 
-const orderCandidates = (groups: SelectedGroup[], startPoint: LatLng | null, config: FundamentalExperimentConfig): string[][] => {
-  const byId = new Map(groups.map((group) => [group.definition.pointIds.slice().sort(compare).join(","), group]));
+const orderCandidates = (
+  groups: SelectedGroup[],
+  graph: RoadGraph | null,
+  startPoint: PathEndpoint | null,
+  config: FundamentalExperimentConfig,
+  firstPointId: string | null = null,
+  refined = false
+): string[][] => {
+  const suppliedOrder = groups.map((group) => group.definition.pointIds.slice().sort(compare).join(","));
+  const byId = new Map(groups.map((group, index) => [suppliedOrder[index], group]));
   const ids = [...byId.keys()].sort(compare);
+  const forcedFirst = firstPointId ? ids.find((id) => byId.get(id)!.definition.pointIds.includes(firstPointId)) : undefined;
+  if (firstPointId && !forcedFirst) return [];
+  const roadDistances = new Map<string, number>();
+  const roadDistance = (from: string, to: string): number => {
+    const key = `${from}>${to}`;
+    const cached = roadDistances.get(key);
+    if (cached !== undefined) return cached;
+    const source = byId.get(from)!.anchor;
+    const target = byId.get(to)!.anchor;
+    const distance = cachedVehicleLegDistance(graph, { position: source.position, segment: source.segment }, { position: target.position, segment: target.segment });
+    roadDistances.set(key, distance);
+    return distance;
+  };
+  const roadGreedy = (first: string | undefined): string[] => {
+    const remaining = new Set(ids);
+    const output: string[] = [];
+    if (first) {
+      output.push(first);
+      remaining.delete(first);
+    }
+    while (remaining.size) {
+      const previous = output.at(-1);
+      let next = "";
+      let bestDistance = Infinity;
+      for (const id of remaining) {
+        const anchor = byId.get(id)!.anchor;
+        const distance = previous ? roadDistance(previous, id) : startPoint ? cachedVehicleLegDistance(graph, startPoint, { position: anchor.position, segment: anchor.segment }) : 0;
+        if (!next || distance < bestDistance || (distance === bestDistance && compare(id, next) < 0)) {
+          next = id;
+          bestDistance = distance;
+        }
+      }
+      output.push(next);
+      remaining.delete(next);
+    }
+    return output;
+  };
+  const cheapestInsertion = (first: string): string[] => {
+    const remaining = new Set(ids.filter((id) => id !== first));
+    const output = [first];
+    while (remaining.size) {
+      let bestId = "";
+      let bestIndex = 1;
+      let bestDelta = Infinity;
+      for (const id of remaining)
+        for (let insertIndex = 1; insertIndex <= output.length; insertIndex++) {
+          const before = output[insertIndex - 1];
+          const after = output[insertIndex];
+          const delta = roadDistance(before, id) + (after ? roadDistance(id, after) - roadDistance(before, after) : 0);
+          if (!bestId || delta < bestDelta || (delta === bestDelta && `${id}|${insertIndex}` < `${bestId}|${bestIndex}`)) {
+            bestId = id;
+            bestIndex = insertIndex;
+            bestDelta = delta;
+          }
+        }
+      output.splice(bestIndex, 0, bestId);
+      remaining.delete(bestId);
+    }
+    return output;
+  };
+  const orderDistance = (order: readonly string[]): number => {
+    let distance = 0;
+    if (startPoint && order[0]) {
+      const first = byId.get(order[0])!.anchor;
+      distance += cachedVehicleLegDistance(graph, startPoint, { position: first.position, segment: first.segment });
+    }
+    for (let index = 1; index < order.length; index++) distance += roadDistance(order[index - 1], order[index]);
+    return distance;
+  };
+  const relocate = (seed: string[]): string[] => {
+    if (!graph || !forcedFirst || seed.length < 3) return seed;
+    let current = seed.slice();
+    let currentDistance = orderDistance(current);
+    for (let move = 0; move < config.maxOrderEvaluations; move++) {
+      let bestOrder: string[] | null = null;
+      let bestDistance = currentDistance;
+      for (let fromIndex = 1; fromIndex < current.length; fromIndex++) {
+        const moved = current[fromIndex];
+        const beforeMoved = current[fromIndex - 1];
+        const afterMoved = current[fromIndex + 1];
+        const without = current.filter((_, index) => index !== fromIndex);
+        for (let insertIndex = 1; insertIndex <= without.length; insertIndex++) {
+          if (insertIndex === fromIndex) continue;
+          const beforeInsert = without[insertIndex - 1];
+          const afterInsert = without[insertIndex];
+          const affected = [
+            roadDistance(beforeMoved, moved),
+            ...(afterMoved ? [roadDistance(moved, afterMoved), roadDistance(beforeMoved, afterMoved)] : []),
+            roadDistance(beforeInsert, moved),
+            ...(afterInsert ? [roadDistance(moved, afterInsert), roadDistance(beforeInsert, afterInsert)] : []),
+          ];
+          let candidateDistance: number;
+          if (Number.isFinite(currentDistance) && affected.every(Number.isFinite)) {
+            const removalDelta = (afterMoved ? roadDistance(beforeMoved, afterMoved) : 0) - roadDistance(beforeMoved, moved) - (afterMoved ? roadDistance(moved, afterMoved) : 0);
+            const insertionDelta = roadDistance(beforeInsert, moved) + (afterInsert ? roadDistance(moved, afterInsert) - roadDistance(beforeInsert, afterInsert) : 0);
+            candidateDistance = currentDistance + removalDelta + insertionDelta;
+          } else {
+            const candidate = [...without.slice(0, insertIndex), moved, ...without.slice(insertIndex)];
+            candidateDistance = orderDistance(candidate);
+          }
+          if (candidateDistance < bestDistance - 1e-6) {
+            bestDistance = candidateDistance;
+            bestOrder = [...without.slice(0, insertIndex), moved, ...without.slice(insertIndex)];
+          } else if (Math.abs(candidateDistance - bestDistance) <= 1e-6 && bestOrder) {
+            const candidate = [...without.slice(0, insertIndex), moved, ...without.slice(insertIndex)];
+            if (candidate.join("|") < bestOrder.join("|")) bestOrder = candidate;
+          }
+        }
+      }
+      for (let left = 1; left < current.length - 1; left++)
+        for (let right = left + 1; right < current.length; right++) {
+          const candidate = current.slice();
+          [candidate[left], candidate[right]] = [candidate[right], candidate[left]];
+          const affectedIndexes = [...new Set([left - 1, left, right - 1, right])].filter((index) => index >= 0 && index < current.length - 1);
+          const removed = affectedIndexes.reduce((total, index) => total + roadDistance(current[index], current[index + 1]), 0);
+          const added = affectedIndexes.reduce((total, index) => total + roadDistance(candidate[index], candidate[index + 1]), 0);
+          const candidateDistance = Number.isFinite(currentDistance) && Number.isFinite(removed) && Number.isFinite(added) ? currentDistance - removed + added : orderDistance(candidate);
+          if (candidateDistance < bestDistance - 1e-6) {
+            bestDistance = candidateDistance;
+            bestOrder = candidate;
+          }
+        }
+      const forwardPrefix = [0];
+      const reversePrefix = [0];
+      for (let index = 0; index < current.length - 1; index++) {
+        forwardPrefix.push(forwardPrefix[index] + roadDistance(current[index], current[index + 1]));
+        reversePrefix.push(reversePrefix[index] + roadDistance(current[index + 1], current[index]));
+      }
+      for (let left = 1; left < current.length - 1; left++)
+        for (let right = left + 1; right < current.length; right++) {
+          const after = current[right + 1];
+          const removed = roadDistance(current[left - 1], current[left]) + (forwardPrefix[right] - forwardPrefix[left]) + (after ? roadDistance(current[right], after) : 0);
+          const added = roadDistance(current[left - 1], current[right]) + (reversePrefix[right] - reversePrefix[left]) + (after ? roadDistance(current[left], after) : 0);
+          let candidateDistance = currentDistance - removed + added;
+          let candidate: string[] | null = null;
+          if (![currentDistance, removed, added, candidateDistance].every(Number.isFinite)) {
+            candidate = [...current.slice(0, left), ...current.slice(left, right + 1).reverse(), ...current.slice(right + 1)];
+            candidateDistance = orderDistance(candidate);
+          }
+          if (candidateDistance < bestDistance - 1e-6) {
+            bestDistance = candidateDistance;
+            bestOrder = candidate ?? [...current.slice(0, left), ...current.slice(left, right + 1).reverse(), ...current.slice(right + 1)];
+          }
+        }
+      if (!bestOrder) break;
+      const exactDistance = orderDistance(bestOrder);
+      if (!(exactDistance < currentDistance - 1e-6)) break;
+      current = bestOrder;
+      currentDistance = exactDistance;
+    }
+    return current;
+  };
+  if (forcedFirst) {
+    const remainingIds = ids.filter((id) => id !== forcedFirst);
+    const factorial = remainingIds.reduce((total, _, index) => total * (index + 1), 1);
+    if (factorial <= config.maxOrderEvaluations) return permutations(remainingIds, config.maxOrderEvaluations).map((order) => [forcedFirst, ...order]);
+    const greedy = (): string[] => {
+      const remaining = new Set(remainingIds);
+      const output = [forcedFirst];
+      let cursor = byId.get(forcedFirst)!.anchor.position;
+      while (remaining.size) {
+        let next = "",
+          bestDistance = Infinity;
+        for (const id of remaining) {
+          const distance = haversine(cursor, byId.get(id)!.anchor.position);
+          if (!next || distance < bestDistance || (distance === bestDistance && compare(id, next) < 0)) {
+            next = id;
+            bestDistance = distance;
+          }
+        }
+        output.push(next);
+        remaining.delete(next);
+        cursor = byId.get(next)!.anchor.position;
+      }
+      return output;
+    };
+    const natural = [forcedFirst, ...remainingIds];
+    const reverse = [forcedFirst, ...remainingIds.slice().reverse()];
+    const base = greedy();
+    const roadBase = graph ? roadGreedy(forcedFirst) : base;
+    const insertionBase = graph ? cheapestInsertion(forcedFirst) : base;
+    const supplied = suppliedOrder[0] === forcedFirst ? [suppliedOrder] : [];
+    const seeds = refined
+      ? [relocate(roadBase), relocate(insertionBase), ...supplied.map(relocate), relocate(base), roadBase, insertionBase, ...supplied, base, natural, reverse]
+      : [roadBase, ...supplied, base, natural, reverse];
+    const initial = [...new Map(seeds.map((order) => [order.join("|"), order])).values()];
+    for (let from = 1; from < base.length - 1 && initial.length < config.maxOrderEvaluations; from++) {
+      for (let to = from + 1; to < base.length && initial.length < config.maxOrderEvaluations; to++)
+        initial.push([...base.slice(0, from), ...base.slice(from, to + 1).reverse(), ...base.slice(to + 1)]);
+    }
+    return initial.slice(0, config.maxOrderEvaluations);
+  }
   const factorial = ids.reduce((total, _, index) => total * (index + 1), 1);
   if (factorial <= config.maxOrderEvaluations) return permutations(ids, config.maxOrderEvaluations);
   const natural = ids.slice();
@@ -424,7 +697,7 @@ const orderCandidates = (groups: SelectedGroup[], startPoint: LatLng | null, con
     }
     return output;
   };
-  const initial = [...new Map([natural, reverse, greedy(startPoint), greedy(null)].map((order) => [order.join("|"), order])).values()];
+  const initial = [...new Map([roadGreedy(undefined), suppliedOrder, natural, reverse, greedy(startPoint?.position ?? null), greedy(null)].map((order) => [order.join("|"), order])).values()];
   const base = initial.at(-1) ?? natural;
   for (let from = 0; from < base.length - 1 && initial.length < config.maxOrderEvaluations; from++) {
     for (let to = from + 1; to < base.length && initial.length < config.maxOrderEvaluations; to++) initial.push([...base.slice(0, from), ...base.slice(from, to + 1).reverse(), ...base.slice(to + 1)]);
@@ -440,13 +713,15 @@ const evaluateSelection = (
   points: Map<string, DeliveryPoint>,
   graph: RoadGraph | null,
   pedestrianGraph: RoadGraph | null,
-  startPoint: LatLng | null,
+  startPoint: PathEndpoint | null,
+  firstPointId: string | null,
   config: FundamentalExperimentConfig,
   operationsEvaluated: number,
-  cache: EvaluationCache
+  cache: EvaluationCache,
+  refineOrder = false
 ): FundamentalSolution => {
   const bySignature = new Map(selected.map((group) => [group.definition.pointIds.slice().sort(compare).join(","), group]));
-  const orders = orderCandidates(selected, startPoint, config);
+  const orders = orderCandidates(selected, graph, startPoint, config, firstPointId, refineOrder);
   const evaluatedGroups = new Map([...bySignature].map(([key, group]) => [key, cachedGroupResult(group, refs, graph, pedestrianGraph, config, cache)]));
   const allGroups = [...evaluatedGroups.values()];
   const assigned = new Set(allGroups.flatMap((group) => group.pointIds));
@@ -481,24 +756,12 @@ const evaluateSelection = (
       workLimitReached: false,
       signature: groups.map((group) => `${group.pointIds.join(",")}@${group.anchor.id}`).join("|") + `|${groups.map((group) => group.id).join(",")}`,
     };
-    const score = (candidate: FundamentalSolution): [number, number, number, string] => [
-      candidate.status === "complete" ? 0 : 1,
-      objective === "vehicleDistance" ? candidate.vehicleDistanceMeters : candidate.modeledTimeSeconds,
-      objective === "vehicleDistance" ? candidate.modeledTimeSeconds : candidate.vehicleDistanceMeters,
-      candidate.signature,
-    ];
-    const compareScore = (a: FundamentalSolution, b: FundamentalSolution): number => {
-      const left = score(a);
-      const right = score(b);
-      for (let index = 0; index < left.length; index++) {
-        if (left[index] < right[index]) return -1;
-        if (left[index] > right[index]) return 1;
-      }
-      return 0;
-    };
-    if (!best || compareScore(solution, best) < 0) best = solution;
+    if (!best || compareSolutions(solution, best, objective) < 0) best = solution;
   }
-  return best ?? evaluateSelection(variant, objective, selected, refs, points, graph, pedestrianGraph, startPoint, { ...config, maxOrderEvaluations: 1 }, operationsEvaluated, cache);
+  return (
+    best ??
+    evaluateSelection(variant, objective, selected, refs, points, graph, pedestrianGraph, startPoint, firstPointId, { ...config, maxOrderEvaluations: 1 }, operationsEvaluated, cache, refineOrder)
+  );
 };
 
 const deduplicateDefinitions = (definitions: GroupDefinition[]): GroupDefinition[] => {
@@ -545,9 +808,17 @@ const fixedDefinitions = (
   return definitions;
 };
 
-const revisableDefinitions = (individual: GroupDefinition[], fixed: GroupDefinition[], maximum: number): GroupDefinition[][] => {
-  const definitions: GroupDefinition[][] = [individual, fixed];
-  const base = fixed.length ? fixed : individual;
+const partitionKey = (definitions: GroupDefinition[]): string =>
+  definitions
+    .map((definition) => definition.pointIds.slice().sort(compare).join(","))
+    .sort(compare)
+    .join("|");
+
+/** Deterministic one-neighborhood around one declared initial partition. */
+const revisableDefinitionsFrom = (source: GroupDefinition[], maximum: number): GroupDefinition[][] => {
+  const base = deduplicateDefinitions(source);
+  const definitions: GroupDefinition[][] = [base];
+  const seen = new Set([partitionKey(base)]);
   function* merges() {
     for (let left = 0; left < base.length; left++)
       for (let right = left + 1; right < base.length; right++) yield [...base.filter((_, index) => index !== left && index !== right), { pointIds: [...base[left].pointIds, ...base[right].pointIds] }];
@@ -569,14 +840,77 @@ const revisableDefinitions = (individual: GroupDefinition[], fixed: GroupDefinit
     for (const iterator of iterators) {
       const next = iterator.next();
       if (!next.done) {
-        definitions.push(deduplicateDefinitions(next.value));
-        added = true;
+        const normalized = deduplicateDefinitions(next.value);
+        const key = partitionKey(normalized);
+        if (!seen.has(key)) {
+          seen.add(key);
+          definitions.push(normalized);
+          added = true;
+        }
       }
       if (definitions.length >= maximum) break;
     }
     if (!added) break;
   }
   return definitions.slice(0, maximum);
+};
+
+const revisableDefinitions = (individual: GroupDefinition[], fixed: GroupDefinition[], maximum: number): GroupDefinition[][] => {
+  const combined = [individual, ...revisableDefinitionsFrom(fixed.length ? fixed : individual, maximum)];
+  const seen = new Set<string>();
+  return combined
+    .filter((definitions) => {
+      const key = partitionKey(definitions);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, maximum);
+};
+
+const mergeDiscoveredGroup = (source: GroupDefinition[], target: GroupDefinition): GroupDefinition[] => {
+  const targetIds = new Set(target.pointIds);
+  if (targetIds.size < 2 || [...targetIds].some((id) => !source.some((definition) => definition.pointIds.includes(id)))) return source;
+  if (source.some((definition) => definition.pointIds.some((id) => targetIds.has(id)) && definition.pointIds.some((id) => !targetIds.has(id)))) return source;
+  return deduplicateDefinitions([...source.filter((definition) => definition.pointIds.every((id) => !targetIds.has(id))), { pointIds: [...targetIds].sort(compare) }]);
+};
+
+/**
+ * Starts with one stop per address and evaluates groups discovered across the
+ * whole route. Single discovered groups are considered independently, then as
+ * a cumulative partition, so the budget is not consumed by pairs involving
+ * only the first address.
+ */
+const unseededDefinitionsFrom = (individual: GroupDefinition[], discovered: GroupDefinition[], maximum: number): GroupDefinition[][] => {
+  const base = deduplicateDefinitions(individual);
+  const targets = discovered
+    .filter((definition) => definition.pointIds.length > 1)
+    .map((definition) => ({ pointIds: definition.pointIds.slice().sort(compare) }))
+    .sort((left, right) => right.pointIds.length - left.pointIds.length || compare(partitionKey([left]), partitionKey([right])));
+  const alternatives: GroupDefinition[][] = [];
+  const seen = new Set<string>();
+  const add = (definitions: GroupDefinition[]): void => {
+    if (alternatives.length >= maximum) return;
+    const normalized = deduplicateDefinitions(definitions);
+    const key = partitionKey(normalized);
+    if (seen.has(key)) return;
+    seen.add(key);
+    alternatives.push(normalized);
+  };
+
+  add(base);
+  for (const target of targets) add(mergeDiscoveredGroup(base, target));
+
+  let fullyDiscovered = base;
+  for (const target of targets) fullyDiscovered = mergeDiscoveredGroup(fullyDiscovered, target);
+  add(fullyDiscovered);
+
+  let cumulative = base;
+  for (const target of targets) {
+    cumulative = mergeDiscoveredGroup(cumulative, target);
+    add(cumulative);
+  }
+  return alternatives;
 };
 
 const anchorsForGroup = (
@@ -606,7 +940,7 @@ const anchorsForGroup = (
       if (!entries.length) bySegment.delete(key);
       if (diversified.length >= config.maxCandidatesPerGroup) break;
     }
-  for (const anchor of [...(definition.seedAnchor ? [definition.seedAnchor] : []), ...defaults, ...diversified]) if (!unique.has(anchor.id)) unique.set(anchor.id, anchor);
+  for (const anchor of [...defaults, ...(definition.seedAnchor ? [definition.seedAnchor] : []), ...diversified]) if (!unique.has(anchor.id)) unique.set(anchor.id, anchor);
   return [...unique.values()].slice(0, config.maxCandidatesPerGroup);
 };
 
@@ -623,11 +957,13 @@ const optimizeDefinitions = (
   candidates: ExperimentAnchor[],
   graph: RoadGraph | null,
   pedestrianGraph: RoadGraph | null,
-  startPoint: LatLng | null,
+  startPoint: PathEndpoint | null,
+  firstPointId: string | null,
   config: FundamentalExperimentConfig,
   objective: FundamentalObjective,
   work: OptimizationWork,
-  cache: EvaluationCache
+  cache: EvaluationCache,
+  refineAnchors = true
 ): FundamentalSolution => {
   let selected = definitions
     .map((definition) => {
@@ -643,33 +979,60 @@ const optimizeDefinitions = (
   if (selected.length !== definitions.length) {
     selected = definitions.map((definition) => ({ definition, anchor: anchorFromReference(refs.get(definition.pointIds[0])!) }));
   }
-  let best = evaluateSelection(variant, objective, selected, refs, points, graph, pedestrianGraph, startPoint, config, work.evaluated, cache);
+  let best = evaluateSelection(variant, objective, selected, refs, points, graph, pedestrianGraph, startPoint, firstPointId, config, work.evaluated, cache);
+  if (!refineAnchors) return best;
+  const orderedSelection = (solution: FundamentalSolution): SelectedGroup[] => {
+    const byDefinition = new Map(selected.map((group) => [group.definition.pointIds.slice().sort(compare).join(","), group.definition]));
+    return solution.groups.map((group) => ({ definition: byDefinition.get(group.pointIds.slice().sort(compare).join(",")) ?? { pointIds: group.pointIds.slice() }, anchor: group.anchor }));
+  };
+  selected = orderedSelection(best);
   let exhausted = false;
   for (let pass = 0; pass < config.maxRefinementPasses; pass++) {
     let changed = false;
     for (let index = 0; index < selected.length; index++) {
       const options = anchorsForGroup(variant, selected[index].definition, refs, candidates, config);
+      const current = selected[index];
+      const currentGroup = cachedGroupResult(current, refs, graph, pedestrianGraph, config, cache);
+      const previous: PathEndpoint | null = index === 0 ? startPoint : { position: selected[index - 1].anchor.position, segment: selected[index - 1].anchor.segment };
+      const next: PathEndpoint | null = selected[index + 1] ? { position: selected[index + 1].anchor.position, segment: selected[index + 1].anchor.segment } : null;
+      const currentEndpoint: PathEndpoint = { position: current.anchor.position, segment: current.anchor.segment };
+      const currentVehicleMeters = (previous ? cachedVehicleLegDistance(graph, previous, currentEndpoint) : 0) + (next ? cachedVehicleLegDistance(graph, currentEndpoint, next) : 0);
+      let bestAnchor = current.anchor;
+      let bestDelta = 0;
       for (const anchor of options) {
-        if (anchor.id === selected[index].anchor.id) continue;
+        if (anchor.id === current.anchor.id) continue;
         if (work.evaluated >= config.maxGroupOperations) {
           work.limitReached = true;
           exhausted = true;
           break;
         }
         work.evaluated++;
-        const moved = cachedGroupResult({ ...selected[index], anchor }, refs, graph, pedestrianGraph, config, cache);
+        const moved = cachedGroupResult({ ...current, anchor }, refs, graph, pedestrianGraph, config, cache);
         if (!moved.limitedCircuit.valid || moved.limitedCircuit.exceedsLimit || !moved.completeWalking.valid) continue;
-        const proposal = selected.map((group, groupIndex) => (groupIndex === index ? { ...group, anchor } : group));
-        const candidate = evaluateSelection(variant, objective, proposal, refs, points, graph, pedestrianGraph, startPoint, config, work.evaluated, cache);
-        const candidateScore = candidate.status === "complete" ? (objective === "vehicleDistance" ? candidate.vehicleDistanceMeters : candidate.modeledTimeSeconds) : Infinity;
-        const bestScore = best.status === "complete" ? (objective === "vehicleDistance" ? best.vehicleDistanceMeters : best.modeledTimeSeconds) : Infinity;
-        if (candidateScore < bestScore || (candidateScore === bestScore && candidate.signature < best.signature)) {
-          selected = proposal;
-          best = candidate;
-          changed = true;
+        const candidateEndpoint: PathEndpoint = { position: anchor.position, segment: anchor.segment };
+        const candidateVehicleMeters = (previous ? cachedVehicleLegDistance(graph, previous, candidateEndpoint) : 0) + (next ? cachedVehicleLegDistance(graph, candidateEndpoint, next) : 0);
+        const vehicleDelta = candidateVehicleMeters - currentVehicleMeters;
+        const walkingDelta = moved.fullWalkingMeters - currentGroup.fullWalkingMeters;
+        const delta = objective === "vehicleDistance" ? vehicleDelta : (vehicleDelta * 3.6) / config.vehicleSpeedKmh + (walkingDelta * 3.6) / config.walkingSpeedKmh;
+        const improvementThreshold = objective === "vehicleDistance" ? VEHICLE_DISTANCE_EQUIVALENCE_METERS : 1e-6;
+        if (Number.isFinite(delta) && delta < bestDelta - improvementThreshold) {
+          bestAnchor = anchor;
+          bestDelta = delta;
         }
       }
+      if (bestAnchor.id !== current.anchor.id) {
+        selected[index] = { ...current, anchor: bestAnchor };
+        changed = true;
+      }
       if (exhausted) break;
+    }
+    if (changed) {
+      const reordered = evaluateSelection(variant, objective, selected, refs, points, graph, pedestrianGraph, startPoint, firstPointId, config, work.evaluated, cache);
+      const candidateScore = reordered.status === "complete" ? (objective === "vehicleDistance" ? reordered.vehicleDistanceMeters : reordered.modeledTimeSeconds) : Infinity;
+      const bestScore = best.status === "complete" ? (objective === "vehicleDistance" ? best.vehicleDistanceMeters : best.modeledTimeSeconds) : Infinity;
+      const improvementThreshold = objective === "vehicleDistance" ? VEHICLE_DISTANCE_EQUIVALENCE_METERS : 1e-6;
+      if (candidateScore < bestScore - improvementThreshold) best = reordered;
+      selected = orderedSelection(best);
     }
     if (exhausted || !changed) break;
   }
@@ -685,38 +1048,31 @@ const solutionForVariant = (
   candidates: ExperimentAnchor[],
   graph: RoadGraph | null,
   pedestrianGraph: RoadGraph | null,
-  startPoint: LatLng | null,
+  startPoint: PathEndpoint | null,
+  firstPointId: string | null,
   config: FundamentalExperimentConfig,
   objective: FundamentalObjective
 ): { solution: FundamentalSolution; definitionsEvaluated: number } => {
   const alternatives = Array.isArray(definitions[0]) ? (definitions as GroupDefinition[][]) : [definitions as GroupDefinition[]];
-  const work: OptimizationWork = { evaluated: 0, limitReached: false };
-  const cache = evaluationCacheFor(sourcePoints, points, graph, pedestrianGraph, variant, objective, startPoint, config);
+  const cache = evaluationCacheFor(sourcePoints, points, graph, pedestrianGraph, variant, objective, config);
   let best: FundamentalSolution | null = null;
-  for (const [index, candidateDefinitions] of alternatives.entries()) {
-    const allowance = Math.ceil((config.maxGroupOperations - work.evaluated) / (alternatives.length - index));
-    const solution = optimizeDefinitions(
-      variant,
-      candidateDefinitions,
-      refs,
-      points,
-      candidates,
-      graph,
-      pedestrianGraph,
-      startPoint,
-      { ...config, maxGroupOperations: work.evaluated + allowance },
-      objective,
-      work,
-      cache
-    );
-    if (
-      !best ||
-      (solution.status === "complete" &&
-        (best.status !== "complete" || (objective === "vehicleDistance" ? solution.vehicleDistanceMeters < best.vehicleDistanceMeters : solution.modeledTimeSeconds < best.modeledTimeSeconds)))
-    )
+  let bestDefinitions = alternatives[0];
+  for (const candidateDefinitions of alternatives) {
+    const rankingWork: OptimizationWork = { evaluated: 0, limitReached: false };
+    const solution = optimizeDefinitions(variant, candidateDefinitions, refs, points, candidates, graph, pedestrianGraph, startPoint, firstPointId, config, objective, rankingWork, cache, false);
+    if (!best || compareSolutions(solution, best, objective) < 0) {
       best = solution;
+      bestDefinitions = candidateDefinitions;
+    }
   }
-  const solution = best ?? optimizeDefinitions(variant, alternatives[0], refs, points, candidates, graph, pedestrianGraph, startPoint, config, objective, work, cache);
+  const work: OptimizationWork = { evaluated: 0, limitReached: false };
+  let solution = optimizeDefinitions(variant, bestDefinitions, refs, points, candidates, graph, pedestrianGraph, startPoint, firstPointId, config, objective, work, cache);
+  const selectedForOrderRefinement: SelectedGroup[] = solution.groups.map((group) => ({
+    definition: { pointIds: group.pointIds.slice() },
+    anchor: group.anchor,
+  }));
+  const refined = evaluateSelection(variant, objective, selectedForOrderRefinement, refs, points, graph, pedestrianGraph, startPoint, firstPointId, config, work.evaluated, cache, true);
+  if (compareSolutions(refined, solution, objective) < 0) solution = refined;
   return {
     solution: {
       ...solution,
@@ -758,6 +1114,7 @@ export const runFundamentalExperiment = (input: FundamentalExperimentInput): Fun
   const pedestrian = input.pedestrianGraph ?? (input.graph ? derivePedestrianGraph(input.graph) : null);
   const individual = referenceSet.references.map((reference) => ({ pointIds: [reference.pointId] }));
   const fixed = fixedDefinitions(search, byVirtualId, input.graph, pedestrian, config);
+  const startPoint: PathEndpoint | null = input.startPoint ? { position: { ...input.startPoint } } : null;
   const revisableWithOverflow = revisableDefinitions(individual, fixed, config.maxRevisableAlternatives + 1);
   const revisableDefinitionLimitReached = revisableWithOverflow.length > config.maxRevisableAlternatives;
   const definitionsByVariant: Record<FundamentalVariant, GroupDefinition[] | GroupDefinition[][]> = {
@@ -767,9 +1124,9 @@ export const runFundamentalExperiment = (input: FundamentalExperimentInput): Fun
   };
   const variants = (Object.keys(definitionsByVariant) as FundamentalVariant[]).map((kind) => {
     input.onPhase?.(`optimize:${kind}:vehicleDistance`);
-    const vehicle = solutionForVariant(kind, definitionsByVariant[kind], input.points, refs, points, candidateAnchors, input.graph, pedestrian, input.startPoint ?? null, config, "vehicleDistance");
+    const vehicle = solutionForVariant(kind, definitionsByVariant[kind], input.points, refs, points, candidateAnchors, input.graph, pedestrian, startPoint, null, config, "vehicleDistance");
     input.onPhase?.(`optimize:${kind}:modeledTime`);
-    const time = solutionForVariant(kind, definitionsByVariant[kind], input.points, refs, points, candidateAnchors, input.graph, pedestrian, input.startPoint ?? null, config, "modeledTime");
+    const time = solutionForVariant(kind, definitionsByVariant[kind], input.points, refs, points, candidateAnchors, input.graph, pedestrian, startPoint, null, config, "modeledTime");
     return {
       kind,
       bestByObjective: { vehicleDistance: vehicle.solution, modeledTime: time.solution },
@@ -792,6 +1149,145 @@ export const runFundamentalExperiment = (input: FundamentalExperimentInput): Fun
     fundamentals: referenceSet.references,
     variants,
     nonDominated,
+    diagnostics: [...new Set(diagnostics)].sort(compare),
+    search,
+  };
+};
+
+/** Complete solutions always outrank partial ones; distance is the declared primary objective. */
+export const selectBestMultiStartAttempt = (attempts: readonly MultiStartAttempt[]): MultiStartAttempt | null => {
+  const score = (attempt: MultiStartAttempt): [number, number, number, number, string, string] => [
+    attempt.solution.status === "complete" ? 0 : 1,
+    finite(attempt.solution.vehicleDistanceMeters),
+    attempt.solution.groups.length,
+    finite(attempt.solution.modeledTimeSeconds),
+    attempt.startPointId,
+    attempt.solution.signature,
+  ];
+  return attempts.reduce<MultiStartAttempt | null>((best, attempt) => {
+    if (!best) return attempt;
+    const left = score(attempt);
+    const right = score(best);
+    for (let index = 0; index < left.length; index++) {
+      if (left[index] < right[index]) return attempt;
+      if (left[index] > right[index]) return best;
+    }
+    return best;
+  }, null);
+};
+
+/**
+ * Evaluates every normalized delivery as the route start for three comparable
+ * strategies. Grouping/search inputs are derived once; only the start and the
+ * declared initial partition vary. The sole optimization objective is vehicle
+ * distance, while modeled time remains a reported metric on the same solution.
+ */
+export const runMultiStartFundamentalExperiment = (input: Omit<FundamentalExperimentInput, "startPoint">): MultiStartFundamentalExperimentResult => {
+  const config = normalizeConfig(input.config);
+  const inputDiagnostics = pointValidation(input.points, input.graph);
+  if (
+    Object.entries(config).some(
+      ([key, value]) =>
+        !Number.isFinite(value) ||
+        value < 0 ||
+        (key.startsWith("max") && (!Number.isSafeInteger(value) || value < 1)) ||
+        (["sampleStepMeters", "walkingSpeedKmh", "vehicleSpeedKmh"].includes(key) && value <= 0)
+    )
+  )
+    inputDiagnostics.push("invalid-config");
+  if (!input.points.length) inputDiagnostics.push("empty-points");
+  if (inputDiagnostics.length)
+    return {
+      status: "invalid",
+      config,
+      fundamentals: [],
+      attempts: [],
+      winners: [],
+      diagnostics: [...new Set(inputDiagnostics)].sort(compare),
+      search: null,
+    };
+
+  input.onPhase?.("fundamentals");
+  const referenceSet = referenceSetFor(input.points, input.graph);
+  const refs = new Map(referenceSet.references.map((reference) => [reference.pointId, reference]));
+  const points = new Map(input.points.map((point) => [point.id, point]));
+  input.onPhase?.("anchor-search");
+  const search = anchorSearchFor(referenceSet, input.graph, config, (phase) => input.onPhase?.(phase));
+  const byVirtualId = new Map(referenceSet.references.map((reference) => [reference.virtualId, reference]));
+  const candidateAnchors = search.candidates.map((candidate) => anchorFromCandidate(candidate, byVirtualId));
+  const pedestrian = input.pedestrianGraph ?? (input.graph ? derivePedestrianGraph(input.graph) : null);
+  const individual = referenceSet.references.map((reference) => ({ pointIds: [reference.pointId] }));
+  const fixed = fixedDefinitions(search, byVirtualId, input.graph, pedestrian, config);
+  const seededInitial = fixed.length ? fixed : individual;
+  const seededWithOverflow = revisableDefinitionsFrom(seededInitial, config.maxRevisableAlternatives + 1);
+  const unseededWithOverflow = unseededDefinitionsFrom(individual, fixed, config.maxRevisableAlternatives + 1);
+  const definitionsByStrategy: Record<
+    MultiStartStrategy,
+    { variant: FundamentalVariant; initialGroupCount: number; definitions: GroupDefinition[] | GroupDefinition[][]; definitionLimitReached: boolean }
+  > = {
+    "seeded-revisable": {
+      variant: "revisable",
+      initialGroupCount: seededInitial.length,
+      definitions: seededWithOverflow.slice(0, config.maxRevisableAlternatives),
+      definitionLimitReached: seededWithOverflow.length > config.maxRevisableAlternatives,
+    },
+    "unseeded-revisable": {
+      variant: "revisable",
+      initialGroupCount: individual.length,
+      definitions: unseededWithOverflow.slice(0, config.maxRevisableAlternatives),
+      definitionLimitReached: unseededWithOverflow.length > config.maxRevisableAlternatives,
+    },
+    individual: {
+      variant: "individual",
+      initialGroupCount: individual.length,
+      definitions: individual,
+      definitionLimitReached: false,
+    },
+  };
+  const startReferences = input.points.map((point) => refs.get(point.id)).filter((reference): reference is FundamentalReference => !!reference);
+  const attempts: MultiStartAttempt[] = [];
+
+  for (const strategy of MULTI_START_STRATEGIES) {
+    const setup = definitionsByStrategy[strategy];
+    for (const [startIndex, start] of startReferences.entries()) {
+      input.onPhase?.(`optimize:${strategy}:start:${startIndex + 1}/${startReferences.length}`);
+      const evaluated = solutionForVariant(
+        setup.variant,
+        setup.definitions,
+        input.points,
+        refs,
+        points,
+        candidateAnchors,
+        input.graph,
+        pedestrian,
+        { position: { ...start.position }, segment: start.segment },
+        start.pointId,
+        config,
+        "vehicleDistance"
+      );
+      attempts.push({
+        strategy,
+        startPointId: start.pointId,
+        startPoint: { ...start.position },
+        initialGroupCount: setup.initialGroupCount,
+        definitionsEvaluated: evaluated.definitionsEvaluated,
+        definitionLimitReached: setup.definitionLimitReached,
+        solution: evaluated.solution,
+      });
+    }
+  }
+
+  const winners = MULTI_START_STRATEGIES.map((strategy) => selectBestMultiStartAttempt(attempts.filter((attempt) => attempt.strategy === strategy))).filter(
+    (attempt): attempt is MultiStartAttempt => !!attempt
+  );
+  const diagnostics = [...referenceSet.diagnostics, ...(search.diagnostics.limitReached ? ["anchor-search-limit"] : []), ...attempts.flatMap((attempt) => attempt.solution.diagnostics)];
+  input.onPhase?.("complete");
+  return {
+    status: search.status === "complete" && winners.length === MULTI_START_STRATEGIES.length && winners.every((winner) => winner.solution.status === "complete") ? "complete" : "partial",
+    config,
+    fundamentals: referenceSet.references,
+    attempts,
+    winners,
     diagnostics: [...new Set(diagnostics)].sort(compare),
     search,
   };

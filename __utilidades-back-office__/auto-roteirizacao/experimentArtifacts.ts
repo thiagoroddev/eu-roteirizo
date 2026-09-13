@@ -2,16 +2,20 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { RoadGraph } from "../../src/utils/routing/graph";
 import type { RowData } from "../../src/types";
-import type { DeliveryPoint, PlannedRoute } from "../../src/types/routing";
+import type { DeliveryPoint, LatLng, PlannedRoute } from "../../src/types/routing";
 import { DEFAULT_ROUTING_CONFIG } from "../../src/types/routing";
 import { createRouteExportPayload } from "../../src/services/routeExport";
 import { hash } from "./corpus";
-import type { FundamentalExperimentConfig, FundamentalObjective, FundamentalSolution, FundamentalVariant } from "./fundamentalExperiment";
+import type { FundamentalExperimentConfig, FundamentalObjective, FundamentalSolution, FundamentalVariant, MultiStartStrategy } from "./fundamentalExperiment";
 import type { FundamentalReference } from "./fundamentals";
 
 export interface ExperimentalArtifactInput {
   runId: string;
   caseId: string;
+  routeNumber?: string;
+  strategy?: MultiStartStrategy;
+  startPointId?: string;
+  startPoint?: LatLng;
   variant: FundamentalVariant;
   objective: FundamentalObjective;
   sourcePoints: readonly DeliveryPoint[];
@@ -23,18 +27,54 @@ export interface ExperimentalArtifactInput {
 const compare = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 const safeJson = (value: unknown): string => (JSON.stringify(value) ?? "null").replaceAll("<", "\\u003c");
 const pointPackageKeys = (points: readonly DeliveryPoint[]): string[] => points.flatMap((point) => point.packages.map((pkg) => JSON.stringify([point.id, pkg.id, point.lat, point.lng]))).sort(compare);
+const strategySlug: Record<MultiStartStrategy, string> = {
+  "seeded-revisable": "com-agrupamento-inicial",
+  "unseeded-revisable": "sem-agrupamento-inicial",
+  individual: "sem-agrupamento",
+};
+const strategyLabel: Record<MultiStartStrategy, string> = {
+  "seeded-revisable": "COM AGRUPAMENTO INICIAL",
+  "unseeded-revisable": "SEM AGRUPAMENTO INICIAL",
+  individual: "SEM AGRUPAMENTO",
+};
+
+export const experimentalWinnerFileName = (input: { routeNumber: string; strategy: MultiStartStrategy; searchRadiusMeters: number; circuitLimitMeters: number }): string => {
+  if (!/^[1-6]$/.test(input.routeNumber)) throw new Error("invalid-route-number");
+  if (![input.searchRadiusMeters, input.circuitLimitMeters].every((value) => Number.isFinite(value) && value > 0)) throw new Error("invalid-experiment-config");
+  return `${input.routeNumber}-r${input.searchRadiusMeters}-c${input.circuitLimitMeters}-${strategySlug[input.strategy]}.json`;
+};
 
 /** Converts one solution to the current v1 import format without persisting experiment semantics. */
 export const createExperimentalRoutePayload = (input: ExperimentalArtifactInput) => {
+  if ((input.startPointId === undefined) !== (input.startPoint === undefined)) throw new Error("incomplete-winning-start");
+  if (input.startPointId && !input.solution.groups[0]?.pointIds.includes(input.startPointId)) throw new Error("winning-start-not-first");
   const config = { ...DEFAULT_ROUTING_CONFIG, ...(input.config ?? {}) };
   const searchRadiusMeters = input.config?.searchRadiusMeters ?? DEFAULT_ROUTING_CONFIG.autoRadiusMeters;
   const circuitLimitMeters = input.config?.circuitLimitMeters ?? 120;
-  const identity = hash(JSON.stringify(["auto-fundamentals", input.runId, input.caseId, input.variant, input.objective, searchRadiusMeters, circuitLimitMeters, config, input.solution.signature]));
+  const identity = hash(
+    JSON.stringify([
+      "auto-fundamentals",
+      input.runId,
+      input.caseId,
+      input.routeNumber,
+      input.strategy,
+      input.startPointId,
+      input.startPoint,
+      input.variant,
+      input.objective,
+      searchRadiusMeters,
+      circuitLimitMeters,
+      config,
+      input.solution.signature,
+    ])
+  );
   const manifestId = `auto-fundamentals-${identity}`;
-  const routeName = `EXPERIMENTO | ${input.caseId} | ${input.variant} | ${input.objective} | PROCURA ${searchRadiusMeters}m | CIRCUITO ${circuitLimitMeters}m | ${input.solution.status}`;
+  const routeIdentity = input.routeNumber ? `ROTEIRO ${input.routeNumber}` : input.caseId;
+  const experimentKind = input.strategy ? strategyLabel[input.strategy] : input.variant;
+  const routeName = `EXPERIMENTO | ${routeIdentity} | ${experimentKind} | ${input.objective} | PROCURA ${searchRadiusMeters}m | CIRCUITO ${circuitLimitMeters}m | ${input.solution.status}`;
   const route: PlannedRoute = {
     id: `${manifestId}-route`,
-    startPoint: null,
+    startPoint: input.startPoint ? { ...input.startPoint } : null,
     config: {
       walkingSpeedKmh: config.walkingSpeedKmh,
       deliveryBaseSeconds: config.deliveryBaseSeconds,
@@ -51,7 +91,7 @@ export const createExperimentalRoutePayload = (input: ExperimentalArtifactInput)
       pointIds: group.orderedPointIds.slice(),
       radiusMeters: DEFAULT_ROUTING_CONFIG.autoRadiusMeters,
       reversed: false,
-      vehicleStopIsDefault: false,
+      vehicleStopIsDefault: group.anchor.source === "fundamental" && group.anchor.fundamentalPointIds[0] === group.orderedPointIds[0],
     })),
   };
   return createRouteExportPayload(
@@ -62,7 +102,7 @@ export const createExperimentalRoutePayload = (input: ExperimentalArtifactInput)
     input.sourceRows.map((row) => structuredClone(row)),
     undefined,
     {
-      manifestFileName: `experimental-${input.caseId}.json`,
+      manifestFileName: input.routeNumber ? `${input.routeNumber}-experimental.json` : `experimental-${input.caseId}.json`,
       addressCount: input.sourcePoints.length,
       packageCount: input.sourcePoints.reduce((total, point) => total + point.packageCount, 0),
       stopCount: route.stops.length,
@@ -77,7 +117,7 @@ export const validateExperimentalPayload = (payload: ReturnType<typeof createExp
   const known = new Set(sourcePoints.map((point) => point.id));
   const members = payload.route.stops.flatMap((stop) => stop.pointIds);
   if (new Set(members).size !== members.length || members.length !== known.size || members.some((id) => !known.has(id))) return false;
-  if (payload.route.stops.some((stop, index) => stop.order !== index + 1 || stop.radiusMeters === 120 || stop.vehicleStopIsDefault !== false)) return false;
+  if (payload.route.stops.some((stop, index) => stop.order !== index + 1 || stop.radiusMeters === 120 || typeof stop.vehicleStopIsDefault !== "boolean")) return false;
   return true;
 };
 
@@ -104,13 +144,19 @@ const graphEdges = (graph: RoadGraph): { from: string; to: string; wayName: stri
 };
 
 /** Static local map: Leaflet is embedded from node_modules and no tile/API URL is used. */
-export const renderExperimentMapHtml = (input: { caseId: string; graph: RoadGraph; solutions: readonly FundamentalSolution[]; fundamentals?: readonly FundamentalReference[] }): string => {
+export const renderExperimentMapHtml = (input: {
+  caseId: string;
+  graph: RoadGraph;
+  solutions: readonly FundamentalSolution[];
+  fundamentals?: readonly FundamentalReference[];
+  solutionLabels?: readonly string[];
+}): string => {
   const data = {
     caseId: input.caseId,
     edges: graphEdges(input.graph),
     fundamentals: input.fundamentals ?? [],
-    solutions: input.solutions.map((solution) => ({
-      label: `${solution.variant}/${solution.objective}`,
+    solutions: input.solutions.map((solution, index) => ({
+      label: input.solutionLabels?.[index] ?? `${solution.variant}/${solution.objective}`,
       status: solution.status,
       vehicle: solution.vehicle.legs,
       metrics: { vehicleMeters: solution.vehicleDistanceMeters, walkingMeters: solution.fullWalkingMeters, modeledSeconds: solution.modeledTimeSeconds },

@@ -1,0 +1,148 @@
+{
+  "id": "TASK-SPIKE-003",
+  "tipo": "SPIKE",
+  "titulo": "Otimizar dois casos por enumeracao completa do ponto inicial",
+  "fatia_de": null,
+  "estado": "em-execucao",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "M",
+    "ia": "G"
+  },
+  "depende_de": [
+    "TASK-SPIKE-002"
+  ],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "RF-34",
+  "requisitos": [
+    "RF-34"
+  ],
+  "sem_requisito_motivo": null,
+  "criada_em": "12/09/26 07:59",
+  "iniciada_em": "12/09/26 07:59",
+  "commit_base": "5be4ca9b881bf2010e62d0968e7486668ad5de05",
+  "concluida_em": null,
+  "plano": {
+    "muda": [
+      "__utilidades-back-office__/auto-roteirizacao/corpus.ts e corpus.test.ts: identificar o numero do roteiro pela pasta privada e permitir selecionar somente os casos 1 e 2 sem alterar o inventario historico padrao.",
+      "__utilidades-back-office__/auto-roteirizacao/fundamentalExperiment.ts e fundamentalExperiment.test.ts: separar as estrategias seeded-revisable, unseeded-revisable e individual; avaliar deterministicamente cada endereco normalizado como inicio, preservar esse inicio na primeira parada e escolher o menor percurso veicular completo.",
+      "__utilidades-back-office__/auto-roteirizacao/fundamental.arnes.ts: executar uma rodada por vez, somente em r60/c120 e objetivo vehicleDistance; registrar modeledTime como metrica secundaria; armazenar todas as tentativas no report.json e gerar exatamente tres vencedores importaveis por rodada.",
+      "__utilidades-back-office__/auto-roteirizacao/experimentArtifacts.ts e experimentArtifacts.test.ts: persistir o inicio vencedor e nomear os tres JSONs pelo numero do caso e estrategia, sem gerar payload importavel para cada tentativa.",
+      "__utilidades-back-office__/auto-roteirizacao/README.md: documentar selecao de caso, semantica das tres estrategias, contagem de tentativas, artefatos e limites da alegacao de otimizacao.",
+      "docs-mentor/rascunhos/2026-09-12--otimizacao-multistart-limitada-aos-casos.md: registrar que a decisao foi convertida nesta tarefa."
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Nos casos 1 e 2, enumerar todos os enderecos normalizados como possiveis inicios e selecionar o melhor resultado de cada uma das tres estrategias produz roteiros completos, sem orfaos, com distancia veicular substancialmente mais proxima das referencias humanas do que a rodada anterior? O resultado pode ser favoravel, negativo ou inconclusivo; a qualidade final depende de validacao humana.",
+        "teste": "nao se aplica como assercao de ganho: pergunta de spike. Contratos verificaveis em fundamentalExperiment.test.ts, corpus.test.ts e experimentArtifacts.test.ts; bateria privada em fundamental.arnes.ts."
+      }
+    ],
+    "impacto": "Experimento local de back-office, sem alterar src, schema publico, UI, defaults manuais, persistencia do produto ou outros casos do corpus. Caso 1 possui 51 enderecos e caso 2 possui 59; cada rodada avalia N inicios por tres estrategias, mas exporta somente os tres vencedores. A comparacao usa vehicleDistance como objetivo e modeledTime como diagnostico secundario.",
+    "riscos": [
+      "Enumerar todos os inicios certifica apenas o melhor inicio dentro da heuristica e do orcamento declarados; nao prova otimo global de TSP.",
+      "O inicio deve ser o ponto fundamental de um endereco e pertencer a primeira parada; permitir que a busca o desloque ou visite depois tornaria a comparacao enganosa.",
+      "As tres estrategias precisam receber o mesmo conjunto de inicios e orcamento. A seeded-revisable parte do pre-agrupamento; a unseeded-revisable parte de unidades individuais e pode agrupar; a individual nunca agrupa.",
+      "Rotas incompletas, com caminho ausente, orfaos, duplicacoes ou circuito acima de 120m nao podem vencer por apresentar distancia numericamente menor.",
+      "Calibrar somente dois casos pode sobreajustar a heuristica. Nenhuma generalizacao nem expansao do corpus sera alegada antes da validacao humana destes casos.",
+      "Os roteiros humanos podem incluir aproximacao externa diferente. O relatorio deve separar essa aproximacao e comparar o miolo equivalente da rota sem favorecer uma variante.",
+      "Corpus, relatorios e JSONs contem dados privados locais e permanecem ignorados pelo Git; nao publicar nem enviar para ferramenta externa."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram otimizar somente dois casos tentando cada endereco como inicio e receber tres JSONs por rodada. Proponho reutilizar o motor e os artefatos existentes, limitar a matriz a r60/c120 e um objetivo, manter tentativas compactas em um unico relatorio e exportar apenas os tres vencedores. O alcance e do tamanho do pedido porque nao cria UI, dependencia, schema ou motor de producao e nao executa outros casos."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "12/09/26 17:45",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  945 passed (945)\n   Start at  17:51:39\n   Duration  35.92s (transform 9.94s, setup 29.96s, import 22.04s, tests 66.00s, environment 116.90s)\n\n(node:36260) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "12/09/26 17:52",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b\n\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "12/09/26 17:52",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .\n\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "12/09/26 17:52",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\nvite v7.3.5 building client environment for production...\ntransforming...\n✓ 1999 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/registerSW.js                 0.13 kB\ndist/manifest.webmanifest          0.75 kB\ndist/index.html                    2.79 kB │ gzip:   1.15 kB\ndist/assets/vendor-Dgihpmma.css   15.04 kB │ gzip:   6.38 kB\ndist/assets/index-CYMBXH50.css    28.24 kB │ gzip:   6.22 kB\ndist/assets/index-BzC2nj7O.js    539.65 kB │ gzip: 103.76 kB\ndist/assets/vendor-BH0bsWaq.js   808.69 kB │ gzip: 263.08 kB\n✓ built in 6.96s\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1798.40 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "12/09/26 17:53",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    }
+  },
+  "achados": [
+    {
+      "classe": 3,
+      "descricao": "A enumeracao completa de inicio executada no desktop levou 132,1 s para o roteiro 1 (153 tentativas) e 230,5 s para o roteiro 2 (177 tentativas). O custo e aceitavel para o arnes privado desta rodada, mas nao sustenta integrar a busca integral a uma interacao do app sem novo trabalho de desempenho e experiencia assincrona.",
+      "destino": "tarefa",
+      "ref": "TASK-SPIKE-003"
+    },
+    {
+      "classe": 4,
+      "descricao": "As 330 tentativas foram completas, sem orfaos, duplicacoes ou inicio fora da primeira parada. Entretanto, as 220 tentativas das estrategias agrupaveis atingiram o limite de alternativas de particao; os vencedores demonstram o melhor inicio encontrado dentro da heuristica limitada, nao o melhor agrupamento possivel nem um otimo global.",
+      "destino": "tarefa",
+      "ref": "TASK-SPIKE-003"
+    },
+    {
+      "classe": 4,
+      "descricao": "Contra o miolo equivalente das referencias humanas, a distancia veicular ficou em +0,6%/+1,6%/+16,9% no roteiro 1 e +9,0%/+9,7%/+20,4% no roteiro 2 para seeded-revisable, unseeded-revisable e individual. A melhora e material frente ao spike anterior, mas a variante individual ainda exige julgamento humano e nenhuma estrategia esta promovida ao produto.",
+      "destino": "tarefa",
+      "ref": "TASK-SPIKE-003"
+    },
+    {
+      "classe": 4,
+      "descricao": "A validacao humana encontrou na parada 12 da rodada roteiro-1-2026-09-12T11-29-09-098Z uma ancora movida do fundamental em frente ao primeiro endereco para uma candidata cerca de 40 m adiante. O trecho veicular local permanece 196,55 m nas duas opcoes, enquanto o circuito a pe cresce de aproximadamente 62,73 m para 86,98 m. A causa e o empate de vehicleDistance ser resolvido pelo ID tecnico da ancora/assinatura (candidate antes de fundamental), sem preferencia pelo ponto original nem pela menor caminhada. A mesma politica ainda aparece na rodada final e precisa ser corrigida antes da aprovacao humana.",
+      "destino": "tarefa",
+      "ref": "TASK-SPIKE-003"
+    },
+    {
+      "classe": 4,
+      "descricao": "A estrategia unseeded-revisable nao agrupou nenhum endereco: todas as 51 tentativas dos roteiros 1 intermediario e final terminaram com 51 paradas. Com limite de 24 particoes, o gerador avaliou a base individual e apenas 23 fusoes do primeiro endereco com enderecos seguintes; nao alcancou pares entre os demais nem fusoes iterativas. O vizinho fundamental mais proximo do primeiro fica a 70,2 m, impondo circuito fechado minimo de 140,5 m, acima de c120, logo nenhuma dessas fusoes podia ser valida. A diferenca para individual veio de deslocar 46/51 ancoras (media 33,3 m, maximo 60 m), nao de agrupamento. O JSON nao cumpre a comparacao solicitada e precisa ser descartado ate a busca ser corrigida.",
+      "destino": "tarefa",
+      "ref": "TASK-SPIKE-003"
+    }
+  ],
+  "validacao": "pendente",
+  "validado_em": null,
+  "validacao_motivo": null,
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": null
+}

@@ -5,8 +5,8 @@ import { buildDeliveryPoints } from "../../src/utils/routing/points";
 import { clearManifests, getRouteRows } from "../../src/services/manifestStorage";
 import { clearRoteiros, getRoteiro } from "../../src/services/routeStorage";
 import { importRoutePayload, parseAndValidateRouteJson } from "../../src/services/routeExport";
-import { runFundamentalExperiment } from "./fundamentalExperiment";
-import { createExperimentalRoutePayload, renderExperimentMapHtml, validateExperimentalPayload } from "./experimentArtifacts";
+import { runFundamentalExperiment, runMultiStartFundamentalExperiment } from "./fundamentalExperiment";
+import { createExperimentalRoutePayload, experimentalWinnerFileName, renderExperimentMapHtml, validateExperimentalPayload } from "./experimentArtifacts";
 
 const rows = [
   { Latitude: -22.9, Longitude: -43.2, "Destination Address": "Rua A, 10", "SPX TN": "pkg-a", Sequence: 1 },
@@ -50,6 +50,7 @@ describe("fundamental experiment artifacts", () => {
     expect(payload.rows).toEqual(rows);
     expect(payload.route.config.autoRadiusMeters).not.toBe(120);
     expect(payload.route.stops.every((stop) => stop.radiusMeters !== 120)).toBe(true);
+    expect(payload.route.stops.every((stop) => stop.vehicleStopIsDefault === true)).toBe(true);
     expect(validateExperimentalPayload(payload, points())).toBe(true);
   });
 
@@ -74,6 +75,36 @@ describe("fundamental experiment artifacts", () => {
     expect((await importRoutePayload(parsed.payload)).ok).toBe(true);
     expect(await getRoteiro(payload.manifestId, payload.routeName)).toEqual(payload.route);
     expect(await getRouteRows(payload.manifestId, payload.routeName)).toEqual(rows);
+  });
+
+  it("persists the winning start and gives one recognizable filename to each strategy", () => {
+    const sourcePoints = points();
+    const experiment = runMultiStartFundamentalExperiment({ points: sourcePoints, graph, pedestrianGraph: graph });
+    expect(experiment.winners).toHaveLength(3);
+
+    for (const winner of experiment.winners) {
+      const payload = createExperimentalRoutePayload({
+        runId: "run-multistart",
+        caseId: "opaque-case",
+        routeNumber: "1",
+        strategy: winner.strategy,
+        startPointId: winner.startPointId,
+        startPoint: winner.startPoint,
+        variant: winner.solution.variant,
+        objective: "vehicleDistance",
+        sourcePoints,
+        sourceRows: rows,
+        solution: winner.solution,
+        config: { searchRadiusMeters: 60, circuitLimitMeters: 120 },
+      });
+
+      expect(payload.route.startPoint).toEqual(winner.startPoint);
+      expect(payload.route.stops[0].pointIds).toContain(winner.startPointId);
+      expect(payload.routeName).toContain("ROTEIRO 1");
+      expect(experimentalWinnerFileName({ routeNumber: "1", strategy: winner.strategy, searchRadiusMeters: 60, circuitLimitMeters: 120 })).toMatch(
+        /^1-r60-c120-(com-agrupamento-inicial|sem-agrupamento-inicial|sem-agrupamento)\.json$/
+      );
+    }
   });
 
   it("renders the evaluated graph and paths with locally installed Leaflet only", () => {

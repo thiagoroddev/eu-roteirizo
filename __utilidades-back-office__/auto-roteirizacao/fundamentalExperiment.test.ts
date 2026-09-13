@@ -2,9 +2,16 @@ import { describe, expect, it } from "vitest";
 import { haversine } from "../../src/utils/routing/geo";
 import type { Edge, RoadGraph } from "../../src/utils/routing/graph";
 import type { DeliveryPoint } from "../../src/types/routing";
-import { DEFAULT_FUNDAMENTAL_EXPERIMENT_CONFIG, runFundamentalExperiment, type FundamentalExperimentConfig } from "./fundamentalExperiment";
+import {
+  DEFAULT_FUNDAMENTAL_EXPERIMENT_CONFIG,
+  MULTI_START_STRATEGIES,
+  runFundamentalExperiment,
+  runMultiStartFundamentalExperiment,
+  selectBestMultiStartAttempt,
+  type FundamentalExperimentConfig,
+} from "./fundamentalExperiment";
 import { buildFundamentalReferences } from "./fundamentals";
-import { evaluateLimitedFundamentalCircuit, evaluateStreetPath } from "./experimentPaths";
+import { evaluateLimitedFundamentalCircuit, evaluateStreetPath, evaluateVehicleOrder } from "./experimentPaths";
 import { pedestrianGraph } from "../../src/utils/routing/pedestrian";
 
 const lat = -22.9;
@@ -97,6 +104,188 @@ describe("fundamental experiment contracts", () => {
         expect(solution.pendingPointIds).toEqual([]);
         expect(solution.groups.flatMap((group) => group.pointIds).sort()).toEqual(points.map((p) => p.id).sort());
       }
+  });
+
+  it("evaluates every delivery as the first point for each of the three strategies", () => {
+    const coords = {
+      a: { lat, lng: -43.2 },
+      b: { lat, lng: -43.19975 },
+      c: { lat, lng: -43.1995 },
+    };
+    const graph = graphFrom(coords, [
+      ["a", "b"],
+      ["b", "a"],
+      ["b", "c"],
+      ["c", "b"],
+    ]);
+    const points = [point("a", coords.a.lng), point("b", coords.b.lng), point("c", coords.c.lng)];
+    const references = new Map(buildFundamentalReferences(points, graph).references.map((reference) => [reference.pointId, reference]));
+
+    const result = runMultiStartFundamentalExperiment({
+      points,
+      graph,
+      pedestrianGraph: graph,
+      config: { maxOrderEvaluations: 12, maxGroupOperations: 12, maxRevisableAlternatives: 12 },
+    });
+
+    expect(result.attempts).toHaveLength(points.length * MULTI_START_STRATEGIES.length);
+    expect(result.winners.map((winner) => winner.strategy)).toEqual(MULTI_START_STRATEGIES);
+    for (const strategy of MULTI_START_STRATEGIES) {
+      const attempts = result.attempts.filter((attempt) => attempt.strategy === strategy);
+      expect(attempts.map((attempt) => attempt.startPointId).sort()).toEqual(points.map((entry) => entry.id).sort());
+      for (const attempt of attempts) {
+        expect(attempt.solution.objective).toBe("vehicleDistance");
+        expect(attempt.startPoint).toEqual(references.get(attempt.startPointId)?.position);
+        expect(attempt.solution.groups[0].pointIds).toContain(attempt.startPointId);
+        expect(attempt.solution.vehicle.legs[0]?.from).toEqual(attempt.startPoint);
+      }
+      const complete = attempts.filter((attempt) => attempt.solution.status === "complete");
+      const winner = result.winners.find((entry) => entry.strategy === strategy);
+      expect(winner?.solution.vehicleDistanceMeters).toBe(Math.min(...complete.map((attempt) => attempt.solution.vehicleDistanceMeters)));
+    }
+  });
+
+  it("keeps seeded, unseeded and never-grouped starts semantically separate", () => {
+    const coords = {
+      a: { lat, lng: -43.2 },
+      b: { lat, lng: -43.19975 },
+      c: { lat, lng: -43.1995 },
+    };
+    const graph = graphFrom(coords, [
+      ["a", "b"],
+      ["b", "a"],
+      ["b", "c"],
+      ["c", "b"],
+    ]);
+    const points = [point("a", coords.a.lng), point("b", coords.b.lng), point("c", coords.c.lng)];
+    const attempts = runMultiStartFundamentalExperiment({ points, graph, pedestrianGraph: graph }).attempts.filter((attempt) => attempt.startPointId === "a");
+    const byStrategy = new Map(attempts.map((attempt) => [attempt.strategy, attempt]));
+
+    expect(byStrategy.get("seeded-revisable")?.initialGroupCount).toBeLessThan(points.length);
+    expect(byStrategy.get("unseeded-revisable")?.initialGroupCount).toBe(points.length);
+    expect(byStrategy.get("individual")?.initialGroupCount).toBe(points.length);
+    expect(byStrategy.get("individual")?.solution.groups).toHaveLength(points.length);
+  });
+
+  it("starts unseeded with individual stops and then discovers a feasible group away from the first address", () => {
+    const coords = {
+      "a-start": { lat, lng: -43.203 },
+      "b-near": { lat, lng: -43.2 },
+      "c-near": { lat, lng: -43.1998 },
+      "d-end": { lat, lng: -43.197 },
+    };
+    const graph = graphFrom(coords, [
+      ["a-start", "b-near"],
+      ["b-near", "a-start"],
+      ["b-near", "c-near"],
+      ["c-near", "b-near"],
+      ["c-near", "d-end"],
+      ["d-end", "c-near"],
+    ]);
+    const points = Object.entries(coords).map(([id, position]) => point(id, position.lng));
+    const attempts = runMultiStartFundamentalExperiment({
+      points,
+      graph,
+      pedestrianGraph: graph,
+      config: { maxRevisableAlternatives: 3, maxGroupOperations: 12, maxOrderEvaluations: 24 },
+    }).attempts.filter((attempt) => attempt.startPointId === "a-start");
+    const unseeded = attempts.find((attempt) => attempt.strategy === "unseeded-revisable")!;
+    const individual = attempts.find((attempt) => attempt.strategy === "individual")!;
+
+    expect(unseeded.initialGroupCount).toBe(points.length);
+    expect(unseeded.solution.groups.some((group) => group.pointIds.slice().sort().join("|") === "b-near|c-near")).toBe(true);
+    expect(unseeded.solution.groups.length).toBeLessThan(individual.solution.groups.length);
+    expect(individual.solution.groups).toHaveLength(points.length);
+  });
+
+  it("keeps the grouped vehicle stop on the first fundamental when moving it does not shorten the vehicle route", () => {
+    const coords = {
+      "a-start": { lat, lng: -43.203 },
+      "b-near": { lat, lng: -43.2 },
+      "c-near": { lat, lng: -43.1998 },
+      "d-end": { lat, lng: -43.197 },
+    };
+    const graph = graphFrom(coords, [
+      ["a-start", "b-near"],
+      ["b-near", "a-start"],
+      ["b-near", "c-near"],
+      ["c-near", "b-near"],
+      ["c-near", "d-end"],
+      ["d-end", "c-near"],
+    ]);
+    const points = Object.entries(coords).map(([id, position]) => point(id, position.lng));
+    const references = new Map(buildFundamentalReferences(points, graph).references.map((reference) => [reference.pointId, reference]));
+    const seeded = runMultiStartFundamentalExperiment({
+      points,
+      graph,
+      pedestrianGraph: graph,
+      config: { maxRevisableAlternatives: 3, maxGroupOperations: 12, maxOrderEvaluations: 24 },
+    }).attempts.find((attempt) => attempt.strategy === "seeded-revisable" && attempt.startPointId === "a-start")!;
+    const grouped = seeded.solution.groups.find((group) => group.pointIds.slice().sort().join("|") === "b-near|c-near")!;
+
+    expect(grouped).toBeDefined();
+    expect(grouped.anchor.source).toBe("fundamental");
+    expect(grouped.anchor.position).toEqual(references.get("b-near")?.position);
+    expect(grouped.orderedPointIds[0]).toBe("b-near");
+  });
+
+  it("uses street costs to escape a coordinate-nearest ordering trap", () => {
+    const coords = Object.fromEntries(
+      ["a", "b", "c", "d", "e", "f"].map((id, index) => {
+        const angle = (index / 6) * Math.PI * 2;
+        return [id, { lat: lat + Math.sin(angle) * 0.001, lng: -43.2 + Math.cos(angle) * 0.001 }];
+      })
+    );
+    const graph = graphFrom(coords, [
+      ["a", "c"],
+      ["c", "e"],
+      ["e", "b"],
+      ["b", "f"],
+      ["f", "d"],
+      ["d", "a"],
+    ]);
+    const points = Object.entries(coords).map(([id, position]) => ({ ...point(id, position.lng), lat: position.lat }));
+    const references = new Map(buildFundamentalReferences(points, graph).references.map((reference) => [reference.pointId, reference]));
+    const start = references.get("a")!;
+    const remaining = points.map((entry) => entry.id).filter((id) => id !== "a");
+    const distances: number[] = [];
+    const visit = (prefix: string[], unused: string[]): void => {
+      if (!unused.length) {
+        distances.push(
+          evaluateVehicleOrder(
+            graph,
+            { position: start.position, segment: start.segment },
+            ["a", ...prefix].map((id) => ({ position: references.get(id)!.position, segment: references.get(id)!.segment }))
+          ).distanceMeters
+        );
+        return;
+      }
+      for (const id of unused)
+        visit(
+          [...prefix, id],
+          unused.filter((candidate) => candidate !== id)
+        );
+    };
+    visit([], remaining);
+    const attempt = runMultiStartFundamentalExperiment({
+      points,
+      graph,
+      pedestrianGraph: pedestrianGraph(graph),
+      config: { maxOrderEvaluations: 1, maxGroupOperations: 1, maxRevisableAlternatives: 1 },
+    }).attempts.find((candidate) => candidate.strategy === "individual" && candidate.startPointId === "a")!;
+
+    expect(attempt.solution.status).toBe("complete");
+    expect(attempt.solution.vehicleDistanceMeters).toBeCloseTo(Math.min(...distances), 6);
+  });
+
+  it("never lets a shorter partial route beat a complete multistart attempt", () => {
+    const graph = lineGraph();
+    const points = [point("p1", -43.1998), point("p2", -43.1988)];
+    const base = runMultiStartFundamentalExperiment({ points, graph, pedestrianGraph: graph }).attempts.find((attempt) => attempt.strategy === "individual" && attempt.solution.status === "complete")!;
+    const farther = { ...base, startPointId: "farther", solution: { ...base.solution, vehicleDistanceMeters: base.solution.vehicleDistanceMeters + 10 } };
+    const partial = { ...base, startPointId: "partial", solution: { ...base.solution, status: "partial" as const, vehicleDistanceMeters: 1 } };
+
+    expect(selectBestMultiStartAttempt([partial, farther, base])).toEqual(base);
   });
 
   it("marks a graphless individual incomplete without losing its logical stop", () => {

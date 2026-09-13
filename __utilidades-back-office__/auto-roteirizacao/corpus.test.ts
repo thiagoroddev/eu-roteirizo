@@ -13,7 +13,18 @@ import { clearManifests, getRouteRows } from "../../src/services/manifestStorage
 import { clearRoteiros, getRoteiro } from "../../src/services/routeStorage";
 import { createInitialBuilderState, routeBuilderReducer } from "../../src/utils/routing/builder";
 import { nearestFirstOrder } from "../../src/utils/routing/walkOrder";
-import { createInspectionPayload, hash, loadCorpus, loadSnapshots, validateReference, type Corpus, type CorpusCase, type GraphSnapshot, type SnapshotIndex } from "./corpus";
+import {
+  createInspectionPayload,
+  hash,
+  loadCorpus,
+  loadSnapshots,
+  selectCorpusCaseByRouteNumber,
+  validateReference,
+  type Corpus,
+  type CorpusCase,
+  type GraphSnapshot,
+  type SnapshotIndex,
+} from "./corpus";
 
 const rows = [
   { Latitude: -22.98, Longitude: -43.2, "SPX TN": "fixture-1", "Destination Address": "Synthetic" },
@@ -45,7 +56,16 @@ describe("inspection exports", () => {
     rows: sourceRows,
     route: { ...reference().route, startPoint: { lat: -22.983, lng: -43.2 }, ignoredPointIds: [sourcePoints[3].id] },
   };
-  const entry: CorpusCase = { id: "case-synthetic", file: "1/private-fixture.xlsx", sourceHash: "synthetic-hash", rows: sourceRows, points: sourcePoints, invalidRows: 0, reference: manual };
+  const entry: CorpusCase = {
+    id: "case-synthetic",
+    routeNumber: "1",
+    file: "1/private-fixture.xlsx",
+    sourceHash: "synthetic-hash",
+    rows: sourceRows,
+    points: sourcePoints,
+    invalidRows: 0,
+    reference: manual,
+  };
   const scenario = { runId: "synthetic-run-one", sampleStepMeters: 10 };
   const result = (): AnchorSearchResult => ({
     status: "partial",
@@ -215,6 +235,8 @@ describe("private corpus integrity with synthetic source files", () => {
     writeFileSync(join(root, "1", "fixture.json"), JSON.stringify(reference()));
     const corpus = loadCorpus(root);
     expect(corpus.cases).toHaveLength(1);
+    expect(corpus.cases[0].routeNumber).toBe("1");
+    expect(selectCorpusCaseByRouteNumber(corpus, "1")).toBe(corpus.cases[0]);
     expect(corpus.cases[0].rows).toHaveLength(2);
     expect(corpus.cases[0].points).toHaveLength(1);
     writeFileSync(join(root, "orphan.json"), JSON.stringify(reference()));
@@ -227,9 +249,19 @@ describe("private corpus integrity with synthetic source files", () => {
     expect(() => loadSnapshots({ hash: "test", cases: [], files: [], referenceCount: 0 }, root)).toThrow("Graph snapshots missing");
   });
 
+  it("requires one unambiguous numbered route per isolated optimization round", () => {
+    const baseCase: CorpusCase = { id: "case-1", routeNumber: "1", file: "1/fixture.xlsx", sourceHash: "test", rows, points, invalidRows: 0 };
+    const corpus: Corpus = { hash: "test", files: [], referenceCount: 0, cases: [baseCase] };
+
+    expect(selectCorpusCaseByRouteNumber(corpus, "1")).toBe(baseCase);
+    expect(() => selectCorpusCaseByRouteNumber(corpus, "5")).toThrow("route-5-not-found");
+    expect(() => selectCorpusCaseByRouteNumber({ ...corpus, cases: [baseCase, { ...baseCase, id: "duplicate" }] }, "1")).toThrow("route-1-ambiguous");
+    expect(() => selectCorpusCaseByRouteNumber(corpus, "7")).toThrow("invalid-route-number");
+  });
+
   it("checks snapshot hashes, input inventory and bounds without a network fallback", () => {
     const root = temp();
-    const corpus: Corpus = { hash: "test", files: [], referenceCount: 0, cases: [{ id: "fixture", file: "fixture.xlsx", sourceHash: "test", rows, points, invalidRows: 0 }] };
+    const corpus: Corpus = { hash: "test", files: [], referenceCount: 0, cases: [{ id: "fixture", routeNumber: null, file: "fixture.xlsx", sourceHash: "test", rows, points, invalidRows: 0 }] };
     const serialized = { coords: [[1, { lat: -22.98, lng: -43.2 }]] as [number, { lat: number; lng: number }][], adj: [] };
     const snapshot: GraphSnapshot = {
       schema: "auto-anchors/graph/v1",

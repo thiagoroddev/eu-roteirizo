@@ -21,6 +21,8 @@ export const hash = (value: string | Buffer): string => createHash("sha256").upd
 
 export interface CorpusCase {
   id: string;
+  /** Human route identifier inherited from a top-level private folder 1..6. */
+  routeNumber: string | null;
   file: string;
   sourceHash: string;
   rows: RowData[];
@@ -34,6 +36,15 @@ export interface Corpus {
   cases: CorpusCase[];
   referenceCount: number;
 }
+
+/** Selects one human-numbered route without letting an absent or duplicate case pass silently. */
+export const selectCorpusCaseByRouteNumber = (corpus: Corpus, routeNumber: string): CorpusCase => {
+  if (!/^[1-6]$/.test(routeNumber)) throw new Error("invalid-route-number");
+  const matches = corpus.cases.filter((entry) => entry.routeNumber === routeNumber);
+  if (matches.length === 0) throw new Error(`route-${routeNumber}-not-found`);
+  if (matches.length !== 1) throw new Error(`route-${routeNumber}-ambiguous`);
+  return matches[0];
+};
 
 /** Converts a spatial result into the existing app format, not an optimized route. */
 export const createInspectionPayload = (entry: CorpusCase, result: AnchorSearchResult, scenario: { runId: string; sampleStepMeters: number }): ExportedRoutePayloadV1 => {
@@ -188,6 +199,8 @@ export const loadCorpus = (root = CORPUS_ROOT): Corpus => {
   const usedReferences = new Set<string>();
   const cases = workbooks.map((file, index): CorpusCase => {
     const id = `case-${String(index + 1).padStart(3, "0")}`;
+    const relativeFile = normalizedPath(relative(root, file));
+    const routeNumber = relativeFile.match(/^([1-6])\//)?.[1] ?? null;
     const bytes = readFileSync(file);
     let rows: RowData[];
     try {
@@ -215,7 +228,7 @@ export const loadCorpus = (root = CORPUS_ROOT): Corpus => {
         usedReferences.add(candidate);
       }
     }
-    return { id, file: normalizedPath(relative(root, file)), sourceHash: hash(bytes), rows, points, invalidRows, ...(reference ? { reference } : {}) };
+    return { id, routeNumber, file: relativeFile, sourceHash: hash(bytes), rows, points, invalidRows, ...(reference ? { reference } : {}) };
   });
   if (usedReferences.size !== jsonFiles.length) throw new Error("Unpaired human reference; corpus validation incomplete.");
   return { hash: hash(JSON.stringify(files)), files, cases, referenceCount: usedReferences.size };

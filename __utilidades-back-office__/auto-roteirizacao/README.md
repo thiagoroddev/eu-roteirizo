@@ -123,23 +123,33 @@ prioritário; a evolução compatível do formato fica em RF-034, sem reescrever
 
 ## Experimento de pontos fundamentais
 
-O spike usa o mesmo corpus e snapshots, mas roda separado da matriz histórica:
+O spike usa o mesmo corpus e snapshots, mas cada comando executa **um único roteiro**. Nesta
+fase só são aceitos os roteiros 1 e 2, sempre em rodadas separadas:
 
 ```powershell
+$env:FUNDAMENTAL_CASE = "1"
+npm run test:auto-fundamentals
+
+$env:FUNDAMENTAL_CASE = "2"
 npm run test:auto-fundamentals
 ```
 
-Cada execução cruza procura fundamental de 30/60 m com circuito limitado de 120 m e uma
-sensibilidade de 60 m. As variantes são `individual`, `fixed-groups` e `revisable`; cada uma
-é avaliada pelos objetivos independentes `vehicleDistance` e `modeledTime`, sem peso oculto.
-O início e o fim veiculares são livres em todas as variantes e referências humanas da bateria.
-A aproximação de uma origem externa do manual é informada separadamente, nunca somada só a ele.
+Uma rodada com N endereços avalia exatamente N inícios em cada uma destas três estratégias:
 
-Antes da bateria, o arnês fixa passo de 10 m, até 8.000 candidatas espaciais, 12 âncoras por
-grupo, 24 ordens por seleção, 24 alternativas revisáveis, três passadas e 48 movimentos locais por variante/objetivo.
-O teto de movimentos é global à variante/objetivo, não reiniciado por alternativa. Limites
-atingidos são gravados em `definitionLimitReached`, `workLimitReached` e nos diagnósticos;
-eles delimitam a heurística e não afirmam ótimo global.
+- `seeded-revisable`: começa com o agrupamento espacial e pode revisá-lo;
+- `unseeded-revisable`: começa com todos os endereços individuais e pode formar grupos;
+- `individual`: começa e termina sem agrupamento.
+
+Cada endereço normalizado vira uma candidata de início no seu ponto fundamental. A candidata deve
+pertencer à primeira parada e é persistida como `route.startPoint`. Portanto, são N × 3 tentativas,
+mas somente o menor percurso **completo** de cada estratégia vence. Uma tentativa parcial nunca
+ganha de uma completa por exibir uma distância numericamente menor.
+
+A configuração está fixa em procura de 60 m e circuito de 120 m (`r60/c120`).
+`vehicleDistance` é o único objetivo usado na seleção. `modeledTime`, caminhada e acessos são
+métricas secundárias do mesmo resultado, não objetivos duplicados. Os limites internos da
+heurística continuam explícitos em `definitionLimitReached`, `workLimitReached` e diagnósticos;
+enumerar todos os inícios não demonstra ótimo global de TSP.
 
 O circuito limitado mede âncora → fundamentais → âncora e precisa de caminho validado na malha.
 A caminhada completa usa o mesmo circuito de fundamentais e soma, em campo separado, os acessos
@@ -147,25 +157,30 @@ estimados fundamental ↔ pino. A distância completa pode ultrapassar 120 m; o 
 em `radiusMeters` nem em `autoRadiusMeters`.
 
 As saídas ficam em `.mentor-saidas/auto-fundamentals/<run-id>/`: `report.json`, `summary.md`,
-`manifest.json`, `details.json`, mapas HTML locais e JSONs v1 em `importaveis/`. Os mapas embutem
-o Leaflet instalado e não usam tiles, API, rede ou JavaScript remoto. Os JSONs são cópias de
-inspeção: o schema v1 não persiste fundamental, circuito ou geometria avaliada. Pendências ficam
-livres, não ignoradas. Resultado completo do motor ainda não é certificação de estacionamento,
-passagem de pedestre, restrições ausentes ou desempenho Android.
+`manifest.json`, um mapa HTML local e a pasta `importaveis/`. Todas as tentativas ficam compactadas
+no único `report.json`; não se grava um JSON para cada início. A pasta `importaveis/` contém
+exatamente três JSONs, um vencedor por estratégia, com nomes como:
+
+- `1-r60-c120-com-agrupamento-inicial.json`;
+- `1-r60-c120-sem-agrupamento-inicial.json`;
+- `1-r60-c120-sem-agrupamento.json`.
+
+O prefixo muda para `2` na rodada do roteiro 2. Os mapas embutem o Leaflet instalado e não usam
+tiles, API, rede ou JavaScript remoto. Os JSONs são cópias de inspeção: o schema v1 preserva início
+e paradas, mas não fundamental, teto de circuito ou geometria avaliada.
 
 O cache usa entradas imutáveis, até 20.000 caminhos por grafo e 2.000 ordens por contexto,
-e é limpo antes de cada configuração. O relatório separa uma execução fria de três repetições
-com cache aquecido (mediana/p95 empíricos), sem leitura, renderização e importação no tempo do motor.
-O A* existente escolhe trajetos com penalidades de conversão/serviço; os metros relatados são
+e é limpo antes de cada rodada. Não se repetem todos os cálculos apenas para benchmark; os contratos
+de determinismo ficam nos testes unitários, evitando multiplicar o custo da bateria privada.
+O A\* existente escolhe trajetos com penalidades de conversão/serviço; os metros relatados são
 físicos, mas não certificam o caminho de menor distância física em cada trecho. A caminhada
 recalculada pelo app atual é outro diagnóstico, não a base para alegar economia experimental.
 
 `status` descreve a execução; `technicalValidity` descreve a validade das soluções. Comparações
-excluem pares incompletos, sem converter ausência de caminho em economia. `manualComparisons`
-identifica também a compatibilidade dos manuais inalterados com cada teto de circuito.
-O manifesto inclui hashes dos JSONs e mapas. A inspeção visual humana permanece pendente.
+com a referência humana usam o miolo da rota com aproximação externa livre para ambos; a aproximação
+externa armazenada no manual aparece separada no relatório. Resultados parciais são excluídos como
+vencedores. O manifesto inclui hashes dos três JSONs e do mapa.
 
-A rodada `2026-09-10T20-45-35-415Z` é histórica e inválida como evidência de viabilidade: expôs
-falhas no adaptador de projeções e na conservação de membros durante a poda revisável.
-Os testes de regressão cobrem essas falhas; use somente a nova rodada identificada no registro
-da tarefa. Nenhum resultado autoriza promoção ao produto ou fechamento automático do spike.
+As rodadas anteriores permanecem apenas como histórico e não atendem a este contrato multi-início.
+A inspeção humana dos três vencedores continua obrigatória. Nenhum resultado autoriza promoção ao
+produto, expansão para os demais roteiros ou fechamento automático do spike.
