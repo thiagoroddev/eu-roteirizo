@@ -87,9 +87,9 @@
         "TASK-BG-018",
         "TASK-BG-017"
       ],
-      "destino": null,
-      "ref": null,
-      "resolvida_em": null,
+      "destino": "descartado",
+      "ref": "Sem acao neste projeto (decisao do humano, 13/09/26): codigo entregue verde no CI do PR #32 e a TASK-BG-021 ja rodou os gates na arvore entregue; sugestao ao pacote em docs-mentor/melhorias-do-pacote.md",
+      "resolvida_em": "13/09/26 03:49",
       "id": "AUD-002-R06"
     },
     {
@@ -98,9 +98,9 @@
       "tarefas": [
         "TASK-BG-018"
       ],
-      "destino": null,
-      "ref": null,
-      "resolvida_em": null,
+      "destino": "tarefa",
+      "ref": "TASK-BG-019",
+      "resolvida_em": "13/09/26 03:49",
       "id": "AUD-002-R07"
     },
     {
@@ -109,9 +109,9 @@
       "tarefas": [
         "TASK-CHORE-016"
       ],
-      "destino": null,
-      "ref": null,
-      "resolvida_em": null,
+      "destino": "descartado",
+      "ref": "Sem acao neste projeto (decisao do humano, 13/09/26); sugestao ao pacote em docs-mentor/melhorias-do-pacote.md",
+      "resolvida_em": "13/09/26 03:49",
       "id": "AUD-002-R08"
     },
     {
@@ -132,9 +132,9 @@
         "TASK-BG-017",
         "TASK-CHORE-016"
       ],
-      "destino": null,
-      "ref": null,
-      "resolvida_em": null,
+      "destino": "descartado",
+      "ref": "Cosmetico: so o titulo dos registros da BG-017 e da CHORE-016; os commits sairam limpos e a BG-021 ja saiu certa",
+      "resolvida_em": "13/09/26 03:49",
       "id": "AUD-002-O10"
     },
     {
@@ -143,9 +143,9 @@
       "tarefas": [
         "TASK-BG-017"
       ],
-      "destino": null,
-      "ref": null,
-      "resolvida_em": null,
+      "destino": "divida_tecnica",
+      "ref": "DT-009",
+      "resolvida_em": "13/09/26 03:49",
       "id": "AUD-002-O11"
     },
     {
@@ -154,9 +154,9 @@
       "tarefas": [
         "TASK-CHORE-016"
       ],
-      "destino": null,
-      "ref": null,
-      "resolvida_em": null,
+      "destino": "descartado",
+      "ref": "Testar o codigo do pacote e responsabilidade do repositorio mentor-agent",
+      "resolvida_em": "13/09/26 03:49",
       "id": "AUD-002-O12"
     },
     {
@@ -165,9 +165,9 @@
       "tarefas": [
         "TASK-BG-018"
       ],
-      "destino": null,
-      "ref": null,
-      "resolvida_em": null,
+      "destino": "risco_aceito",
+      "ref": "Aceito pelo humano em 13/09/26: repositorio privado, sem nome nem unidade; os registros ja estao na main desde o PR #32 e reescrever historico nao compensa. Daqui para frente, citar paradas pela posicao no roteiro (P1, P2), sem numero de porta.",
+      "resolvida_em": "13/09/26 03:49",
       "id": "AUD-002-O13"
     }
   ]
