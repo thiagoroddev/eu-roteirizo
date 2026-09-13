@@ -1,11 +1,11 @@
 {
   "_meta": {
     "schema": "contexto-projeto/1",
-    "versao_do_pacote": "0.5.0",
+    "versao_do_pacote": "0.6.0",
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-13T07:22:44.536Z",
+    "atualizado_em": "2026-09-13T07:29:56.189Z",
     "gerado_por": "script"
   },
   "projeto": {
@@ -616,7 +616,7 @@
   },
   "contagens": {
     "_gerado_por_script": true,
-    "tarefas_concluidas": 26,
+    "tarefas_concluidas": 27,
     "tarefas_abertas": 25,
     "tarefas_no_ciclo": 1,
     "tarefas_na_reserva": 24,

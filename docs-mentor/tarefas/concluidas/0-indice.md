@@ -30,4 +30,5 @@
 | 12/09/26 06:08 | [`TASK-BG-017`](./2026-09-12--06h08--TASK-BG-017.md) | BG | titulo-autossuficiente: Adicionar keywords ausentes na classificacao comercial/residencial a partir de romaneios reais (edificio, zelador, emporio, drogarias, sobreloja, grill, vitrine, teatro, tech) | - | concluida | dispensado |
 | 12/09/26 06:20 | [`TASK-CHORE-016`](./2026-09-12--06h20--TASK-CHORE-016.md) | CHORE | titulo-autossuficiente: Atualizar mentor-agent para v0.5.0 | - | concluida | dispensado |
 | 12/09/26 23:55 | [`TASK-BG-018`](./2026-09-12--23h55--TASK-BG-018.md) | BG | Rota desenhava conversao proibida porque a malha baixada recortava o retorno legal | - | concluida | aprovado |
+| 13/09/26 00:20 | [`TASK-CHORE-017`](./2026-09-13--00h20--TASK-CHORE-017.md) | CHORE | Atualizar mentor-agent para v0.6.0 | - | concluida | dispensado |
 | 13/09/26 03:30 | [`TASK-BG-021`](./2026-09-13--03h30--TASK-BG-021.md) | BG | Retirar edificio e zelador das palavras residenciais e gerar roteiro ficticio para validar a classificacao comercial/residencial (AUD-002-B01) | - | concluida | aprovado |

@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process'
 import { renameSync, rmSync } from 'node:fs'
+import { join } from 'node:path'
 import { agora, caminhos, escreverJson, escreverTexto, existe, lerJson, lerTexto, listar, NOME_DOS_DOCUMENTOS } from './arquivos.ts'
 import { proximoIdDeTarefa } from './ids.ts'
 import { carregarContexto, carregarRequisitos, carregarTarefas, fixar, regenerarTudo, registrarRecusa, soltar } from './vistas.ts'
@@ -130,12 +131,37 @@ export function nova(flags: Flags): void {
 
 // ---------------------------------------------------------------- iniciar
 
-export function iniciar(id: string): void {
+export function iniciar(id: string, flags: Flags = {}): void {
   const { caminho, tarefa } = localizar(id)
   if (tarefa.estado !== 'aberta') throw new Error(`${id} esta em "${tarefa.estado}", nao em "aberta".`)
   if (tarefa.fila !== 'ciclo') {
     throw new Error(`${id} esta na reserva. Puxe primeiro: mentor task puxar ${id}`)
   }
+  // M6: Bloqueio por reincidência de spikes inconclusivos consecutivos
+  if (tarefa.tipo === 'SPIKE') {
+    const c = caminhos()
+    const spikesConcluidos = carregarTarefas().filter((t) => t.tipo === 'SPIKE' && t.estado === 'concluida')
+    if (spikesConcluidos.length >= 2) {
+      const ultimos2 = spikesConcluidos.slice(-2)
+      const inconclusivos = ultimos2.filter((s) => {
+        const nar = s.narrativa ? join(c.concluidas, s.narrativa) : null
+        const txt = nar && existe(nar) ? lerTexto(nar).toLowerCase() : ''
+        return (
+          txt.includes('inconclusivo') ||
+          txt.includes('sem conclusao') ||
+          s.achados.some((a) => a.descricao?.toLowerCase().includes('inconclusivo'))
+        )
+      })
+      if (inconclusivos.length >= 2 && !flags['estrategia-revisada']) {
+        throw new Error(
+          'Reincidencia de spikes inconclusivos: os ultimos 2 spikes fecharam inconclusivos. Abra revisao de estrategia antes de abrir novo spike (ou use: mentor task iniciar ' +
+            id +
+            ' --estrategia-revisada).',
+        )
+      }
+    }
+  }
+
   // Trabalho parado pela metade e' o desperdicio mais invisivel, porque parece progresso (guia ES-50).
   const limite = carregarContexto().limites.em_execucao
   const emExecucao = carregarTarefas().filter((t) => t.estado === 'em-execucao')
@@ -154,6 +180,8 @@ export function iniciar(id: string): void {
     tarefa.validacao = 'pendente'
   }
   const ehSpike = tarefa.tipo === 'SPIKE'
+  const ehGrande = tarefa.esforco.ia === 'G' || tarefa.esforco.ia === 'XG'
+  const ehSpikeDeMedicao = ehSpike && /\b(melhor|ganh|otimiz|reduz|desempenho|latenci|taxa|bench|med)/i.test(tarefa.titulo)
   tarefa.plano = {
     muda: [`${MARCADOR} caminho/arquivo.ext - o que muda nele, em uma linha`],
     criterios_aceite: [
@@ -164,6 +192,36 @@ export function iniciar(id: string): void {
             teste: `${MARCADOR} arquivo > nome do teste, ou "nao se aplica: <motivo>"`,
           },
     ],
+    problema_canonico: `${MARCADOR} nome canonico na literatura (ex: TSP, CRDT), ou "sem nome canonico"`,
+    discordancia: {
+      o_que_faria_diferente: `${MARCADOR} o que eu faria diferente, ou "Nada a objetar"`,
+      o_que_preocupa: `${MARCADOR} o que me preocupa neste plano, ou "Nada a objetar"`,
+      o_que_existe_pronto_80_porcento: `${MARCADOR} ferramenta/lib consolidada que resolve 80%, ou "Nenhuma conhecida"`,
+    },
+    ...(ehSpikeDeMedicao
+      ? {
+          reguas_de_medicao: {
+            piso: `${MARCADOR} baseline trivial a superar`,
+            teto: `${MARCADOR} otimo calculado ou melhor ref externa`,
+            padrao: `${MARCADOR} solucao consolidada da industria`,
+          },
+        }
+      : {}),
+    ...(ehGrande
+      ? {
+          estado_da_arte: {
+            implementacoes_consolidadas: [`${MARCADOR} alternativa 1`, `${MARCADOR} alternativa 2`],
+            motivo_descarte: `${MARCADOR} por que cada alternativa foi descartada`,
+            o_que_resta_construir: `${MARCADOR} o que ainda precisa ser feito mesmo adotando a solucao`,
+          },
+          custo_de_oportunidade: {
+            o_que_existe_pronto: `${MARCADOR} o que existe pronto no mercado`,
+            custo_estimado: `${MARCADOR} custo em dinheiro ou licenca`,
+            dependencias_ou_infra: `${MARCADOR} backend ou dependencias necessarias`,
+            tempo_substituido: `${MARCADOR} semanas de desenvolvimento substituidas`,
+          },
+        }
+      : {}),
     impacto: `${MARCADOR} modulos afetados`,
     riscos: [`${MARCADOR} o que pode dar errado, ou "nenhum identificado"`],
     dependencias_novas: [],
@@ -201,6 +259,115 @@ export function iniciar(id: string): void {
   }
   regenerarTudo()
   console.log(`${id} em execucao. Preencha o plano e apresente ao humano antes de executar (nucleo, portao 1).`)
+}
+
+// ---------------------------------------------------------------- pausar
+
+export function pausar(id: string, flags: Flags = {}): void {
+  const { caminho, tarefa } = localizar(id)
+  if (tarefa.estado !== 'em-execucao') {
+    throw new Error(`${id} esta em "${tarefa.estado}", nao em "em-execucao". So e possivel pausar tarefa em execucao.`)
+  }
+  const motivo = flags.motivo?.trim()
+  if (!motivo) {
+    throw new Error(`Falta --motivo. Informe por que a tarefa esta sendo pausada (ex: mentor task pausar ${id} --motivo "aguardando ajuste de UI e correcao de bug").`)
+  }
+
+  const c = caminhos()
+  // Inspeciona se o Git possui arquivos modificados ou untracked
+  const rStatus = spawnSync('git', ['status', '--porcelain'], { cwd: c.raiz, encoding: 'utf8' })
+  const temAlteracoes = rStatus.status === 0 && Boolean(rStatus.stdout?.trim())
+
+  if (temAlteracoes) {
+    if (flags.commit !== undefined) {
+      // Auto-commit das alterações em WIP
+      const msg = `wip(${id}): pausada - ${motivo}`
+      const add = spawnSync('git', ['add', '-A'], { cwd: c.raiz, encoding: 'utf8' })
+      if (add.status !== 0) throw new Error(`Falha ao adicionar arquivos no Git: ${add.stderr}`)
+      const com = spawnSync('git', ['commit', '-m', msg], { cwd: c.raiz, encoding: 'utf8' })
+      if (com.status !== 0) throw new Error(`Falha ao commitar no Git: ${com.stderr}`)
+      console.log(`Commit de pausa realizado: ${msg}`)
+    } else {
+      throw new Error(
+        `Existem alteracoes nao commitadas no Git. Para pausar sem contaminar a proxima tarefa, commite as alteracoes atuais (ex: git commit -m "wip(${id}): pausada - ${motivo}") ou passe a flag --commit para commitar automaticamente.`,
+      )
+    }
+  }
+
+  const commitPausa = cabecaDoGit()
+  const agoraPausa = agora().log
+  const bloqueadaPor = (flags['bloqueada-por'] ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  if (!tarefa.pausas) tarefa.pausas = []
+  tarefa.pausas.push({
+    pausada_em: agoraPausa,
+    retomada_em: null,
+    motivo,
+    bloqueada_por: bloqueadaPor,
+    commit_pausa: commitPausa,
+    commit_retomada: null,
+  })
+
+  tarefa.estado = 'pausada'
+  tarefa.pausada_em = agoraPausa
+  tarefa.pausa_motivo = motivo
+  tarefa.bloqueada_por = bloqueadaPor
+
+  escreverJson(caminho, tarefa)
+  regenerarTudo()
+  console.log(
+    `Tarefa ${id} pausada com sucesso.${bloqueadaPor.length ? ` Bloqueada por: ${bloqueadaPor.join(', ')}.` : ''} Slot de execucao liberado.`,
+  )
+}
+
+// ---------------------------------------------------------------- retomar
+
+export function retomar(id: string, flags: Flags = {}): void {
+  const { caminho, tarefa } = localizar(id)
+  if (tarefa.estado !== 'pausada') {
+    throw new Error(`${id} esta em "${tarefa.estado}", nao em "pausada".`)
+  }
+
+  const limite = carregarContexto().limites.em_execucao
+  const emExecucao = carregarTarefas().filter((t) => t.estado === 'em-execucao')
+  if (emExecucao.length >= limite) {
+    throw new Error(
+      `Ja ha ${emExecucao.length} tarefa(s) em execucao (limite ${limite}): ${emExecucao.map((t) => t.id).join(', ')}. Feche ou pause a tarefa ativa antes de retomar ${id}.`,
+    )
+  }
+
+  // Se houver tarefas declaradas em bloqueada_por, verifica se já foram concluídas ou canceladas
+  if (tarefa.bloqueada_por && tarefa.bloqueada_por.length > 0) {
+    const todas = carregarTarefas()
+    const pendentes = tarefa.bloqueada_por.filter((bid) => {
+      const b = todas.find((t) => t.id === bid)
+      return !b || (b.estado !== 'concluida' && b.estado !== 'cancelada')
+    })
+    if (pendentes.length > 0 && !flags.forcar) {
+      throw new Error(
+        `Tarefa(s) bloqueadora(s) ainda nao concluida(s): ${pendentes.join(', ')}. Conclua-as antes de retomar ${id} (ou use --forcar).`,
+      )
+    }
+  }
+
+  const agoraRetomada = agora().log
+  const commitRetomada = cabecaDoGit()
+
+  if (tarefa.pausas && tarefa.pausas.length > 0) {
+    const ultima = tarefa.pausas[tarefa.pausas.length - 1]
+    if (ultima) {
+      ultima.retomada_em = agoraRetomada
+      ultima.commit_retomada = commitRetomada
+    }
+  }
+
+  tarefa.estado = 'em-execucao'
+  escreverJson(caminho, tarefa)
+  regenerarTudo()
+  console.log(`Tarefa ${id} retomada em execucao.`)
 }
 
 // ---------------------------------------------------------------- gate
@@ -353,8 +520,18 @@ export function finalizar(id: string, flags: Flags = {}): void {
 
   if (tarefa.estado !== 'em-execucao') impedimentos.push(`estado e "${tarefa.estado}", nao "em-execucao"`)
 
+  const ehSpike = tarefa.tipo === 'SPIKE'
+  const temCriterioDeMedicao = tarefa.plano.criterios_aceite.some((c) =>
+    /\b(melhor|ganh|otimiz|reduz|desempenho|latenci|taxa|bench|med)/i.test(c.texto || ''),
+  )
+
+  const planoParaVerificar = { ...tarefa.plano }
+  if (ehSpike && !temCriterioDeMedicao) {
+    delete (planoParaVerificar as Record<string, unknown>).reguas_de_medicao
+  }
+
   const marcadores: string[] = []
-  marcadoresEm(tarefa.plano, 'plano', marcadores)
+  marcadoresEm(planoParaVerificar, 'plano', marcadores)
   if (marcadores.length) impedimentos.push(`marcador ${MARCADOR} nao preenchido em ${marcadores.join(', ')}`)
 
   // Validação manual: atalho direto na finalização
@@ -405,6 +582,86 @@ export function finalizar(id: string, flags: Flags = {}): void {
     })
   }
 
+  // M2: Problema canônico obrigatório no plano
+  if (tarefa.plano.problema_canonico !== undefined) {
+    if (!tarefa.plano.problema_canonico || !tarefa.plano.problema_canonico.trim()) {
+      impedimentos.push('plano sem "problema_canonico": declare o nome canonico na literatura (ex: TSP, VRP, CRDT) ou "sem nome canonico"')
+    }
+  }
+
+  // M7: Seção de discordância obrigatória no plano
+  if (tarefa.plano.discordancia !== undefined) {
+    const d = tarefa.plano.discordancia
+    if (
+      !d ||
+      !d.o_que_faria_diferente || !d.o_que_faria_diferente.trim() ||
+      !d.o_que_preocupa || !d.o_que_preocupa.trim() ||
+      !d.o_que_existe_pronto_80_porcento || !d.o_que_existe_pronto_80_porcento.trim()
+    ) {
+      impedimentos.push(
+        'plano sem secao "discordancia" completa (exige o_que_faria_diferente, o_que_preocupa e o_que_existe_pronto_80_porcento; "Nada a objetar" e valido)',
+      )
+    }
+  }
+
+  // M4: Três réguas para spike de medição
+  if (ehSpike && temCriterioDeMedicao) {
+    const r = tarefa.plano.reguas_de_medicao
+    if (!r || !r.piso || !r.piso.trim() || !r.teto || !r.teto.trim() || !r.padrao || !r.padrao.trim()) {
+      impedimentos.push('spike de medicao sem as tres reguas obrigatorias em reguas_de_medicao (piso, teto e padrao)')
+    }
+  }
+
+  // M1 & M8: Estado da arte e custo de oportunidade em G/XG
+  const ehGrande = tarefa.esforco.ia === 'G' || tarefa.esforco.ia === 'XG'
+  if (ehGrande) {
+    const eda = tarefa.plano.estado_da_arte
+    if (
+      !eda ||
+      !Array.isArray(eda.implementacoes_consolidadas) ||
+      eda.implementacoes_consolidadas.length === 0 ||
+      !eda.motivo_descarte || !eda.motivo_descarte.trim() ||
+      !eda.o_que_resta_construir || !eda.o_que_resta_construir.trim()
+    ) {
+      impedimentos.push(
+        'tarefa com esforco IA G/XG exige secao "estado_da_arte" preenchida (implementacoes_consolidadas, motivo_descarte e o_que_resta_construir)',
+      )
+    }
+    const co = tarefa.plano.custo_de_oportunidade
+    if (
+      !co ||
+      !co.o_que_existe_pronto || !co.o_que_existe_pronto.trim() ||
+      !co.custo_estimado || !co.custo_estimado.trim() ||
+      !co.dependencias_ou_infra || !co.dependencias_ou_infra.trim() ||
+      !co.tempo_substituido || !co.tempo_substituido.trim()
+    ) {
+      impedimentos.push('tarefa com esforco IA G/XG exige secao "custo_de_oportunidade" preenchida')
+    }
+  } else {
+    if (tarefa.plano.estado_da_arte) {
+      const eda = tarefa.plano.estado_da_arte
+      if (
+        !Array.isArray(eda.implementacoes_consolidadas) ||
+        eda.implementacoes_consolidadas.length === 0 ||
+        !eda.motivo_descarte?.trim() ||
+        !eda.o_que_resta_construir?.trim()
+      ) {
+        impedimentos.push('secao "estado_da_arte" incompleta no plano')
+      }
+    }
+    if (tarefa.plano.custo_de_oportunidade) {
+      const co = tarefa.plano.custo_de_oportunidade
+      if (
+        !co.o_que_existe_pronto?.trim() ||
+        !co.custo_estimado?.trim() ||
+        !co.dependencias_ou_infra?.trim() ||
+        !co.tempo_substituido?.trim()
+      ) {
+        impedimentos.push('secao "custo_de_oportunidade" incompleta no plano')
+      }
+    }
+  }
+
   // Com metodo tdd ou bdd, o gate de testes precisa ter sido visto vermelho antes do verde.
   const metodo = (ctx['qualidade'] as { metodo_de_teste?: MetodoDeTeste } | undefined)?.metodo_de_teste
   if (metodo && METODOS_COM_VERMELHO.includes(metodo) && tarefa.tipo !== 'SPIKE') {
@@ -444,17 +701,47 @@ export function finalizar(id: string, flags: Flags = {}): void {
 
   // Disciplina de escopo Git vs plano.muda (AUD-001-B05: previne arquivos fantasmas)
   if (tarefa.commit_base) {
-    const rDiff = spawnSync('git', ['diff', '--name-only', tarefa.commit_base, '--relative'], {
-      cwd: caminhos().raiz,
-      encoding: 'utf8',
-    })
+    const arquivosSet = new Set<string>()
+    if (tarefa.pausas && tarefa.pausas.length > 0) {
+      let pontoAnterior: string | null = tarefa.commit_base
+      for (const p of tarefa.pausas) {
+        if (pontoAnterior && p.commit_pausa && pontoAnterior !== p.commit_pausa) {
+          const r = spawnSync('git', ['diff', '--name-only', pontoAnterior, p.commit_pausa, '--relative'], {
+            cwd: caminhos().raiz,
+            encoding: 'utf8',
+          })
+          if (r.status === 0 && r.stdout) {
+            r.stdout.split('\n').forEach((f) => arquivosSet.add(f.trim().replace(/\\/g, '/')))
+          }
+        }
+        pontoAnterior = p.commit_retomada
+      }
+      if (pontoAnterior) {
+        const r = spawnSync('git', ['diff', '--name-only', pontoAnterior, '--relative'], {
+          cwd: caminhos().raiz,
+          encoding: 'utf8',
+        })
+        if (r.status === 0 && r.stdout) {
+          r.stdout.split('\n').forEach((f) => arquivosSet.add(f.trim().replace(/\\/g, '/')))
+        }
+      }
+    } else {
+      const rDiff = spawnSync('git', ['diff', '--name-only', tarefa.commit_base, '--relative'], {
+        cwd: caminhos().raiz,
+        encoding: 'utf8',
+      })
+      if (rDiff.status === 0 && rDiff.stdout) {
+        rDiff.stdout.split('\n').forEach((f) => arquivosSet.add(f.trim().replace(/\\/g, '/')))
+      }
+    }
     const rUntracked = spawnSync('git', ['ls-files', '--others', '--exclude-standard'], {
       cwd: caminhos().raiz,
       encoding: 'utf8',
     })
-    const diffFiles = rDiff.status === 0 && rDiff.stdout ? rDiff.stdout.split('\n') : []
-    const untrackedFiles = rUntracked.status === 0 && rUntracked.stdout ? rUntracked.stdout.split('\n') : []
-    const arquivosModificados = [...diffFiles, ...untrackedFiles].map((s) => s.trim().replace(/\\/g, '/')).filter(Boolean)
+    if (rUntracked.status === 0 && rUntracked.stdout) {
+      rUntracked.stdout.split('\n').forEach((f) => arquivosSet.add(f.trim().replace(/\\/g, '/')))
+    }
+    const arquivosModificados = [...arquivosSet].filter(Boolean)
     const declarados = new Set<string>()
     for (const linha of tarefa.plano.muda) {
       // O caminho vai ate' o primeiro espaco. Cortar no hifen partia `__utilidades-back-office__/...`

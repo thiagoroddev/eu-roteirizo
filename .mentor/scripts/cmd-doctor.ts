@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process'
-import { agora, caminhos, diasDesde, escreverJson, listar } from './arquivos.ts'
+import { join } from 'node:path'
+import { agora, caminhos, diasDesde, escreverJson, existe, lerTexto, listar } from './arquivos.ts'
 import { tetos } from './cmd-verificar.ts'
 import { rascunhosParados } from './cmd-anotar.ts'
 import { PONTOS_DE_ENTRADA, pontosDeEntradaSemNucleo } from './entrada.ts'
@@ -134,6 +135,28 @@ function qualidade(ctx: Contexto, tarefas: Tarefa[]): Linha[] {
     ? { estado: 'bloqueio', texto: `${semTeste.length} tarefa(s) concluida(s) com criterio sem teste nomeado` }
     : { estado: 'ok', texto: `metodo de teste "${metodo ?? 'nao declarado'}", todo criterio com teste nomeado` })
 
+  // M6: Reincidência de spikes inconclusivos
+  const c = caminhos()
+  const spikesConcluidos = tarefas.filter((t) => t.tipo === 'SPIKE' && t.estado === 'concluida')
+  if (spikesConcluidos.length >= 2) {
+    const ultimos2 = spikesConcluidos.slice(-2)
+    const inconclusivos = ultimos2.filter((s) => {
+      const nar = s.narrativa ? join(c.concluidas, s.narrativa) : null
+      const txt = nar && existe(nar) ? lerTexto(nar).toLowerCase() : ''
+      return (
+        txt.includes('inconclusivo') ||
+        txt.includes('sem conclusao') ||
+        s.achados.some((a) => a.descricao?.toLowerCase().includes('inconclusivo'))
+      )
+    })
+    if (inconclusivos.length >= 2) {
+      linhas.push({
+        estado: 'atencao',
+        texto: 'reincidencia de spikes inconclusivos: os ultimos 2 spikes fecharam inconclusivos. Abra revisao de estrategia antes de planejar novo spike.',
+      })
+    }
+  }
+
   const estouros = tetos()
   linhas.push(estouros.length
     ? { estado: 'atencao', texto: `${estouros.length} arquivo(s) acima do teto de texto: ${estouros.map((a) => a.onde).join(', ')}` }
@@ -155,7 +178,7 @@ function qualidade(ctx: Contexto, tarefas: Tarefa[]): Linha[] {
 
 function processo(ctx: Contexto, tarefas: Tarefa[]): Linha[] {
   const linhas: Linha[] = []
-  const viva = (t: Tarefa) => t.estado === 'aberta' || t.estado === 'em-execucao'
+  const viva = (t: Tarefa) => t.estado === 'aberta' || t.estado === 'em-execucao' || t.estado === 'pausada'
   const emExecucao = tarefas.filter((t) => t.estado === 'em-execucao')
   const noCiclo = tarefas.filter((t) => viva(t) && t.fila === 'ciclo')
 
@@ -164,6 +187,28 @@ function processo(ctx: Contexto, tarefas: Tarefa[]): Linha[] {
     : { estado: 'ok', texto: `${emExecucao.length} de ${ctx.limites.em_execucao} em execucao` })
   linhas.push({ estado: noCiclo.length > ctx.limites.ciclo_tarefas ? 'atencao' : 'neutro',
     texto: `${noCiclo.length} de ${ctx.limites.ciclo_tarefas} no ciclo, ${tarefas.filter((t) => viva(t) && t.fila === 'reserva').length} na reserva` })
+
+  const pausadas = tarefas.filter((t) => t.estado === 'pausada')
+  for (const p of pausadas) {
+    const bloqueadores = p.bloqueada_por ?? []
+    const todosResolvidos =
+      bloqueadores.length > 0 &&
+      bloqueadores.every((bid) => {
+        const b = tarefas.find((t) => t.id === bid)
+        return b && (b.estado === 'concluida' || b.estado === 'cancelada')
+      })
+    if (todosResolvidos) {
+      linhas.push({
+        estado: 'atencao',
+        texto: `${p.id} esta pausada, mas seus bloqueadores (${bloqueadores.join(', ')}) ja foram concluidos. Pronta para retomar: mentor task retomar ${p.id}`,
+      })
+    } else {
+      linhas.push({
+        estado: 'neutro',
+        texto: `${p.id} pausada: "${p.pausa_motivo ?? 'sem motivo'}"${bloqueadores.length ? ` (bloqueada por ${bloqueadores.join(', ')})` : ''}`,
+      })
+    }
+  }
 
   // Trabalho parado pela metade e' o desperdicio mais invisivel, porque parece progresso (ES-50).
   for (const t of noCiclo.filter((x) => x.valor === 'critico' && x.urgencia === 'imediata')) {
