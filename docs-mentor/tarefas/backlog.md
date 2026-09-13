@@ -9,5 +9,4 @@
 
 | # | ID | Titulo | Fatia | Valor | Urgencia | Esforco H/IA | Bloqueada por | Origem |
 |--:|---|---|---|---|---|---|---|---|
-| 1 | `TASK-CHORE-019` | Atualizar mentor-agent para v0.7.0 | - | importante | normal | P/P | - | titulo-autossuficiente |
-| 2 | `TASK-RF-044` | Avancar e retroceder entre paradas do Meu roteiro em ciclo | - | importante | normal | P/M | - | RF-58 |
+| 1 | `TASK-RF-044` | Avancar e retroceder entre paradas do Meu roteiro em ciclo | - | importante | normal | P/M | - | RF-58 |
