@@ -1,0 +1,170 @@
+{
+  "id": "TASK-CHORE-020",
+  "tipo": "CHORE",
+  "titulo": "Atualizar mentor-agent para v0.8.1",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "sem_requisito_motivo": null,
+  "criada_em": "13/09/26 17:46",
+  "iniciada_em": "13/09/26 17:47",
+  "commit_base": "c857738ffe702191f74d94a2d438196e0049799a",
+  "concluida_em": "13/09/26 17:56",
+  "plano": {
+    "muda": [
+      "package.json - devDependency mentor-agent github:thiagoroddev/mentor-agent#v0.7.0 -> #v0.8.1",
+      "package-lock.json - lock atualizado para mentor-agent 0.8.1",
+      ".mentor/** - pacote reinstalado via npx mentor instalar --forcar",
+      "mentor.mjs - atalho reinstalado junto do pacote",
+      "docs-mentor/contexto.json - versao_do_pacote 0.8.1 via resolver-gerados; sai auditoria.cadencia_em_caracteres, que a 0.8.0 deixou de usar",
+      ".gitattributes - __utilidades-back-office__/roteiros-ficticios/*.json como linguist-generated: a fixture gerada por script sai do diff da auditoria",
+      "docs-mentor/melhorias-do-pacote.md - tirar o que a 0.8.0 e a 0.8.1 implementaram"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "node mentor.mjs verificar aprova depois da atualizacao",
+        "teste": "nao se aplica: verificacao operacional via CLI; a saida fica registrada com task criterio",
+        "evidencia": {
+          "comando": "node mentor.mjs verificar",
+          "codigo_saida": 0,
+          "saida": "APROVADO. Tres familias: marcadores, tetos de texto, integridade referencial (ponteiros, links e inventario de regras).",
+          "executado_em": "13/09/26 17:52"
+        }
+      },
+      {
+        "texto": "node mentor.mjs doctor mostra a auditoria em dia contada por tarefas, sem a linha de caracteres de diff",
+        "teste": "nao se aplica: verificacao operacional via CLI; a saida fica registrada com task criterio",
+        "evidencia": {
+          "comando": "node mentor.mjs doctor",
+          "codigo_saida": 0,
+          "saida": "SAUDE DO PROJETO — 13/09/26 17:52\n\nSEGURANCA\n  ✓  nenhum risco aceito vencido\n  ✓  analise de dependencias automatica\n\nQUALIDADE\n  ·  12 de 32 requisitos implementados\n  ✓  metodo de teste \"tdd\", todo criterio com teste nomeado\n  ✓  nenhum teto de texto estourado\n  ·  2 divida(s) tecnica(s) aberta(s)\n\n  Perfil ISO/IEC 25010, contra as metas do proprio projeto:\n    ⚠  adequacao funcional    Avaliacao parcial, TASK-CHORE-012. A suite passou, mas nao certifica todos os RFs. Contagem 44/49 retirada por rastreabilidade obsoleta: RF-35 ainda consta planejado apesar de routeStorage/TASK-RF-008. RF-009, RF-029 e RF-013 seguem pendentes.\n    ⚠  desempenho             Parcial, TASK-CHORE-012: upload/TTL conferidos no codigo; build com chunks acima de 500 kB, sem bloqueio. A* usa teste sintetico sem assercao temporal. Alvo ~150ms em bairro/celular segue sem medicao; doctor/gates nao aferem isso.\n    ⚠  compatibilidade        Parcial, TASK-CHORE-012: PWA, fallback SPA e teste de round-trip XLSX presentes. Faltam matriz de versoes/navegadores e validacao em Android. TWA/Play Store planejados.\n    ?  usabilidade            meta declarada, nunca aferida: Uso em rua/sol/celular; UI em portugues; smoke real obrigatorio para UI/gestos.\n    ⚠  confiabilidade         Relato Samsung M35 em TASK-CHORE-012: teste offline realizado, com reuso de tiles visitados entre romaneios, lacunas em zooms/areas e atraso durante arraste. Percursos fora das ruas offline e falha ao carregar malha tambem online. Validacao integral pendente com falhas; data do teste e versao nao informadas.\n    ⚠  seguranca              Parcial, TASK-CHORE-012: logs DEV, escapeHtml e XLSX fixado. Alertas e correcoes de seguranca GitHub ativados e reconferidos por API. Plano de incidente aberto; audit local anterior identificou 1 moderada (@humanfs/node) e 1 baixa (esbuild), ainda sem correcao local.\n    ⚠  manutenibilidade       Parcial, TASK-CHORE-012: strict, UI_LABELS, reducer e gates verdes. Docs de requisitos obsoletas; separacao utils/servicos incompleta, pois routing/osm.ts executa fetch.\n    ⚠  portabilidade          Parcial, TASK-CHORE-012: PWA e dados locais presentes. Isolamento de mapas incompleto: Worker em RouteMap.tsx, Overpass em routing/osm.ts. TWA/Capacitor e PMTiles/R2 planejados, sem teste de migracao.\n\n    avaliadas 7 de 8 · conformes 0 · ressalva 7 · reprovadas 0 · sem meta 0 · sem afericao 1\n    Caracteristica sem meta e \"–\", nunca conforme: ausencia de medicao nao e conformidade.\n\nPROCESSO\n  ✓  1 de 1 em execucao\n  ·  2 de 12 no ciclo, 24 na reserva\n  ✓  portoes exigidos pela fase \"construcao\" respondidos\n  ✓  versionado, 117 commit(s), remoto configurado\n  ✓  versionamento declarado\n  ✓  pontos de entrada apontam para o nucleo\n  ✓  auditoria em dia: ultima em 13/09/26 01:02, 1 de 10 tarefa(s) com codigo desde entao\n\nPRONTO PARA PUBLICO?  SIM — nenhum bloqueio",
+          "executado_em": "13/09/26 17:52"
+        }
+      },
+      {
+        "texto": "a fixture roteiro-classificacao.json sai marcada como gerada para o git",
+        "teste": "nao se aplica: atributo do git; a saida de git check-attr fica registrada com task criterio",
+        "evidencia": {
+          "comando": "git check-attr linguist-generated -- __utilidades-back-office__/roteiros-ficticios/roteiro-classificacao.json",
+          "codigo_saida": 0,
+          "saida": "__utilidades-back-office__/roteiros-ficticios/roteiro-classificacao.json: linguist-generated: true",
+          "executado_em": "13/09/26 17:52"
+        }
+      }
+    ],
+    "problema_canonico": "sem nome canonico",
+    "discordancia": {
+      "o_que_faria_diferente": "Nada a objetar",
+      "o_que_preocupa": "A 0.8.1 endurece duas travas que valem para as tarefas abertas antes dela (TASK-RF-044 no ciclo, TASK-SPIKE-003 pausada no ramo local): o pre-push barra commit de codigo sem (TASK-X-NNN) nem (light) no titulo, e o finalizar recusa gate de testes ou build que rodou antes de o codigo mudar. Os commits antigos da spike ficam no historico, mas um commit novo com escopo livre passa a ser barrado.",
+      "o_que_existe_pronto_80_porcento": "Nenhuma conhecida"
+    },
+    "impacto": "Nenhum modulo de src/ afetado; escopo restrito ao pacote de processo (.mentor/ e mentor.mjs), a dependencia de desenvolvimento, ao contexto do projeto e a um atributo do git para a fixture gerada",
+    "riscos": [
+      "resolver-gerados pode reescrever o bloco auditoria do contexto.json (ja aconteceu num merge); conferir o diff contra o main antes de commitar",
+      "instalar --forcar troca leis: nucleo.md (marca light no commit) e processos entrega, revisao e tarefa; ler o aviso de normas e o git diff dessas pastas antes de fechar"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pedido explicito do humano (roteiro de tres passos autorizado em 13/09/26). Dependencia de desenvolvimento e Light pela lista fechada do nucleo; a tarefa existe porque a atualizacao troca leis e o hook exige ID em commit que toca package.json. O .gitattributes e o campo obsoleto sao efeito direto da versao nova, e a limpeza das melhorias repete o que foi feito na TASK-CHORE-019. Nada de src/."
+  },
+  "gates": {
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "13/09/26 17:50",
+      "commit_execucao": "c857738ffe702191f74d94a2d438196e0049799a",
+      "arvore_hash": "183bbadaf1ec9eea48a0e433cee9437a92f69e79",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "13/09/26 17:50",
+      "commit_execucao": "c857738ffe702191f74d94a2d438196e0049799a",
+      "arvore_hash": "183bbadaf1ec9eea48a0e433cee9437a92f69e79",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  964 passed (964)\n   Start at  17:50:34\n   Duration  42.40s (transform 17.41s, setup 50.37s, import 30.18s, tests 67.64s, environment 190.48s)\n\n(node:18828) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "13/09/26 17:51",
+      "commit_execucao": "c857738ffe702191f74d94a2d438196e0049799a",
+      "arvore_hash": "183bbadaf1ec9eea48a0e433cee9437a92f69e79",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": {
+        "dispensado_em": "13/09/26 17:51",
+        "motivo": "Nao ha regra de negocio nem codigo de aplicacao (src/) alterado: e so a atualizacao da dependencia de processo mentor-agent. Sem codigo de producao para mutar, prova por mutacao nao se aplica; os testes existentes passam inalterados porque nada que eles cobrem mudou."
+      }
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1999 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CYMBXH50.css   \u001b[39m\u001b[1m\u001b[2m 28.24 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-CywrxhdV.js    \u001b[39m\u001b[1m\u001b[33m539.63 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.76 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-BH0bsWaq.js   \u001b[39m\u001b[1m\u001b[33m808.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 263.08 kB\u001b[22m\n\u001b[32m✓ built in 5.92s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1798.38 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "13/09/26 17:51",
+      "commit_execucao": "c857738ffe702191f74d94a2d438196e0049799a",
+      "arvore_hash": "183bbadaf1ec9eea48a0e433cee9437a92f69e79",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "não se aplica",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": null,
+      "executado_em": "13/09/26 17:52",
+      "commit_execucao": "c857738ffe702191f74d94a2d438196e0049799a",
+      "arvore_hash": "183bbadaf1ec9eea48a0e433cee9437a92f69e79",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": "Atualizacao mecanica de ferramenta de processo (mentor-agent), sem alteracao em src/; nenhum modulo de aplicacao ou UI tocado. Mesma operacao ja feita nas TASK-CHORE-015, 016, 017 e 019.",
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "dispensado",
+  "validado_em": "13/09/26 17:52",
+  "validacao_motivo": "Atualizacao mecanica de ferramenta de processo (mentor-agent), sem alteracao em src/; nenhum modulo de aplicacao ou UI tocado. Mesma operacao ja feita nas TASK-CHORE-015, 016, 017 e 019.",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-13--17h56--TASK-CHORE-020.md"
+}

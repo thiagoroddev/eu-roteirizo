@@ -1,11 +1,11 @@
 {
   "_meta": {
     "schema": "contexto-projeto/1",
-    "versao_do_pacote": "0.7.0",
+    "versao_do_pacote": "0.8.1",
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-13T08:54:57.101Z",
+    "atualizado_em": "2026-09-13T20:56:30.613Z",
     "gerado_por": "script"
   },
   "projeto": {
@@ -616,7 +616,7 @@
   },
   "contagens": {
     "_gerado_por_script": true,
-    "tarefas_concluidas": 28,
+    "tarefas_concluidas": 29,
     "tarefas_abertas": 25,
     "tarefas_no_ciclo": 1,
     "tarefas_na_reserva": 24,
@@ -635,12 +635,11 @@
   },
   "auditoria": {
     "cadencia_em_tarefas": 10,
-    "cadencia_em_caracteres": 80000,
-    "cadencia_nota": "A cada N tarefas concluidas ou X caracteres de diff acumulados, 'mentor auditar preparar' monta o dossie do lote. O auditor le so o diff do lote, os registros e os requisitos citados: nunca o repositorio.",
+    "cadencia_nota": "A cada N tarefas concluidas com diff auditavel, 'mentor auditar preparar' monta o dossie do lote. Cada tarefa leva o proprio diff (os commits com o ID dela no titulo); registros, notas e atualizacao do pacote nao contam. O tamanho so decide como o dossie se divide. O auditor le o dossie: nunca o repositorio.",
     "ultima_em": "13/09/26 01:02",
     "ultima_na_tarefa": 25,
     "ultimo_commit": "00921b69123c37ae01c09f9f7728af26b10e747a",
-    "proxima_em_tarefa": 30,
+    "proxima_em_tarefa": 35,
     "pendencias_reportadas": []
   },
   "versionamento": {
