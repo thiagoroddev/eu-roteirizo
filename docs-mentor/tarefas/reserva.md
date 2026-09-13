@@ -7,7 +7,8 @@
 
 | ID | Titulo | Fatia | Tipo | Valor | Esforco H/IA | Origem |
 |---|---|---|---|---|---|---|
-| `TASK-BG-018` | Retorno ilegal em avenida de mao unica quando a parada encaixa exatamente sobre a via | - | BG | importante | P/M | titulo-autossuficiente |
+| `TASK-BG-019` | Respeitar as restricoes de conversao do OSM (no_* e only_*) no roteamento veicular | - | BG | importante | M/G | titulo-autossuficiente |
+| `TASK-BG-020` | Sumario carregar a malha viaria com o ponto inicial, igual ao mapa | - | BG | importante | P/P | titulo-autossuficiente |
 | `TASK-CHORE-008` | Remover service worker legado public/sw.js | - | CHORE | desejavel | P/P | titulo-autossuficiente |
 | `TASK-CHORE-009` | Comprimir capturas de docs/imagens | - | CHORE | desejavel | P/P | titulo-autossuficiente |
 | `TASK-DOC-005` | Decidir destino do status Carregando ruas do grafo OSM | - | DOC | desejavel | P/P | titulo-autossuficiente |

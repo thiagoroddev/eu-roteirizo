@@ -1,0 +1,142 @@
+{
+  "id": "TASK-BG-018",
+  "tipo": "BG",
+  "titulo": "Rota desenhava conversao proibida porque a malha baixada recortava o retorno legal",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "P",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "sem_requisito_motivo": null,
+  "criada_em": "12/09/26 22:45",
+  "iniciada_em": "12/09/26 23:35",
+  "commit_base": "2f5ad7887c38490a7622d9cd73302a2dcd02064f",
+  "concluida_em": "12/09/26 23:55",
+  "plano": {
+    "muda": [
+      "src/hooks/useRoadGraph.ts - margem da malha em volta dos pontos passa de 300m para 600m, para a malha alcancar o retorno legal mais proximo",
+      "src/__tests__/hooks/useRoadGraph.test.tsx - novo teste: o bbox pedido cobre ao menos 600m em volta do envelope dos pontos"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "A malha viaria pedida cobre ao menos 600m alem do envelope dos pontos, nas quatro direcoes.",
+        "teste": "src/__tests__/hooks/useRoadGraph.test.tsx > cobre ao menos 600 m em volta dos pontos, para alcancar retornos legais fora do envelope"
+      },
+      {
+        "texto": "No romaneio real (Av. Epitacio Pessoa 2224 -> 2556), o tracado entre as duas paradas segue Henrique Dodsworth -> Praca Eugenio Jardim -> volta, como no Google Maps, sem a conversao proibida em V.",
+        "teste": "nao se aplica como assercao automatizada: depende da malha OSM ao vivo. Simulacao registrada nos achados; conferencia na validacao manual."
+      }
+    ],
+    "problema_canonico": "Recorte da area de busca (subgrafo carregado) em roteamento veicular com restricoes de conversao: o caminho legal otimo sai do subgrafo e so sobram manobras proibidas. Roteadores de producao carregam a malha por regiao inteira (particoes/tiles) para nao recortar desvios legais.",
+    "discordancia": {
+      "o_que_faria_diferente": "Respeitar as relacoes de restricao de conversao do OSM e proibir retorno no meio da quadra. Isso barra o V sempre que o contorno legal estiver na malha, sem depender de acertar a margem. Registrado como TASK-BG-019 por mexer na consulta, no formato do cache e no A*.",
+      "o_que_preocupa": "600m e margem empirica: resolve este caso com folga (o limite medido ficou entre 300m e 450m), mas um retorno legal mais distante volta a ser recortado. Tambem aumenta a area baixada (~65%) e os nos do grafo (~74%) na primeira abertura de cada roteiro.",
+      "o_que_existe_pronto_80_porcento": "OSRM, GraphHopper e Valhalla carregam a malha por regiao e aplicam as restricoes do OSM; nenhum e adotavel sem trocar o motor local (ADR-002)."
+    },
+    "impacto": "Malha carregada pelo mapa (MapPage) e pelo Sumario (SummaryPage), ambos via useRoadGraph; todas as rotas veiculares e circuitos a pe calculados sobre ela. A chave do cache muda (bbox maior), entao cada roteiro baixa a malha de novo uma vez.",
+    "riscos": [
+      "Area maior pesa mais no Overpass/proxy e no aparelho: 4,69 -> 7,74 km2 e 2.536 -> 4.418 nos no romaneio de teste.",
+      "Margem empirica: retorno legal alem de 600m continua recortado; a mitigacao estrutural e a TASK-BG-019.",
+      "Rotas ja montadas podem mudar de tracado e distancia ao reabrir, porque a malha maior encontra caminhos legais que antes ficavam de fora."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram o tracado igual ao do Google entre duas paradas; proponho mudar uma constante e cobrir com um teste. E do tamanho do pedido porque a simulacao mostrou que, com a malha completa, o algoritmo atual ja escolhe a rota certa; o conserto estrutural (restricoes do OSM) virou tarefa propria, a TASK-BG-019."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "12/09/26 23:38",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  946 passed (946)\n   Start at  23:38:32\n   Duration  38.87s (transform 17.23s, setup 42.27s, import 32.53s, tests 65.29s, environment 164.12s)\n\n(node:35072) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "12/09/26 23:39",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "12/09/26 23:39",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "12/09/26 23:39",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1999 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CYMBXH50.css   \u001b[39m\u001b[1m\u001b[2m 28.24 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-w_2L8gbc.js    \u001b[39m\u001b[1m\u001b[33m539.65 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.76 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-BH0bsWaq.js   \u001b[39m\u001b[1m\u001b[33m808.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 263.08 kB\u001b[22m\n\u001b[32m✓ built in 6.92s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1798.40 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "12/09/26 23:40",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "APROVADO",
+      "comando": null,
+      "codigo_saida": 0,
+      "saida": "Humano validou no app em 12/09/26 com o romaneio 2025-11-19-JQJE-LAGOA (1).json: o trecho P1 (Epitacio Pessoa 2224) -> P2 (2556) passou a seguir Av. Henrique Dodsworth ate o contorno da Praca Eugenio Jardim (Cantagalo) e voltar, sem o V proibido perto da Praca Senador Filinto Miller, igual a rota do Google Maps. Humano confirmou que nada regrediu em outros pontos.",
+      "executado_em": "12/09/26 23:51",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [
+    {
+      "classe": 4,
+      "descricao": "O motor ignora as relacoes de restricao de conversao do OSM. A manobra em V deste bug e proibida pela relacao 4603685 (no_left_turn, from way 160970023 via node 2112929361 to way 329058529). Na malha de 600m do romaneio de teste ha 42 restricoes ignoradas. Simulado: com margem 300m, respeita-las deixa o trecho sem caminho; com margem 450m ou mais, o A* atual ja faz o contorno pela Praca Eugenio Jardim (1358m) e as restricoes nao mudam esta rota.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-019"
+    },
+    {
+      "classe": 4,
+      "descricao": "SummaryPage.tsx chama useRoadGraph sem o ponto inicial e MapPage.tsx chama com ele. Quando o inicio fica fora do envelope das entregas, o Sumario e o mapa calculam sobre malhas diferentes e podem mostrar distancias diferentes, contrariando o que a TASK-BG-014 garantiu. Encontrado lendo o codigo durante esta tarefa; nao corrigido aqui.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-020"
+    }
+  ],
+  "validacao": "aprovado",
+  "validado_em": "12/09/26 23:51",
+  "validacao_motivo": "Humano validou no app em 12/09/26 com o romaneio 2025-11-19-JQJE-LAGOA (1).json: o trecho P1 (Epitacio Pessoa 2224) -> P2 (2556) passou a seguir Av. Henrique Dodsworth ate o contorno da Praca Eugenio Jardim (Cantagalo) e voltar, sem o V proibido perto da Praca Senador Filinto Miller, igual a rota do Google Maps. Humano confirmou que nada regrediu em outros pontos.",
+  "tarefas_geradas": [
+    "TASK-BG-019",
+    "TASK-BG-020"
+  ],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-12--23h55--TASK-BG-018.md"
+}
