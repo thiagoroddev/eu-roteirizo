@@ -52,6 +52,21 @@ describe("useRoadGraph (lazy, ADR-009 decision B)", () => {
     expect(bbox.east).toBeGreaterThan(-43.199);
   });
 
+  it("cobre ao menos 600 m em volta dos pontos, para alcancar retornos legais fora do envelope", async () => {
+    vi.mocked(loadRoadGraph).mockResolvedValue({ graph: GRAPH });
+    renderHook(() => useRoadGraph(POINTS, true));
+
+    await waitFor(() => expect(loadRoadGraph).toHaveBeenCalled());
+    const bbox = vi.mocked(loadRoadGraph).mock.calls[0][0];
+    const envelope = { south: -22.98, north: -22.979, west: -43.2, east: -43.199 };
+    const latDeg = 600 / 111_320;
+    const lngDeg = 600 / (111_320 * Math.cos((-22.9795 * Math.PI) / 180));
+    expect(envelope.south - bbox.south).toBeGreaterThanOrEqual(latDeg * 0.99);
+    expect(bbox.north - envelope.north).toBeGreaterThanOrEqual(latDeg * 0.99);
+    expect(envelope.west - bbox.west).toBeGreaterThanOrEqual(lngDeg * 0.99);
+    expect(bbox.east - envelope.east).toBeGreaterThanOrEqual(lngDeg * 0.99);
+  });
+
   it("expande o bbox da malha viaria para cobrir o startPoint quando fornecido", async () => {
     vi.mocked(loadRoadGraph).mockResolvedValue({ graph: GRAPH });
     const startPoint = { lat: -22.95, lng: -43.15 };
