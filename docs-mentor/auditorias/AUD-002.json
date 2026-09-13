@@ -1,0 +1,174 @@
+{
+  "id": "AUD-002",
+  "lote": [
+    "TASK-BG-017",
+    "TASK-CHORE-016",
+    "TASK-BG-018"
+  ],
+  "commit_base": "8f4b23a971d419076a2571c82dce0ef37bfabe0f",
+  "commit_final": "00921b69123c37ae01c09f9f7728af26b10e747a",
+  "preparada_em": "13/09/26 00:38",
+  "registrada_em": "13/09/26 01:02",
+  "veredito": "REPROVADO",
+  "nao_verificado": [
+    "Codigo fora do diff, por regra do dossie: nao li inferLocationType.ts, bboxFromPoints nem graphCache. A ordem 'residencial antes da checagem de sala' e a normalizacao de acento (Emporio/Edificio) vem da narrativa da BG-017 e dos testes verdes, nao de leitura do codigo.",
+    "Fixture POINTS do useRoadGraph.test.tsx nao aparece no diff: o envelope fixo usado no teste novo (-22.98/-22.979, -43.2/-43.199) nao foi conferido contra ela.",
+    "Criterio 2 da BG-018 (tracado P1 -> P2 pela Praca Eugenio Jardim): depende da malha OSM ao vivo e do romaneio 2025-11-19-JQJE-LAGOA, que e privado e fica fora do git; a simulacao das margens (300/450/600/800/1000 m) nao tem saida registrada.",
+    "Que um humano executou a validacao manual da BG-018: o registro e texto gravado pelo agente via CLI, sem artefato (captura, URL, sequencia de ways). 'Nada regrediu em outros pontos' nao tem passos nem escopo.",
+    "Criterio da CHORE-016 (doctor sem bloqueio apos a atualizacao): nao ha saida registrada, e o estado daquele momento nao se reconstroi mais.",
+    "Que o conteudo de .mentor/* e o do mentor-agent v0.5.0 (d1b817a): o manifesto so prova coerencia interna dos hashes; nao comparei com node_modules nem com o repositorio do pacote. As leis novas citam IDs da AUD-001 deste projeto.",
+    "Que o humano leu e aceitou as mudancas de lei em nucleo.md e processos/tarefa.md: a narrativa da CHORE-016 fala em aprovar a atualizacao, nao as leis novas.",
+    "Carga da malha de 7,74 km2 no caminho real do app (proxy, Overpass, aparelho): tempo de carga, taxa de 504 e memoria nao foram medidos por ninguem.",
+    "Efeito da chave de cache nova da BG-018 sobre rotas ja montadas (tracado e distancia ao reabrir).",
+    "Analise de frequencia dos 20 romaneios da BG-017 (1.186 complementos): script descartado, nao reproduzivel; a separacao entre 'claramente X' e 'ambiguo' dos 9 termos repousa nela.",
+    "Logs do CI dos PRs #30, #31 e #32: vi so o nome do job ('Typecheck, lint, test, build, and audit') e a conclusao SUCCESS, nao o que cada passo rodou."
+  ],
+  "pendencias": [
+    {
+      "nivel": "bloqueia",
+      "descricao": "Regra 4 sem revisao humana. A tarefa muda a regra de classificacao comercial/residencial, e o proprio campo impacto declara que isso muda a contagem do Sumario (countCommercialAddresses) e a coluna 'Horario Comercial?'. A validacao manual foi dispensada com o motivo 'funcao pura, sem UI/layout, persistencia ou calculo de rota', que nao cobre esse efeito declarado, e nenhum humano conferiu a classificacao sobre dado real. Os testes provam que as 9 palavras classificam como a lista manda; nao provam que a lista esta certa (ver a pendencia sobre 'edificio'). O fato mecanico disparou pela palavra 'romaneios' no titulo; o nivel aqui vem do campo impacto, nao do disparo.",
+      "tarefas": [
+        "TASK-BG-017"
+      ],
+      "destino": "tarefa",
+      "ref": "TASK-BG-021",
+      "resolvida_em": "13/09/26 02:47",
+      "id": "AUD-002-B01"
+    },
+    {
+      "nivel": "bloqueia",
+      "descricao": "Unico criterio de aceite sem evidencia. 'node mentor.mjs doctor roda sem bloqueio apos a atualizacao' nao tem comando, saida nem horario registrados: e criterio NAO VERIFICADO (regras 2 e 3), e e o unico que sustenta a conclusao. Agravante verificado no git: o commit_base registrado (d3a6cb2) ja contem a atualizacao (a arvore dele difere do commit final so em .gitignore e nos arquivos da BG-017 e da BG-018), entao a tarefa nao tem estado 'antes', e a trava nova de escopo git x plano.muda do finalizar rodou sobre um diff praticamente vazio. O CI do PR #30 passou, o que cobre tipos, lint, testes e build, nao o doctor.",
+      "tarefas": [
+        "TASK-CHORE-016"
+      ],
+      "destino": "descartado",
+      "ref": "Sem acao neste projeto (decisao do humano, 13/09/26); sugestao ao pacote registrada em docs-mentor/melhorias-do-pacote.md",
+      "resolvida_em": "13/09/26 03:30",
+      "id": "AUD-002-B02"
+    },
+    {
+      "nivel": "bloqueia",
+      "descricao": "Gate de validacao manual que aprova sem evidencia, instalado por esta atualizacao. Em cmd-tarefa.ts (v0.5.0), 'task validar --aprovado' sem --evidencia grava rotulo APROVADO, codigo_saida 0 e a saida padrao 'Validado e aprovado pelo humano.'; 'task finalizar --validado-por-humano \"<texto>\"' aprova e fecha no mesmo comando. Nos dois casos o codigo_saida 0 e sintetico (comando null). Em cmd-auditar.ts, fatosMecanicos declara 'Regra 4 atendida' so porque validacao === 'aprovado'. Isso contradiz o nucleo 1.2 (gate sem evidencia equivale a NAO EXECUTADO) e esvazia a Regra 4: o fato 'Regra 4 atendida' da BG-018 neste dossie e uma afirmacao, nao uma evidencia. O texto da BG-018 em si e especifico; o defeito e o mecanismo aceitar menos que isso.",
+      "tarefas": [
+        "TASK-CHORE-016",
+        "TASK-BG-018"
+      ],
+      "destino": "descartado",
+      "ref": "Sem acao neste projeto (decisao do humano, 13/09/26); sugestao ao pacote registrada em docs-mentor/melhorias-do-pacote.md",
+      "resolvida_em": "13/09/26 03:30",
+      "id": "AUD-002-B03"
+    },
+    {
+      "nivel": "bloqueia",
+      "descricao": "Performance com impacto de usuario sem medicao nem aceite. A margem de 600 m leva o pedido do romaneio de teste de 4,69 para 7,74 km2 (+65%) e de 2.536 para 4.418 nos (+74%), e a propria tarefa registrou no aprendizado 8 que o Overpass publico devolve 504 em consultas de ~5 km2. Nao ha medicao de tempo de carga nem de taxa de falha no caminho do app (proxy): so houve uma carga bem-sucedida, na validacao manual. Nenhum dos tres riscos declarados, incluindo 'rotas ja montadas podem mudar de tracado e distancia ao reabrir', esta em riscos_aceitos, que ficou vazio. Precisa de decisao humana escrita: aceitar o risco ou medir.",
+      "tarefas": [
+        "TASK-BG-018"
+      ],
+      "destino": "risco_aceito",
+      "ref": "Aceito pelo humano em 13/09/26: malha OSM ao vivo e temporaria, so para o prototipo e inviavel comercialmente; o que importa agora e funcionar para seguir o desenvolvimento. Medido no app a 7,74 km2: cargas pela rede de 8,5 s, 1,9 s e uma falha por tempo excedido (HTTP 200 aos 15 s, corpo nao chegou em 30 s; ~50 s sem malha); cache 0-0,1 s.",
+      "resolvida_em": "13/09/26 02:19",
+      "id": "AUD-002-B04"
+    },
+    {
+      "nivel": "recomendacao",
+      "descricao": "Falta cenario de protecao para 'edificio'. A tarefa descartou 'andar' porque a lista residencial roda antes da checagem de sala e capturaria 'andar 5, sala 302'. 'edificio' entrou na mesma lista residencial e, pelo mecanismo que a propria tarefa descreve, 'Edificio Central, sala 302' passa a sair residencial. A secao 4 (PROTECTION SCENARIOS) do teste nao ganhou caso novo. Decidir o comportamento pretendido para edificio com sala ou loja e travar num teste. O mecanismo vem da narrativa; inferLocationType.ts nao foi lido.",
+      "tarefas": [
+        "TASK-BG-017"
+      ],
+      "destino": "tarefa",
+      "ref": "TASK-BG-021",
+      "resolvida_em": "13/09/26 02:47",
+      "id": "AUD-002-R05"
+    },
+    {
+      "nivel": "recomendacao",
+      "descricao": "Evidencia dos gates gerada numa arvore diferente da entregue. O commit_base da BG-018 (2f5ad78) esta no ramo spike-003-otimizar-dois-casos e nao e ancestral do commit final. Aquela arvore tem mentor-agent v0.6.0 e testes de __utilidades-back-office__/auto-roteirizacao alterados, o que explica 946 testes no gate contra 938 esperados pelo diff (934 + 3 da BG-017 + 1 da BG-018). Conferido por nome de arquivo: em src/ as duas arvores so diferem pela propria mudanca, e o CI do PR #32 passou, entao o estado entregue tem evidencia externa. O registro, porem, nao aponta para ela (evidencia_url null). O mesmo acontece em grau menor na BG-017 (937 testes numa arvore sem a CHORE-016). Recomendo rodar os gates no ramo que vai ser entregue ou gravar a URL do CI em evidencia_url.",
+      "tarefas": [
+        "TASK-BG-018",
+        "TASK-BG-017"
+      ],
+      "destino": null,
+      "ref": null,
+      "resolvida_em": null,
+      "id": "AUD-002-R06"
+    },
+    {
+      "nivel": "recomendacao",
+      "descricao": "Criterio 2 sem verificacao reproduzivel. O tracado P1 -> P2 depende da malha OSM ao vivo e de um romaneio privado, e a simulacao (margens, 1358 m, relacao 4603685) nao tem saida registrada. A tarefa descartou fixture por custo, mas registrou que guardou a resposta do Overpass em cache local. Um recorte pequeno dessa resposta, com assercao sobre o A* (passa pela Praca Eugenio Jardim e nao faz a manobra da way 160970023 para a 329058529 no no 2112929361), travaria a regressao sem depender da rede.",
+      "tarefas": [
+        "TASK-BG-018"
+      ],
+      "destino": null,
+      "ref": null,
+      "resolvida_em": null,
+      "id": "AUD-002-R07"
+    },
+    {
+      "nivel": "recomendacao",
+      "descricao": "Mudanca de lei registrada como operacao mecanica. A tarefa declara 'riscos: nenhum identificado' e se apresenta como dependencia Light, mas o diff muda o nucleo.md (validacao manual obrigatoria em UI, persistencia, calculo e spike) e processos/tarefa.md, acrescenta travas novas ao 'task finalizar' (validacao pendente, escopo git x plano.muda) e muda a cadencia de auditoria do doctor para contar caracteres. Isso muda as regras de toda tarefa seguinte e devia constar em impacto e riscos, com aceite explicito das leis novas (nucleo 1). A lei nova tambem nao tem mecanismo por categoria: o codigo so olha a flag global gates.validacao_manual.existe, e o cabecalho do nucleo diz que lei sem mecanismo de verificacao nao entra.",
+      "tarefas": [
+        "TASK-CHORE-016"
+      ],
+      "destino": null,
+      "ref": null,
+      "resolvida_em": null,
+      "id": "AUD-002-R08"
+    },
+    {
+      "nivel": "recomendacao",
+      "descricao": "Trava de escopo do finalizar com parser fragil. Em cmd-tarefa.ts, o arquivo declarado sai de linha.split(/[\\s:—-]/)[0]: caminho com hifen e cortado (src/components/route-map.tsx vira src/components/route e passa a ser acusado de nao declarado), e glob (.mentor/*) ou linha 'a / b' nao sao entendidos. O fato mecanico deste dossie tropeca no mesmo tipo de linha: conferi os 18 arquivos 'fora do plano.muda' e todos estao cobertos por '.mentor/*' e 'package.json / package-lock.json' da CHORE-016 ou sao registros de processo (concluidas do lote e BG-019/BG-020 geradas pela BG-018). Nao ha arquivo fantasma. A trava tambem passa vazia quando o commit_base e posterior a mudanca, como aconteceu na propria CHORE-016.",
+      "tarefas": [
+        "TASK-CHORE-016"
+      ],
+      "destino": "tarefa",
+      "ref": "TASK-BG-021",
+      "resolvida_em": "13/09/26 03:30",
+      "id": "AUD-002-R09"
+    },
+    {
+      "nivel": "observacao",
+      "descricao": "O titulo das duas tarefas comeca com o texto literal 'titulo-autossuficiente:', que e o valor do campo origem vazado para o titulo.",
+      "tarefas": [
+        "TASK-BG-017",
+        "TASK-CHORE-016"
+      ],
+      "destino": null,
+      "ref": null,
+      "resolvida_em": null,
+      "id": "AUD-002-O10"
+    },
+    {
+      "nivel": "observacao",
+      "descricao": "A lacuna de plural e estrutural: o casamento e por palavra inteira, sem radical. O conserto cobre so 'drogarias'; a causa continua valendo para os demais termos das duas listas.",
+      "tarefas": [
+        "TASK-BG-017"
+      ],
+      "destino": null,
+      "ref": null,
+      "resolvida_em": null,
+      "id": "AUD-002-O11"
+    },
+    {
+      "nivel": "observacao",
+      "descricao": "Vermelho dispensado do gate testes: nao ha prova por mutacao, e ela nao se aplica a suite do app, porque o diff confirma que a CHORE-016 nao toca src/. As mudancas de logica em .mentor/scripts (cerca de 200 linhas) nao tem teste neste repositorio.",
+      "tarefas": [
+        "TASK-CHORE-016"
+      ],
+      "destino": null,
+      "ref": null,
+      "resolvida_em": null,
+      "id": "AUD-002-O12"
+    },
+    {
+      "nivel": "observacao",
+      "descricao": "Endereco real no registro. O JSON, a narrativa e o gate citam duas paradas de romaneio real com numero (Av. Epitacio Pessoa 2224 e 2556) e o nome do arquivo do romaneio, enquanto o .gitignore trata romaneios reais como privados e a BG-017 fez questao de nao expor endereco. Nao classifiquei como dado pessoal exposto porque o repositorio e privado e nao ha nome nem unidade.",
+      "tarefas": [
+        "TASK-BG-018"
+      ],
+      "destino": null,
+      "ref": null,
+      "resolvida_em": null,
+      "id": "AUD-002-O13"
+    }
+  ]
+}
