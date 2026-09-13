@@ -3,7 +3,7 @@
   "tipo": "SPIKE",
   "titulo": "Otimizar dois casos por enumeracao completa do ponto inicial",
   "fatia_de": null,
-  "estado": "em-execucao",
+  "estado": "pausada",
   "cerimonia": "Standard",
   "valor": "importante",
   "urgencia": "imediata",
@@ -144,5 +144,28 @@
   "riscos_aceitos": [],
   "absorvida_por": null,
   "cancelamento_motivo": null,
-  "narrativa": null
+  "narrativa": null,
+  "pausas": [
+    {
+      "pausada_em": "12/09/26 22:46",
+      "retomada_em": null,
+      "motivo": "aguardando TASK-BG-018 (retorno ilegal em mao unica) e as tarefas fatiadas de UI do mapa (TASK-RF-043/044/045), necessarias para investigar a spike com clareza de ordem/distancia/sentido das paradas",
+      "bloqueada_por": [
+        "TASK-BG-018",
+        "TASK-RF-043",
+        "TASK-RF-044",
+        "TASK-RF-045"
+      ],
+      "commit_pausa": "86522844624e05018e460d900aef62e15314d77f",
+      "commit_retomada": null
+    }
+  ],
+  "pausada_em": "12/09/26 22:46",
+  "pausa_motivo": "aguardando TASK-BG-018 (retorno ilegal em mao unica) e as tarefas fatiadas de UI do mapa (TASK-RF-043/044/045), necessarias para investigar a spike com clareza de ordem/distancia/sentido das paradas",
+  "bloqueada_por": [
+    "TASK-BG-018",
+    "TASK-RF-043",
+    "TASK-RF-044",
+    "TASK-RF-045"
+  ]
 }
