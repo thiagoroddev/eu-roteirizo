@@ -1,0 +1,143 @@
+{
+  "id": "TASK-CHORE-019",
+  "tipo": "CHORE",
+  "titulo": "Atualizar mentor-agent para v0.7.0",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "sem_requisito_motivo": null,
+  "criada_em": "13/09/26 05:44",
+  "iniciada_em": "13/09/26 05:44",
+  "commit_base": "1ee5e6b9c4b5979890e58961ea1e7b0ccc7f84b5",
+  "concluida_em": "13/09/26 05:54",
+  "plano": {
+    "muda": [
+      "package.json - devDependency mentor-agent github:thiagoroddev/mentor-agent#v0.6.0 -> #v0.7.0",
+      "package-lock.json - lock atualizado para mentor-agent 0.7.0",
+      ".mentor/** - pacote reinstalado via npx mentor instalar --forcar",
+      "docs-mentor/contexto.json - versao_do_pacote 0.7.0 e campos novos do pacote, consolidados por resolver-gerados",
+      "docs-mentor/melhorias-do-pacote.md - tirar os dois-pontos do token do marcador numa celula da tabela (falso positivo do verificar) e anotar duas melhorias do pacote achadas nesta atualizacao"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "node mentor.mjs verificar roda sem achado bloqueante depois da atualizacao, e a divergencia local do parser de plano.muda (AUD-002-R09) deixa de existir porque o pacote traz a correcao",
+        "teste": "nao se aplica: verificacao operacional via CLI; a saida do verificar fica registrada na narrativa",
+        "evidencia": {
+          "comando": "node mentor.mjs verificar",
+          "codigo_saida": 0,
+          "saida": "APROVADO. Tres familias: marcadores, tetos de texto, integridade referencial (ponteiros, links e inventario de regras).",
+          "executado_em": "13/09/26 05:47"
+        }
+      }
+    ],
+    "problema_canonico": "sem nome canonico",
+    "discordancia": {
+      "o_que_faria_diferente": "Nada a objetar",
+      "o_que_preocupa": "A v0.7.0 muda travas do finalizar e do validar (evidencia obrigatoria, commit_execucao, integridade da arvore). Tarefas abertas antes dela, como a TASK-RF-044 no ciclo e a TASK-SPIKE-003 pausada, podem esbarrar nas regras novas ao fechar.",
+      "o_que_existe_pronto_80_porcento": "Nenhuma conhecida"
+    },
+    "impacto": "Nenhum modulo de src/ afetado; escopo restrito ao pacote de processo (.mentor/), a dependencia de desenvolvimento e o contexto do projeto",
+    "riscos": [
+      "instalar --forcar sobrescreve a correcao local do parser em .mentor/scripts (AUD-002-R09); se a v0.7.0 nao trouxer a mesma correcao, o bug do hifen volta, e o verificar e o finalizar desta tarefa acusam",
+      "resolver-gerados pode reescrever o bloco auditoria do contexto.json (ja aconteceu num merge); conferir o diff contra o main antes de commitar"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pedido explicito do humano, com os quatro comandos e tarefa propria. Dependencia de desenvolvimento e Light pela lista fechada do nucleo; a tarefa existe porque o hook exige ID em commit que toca package.json, e nasce antes do npm i para o commit_base nao conter a mudanca (AUD-002-B02)."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  964 passed (964)\n   Start at  05:53:39\n   Duration  37.95s (transform 13.38s, setup 30.39s, import 24.86s, tests 69.48s, environment 127.93s)\n\n(node:6068) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "13/09/26 05:54",
+      "commit_execucao": "b6c91b06c8cf0733a47cb3d1198bc95672f1ccce",
+      "arvore_hash": "6131c36b36a328ef2fbb11b3cbfe491cf339c128",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": {
+        "dispensado_em": "13/09/26 05:49",
+        "motivo": "Nao ha regra de negocio nem codigo de aplicacao (src/) alterado: e apenas atualizacao da dependencia de processo mentor-agent. Sem codigo de producao para mutar, prova por mutacao nao se aplica; os testes existentes passam inalterados porque nada que eles cobrem mudou."
+      }
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "13/09/26 05:54",
+      "commit_execucao": "b6c91b06c8cf0733a47cb3d1198bc95672f1ccce",
+      "arvore_hash": "3befee9073b2dcce3213cd88ed7d174c02d7e7f2",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "13/09/26 05:54",
+      "commit_execucao": "b6c91b06c8cf0733a47cb3d1198bc95672f1ccce",
+      "arvore_hash": "2dc040c6693c24aa54af7d6daaea6bb7a61ef155",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1999 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CYMBXH50.css   \u001b[39m\u001b[1m\u001b[2m 28.24 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-CywrxhdV.js    \u001b[39m\u001b[1m\u001b[33m539.63 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.76 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-BH0bsWaq.js   \u001b[39m\u001b[1m\u001b[33m808.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 263.08 kB\u001b[22m\n\u001b[32m✓ built in 6.57s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1798.38 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "13/09/26 05:54",
+      "commit_execucao": "b6c91b06c8cf0733a47cb3d1198bc95672f1ccce",
+      "arvore_hash": "dd919728132e727b594254915ecd73d1d38e0743",
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "não se aplica",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": null,
+      "executado_em": "13/09/26 05:50",
+      "commit_execucao": "1ee5e6b9c4b5979890e58961ea1e7b0ccc7f84b5",
+      "arvore_hash": "40db3c519fdcec7cf039c00a86f289375a6625fb",
+      "evidencia_url": null,
+      "motivo": "Atualizacao mecanica de ferramenta de processo (mentor-agent), sem alteracao em src/; nenhum modulo de aplicacao ou UI tocado. Mesma operacao ja feita nas TASK-CHORE-015, 016 e 017.",
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "dispensado",
+  "validado_em": "13/09/26 05:50",
+  "validacao_motivo": "Atualizacao mecanica de ferramenta de processo (mentor-agent), sem alteracao em src/; nenhum modulo de aplicacao ou UI tocado. Mesma operacao ja feita nas TASK-CHORE-015, 016 e 017.",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-13--05h54--TASK-CHORE-019.md"
+}
