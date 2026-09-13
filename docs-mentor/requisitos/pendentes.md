@@ -6,7 +6,7 @@
 |---|---|---|---|---|
 | `RF-11` | RF | Diferenciar visualmente tipos de parada no mapa e na lista, reduzindo ambiguidades de apartamentos, casas, lojas e indefinidos. | importante | - |
 | `RF-33` | RF | Permitir salvar roteiro incompleto gratuitamente e liberar execucao somente quando todos os enderecos estiverem resolvidos. | essencial | TASK-RF-025 |
-| `RF-34` | RF | Oferecer o botao Auto-roteirizar sobre um motor local testavel sem UI. O padrao Menos conversoes combina distancia e penalidade D3 com peso de 400m. O motor escolhe paradas do veiculo em pontos livres das ruas, independentes dos enderecos, agrupa entregas dentro do raio geometrico da ancora e devolve roteiro editavel com caminhos de veiculo e circuitos a pe coerentes. | importante | TASK-RF-029, TASK-RF-030, TASK-RF-031, TASK-RF-032, TASK-RF-033, TASK-RF-034, TASK-SPIKE-001, TASK-TEST-004, TASK-SPIKE-002, TASK-RF-012 |
+| `RF-34` | RF | Oferecer o botao Auto-roteirizar sobre um motor local testavel sem UI. O padrao Menos conversoes combina distancia e penalidade D3 com peso de 400m. O motor escolhe paradas do veiculo em pontos livres das ruas, independentes dos enderecos, agrupa entregas dentro do raio geometrico da ancora e devolve roteiro editavel com caminhos de veiculo e circuitos a pe coerentes. | importante | TASK-RF-029, TASK-RF-030, TASK-RF-031, TASK-RF-032, TASK-RF-033, TASK-RF-034, TASK-SPIKE-001, TASK-TEST-004, TASK-SPIKE-002, TASK-SPIKE-003, TASK-RF-012 |
 | `RF-37` | RF | Executar o roteiro entrega a entrega, com destino atual, progresso, conclusao, insucesso e integracao por deeplink/GPS externo. | essencial | TASK-RF-009, TASK-RF-024, TASK-RF-025, TASK-RF-026, TASK-RF-027, TASK-RF-028 |
 | `RF-40` | RF | Exibir legenda recolhivel do mapa usando o mesmo sistema visual de icones das paradas. | desejavel | TASK-RF-027 |
 | `RF-41` | RF | Aplicar modelo freemium com anuncio recompensado por importacao, mantendo consentimento explicito antes de carregar SDK de anuncios. | importante | - |
@@ -21,3 +21,6 @@
 | `RNF-16` | RNF | Preparar empacotamento TWA para distribuicao Android/Play Store mantendo origem web/PWA como base. | importante | - |
 | `RNF-17` | RNF | Integrar Play Billing e entitlement premium com estrategia de validacao adequada ao MVP e ao risco de cobranca real. | importante | - |
 | `RNF-20` | RNF | Cumprir LGPD e consentimento de anuncios: dados de terceiros ficam locais e UMP/consentimento ocorre antes de carregar SDK de ads. | essencial | - |
+| `RF-57` | RF | Alternar o tracado do roteiro no mapa entre rota inteira e trecho da parada selecionada, com passagens repetidas distinguiveis por acumulo de opacidade | importante | TASK-RF-043 |
+| `RF-58` | RF | Navegar entre paradas firmadas do Meu roteiro com avancar/retroceder ciclico no cabecalho do painel | importante | TASK-RF-044 |
+| `RF-59` | RF | Exibir a distancia de deslocamento entre paradas consecutivas na lista completa do roteiro | importante | TASK-RF-045 |

@@ -9,4 +9,5 @@
 
 | # | ID | Titulo | Fatia | Valor | Urgencia | Esforco H/IA | Bloqueada por | Origem |
 |--:|---|---|---|---|---|---|---|---|
-| | | Nenhuma tarefa na fila | | | | | | |
+| 1 | `TASK-SPIKE-003` | Otimizar dois casos por enumeracao completa do ponto inicial 🔍 | - | importante | imediata | M/G | - | RF-34 |
+| 2 | `TASK-RF-044` | Avancar e retroceder entre paradas do Meu roteiro em ciclo | - | importante | normal | P/M | - | RF-58 |

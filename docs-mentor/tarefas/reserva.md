@@ -24,5 +24,7 @@
 | `TASK-RF-032` | Montar o roteiro automatico completo e tratar trechos inviaveis | 3/6 de TASK-RF-029 | RF | importante | M/G | RF-34 |
 | `TASK-RF-033` | Adicionar botao Auto-roteirizar e validar a experiencia no celular | 4/6 de TASK-RF-029 | RF | importante | M/G | RF-34 |
 | `TASK-RF-034` | Integrar o motor em worker e preservar o roteiro editavel | 5/6 de TASK-RF-029 | RF | importante | M/G | RF-34 |
+| `TASK-RF-043` | Alternar tracado do roteiro e tornar passagens repetidas visiveis por opacidade | - | RF | importante | M/G | RF-57 |
+| `TASK-RF-045` | Mostrar distancia entre paradas consecutivas na lista completa | - | RF | importante | P/M | RF-59 |
 | `TASK-TEST-002` | Testar zoom minimo do mapa para detalhe de rua a pe | - | TEST | importante | P/M | RNF-15 |
 | `TASK-TEST-004` | Validar o motor com corpus sintetico e romaneios reais locais | 6/6 de TASK-RF-029 | TEST | importante | M/G | RF-34 |
