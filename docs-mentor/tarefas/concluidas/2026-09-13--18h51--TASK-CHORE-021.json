@@ -1,0 +1,170 @@
+{
+  "id": "TASK-CHORE-021",
+  "tipo": "CHORE",
+  "titulo": "Atualizar mentor-agent para v0.9.0",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "sem_requisito_motivo": null,
+  "criada_em": "13/09/26 18:48",
+  "iniciada_em": "13/09/26 18:48",
+  "commit_base": "811cc450ec07bb1201a32d3b2fd5e8414fdb79b2",
+  "concluida_em": "13/09/26 18:51",
+  "plano": {
+    "muda": [
+      "package.json - devDependency mentor-agent github:thiagoroddev/mentor-agent#v0.8.1 -> #v0.9.0",
+      "package-lock.json - lock atualizado para mentor-agent 0.9.0",
+      ".mentor/** - pacote reinstalado via npx mentor instalar --forcar",
+      "mentor.mjs - atalho reinstalado junto do pacote",
+      ".githooks/pre-push - regravado pelo instalar no modelo 0.9.0: uma linha, os gates passam para o hooks --pre-push, que os pula no envio para wip/",
+      ".github/workflows/quality.yml - job pronto-para-merge no PR: verde so com a tarefa do titulo concluida no ramo; fora dos PRs do Dependabot; titulo por variavel de ambiente",
+      "docs-mentor/contexto.json - versao_do_pacote 0.9.0 via resolver-gerados"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "node mentor.mjs verificar aprova depois da atualizacao",
+        "teste": "nao se aplica: verificacao operacional via CLI; a saida fica registrada com task criterio",
+        "evidencia": {
+          "comando": "node mentor.mjs verificar",
+          "codigo_saida": 0,
+          "saida": "APROVADO. Tres familias: marcadores, tetos de texto, integridade referencial (ponteiros, links e inventario de regras).",
+          "executado_em": "13/09/26 18:51"
+        }
+      },
+      {
+        "texto": "o hook regravado nao roda mais os gates no shell e chama o hooks --pre-push",
+        "teste": "nao se aplica: conferencia do arquivo gerado; a saida fica registrada com task criterio",
+        "evidencia": {
+          "comando": "node -e \"const t=require('fs').readFileSync('.githooks/pre-push','utf8');console.log(t);process.exit(t.includes('node mentor.mjs gates')||!t.includes('hooks --pre-push')?1:0)\"",
+          "codigo_saida": 0,
+          "saida": "#!/bin/sh\n# Gerado por `mentor hooks --instalar`. Roda os gates e verificacoes de pre-push do mentor.\n# Em pre-push, nao em pre-commit: commit barato evita que alguem aprenda `--no-verify`.\n# O git passa na entrada padrao os ramos enviados; envio so para wip/ pula os gates.\nnode mentor.mjs hooks --pre-push \"$@\" || exit 1",
+          "executado_em": "13/09/26 18:51"
+        }
+      },
+      {
+        "texto": "pronto-para-merge recusa esta tarefa enquanto aberta; o job da esteira fica verde no PR depois do finalizar",
+        "teste": "nao se aplica: verificacao operacional via CLI e esteira; a recusa fica registrada com task criterio, e o job, no PR",
+        "evidencia": {
+          "comando": "node mentor.mjs pronto-para-merge --titulo \"chore(TASK-CHORE-021): atualizar mentor-agent para v0.9.0\"",
+          "codigo_saida": 1,
+          "saida": "Nao esta pronto para merge:\n  - TASK-CHORE-021 esta \"em-execucao\": feche com \"task finalizar\" antes do merge",
+          "executado_em": "13/09/26 18:51"
+        }
+      }
+    ],
+    "problema_canonico": "sem nome canonico",
+    "discordancia": {
+      "o_que_faria_diferente": "Nada a objetar",
+      "o_que_preocupa": "Sem protecao de ramo no GitHub (repositorio privado no plano gratuito), o job pronto-para-merge vermelho avisa e nao impede o merge: a barreira continua sendo so mergear com a esteira verde. E o ramo wip/spike-003 vai subir com o hook novo, sem gates: e o combinado, mas o merge dele no main so pode vir depois do retomar, da conclusao e do job verde.",
+      "o_que_existe_pronto_80_porcento": "Nenhuma conhecida"
+    },
+    "impacto": "Nenhum modulo de src/ afetado; escopo restrito ao pacote de processo (.mentor/, mentor.mjs e o hook), a dependencia de desenvolvimento, ao contexto do projeto e a um job novo da esteira",
+    "riscos": [
+      "o job novo rodar em PR sem tarefa (Dependabot) e ficar vermelho; mitigado pela condicao do job, conferida no proximo PR do Dependabot",
+      "resolver-gerados pode reescrever o bloco auditoria do contexto.json; conferir o diff contra o main antes de commitar"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pedido explicito do humano (subir a spike e atualizar o mentor, 13/09/26). A 0.9.0 e o que permite o push da spike sem pular hook; o job da esteira e a metade da regra que troca a proibicao do push pela proibicao do merge. Nada de src/."
+  },
+  "gates": {
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "13/09/26 18:49",
+      "commit_execucao": "811cc450ec07bb1201a32d3b2fd5e8414fdb79b2",
+      "arvore_hash": "be03eb460aa428ef7e1f2f2a0638881dd134b407",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "13/09/26 18:49",
+      "commit_execucao": "811cc450ec07bb1201a32d3b2fd5e8414fdb79b2",
+      "arvore_hash": "be03eb460aa428ef7e1f2f2a0638881dd134b407",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  964 passed (964)\n   Start at  18:49:54\n   Duration  46.98s (transform 15.40s, setup 58.45s, import 30.29s, tests 64.05s, environment 242.56s)\n\n(node:19232) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "13/09/26 18:50",
+      "commit_execucao": "811cc450ec07bb1201a32d3b2fd5e8414fdb79b2",
+      "arvore_hash": "be03eb460aa428ef7e1f2f2a0638881dd134b407",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": {
+        "dispensado_em": "13/09/26 18:50",
+        "motivo": "Nao ha regra de negocio nem codigo de aplicacao (src/) alterado: e so a atualizacao da dependencia de processo mentor-agent e um job novo da esteira. Sem codigo de producao para mutar, prova por mutacao nao se aplica; os testes existentes passam inalterados porque nada que eles cobrem mudou."
+      }
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1999 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-CYMBXH50.css   \u001b[39m\u001b[1m\u001b[2m 28.24 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-CywrxhdV.js    \u001b[39m\u001b[1m\u001b[33m539.63 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.76 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-BH0bsWaq.js   \u001b[39m\u001b[1m\u001b[33m808.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 263.08 kB\u001b[22m\n\u001b[32m✓ built in 7.01s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1798.38 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "13/09/26 18:51",
+      "commit_execucao": "811cc450ec07bb1201a32d3b2fd5e8414fdb79b2",
+      "arvore_hash": "be03eb460aa428ef7e1f2f2a0638881dd134b407",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "não se aplica",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": null,
+      "executado_em": "13/09/26 18:51",
+      "commit_execucao": "811cc450ec07bb1201a32d3b2fd5e8414fdb79b2",
+      "arvore_hash": "be03eb460aa428ef7e1f2f2a0638881dd134b407",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": "Atualizacao mecanica de ferramenta de processo (mentor-agent) e um job novo da esteira, sem alteracao em src/; nenhum modulo de aplicacao ou UI tocado. Mesma operacao das TASK-CHORE-019 e 020.",
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "dispensado",
+  "validado_em": "13/09/26 18:51",
+  "validacao_motivo": "Atualizacao mecanica de ferramenta de processo (mentor-agent) e um job novo da esteira, sem alteracao em src/; nenhum modulo de aplicacao ou UI tocado. Mesma operacao das TASK-CHORE-019 e 020.",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-13--18h51--TASK-CHORE-021.md"
+}

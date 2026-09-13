@@ -34,3 +34,4 @@
 | 13/09/26 03:30 | [`TASK-BG-021`](./2026-09-13--03h30--TASK-BG-021.md) | BG | Retirar edificio e zelador das palavras residenciais e gerar roteiro ficticio para validar a classificacao comercial/residencial (AUD-002-B01) | - | concluida | aprovado |
 | 13/09/26 05:54 | [`TASK-CHORE-019`](./2026-09-13--05h54--TASK-CHORE-019.md) | CHORE | Atualizar mentor-agent para v0.7.0 | - | concluida | dispensado |
 | 13/09/26 17:56 | [`TASK-CHORE-020`](./2026-09-13--17h56--TASK-CHORE-020.md) | CHORE | Atualizar mentor-agent para v0.8.1 | - | concluida | dispensado |
+| 13/09/26 18:51 | [`TASK-CHORE-021`](./2026-09-13--18h51--TASK-CHORE-021.md) | CHORE | Atualizar mentor-agent para v0.9.0 | - | concluida | dispensado |
