@@ -1,1 +1,28 @@
-[]
+[
+  {
+    "id": "DT-009",
+    "tipo": "codigo",
+    "o_que": "A classificacao comercial/residencial (inferLocationType) decide por palavra-chave solta no complemento, e checa a lista residencial antes da comercial. Palavra ambigua nao tem resposta certa nesse metodo, e nome proprio que contem palavra de uma lista vence o sinal real: \"Emporio da Vila\", nome de empresa, sai residencial por causa de \"vila\" (caso 18 de src/__tests__/utils/addressClassificationCases.ts). Na validacao da TASK-BG-021 o humano tambem reconsiderou o esperado de \"Ao lado do Teatro\" (caso 19). Plural sem entrada propria nao casa (caso 23). Os casos 18 e 19 seguem na tabela travando o comportamento atual, marcados com esta divida.",
+    "motivo": "A TASK-BG-021 existia para validar o que a TASK-BG-017 mudou. Consertar o metodo de inferencia estenderia a tarefa para outro problema; o humano decidiu adiar ate haver uma abordagem mais robusta.",
+    "custo_futuro": "Toda palavra nova pode colidir com a lista oposta, como edificio e zelador colidiram na BG-017. A coluna Horario Comercial? e a contagem do Sumario erram em endereco com nome de empresa ou termo ambiguo, e cada ajuste pontual de lista aumenta o risco de regressao.",
+    "gatilho": "Antes de acrescentar ou retirar a proxima palavra-chave em src/constants/keywords.ts, ou quando classificacao errada de endereco comercial aparecer em uso real.",
+    "dono": "Thiago Rodrigues",
+    "criada_em": "13/09/26 03:12",
+    "tarefa_origem": "TASK-BG-021",
+    "paga_em": null,
+    "tarefa_pagamento": null
+  },
+  {
+    "id": "DT-010",
+    "tipo": "codigo",
+    "o_que": "O horario comercial inferido nao aparece no mapa em rota unica. No tooltip visto na validacao da TASK-BG-021 (modo roteiro) so aparecem Endereco e Pacotes. O tooltip dos quadrados de parada (buildStopTooltipHtml, src/utils/markers/markerModels.ts:97) tem a linha, mas chama getCommercialDisplayStatus com a linha crua: sem a coluna Location Type, isRowData falha e cai em \"Sem dados\" (26 de 26 no roteiro ficticio). A coluna da tabela mostra a inferencia correta, como decidido na TASK-RF-016/RF-017.",
+    "motivo": "Achado fora do escopo da TASK-BG-021, que validava a mudanca de palavras-chave. Decisao do humano: divida tecnica.",
+    "custo_futuro": "Quem planeja pelo mapa nao ve quais paradas sao comerciais, embora o dado ja exista na tabela; e o caminho de buildStopTooltipHtml, se exibido, mostra \"Sem dados\" onde ha inferencia.",
+    "gatilho": "Ao mexer nos tooltips ou marcadores do mapa (src/utils/markers/markerModels.ts), ou ao levar a informacao de horario comercial para o mapa.",
+    "dono": "Thiago Rodrigues",
+    "criada_em": "13/09/26 03:12",
+    "tarefa_origem": "TASK-BG-021",
+    "paga_em": null,
+    "tarefa_pagamento": null
+  }
+]
