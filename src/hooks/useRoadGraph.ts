@@ -17,9 +17,11 @@ import { bboxFromPoints } from "../utils/routing/osm";
 import { UI_LABELS } from "../constants/uiLabels";
 import { bboxKey, loadRoadGraph } from "../services/graphCache";
 
-/** Margin (meters) around the points' envelope: street context for map
- *  matching/A* at border points without inflating the bbox (DT-005). */
-const BBOX_MARGIN_METERS = 300;
+/** Margin (meters) around the points' envelope. Must reach the nearest LEGAL
+ *  turnaround: reversing on a divided or turn-restricted avenue may need a loop
+ *  outside the envelope, and a graph clipped before it leaves A* only prohibited
+ *  maneuvers. Weighed against Overpass load (DT-005). ⚙️ MANUAL KNOB. */
+const BBOX_MARGIN_METERS = 600;
 
 export type RoadGraphStatus = "idle" | "loading" | "ready" | "error";
 
