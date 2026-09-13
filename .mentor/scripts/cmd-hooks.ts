@@ -1,7 +1,9 @@
 import { spawnSync } from 'node:child_process'
 import { caminhos, escreverTexto, existe } from './arquivos.ts'
 import { carregarContexto } from './vistas.ts'
-import { gates } from './cmd-gates.ts'
+import { arquivoIntactoDoPacote } from './cmd-pacote.ts'
+import { coletarAchados } from './cmd-verificar.ts'
+import { ID_DE_TAREFA_NO_TITULO, MARCA_LIGHT_NO_TITULO } from './tipos.ts'
 import { chmodSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -14,10 +16,11 @@ function exigePr(texto: unknown): boolean {
 
 function arquivoEhCodigo(arquivo: string): boolean {
   const norm = arquivo.replace(/\\/g, '/')
+  // Pacote intacto nao e' codigo do projeto; patch local em `.mentor/` e'. A mesma regra do `finalizar` e da auditoria.
+  if (norm.startsWith('.mentor/')) return !arquivoIntactoDoPacote(norm)
   if (
     norm.startsWith('docs-mentor/') ||
     norm.startsWith('docs/') ||
-    norm.startsWith('.mentor/') ||
     norm.startsWith('.githooks/') ||
     norm.startsWith('.github/') ||
     norm.startsWith('.obsidian/')
@@ -30,19 +33,30 @@ function arquivoEhCodigo(arquivo: string): boolean {
   return true
 }
 
+/**
+ * O que roda **depois** dos gates. Os gates ficam no arquivo do hook (`node mentor.mjs gates`), e nao
+ * aqui: ate' a 0.7.0 rodavam nos dois lugares, e todo push executava a suite inteira duas vezes.
+ */
 export function prePush(): number {
   const c = caminhos()
-  // 1. Rodar os gates do projeto
-  const resultadoGates = gates()
-  if (resultadoGates !== 0) {
-    console.error('\nEnvio barrado: gate reprovado. Conserte, ou envie com --no-verify e assuma.')
-    return 1
-  }
-
   if (!existe(join(c.raiz, '.git'))) return 0
 
   let ctx: any = null
   try { ctx = carregarContexto() } catch { return 0 }
+
+  // 1. Mostrar o `verificar`, sem barrar. Medido em campo: reprovado chegou ao main e ficou dias sem
+  // ninguem ver, porque nada o rodava. Barrar nao serve: tarefa em execucao e rascunho de stack tem
+  // marcador legitimo, e travar o envio por eles vira laco. Quem barra e' a esteira.
+  try {
+    const achados = coletarAchados()
+    if (achados.length) {
+      console.warn(`\nAviso: o verificar tem ${achados.length} achado(s). O envio segue; a esteira pode barrar.`)
+      for (const a of achados.slice(0, 10)) console.warn(`  [${a.familia}] ${a.onde}: ${a.problema}`)
+      if (achados.length > 10) console.warn(`  ... e mais ${achados.length - 10}. Rode: node mentor.mjs verificar`)
+    }
+  } catch {
+    // verificar quebrado nao pode travar o envio
+  }
 
   const ramoPrincipal = ctx?.versionamento?.ramo_principal ?? 'main'
   const revisao = ctx?.versionamento?.revisao_antes_do_merge
@@ -89,14 +103,17 @@ export function prePush(): number {
           const arquivos = rDiff.stdout.split('\n').map((s) => s.trim()).filter(Boolean)
           const arquivosCodigo = arquivos.filter(arquivoEhCodigo)
           if (arquivosCodigo.length > 0) {
-            const temId = /\bTASK-[A-Z]+-\d{3}\b/.test(titulo) || /^[a-z]+(\([A-Z0-9_-]+\)):\s*.+/i.test(titulo)
-            if (!temId) {
+            if (!ID_DE_TAREFA_NO_TITULO.test(titulo) && !MARCA_LIGHT_NO_TITULO.test(titulo)) {
               console.error(
                 `\nEnvio barrado: commit sem ID de tarefa tocando codigo de producao.\n` +
                 `Commit: ${hash.slice(0, 7)} - "${titulo}"\n` +
                 `Arquivos afetados: ${arquivosCodigo.slice(0, 3).join(', ')}${arquivosCodigo.length > 3 ? '...' : ''}\n` +
-                `O Nucleo §2 exige que todo commit em codigo esteja vinculado a uma tarefa rastreada:\n` +
-                `Padrao: <tipo>(<ID da tarefa>): <descricao> (ex: feat(TASK-RF-001): adicionar validacao)\n`,
+                `O Nucleo §2 pede, para commit que toca codigo, uma das duas marcas no titulo:\n` +
+                `  com tarefa:  <tipo>(<ID da tarefa>): <descricao>   ex: feat(TASK-RF-001): adicionar validacao\n` +
+                `  Light:       <tipo>(light): <descricao>            ex: fix(light): corrigir typo no botao\n` +
+                `Light e' lista fechada (nucleo §5): typo, formatacao, renomear arquivo, dependencia de desenvolvimento.\n` +
+                `A auditoria lista todo commit Light para conferir se cabia na lista.\n` +
+                `Para corrigir o titulo sem perder o trabalho: git rebase -i e "reword" no commit.\n`,
               )
               return 1
             }

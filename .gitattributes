@@ -5,3 +5,7 @@ docs-mentor/tarefas/reserva.md merge=ours
 docs-mentor/tarefas/concluidas/0-indice.md merge=ours
 # recusas.jsonl usa union: duplicatas de append entre branches sao toleradas no log
 docs-mentor/tarefas/recusas.jsonl merge=union
+
+# Fixtures geradas por script: saem do diff da auditoria do mentor e ficam recolhidas no PR do GitHub.
+# roteiro-classificacao.json sai de gerar-roteiro-classificacao.ts (TASK-BG-021); regenere, nao edite.
+__utilidades-back-office__/roteiros-ficticios/*.json linguist-generated=true
