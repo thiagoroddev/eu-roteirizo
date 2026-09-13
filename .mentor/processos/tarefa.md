@@ -4,7 +4,7 @@ carrega_quando: tarefa Standard ou Strict
 
 # Processo · Tarefa
 
-`task nova` → **aberta** → `task iniciar` → **em execução** → `task finalizar` → **concluída**
+`task nova` → **aberta** → `task iniciar` → **em execução** (↔ `task pausar` / `task retomar`) → `task finalizar` → **concluída**
 
 | Quem | Escreve |
 |---|---|
@@ -50,6 +50,53 @@ Funcionalidade e regra de negócio não entram no código sem estarem catalogada
 > **Medido:** quando o ponteiro não resolve, o texto vaza para dentro do backlog. Foram 57 linhas de
 > detalhamento em três tarefas não iniciadas, cerca de 90% duplicando documento que já existia. A
 > tarefa não tinha para onde apontar, então apontou para dentro de si mesma.
+
+## Plano e Mérito Técnico (Portão 1)
+
+O plano não é apenas um formulário de procedimento: ele é a **defesa de mérito técnico** da tarefa.
+O `mentor-agent` recusa planos que constroem do zero sem pesquisar o estado da arte ou sem exercer o dever de contrariar.
+
+### Campos Obrigatórios de Mérito no Plano
+
+1. **`problema_canonico`**: Se o problema tem nome na literatura científica ou de engenharia (ex: TSP, VRP, CRDT, LR parser, rate limiting, sincronização offline), declare o nome canônico. Se genuinamente não tiver, declare explicitamente `"sem nome canonico"`. Nome canônico traz literatura, bibliotecas testadas e benchmarks conhecidos.
+2. **`discordancia`**: Exercício ativo e obrigatório para combater a complacência da IA. Deve responder:
+   - *O que eu faria diferente:* a abordagem alternativa que o mentor recomendaria.
+   - *O que me preocupa neste plano:* riscos de arquitetura, limites de escala ou dívida técnica gerada.
+   - *O que existe pronto que faz 80% disso:* bibliotecas, solvers ou ferramentas de mercado existentes.
+   *(Valor `"Nada a objetar"` é aceito se não houver ressalvas, mas deve ser explicitamente digitado).*
+3. **`estado_da_arte` e `custo_de_oportunidade`**:
+   - Disparo: esforço IA `G` ou `XG`, ou quando a tarefa constrói motor, algoritmo, heurística, protocolo ou parser próprio.
+   - Exige: 2 a 4 implementações consolidadas de mercado com licenças, motivo do descarte de cada uma, o que restaria construir caso uma delas fosse adotada, e estimativa de semanas de desenvolvimento economizadas.
+4. **Spikes de Medição — As Três Réguas**:
+   - Todo spike cujo critério cite "melhora", "ganho", "otimiza", "reduz" ou "taxa" exige:
+     - **Piso**: o baseline trivial que o resultado tem obrigação mínima de superar.
+     - **Teto**: o ótimo matemático calculado ou a melhor referência externa conhecida.
+     - **Padrão**: o que uma solução padrão da indústria entrega na mesma instância.
+   - Sem as três réguas, o spike é recusado. "Inconclusivo por falta de régua" é classificado como defeito de planejamento.
+5. **Restrições Fundadoras e Premissas Refutadas**:
+   - Restrições herdadas de README ou arquivos antigos não são leis eternas. Se eliminam alternativas de mercado nesta tarefa, devem ser reavaliadas e reconfirmadas pelo mantenedor (reconfirmada 3 vezes vira ADR).
+   - Se um achado de classe 3 ou 4 refuta a premissa de um spike ou tarefa anterior, as tarefas dependentes não podem ser puxadas para o ciclo sem reconfirmação explícita.
+   - Dois spikes consecutivos que fecham como "inconclusivo" no mesmo tema bloqueiam novos spikes e exigem **Revisão de Estratégia**.
+
+## Pausa e Retomada de Tarefas (`task pausar` e `task retomar`)
+
+Durante o desenvolvimento ou execução de um spike, podem surgir dependências dinâmicas imprevistas — por exemplo, falta de suporte de UI para avaliar um teste manual, ou um bug bloqueador no próprio ambiente de testes.
+
+O `mentor-agent` adota o fluxo de **Pausa com Rastreabilidade de Dependências**:
+
+1. **Pausar e liberar o slot de WIP:**
+   `mentor task pausar <ID> --motivo "<motivo>" [--bloqueada-por <IDs>] [--commit]`
+   - Exige que o estado local do Git esteja limpo. Se houver alterações não commitadas, a flag `--commit` realiza o auto-commit de WIP: `wip(<ID>): pausada - <motivo>`.
+   - **Apenas commit, nunca push:** o commit de WIP existe para limpar a árvore de trabalho e isolar o contexto da próxima tarefa. Dar push de WIP quebraria pipelines de CI ou acionaria deploys de código incompleto.
+   - O slot de execução (`em_execucao`) é liberado para que as tarefas que desbloqueiam a atual possam ser puxadas, iniciadas e concluídas.
+
+2. **Retomar após resolução:**
+   `mentor task retomar <ID> [--forcar]`
+   - Verifica se as tarefas declaradas em `--bloqueada-por` já foram concluídas ou canceladas.
+   - Reassume o slot de execução (`em-execucao`).
+
+3. **Isolamento de Escopo no Git:**
+   - Ao finalizar uma tarefa que passou por pausas, o `mentor task finalizar` calcula o diff ativo excluindo os períodos em que esteve pausada (`[commit_pausa .. commit_retomada]`). As alterações de código realizadas pelas tarefas intermediárias não geram falso positivo de arquivos fora do `plano.muda`.
 
 ## Fatia
 

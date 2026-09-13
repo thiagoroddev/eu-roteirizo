@@ -26,7 +26,7 @@ export type TipoTarefa = (typeof TIPOS_TAREFA)[number]
 export const ESCALA = ['P', 'M', 'G', 'XG'] as const
 export type Escala = (typeof ESCALA)[number]
 
-export type EstadoTarefa = 'aberta' | 'em-execucao' | 'concluida' | 'cancelada'
+export type EstadoTarefa = 'aberta' | 'em-execucao' | 'pausada' | 'concluida' | 'cancelada'
 
 /**
  * `reserva` e' lembrete e **nao entra no contexto**; `ciclo` e' compromisso do ciclo atual.
@@ -115,13 +115,60 @@ export interface RegistroGate {
   vermelho_motivo?: string | null
 }
 
+export interface DiscordanciaPlano {
+  o_que_faria_diferente: string | null
+  o_que_preocupa: string | null
+  o_que_existe_pronto_80_porcento: string | null
+}
+
+export interface EstadoDaArtePlano {
+  implementacoes_consolidadas: string[]
+  motivo_descarte: string | null
+  o_que_resta_construir: string | null
+}
+
+export interface CustoDeOportunidadePlano {
+  o_que_existe_pronto: string | null
+  custo_estimado: string | null
+  dependencias_ou_infra: string | null
+  tempo_substituido: string | null
+}
+
+export interface ReguasDeMedicao {
+  piso: string | null
+  teto: string | null
+  padrao: string | null
+}
+
+export interface RestricaoReavaliada {
+  restricao: string
+  onde_foi_escrita: string
+  o_que_elimina_nesta_tarefa: string
+  reconfirmada?: boolean
+}
+
 export interface Plano {
   muda: string[]
   criterios_aceite: CriterioDeAceite[]
+  problema_canonico?: string | null
+  discordancia?: DiscordanciaPlano | null
+  estado_da_arte?: EstadoDaArtePlano | null
+  custo_de_oportunidade?: CustoDeOportunidadePlano | null
+  reguas_de_medicao?: ReguasDeMedicao | null
+  restricoes_reavaliadas?: RestricaoReavaliada[]
   impacto: string | null
   riscos: string[]
   dependencias_novas: string[]
   proporcionalidade: string | null
+}
+
+export interface PausaTarefa {
+  pausada_em: string
+  retomada_em: string | null
+  motivo: string
+  bloqueada_por: string[]
+  commit_pausa: string | null
+  commit_retomada: string | null
 }
 
 export interface Tarefa {
@@ -146,6 +193,10 @@ export interface Tarefa {
   /** HEAD no momento do `iniciar`. E' a base do diff que a auditoria le'. `null` = projeto sem git. */
   commit_base: string | null
   concluida_em: string | null
+  pausada_em?: string | null
+  pausa_motivo?: string | null
+  bloqueada_por?: string[]
+  pausas?: PausaTarefa[]
   plano: Plano
   gates: Partial<Record<string, RegistroGate>>
   achados: Achado[]
