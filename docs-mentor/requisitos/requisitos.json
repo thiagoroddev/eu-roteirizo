@@ -694,5 +694,47 @@
     "criado_em": "11/09/26 19:55",
     "implementado_em": "11/09/26 20:07",
     "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-57",
+    "tipo": "RF",
+    "enunciado": "Alternar o tracado do roteiro no mapa entre rota inteira e trecho da parada selecionada, com passagens repetidas distinguiveis por acumulo de opacidade",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [],
+    "tarefas": [],
+    "adr": null,
+    "criado_em": "12/09/26 21:20",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-58",
+    "tipo": "RF",
+    "enunciado": "Navegar entre paradas firmadas do Meu roteiro com avancar/retroceder ciclico no cabecalho do painel",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [],
+    "tarefas": [],
+    "adr": null,
+    "criado_em": "12/09/26 21:20",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-59",
+    "tipo": "RF",
+    "enunciado": "Exibir a distancia de deslocamento entre paradas consecutivas na lista completa do roteiro",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [],
+    "tarefas": [],
+    "adr": null,
+    "criado_em": "12/09/26 21:20",
+    "implementado_em": null,
+    "pendente_de_validacao": false
   }
 ]
