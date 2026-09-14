@@ -1,0 +1,176 @@
+{
+  "id": "TASK-BG-022",
+  "tipo": "BG",
+  "titulo": "Veiculo estacionava longe do pino: exportacao do experimento marcava ancoras otimizadas como escolha do usuario e a regra padrao preferia a rua do endereco a ate 250 m",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "sem_requisito_motivo": null,
+  "criada_em": "13/09/26 20:36",
+  "iniciada_em": "13/09/26 21:58",
+  "commit_base": "4e2103b5e3f9b93aa90d78ba708238bf2883d116",
+  "concluida_em": "13/09/26 23:20",
+  "plano": {
+    "muda": [
+      "__utilidades-back-office__/auto-roteirizacao/experimentArtifacts.ts - anchorPolicy na exportacao: app-default (padrao) sai com vehicleStopIsDefault true e o veiculo no primeiro pino da parada, e o app o poe em frente ao pino quando a malha carrega; experiment so por opcao explicita, com as ancoras otimizadas e o nome do roteiro avisando; o validador aceita as duas politicas, nunca mistura",
+      "__utilidades-back-office__/auto-roteirizacao/experimentArtifacts.test.ts - teste de caracterizacao da exportacao padrao e da opcao do experimento",
+      "__utilidades-back-office__/auto-roteirizacao/fundamental.arnes.ts - a chave FUNDAMENTAL_ANCORAS_DO_EXPERIMENTO=1 liga a politica experiment; sem ela, app-default",
+      "__utilidades-back-office__/auto-roteirizacao/README.md - a chave e o que ela muda",
+      "docs-mentor/invariantes.json - INV-001: artefato de laboratorio que chega ao app sai com o comportamento padrao; o do teste so com chave explicita, desligada por padrao e marcada no nome",
+      "src/utils/routing/vehicleStop.ts - defaultVehicleStop passa a usar a via nomeada mais proxima do pino; a rua do endereco so vence se estiver ate ADDRESS_STREET_TIE_METERS (10 m, MANUAL KNOB) mais longe que ela; via sem nome so quando nao ha nomeada; sem grafo, o proprio ponto. Sai o teto de 250 m da BG-016",
+      "src/__tests__/utils/routing/vehicleStop.test.ts - ajusta a descricao da BG-016 e prende a regra nova: rua do endereco a ~200 m perde para a nomeada a ~33 m (P3 da L-30), a ~47 m perde para a de ~15 m (P4), e na esquina a rua do endereco dentro da folga vence",
+      "src/utils/routing/match.ts - so o comentario de nearestEdgeByTiers, que descrevia a regra antiga",
+      "src/pages/MapPage.tsx - so o comentario da reancoragem ao carregar a malha, que descrevia a regra antiga",
+      "src/utils/routing/builder.ts - so o comentario de REPROJECT_DEFAULT_ANCHORS, que descrevia a regra antiga"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "exportacao sem opcao: toda parada com vehicleStopIsDefault true, veiculo no primeiro pino da parada e nome do roteiro sem o aviso de ancoras do experimento",
+        "teste": "__utilidades-back-office__/auto-roteirizacao/experimentArtifacts.test.ts > exporta com as ancoras padrao do app sem a chave"
+      },
+      {
+        "texto": "exportacao com anchorPolicy experiment: ancoras otimizadas, vehicleStopIsDefault false e ANCORAS DO EXPERIMENTO no nome",
+        "teste": "__utilidades-back-office__/auto-roteirizacao/experimentArtifacts.test.ts > so a chave explicita exporta as ancoras do experimento"
+      },
+      {
+        "texto": "o validador recusa roteiro que mistura paradas padrao e paradas com ancora do experimento",
+        "teste": "__utilidades-back-office__/auto-roteirizacao/experimentArtifacts.test.ts > recusa politica de ancoras misturada"
+      },
+      {
+        "texto": "a parada padrao fica na via nomeada mais proxima do pino quando a rua do endereco esta longe (caso P3 da L-30: ~200 m contra ~33 m)",
+        "teste": "src/__tests__/utils/routing/vehicleStop.test.ts > rua do endereço longe do pino perde para a via nomeada em frente ao pino"
+      },
+      {
+        "texto": "a rua do endereco perde quando passa da folga de desempate (caso P4 da L-30: ~47 m contra ~15 m)",
+        "teste": "src/__tests__/utils/routing/vehicleStop.test.ts > rua do endereço além da folga de desempate perde para a nomeada mais próxima"
+      },
+      {
+        "texto": "na esquina, a rua do endereco dentro da folga de desempate vence a transversal um pouco mais perto",
+        "teste": "src/__tests__/utils/routing/vehicleStop.test.ts > na esquina, a rua do endereço dentro da folga vence a transversal"
+      },
+      {
+        "texto": "no app (preview), o roteiro L-30 DEMO e o JSON regerado do experimento mostram o veiculo na via em frente ao pino de cada parada padrao, inclusive depois que a malha carrega e ao editar a parada",
+        "teste": "nao se aplica: depende da malha OSM ao vivo e da tela; validacao manual do humano no preview, com o JSON regerado da ultima rodada",
+        "evidencia": {
+          "comando": null,
+          "codigo_saida": 0,
+          "saida": "Print do humano no preview (13/09/26 23:10): L-30 DEMO com P3, P4 e P8 na via nomeada em frente ao pino; humano declarou consertado. Ver gates.validacao_manual.",
+          "executado_em": "13/09/26 23:12"
+        }
+      }
+    ],
+    "problema_canonico": "Duas causas: (1) contaminacao do produto por artefato de teste (test data leaking into production), resolvida com chave de experimento desligada por padrao e contrato na fronteira; (2) escolha do ponto de acesso do veiculo ao endereco (access point / routable point de geocodificacao), que os provedores resolvem pelo segmento viario mais proximo do pino com filtro de classe de via, e nao pelo nome do logradouro",
+    "discordancia": {
+      "o_que_faria_diferente": "Tres saidas comparadas: (a) corrigir na origem, a exportacao do laboratorio sai com o padrao e a opcao do experimento e explicita: escolhida, e do tamanho do defeito e nao mexe no app; (b) o importador do app tratar JSON externo como nao confiavel e resetar ancoras de roteiro de experimento: e o contrato na fronteira que a industria usa, mas exige campo de origem no esquema v1 e mudanca no app, e apagaria ancora movida a mao em roteiro reimportado; fica como proxima defesa se outro artefato vazar; (c) ambiente separado para artefato de laboratorio: adotado na validacao (preview, armazenamento separado), mas sozinho nao resolve, porque a ancora errada atrapalha tambem o teste. Para a regra padrao, comparadas: (A) via nomeada mais proxima do pino, com desempate a favor da rua do endereco ate 10 m: escolhida pelo humano, segue o pino como os routable points dos provedores e so usa o nome para desempatar esquina; (B) manter a rua do endereco com teto menor (ex. 60 m): ainda puxa para longe quando o geocodigo do romaneio fica mais perto de outra rua, que e o caso da L-30; (C) projecao crua na aresta mais proxima: volta o bug da via de servico da BG-016.",
+      "o_que_preocupa": "O ramo wip/spike-003 tem uma versao mais nova do laboratorio; no merge antes do retomar, experimentArtifacts.ts vai conflitar e a politica desta tarefa precisa sobreviver. Roteiros ja importados no celular continuam com as ancoras antigas ate serem apagados e reimportados. A regra nova desfaz o nivel 1 da BG-016: endereco cujo pino fica mais perto de outra rua passa a estacionar nela e o rotulo mostra Proximo a <endereco>; e o comportamento esperado, mas muda roteiros ja abertos, porque as paradas ainda no padrao se reancoram quando a malha carrega.",
+      "o_que_existe_pronto_80_porcento": "Feature flags (OpenFeature, Unleash, GrowthBook) resolvem a chave num produto contínuo; aqui a chave e de um script de laboratorio local, e uma variavel de ambiente cobre o caso sem dependencia nova Para o ponto de acesso, Google (navigation_points), HERE e Mapbox (routable points) entregam isso pronto, mas exigem geocodificacao externa por endereco, contra RNF-03/13 (zero geocodificacao externa); a malha OSM ja carregada resolve com o mesmo criterio."
+    },
+    "impacto": "Laboratorio de auto-roteirizacao (exportacao e harness) e a regra da parada padrao do veiculo no app (defaultVehicleStop: criacao, reset, reancoragem ao carregar a malha e visao geral)",
+    "riscos": [
+      "conflito com a versao do laboratorio no ramo wip/spike-003",
+      "JSON antigos em .mentor-saidas continuam com as ancoras do experimento; so os regerados saem no padrao",
+      "paradas padrao de roteiros ja salvos mudam de rua quando o pino esta mais perto de outra via; manual continua intocada",
+      "pino geocodificado errado passa a puxar o veiculo para a rua errada em vez da rua do endereco; o usuario arrasta a ancora"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram o veiculo em frente ao pino e que teste nao altere o padrao fora do teste. Proponho a politica de ancoras na exportacao com padrao seguro, a chave explicita no harness, a invariante, e trocar o nivel de nome da regra padrao por um desempate de 10 m; nenhum arquivo novo no app. E do tamanho das duas causas."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "13/09/26 23:00",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  976 passed (976)\n   Start at  23:02:20\n   Duration  38.65s (transform 14.24s, setup 28.86s, import 28.48s, tests 76.27s, environment 112.58s)\n\n(node:38676) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "13/09/26 23:02",
+      "commit_execucao": "4e2103b5e3f9b93aa90d78ba708238bf2883d116",
+      "arvore_hash": "3ed89893c71a3d6284bc8a167b3cfa76b8ff9468",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "13/09/26 23:02",
+      "commit_execucao": "4e2103b5e3f9b93aa90d78ba708238bf2883d116",
+      "arvore_hash": "3ed89893c71a3d6284bc8a167b3cfa76b8ff9468",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "13/09/26 23:02",
+      "commit_execucao": "4e2103b5e3f9b93aa90d78ba708238bf2883d116",
+      "arvore_hash": "3ed89893c71a3d6284bc8a167b3cfa76b8ff9468",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1999 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-Bykvp3d9.css   \u001b[39m\u001b[1m\u001b[2m 28.26 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-DjO9vT5h.js    \u001b[39m\u001b[1m\u001b[33m540.41 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.96 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-BH0bsWaq.js   \u001b[39m\u001b[1m\u001b[33m808.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 263.08 kB\u001b[22m\n\u001b[32m✓ built in 6.47s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1799.17 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "13/09/26 23:03",
+      "commit_execucao": "4e2103b5e3f9b93aa90d78ba708238bf2883d116",
+      "arvore_hash": "3ed89893c71a3d6284bc8a167b3cfa76b8ff9468",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "APROVADO",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": "Humano validou no Samsung M35 pelo preview bg-022-ancoras-do-experiment.teste-prototipo.pages.dev (13/09/26 23:10), com print do roteiro L-30 DEMO no Meu roteiro depois de a malha carregar: P8 com o veiculo na Rua Redentor em frente ao pino (antes na Anibal de Mendonca, 86 m), P4 na Rua Barao da Torre (antes na Garcia d'Avila, 47 m), P3 na Rua Prudente de Morais (antes na Barao da Torre, 204 m); as demais paradas na via em frente ao pino. Declarou: consertado.",
+      "executado_em": "13/09/26 23:12",
+      "commit_execucao": "4e2103b5e3f9b93aa90d78ba708238bf2883d116",
+      "arvore_hash": "3ed89893c71a3d6284bc8a167b3cfa76b8ff9468",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "aprovado",
+  "validado_em": "13/09/26 23:12",
+  "validacao_motivo": "Humano validou no Samsung M35 pelo preview bg-022-ancoras-do-experiment.teste-prototipo.pages.dev (13/09/26 23:10), com print do roteiro L-30 DEMO no Meu roteiro depois de a malha carregar: P8 com o veiculo na Rua Redentor em frente ao pino (antes na Anibal de Mendonca, 86 m), P4 na Rua Barao da Torre (antes na Garcia d'Avila, 47 m), P3 na Rua Prudente de Morais (antes na Barao da Torre, 204 m); as demais paradas na via em frente ao pino. Declarou: consertado.",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-13--23h20--TASK-BG-022.md"
+}

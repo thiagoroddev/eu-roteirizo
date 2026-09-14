@@ -129,6 +129,18 @@ O spike usa o mesmo corpus e snapshots, mas roda separado da matriz histórica:
 npm run test:auto-fundamentals
 ```
 
+**Âncoras nos JSONs importáveis (INV-001, TASK-BG-022).** Por padrão, cada parada exportada sai
+com a âncora padrão do app: o veículo começa no primeiro pino, e o app o põe na via em frente ao
+pino quando a malha carrega. As âncoras escolhidas pelo experimento só saem com a chave explícita,
+e o arquivo e o nome do roteiro avisam (`-ancoras-do-experimento`, `ANCORAS DO EXPERIMENTO`):
+
+```powershell
+$env:FUNDAMENTAL_ANCORAS_DO_EXPERIMENTO = "1"; npm run test:auto-fundamentals
+```
+
+Importe esses arquivos no **preview** do app, nunca no app que guarda roteiros reais: o
+armazenamento do preview é separado.
+
 Cada execução cruza procura fundamental de 30/60 m com circuito limitado de 120 m e uma
 sensibilidade de 60 m. As variantes são `individual`, `fixed-groups` e `revisable`; cada uma
 é avaliada pelos objetivos independentes `vehicleDistance` e `modeledTime`, sem peso oculto.
