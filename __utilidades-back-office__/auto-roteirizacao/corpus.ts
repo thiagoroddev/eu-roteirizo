@@ -35,8 +35,25 @@ export interface Corpus {
   referenceCount: number;
 }
 
+/**
+ * Where the lab's exported stops park the vehicle (TASK-BG-022, TASK-BG-023, INV-001).
+ *
+ * - `app-default` (the default): each stop is flagged as the app's default anchor and starts on its
+ *   seed pin; the app moves it onto the street in front of that pin once the road graph loads.
+ * - `experiment`: the lab's own anchors, flagged as a manual choice so the app keeps them. Only on
+ *   explicit request (a harness key), and the route name says so.
+ *
+ * ⚠️ Until BG-022/BG-023 the exports used the lab's anchors flagged as the user's choice: imported
+ * into the app, they parked the vehicle away from the pin and survived even stop edits.
+ */
+export type AnchorPolicy = "app-default" | "experiment";
+
+/** Route-name marker of lab anchors: whoever imports the file sees it before trusting a stop. */
+export const EXPERIMENT_ANCHORS_MARKER = "ANCORAS DO EXPERIMENTO";
+
 /** Converts a spatial result into the existing app format, not an optimized route. */
-export const createInspectionPayload = (entry: CorpusCase, result: AnchorSearchResult, scenario: { runId: string; sampleStepMeters: number }): ExportedRoutePayloadV1 => {
+export const createInspectionPayload = (entry: CorpusCase, result: AnchorSearchResult, scenario: { runId: string; sampleStepMeters: number; anchorPolicy?: AnchorPolicy }): ExportedRoutePayloadV1 => {
+  const anchorPolicy: AnchorPolicy = scenario.anchorPolicy ?? "app-default";
   const byId = new Map(entry.points.map((p) => [p.id, p]));
   const assigned = result.groups.flatMap((g) => g.pointIds);
   const accounted = [...assigned, ...result.pending.map((p) => p.pointId), ...result.ignoredPointIds];
@@ -71,9 +88,13 @@ export const createInspectionPayload = (entry: CorpusCase, result: AnchorSearchR
 
   // A new execution/scenario gets its own standalone manifest; reimporting the
   // same file updates only that experimental copy, never a human manifest.
-  const identity = hash(JSON.stringify([scenario.runId, entry.id, entry.sourceHash, result.radiusMeters, scenario.sampleStepMeters, result.groups, result.pending, result.ignoredPointIds]));
+  const identity = hash(
+    JSON.stringify([scenario.runId, entry.id, entry.sourceHash, result.radiusMeters, scenario.sampleStepMeters, result.groups, result.pending, result.ignoredPointIds, anchorPolicy])
+  );
   const manifestId = `auto-inspection-${identity}`;
-  const routeName = `INSPEÇÃO RF-030 | ${entry.id} | R${result.radiusMeters}m P${scenario.sampleStepMeters}m | NÃO OTIMIZADO${result.status === "partial" ? " | PARCIAL" : ""}`;
+  const policyLabel = anchorPolicy === "experiment" ? ` | ${EXPERIMENT_ANCHORS_MARKER}` : "";
+  const routeName = `INSPEÇÃO RF-030${policyLabel} | ${entry.id} | R${result.radiusMeters}m P${scenario.sampleStepMeters}m | NÃO OTIMIZADO${result.status === "partial" ? " | PARCIAL" : ""}`;
+  const appDefault = anchorPolicy === "app-default";
   const route: PlannedRoute = {
     id: `${manifestId}-route`,
     createdAt: new Date().toISOString(),
@@ -81,20 +102,25 @@ export const createInspectionPayload = (entry: CorpusCase, result: AnchorSearchR
     startPoint: entry.reference?.route.startPoint ? { ...entry.reference.route.startPoint } : null,
     config: { ...normalizeRoutingConfig(entry.reference?.route.config), autoRadiusMeters: result.radiusMeters },
     ignoredPointIds: [...result.ignoredPointIds],
-    stops: result.groups.map((g, index) => ({
-      id: `${manifestId}-stop-${index + 1}`,
-      order: index + 1,
-      vehicleStop: { ...g.vehicleStop },
-      vehicleStopIsDefault: g.vehicleStopIsDefault,
-      radiusMeters: result.radiusMeters,
-      reversed: false,
-      pointIds: nearestFirstOrder(
-        g.vehicleStop,
-        g.pointIds.map((id) => byId.get(id)!),
-        false,
-        g.vehicleStopIsDefault ? g.seedPointId : undefined
-      ),
-    })),
+    stops: result.groups.map((g, index) => {
+      // app-default: the seed pin, which the app reprojects from pointIds[0]; experiment: the generator's spot.
+      const seed = byId.get(g.seedPointId)!;
+      const vehicleStop = appDefault ? { lat: seed.lat, lng: seed.lng } : { ...g.vehicleStop };
+      return {
+        id: `${manifestId}-stop-${index + 1}`,
+        order: index + 1,
+        vehicleStop,
+        vehicleStopIsDefault: appDefault,
+        radiusMeters: result.radiusMeters,
+        reversed: false,
+        pointIds: nearestFirstOrder(
+          vehicleStop,
+          g.pointIds.map((id) => byId.get(id)!),
+          false,
+          appDefault || g.vehicleStopIsDefault ? g.seedPointId : undefined
+        ),
+      };
+    }),
   };
   return createRouteExportPayload(manifestId, routeName, route, structuredClone(entry.points), structuredClone(entry.rows), undefined, {
     manifestFileName: basename(entry.file),

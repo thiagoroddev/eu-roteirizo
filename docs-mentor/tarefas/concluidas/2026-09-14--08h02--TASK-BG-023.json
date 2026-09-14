@@ -1,0 +1,195 @@
+{
+  "id": "TASK-BG-023",
+  "tipo": "BG",
+  "titulo": "Variantes de inspecao da RF-030 (corpus.ts) exportam a ancora movida pelo gerador como escolha do usuario, sem chave, contra a INV-001",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "sem_requisito_motivo": null,
+  "criada_em": "14/09/26 02:42",
+  "iniciada_em": "14/09/26 07:01",
+  "commit_base": "2dc7ed843019562c50061d8e06814bc156b851fa",
+  "concluida_em": "14/09/26 08:02",
+  "plano": {
+    "muda": [
+      "__utilidades-back-office__/auto-roteirizacao/corpus.ts - AnchorPolicy e EXPERIMENT_ANCHORS_MARKER passam a morar aqui; createInspectionPayload ganha anchorPolicy (padrao app-default): parada no pino da semente, semente primeiro, vehicleStopIsDefault true; so experiment exporta a ancora do gerador, marcada false e com o marcador no nome",
+      "__utilidades-back-office__/auto-roteirizacao/corpus.test.ts - dois testes da politica de ancoras; o teste que prendia o false passa a pedir anchorPolicy experiment",
+      "__utilidades-back-office__/auto-roteirizacao/experimentArtifacts.ts - importa e reexporta AnchorPolicy e EXPERIMENT_ANCHORS_MARKER de ./corpus, sem mudar comportamento",
+      "__utilidades-back-office__/auto-roteirizacao/anchors.arnes.ts - le a chave INSPECAO_ANCORAS_DO_EXPERIMENTO, sufixo -ancoras-do-experimento no arquivo, politica no index.json e LEIA-ME corrigido",
+      "docs-mentor/contexto.json - laboratorio.chaves ganha INSPECAO_ANCORAS_DO_EXPERIMENTO; artefatos_importaveis ganha o JSON da inspecao RF-030 com teste de contrato",
+      "docs-mentor/invariantes.json - mecanismo da INV-001 cita tambem os testes do corpus"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Sem a chave, a parada que o gerador moveu sai na ancora padrao do app (pino da semente, semente primeiro, vehicleStopIsDefault true) e o nome nao leva o marcador",
+        "teste": "__utilidades-back-office__/auto-roteirizacao/corpus.test.ts > exports app default anchors without the key",
+        "evidencia": {
+          "comando": "npx vitest run __utilidades-back-office__/auto-roteirizacao/corpus.test.ts -t \"exports app default anchors without the key\"",
+          "codigo_saida": 0,
+          "saida": "RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 12 skipped (13)\n   Start at  07:22:31\n   Duration  7.44s (transform 256ms, setup 1.14s, import 493ms, tests 13ms, environment 5.15s)",
+          "executado_em": "14/09/26 07:22"
+        }
+      },
+      {
+        "texto": "So a chave explicita exporta a ancora do gerador, marcada como escolha (false), com ANCORAS DO EXPERIMENTO no nome e manifestId proprio",
+        "teste": "__utilidades-back-office__/auto-roteirizacao/corpus.test.ts > only the explicit key exports the generator anchors",
+        "evidencia": {
+          "comando": "npx vitest run __utilidades-back-office__/auto-roteirizacao/corpus.test.ts -t \"only the explicit key exports the generator anchors\"",
+          "codigo_saida": 0,
+          "saida": "RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 12 skipped (13)\n   Start at  07:22:41\n   Duration  1.32s (transform 250ms, setup 197ms, import 326ms, tests 13ms, environment 592ms)",
+          "executado_em": "14/09/26 07:22"
+        }
+      },
+      {
+        "texto": "node mentor.mjs verificar aprova a chave e o artefato importavel registrados no contexto",
+        "teste": "nao se aplica: verificacao operacional via CLI; a saida fica registrada com task criterio",
+        "evidencia": {
+          "comando": "node mentor.mjs verificar",
+          "codigo_saida": 0,
+          "saida": "APROVADO. Tres familias: marcadores, tetos de texto, integridade referencial (ponteiros, links e inventario de regras).",
+          "executado_em": "14/09/26 07:22"
+        }
+      },
+      {
+        "texto": "npm run test:auto-anchors fecha completo sem a chave e com INSPECAO_ANCORAS_DO_EXPERIMENTO=1, usando o corpus privado local",
+        "teste": "nao se aplica: bateria de laboratorio com corpus privado fora do git; a saida (so contagens) fica registrada com task criterio",
+        "evidencia": {
+          "comando": null,
+          "codigo_saida": 0,
+          "saida": "Comandos: 'npm run test:auto-anchors' e 'INSPECAO_ANCORAS_DO_EXPERIMENTO=1 npm run test:auto-anchors' (Git Bash, corpus privado local). Timeout de 60s do --comando nao comporta a bateria; saida real recortada (so contagens).\n[sem chave] Real corpus report: 240/240 scenarios; 20/20 cases; 117 other-street assertions; 80/80 importable inspections. Test Files 1 passed (1); Tests 21 passed (21); exit 0.\n[com chave] Real corpus report: 240/240 scenarios; 20/20 cases; 117 other-street assertions; 80/80 importable inspections. Test Files 1 passed (1); Tests 21 passed (21); exit 0.\nConferencia dos JSONs gerados: execucao 2026-09-14T10-09-50-837Z politica=app-default, 80 arquivos sem sufixo, 0 nomes com marcador, 1624 paradas true e 0 false, veiculo no pino de pointIds[0] em 1624; execucao 2026-09-14T10-14-47-182Z politica=experiment, 80 arquivos com sufixo -ancoras-do-experimento, 80 nomes com marcador, 0 paradas true e 1624 false.",
+          "executado_em": "14/09/26 07:21"
+        }
+      }
+    ],
+    "pedido_original": "TASK-BG-023: o exportador das variantes de inspecao da RF-030 tambem marca a ancora do gerador como escolha do usuario, o mesmo problema da BG-022. planeje a bg023",
+    "solucao_sugerida": "Repetir a correcao da TASK-BG-022 (implicita em 'o mesmo problema da BG-022')",
+    "alternativas_profissionais": [
+      {
+        "pratica": "Padrao seguro por exportador: a politica da BG-022 (ancora padrao do app; a do gerador so com chave explicita e marcador no nome)",
+        "pegaria_o_caso": "Sim, para este exportador: o JSON sem chave nunca chega ao app como escolha do usuario",
+        "custo": "4 arquivos de laboratorio, sem tocar src/; reusa politica ja validada no Samsung M35"
+      },
+      {
+        "pratica": "Defesa no importador: o app trata JSON de laboratorio como nao confiavel (campo de origem no esquema v1)",
+        "pegaria_o_caso": "Sim, e tambem todo exportador futuro",
+        "custo": "G: mexe no produto e no esquema v1 e pode apagar ancora movida a mao em roteiro reimportado; descartada na BG-022 pelo mesmo motivo"
+      },
+      {
+        "pratica": "Deixar de gerar os JSONs importaveis da inspecao RF-030",
+        "pegaria_o_caso": "Sim, elimina o caminho do erro",
+        "custo": "Menor codigo, mas remove a inspecao visual do gerador no app; o humano decidiu manter (14/09/26, resposta 1-A)"
+      }
+    ],
+    "problema_canonico": "padrao seguro (secure by default) com comportamento de teste atras de chave desligada; proveniencia de dado importado (data provenance)",
+    "discordancia": {
+      "o_que_faria_diferente": "Num artefato de inspecao, o padrao do app esconde o que se quer ver (onde o gerador poe a ancora); na pratica a chave sera ligada quase sempre. Sigo a INV-001 mesmo assim: quem liga a chave sabe o que importa",
+      "o_que_preocupa": "Segundo exportador de laboratorio vazando o mesmo campo: a defesa segue por exportador e o terceiro repete o erro; a correcao estrutural e a defesa no importador. O ramo wip/spike-003 altera corpus.ts e corpus.test.ts em trechos vizinhos (routeNumber no CorpusCase): os testes novos reusam a constante entry para nao conflitar no merge antes do retomar",
+      "o_que_existe_pronto_80_porcento": "A propria politica da BG-022 (experimentArtifacts.ts); nenhuma biblioteca"
+    },
+    "impacto": "Nenhum modulo de src/; muda so o artefato que o laboratorio de auto-roteirizacao (RF-030) entrega ao app",
+    "riscos": [
+      "Com a ancora padrao, membro agrupado pelo raio da ancora do gerador pode ficar alem do raio a partir da parada padrao: o importador aceita, mas o agrupamento parece largo. E o caso de ligar a chave",
+      "Merge do main no wip/spike-003 antes do retomar: conflito possivel em corpus.ts/corpus.test.ts; a politica desta tarefa precisa sobreviver"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram a correcao da BG-022 no exportador da inspecao RF-030; proponho a mesma politica em 4 arquivos de laboratorio e 2 registros, sem arquivo novo e sem tocar src/. O unico artefato novo e a chave INSPECAO_ANCORAS_DO_EXPERIMENTO, do tamanho do pedido porque a INV-001 exige chave explicita; reaproveitar FUNDAMENTAL_ANCORAS_DO_EXPERIMENTO ligaria dois harnesses com uma chave so"
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "14/09/26 07:04",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  978 passed (978)\n   Start at  07:20:08\n   Duration  44.47s (transform 13.97s, setup 45.38s, import 26.46s, tests 71.35s, environment 168.18s)\n\n(node:27444) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "14/09/26 07:20",
+      "commit_execucao": "2dc7ed843019562c50061d8e06814bc156b851fa",
+      "arvore_hash": "be81e656b4892fcfbec8805caa9ed790809dfbb2",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "14/09/26 07:09",
+      "commit_execucao": "2dc7ed843019562c50061d8e06814bc156b851fa",
+      "arvore_hash": "be81e656b4892fcfbec8805caa9ed790809dfbb2",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "14/09/26 07:08",
+      "commit_execucao": "2dc7ed843019562c50061d8e06814bc156b851fa",
+      "arvore_hash": "be81e656b4892fcfbec8805caa9ed790809dfbb2",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1999 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-Bykvp3d9.css   \u001b[39m\u001b[1m\u001b[2m 28.26 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-DjO9vT5h.js    \u001b[39m\u001b[1m\u001b[33m540.41 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.96 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-BH0bsWaq.js   \u001b[39m\u001b[1m\u001b[33m808.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 263.08 kB\u001b[22m\n\u001b[32m✓ built in 7.48s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1799.17 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "14/09/26 07:21",
+      "commit_execucao": "2dc7ed843019562c50061d8e06814bc156b851fa",
+      "arvore_hash": "be81e656b4892fcfbec8805caa9ed790809dfbb2",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "APROVADO",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": "Humano importou no app o case-014 R120m P10m nas duas versoes (14/09/26, capturas no chat). Sem chave: nome sem ANCORAS DO EXPERIMENTO, parada 9 com o veiculo na Rua Arnaldo Quintela em frente ao 1o endereco e sem botao Resetar. Com a chave: nome com ANCORAS DO EXPERIMENTO, veiculo na ancora do gerador (Rua Oliveira Fausto) e Resetar local do veiculo visivel. Os dois roteiros coexistem.",
+      "executado_em": "14/09/26 08:02",
+      "commit_execucao": "2dc7ed843019562c50061d8e06814bc156b851fa",
+      "arvore_hash": "be81e656b4892fcfbec8805caa9ed790809dfbb2",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "aprovado",
+  "validado_em": "14/09/26 08:02",
+  "validacao_motivo": "Humano importou no app o case-014 R120m P10m nas duas versoes (14/09/26, capturas no chat). Sem chave: nome sem ANCORAS DO EXPERIMENTO, parada 9 com o veiculo na Rua Arnaldo Quintela em frente ao 1o endereco e sem botao Resetar. Com a chave: nome com ANCORAS DO EXPERIMENTO, veiculo na ancora do gerador (Rua Oliveira Fausto) e Resetar local do veiculo visivel. Os dois roteiros coexistem.",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-14--08h02--TASK-BG-023.md"
+}

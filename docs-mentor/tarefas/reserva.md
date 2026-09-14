@@ -9,7 +9,6 @@
 |---|---|---|---|---|---|---|
 | `TASK-BG-019` | Respeitar as restricoes de conversao do OSM (no_* e only_*) no roteamento veicular | - | BG | importante | M/G | titulo-autossuficiente |
 | `TASK-BG-020` | Sumario carregar a malha viaria com o ponto inicial, igual ao mapa | - | BG | importante | P/P | titulo-autossuficiente |
-| `TASK-BG-023` | Variantes de inspecao da RF-030 (corpus.ts) exportam a ancora movida pelo gerador como escolha do usuario, sem chave, contra a INV-001 | - | BG | importante | P/P | titulo-autossuficiente |
 | `TASK-CHORE-008` | Remover service worker legado public/sw.js | - | CHORE | desejavel | P/P | titulo-autossuficiente |
 | `TASK-CHORE-009` | Comprimir capturas de docs/imagens | - | CHORE | desejavel | P/P | titulo-autossuficiente |
 | `TASK-CHORE-018` | Atualizar esbuild para 0.28.1 ou superior (alerta Dependabot 1: leitura de arquivos pelo servidor de desenvolvimento no Windows) | - | CHORE | importante | P/M | titulo-autossuficiente |

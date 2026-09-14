@@ -38,3 +38,4 @@
 | 13/09/26 21:53 | [`TASK-RF-044`](./2026-09-13--21h53--TASK-RF-044.md) | RF | Avancar e retroceder entre paradas do Meu roteiro em ciclo | - | concluida | aprovado |
 | 13/09/26 23:20 | [`TASK-BG-022`](./2026-09-13--23h20--TASK-BG-022.md) | BG | Veiculo estacionava longe do pino: exportacao do experimento marcava ancoras otimizadas como escolha do usuario e a regra padrao preferia a rua do endereco a ate 250 m | - | concluida | aprovado |
 | 14/09/26 02:42 | [`TASK-CHORE-022`](./2026-09-14--02h42--TASK-CHORE-022.md) | CHORE | Atualizar mentor-agent para v0.10.0 | - | concluida | dispensado |
+| 14/09/26 08:02 | [`TASK-BG-023`](./2026-09-14--08h02--TASK-BG-023.md) | BG | Variantes de inspecao da RF-030 (corpus.ts) exportam a ancora movida pelo gerador como escolha do usuario, sem chave, contra a INV-001 | - | concluida | aprovado |

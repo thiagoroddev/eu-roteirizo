@@ -3,8 +3,8 @@
     "id": "INV-001",
     "enunciado": "Artefato de laboratorio que chega ao app sai com o comportamento padrao do app; o comportamento do teste so com chave explicita, desligada por padrao e marcada no nome do artefato",
     "porque": "Na validacao da TASK-RF-044, o JSON do experimento de auto-roteirizacao entrou no app com as ancoras otimizadas marcadas como escolha do usuario: o veiculo parava no meio do caminho ate a proxima parada e o padrao (em frente ao pino) nunca era reaplicado (TASK-BG-022)",
-    "mecanismo": "__utilidades-back-office__/auto-roteirizacao/experimentArtifacts.test.ts > exporta com as ancoras padrao do app sem a chave; > so a chave explicita exporta as ancoras do experimento; > recusa politica de ancoras misturada",
+    "mecanismo": "__utilidades-back-office__/auto-roteirizacao/experimentArtifacts.test.ts > exporta com as ancoras padrao do app sem a chave; > so a chave explicita exporta as ancoras do experimento; > recusa politica de ancoras misturada; __utilidades-back-office__/auto-roteirizacao/corpus.test.ts > exports app default anchors without the key; > only the explicit key exports the generator anchors",
     "declarada_em": "13/09/26",
-    "conferida_em": "13/09/26"
+    "conferida_em": "14/09/26"
   }
 ]

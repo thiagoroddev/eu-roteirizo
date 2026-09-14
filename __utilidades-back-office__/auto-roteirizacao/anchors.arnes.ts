@@ -15,11 +15,13 @@ import { clearManifests, getRouteRows } from "../../src/services/manifestStorage
 import { clearRoteiros, getRoteiro } from "../../src/services/routeStorage";
 import { buildDeliveryPoints } from "../../src/utils/routing/points";
 import { createInitialBuilderState, routeBuilderReducer } from "../../src/utils/routing/builder";
-import { createInspectionPayload, hash, loadCorpus, loadSnapshots, type CorpusCase } from "./corpus";
+import { createInspectionPayload, EXPERIMENT_ANCHORS_MARKER, hash, loadCorpus, loadSnapshots, type AnchorPolicy, type CorpusCase } from "./corpus";
 
 const RADII = [30, 60, 90, 120];
 const STEPS = [5, 10, 20];
 const REPETITIONS = 5;
+/** INV-001: the importable JSONs park on the app's default anchor unless INSPECAO_ANCORAS_DO_EXPERIMENTO=1 (TASK-BG-023). */
+const ANCHOR_POLICY: AnchorPolicy = process.env.INSPECAO_ANCORAS_DO_EXPERIMENTO === "1" ? "experiment" : "app-default";
 const corpus = loadCorpus();
 const snapshots = loadSnapshots(corpus);
 const runId = new Date().toISOString().replaceAll(/[:.]/g, "-");
@@ -111,7 +113,7 @@ const exportComparison = (entry: CorpusCase, result: AnchorSearchResult, radius:
 };
 
 const exportInspection = async (entry: CorpusCase, result: AnchorSearchResult, step: number): Promise<void> => {
-  const payload = createInspectionPayload(entry, result, { runId, sampleStepMeters: step });
+  const payload = createInspectionPayload(entry, result, { runId, sampleStepMeters: step, anchorPolicy: ANCHOR_POLICY });
   const serialized = serializeRouteExport(payload);
   const parsed = parseAndValidateRouteJson(serialized);
   check(parsed.ok, `${entry.id}: inspection rejected by the app parser`);
@@ -133,7 +135,7 @@ const exportInspection = async (entry: CorpusCase, result: AnchorSearchResult, s
     .map((p) => p.id)
     .sort();
   check(hash(JSON.stringify(free)) === hash(JSON.stringify(result.pending.map((p) => p.pointId).sort())), `${entry.id}: pending points were lost or ignored`);
-  const file = `${entry.id}-r${result.radiusMeters}m-p${step}m.json`;
+  const file = `${entry.id}-r${result.radiusMeters}m-p${step}m${ANCHOR_POLICY === "experiment" ? "-ancoras-do-experimento" : ""}.json`;
   writeFileSync(join(inspectionDir, file), serialized, { flag: "wx" });
   inspectionFiles.push({
     caseId: entry.id,
@@ -290,6 +292,7 @@ afterAll(async () => {
     gitVersion,
     sourceHashes: sources.map((file) => ({ file, hash: hash(readFileSync(file)) })),
     machine: { platform: platform(), release: release(), cpu: cpus()[0]?.model, node: process.version },
+    anchorPolicy: ANCHOR_POLICY,
     repetitions: REPETITIONS,
     radii: RADII,
     steps: STEPS,
@@ -308,7 +311,11 @@ afterAll(async () => {
   };
   writeFileSync(join(outputDir, "report.json"), JSON.stringify(report, null, 2));
   writeFileSync(join(outputDir, "details.json"), JSON.stringify(details));
-  writeFileSync(join(inspectionDir, "index.json"), JSON.stringify({ runId, status: report.status, files: inspectionFiles }, null, 2));
+  writeFileSync(join(inspectionDir, "index.json"), JSON.stringify({ runId, status: report.status, anchorPolicy: ANCHOR_POLICY, files: inspectionFiles }, null, 2));
+  const anchorGuide =
+    ANCHOR_POLICY === "experiment"
+      ? `**ÂNCORAS DO GERADOR (chave INSPECAO_ANCORAS_DO_EXPERIMENTO=1).** Cada parada sai na âncora que o gerador escolheu, marcada como escolha manual para o app não reaplicar o padrão; o nome do roteiro traz "${EXPERIMENT_ANCHORS_MARKER}" e o do arquivo, "-ancoras-do-experimento". Os grupos e as âncoras são resultados do motor.`
+      : "**ÂNCORAS PADRÃO DO APP (sem chave).** Os grupos são resultados do motor, mas cada parada sai no pino da semente, marcada como padrão: com a malha carregada, o app leva o veículo para a rua em frente a esse pino, como faria com uma parada criada à mão. Para ver onde o gerador põe a âncora, rode de novo com INSPECAO_ANCORAS_DO_EXPERIMENTO=1 (INV-001).";
   const inspectionGuide =
     [
       "# JSONs para importar no Eu Roteirizo",
@@ -323,7 +330,9 @@ afterAll(async () => {
       "",
       "Cada arquivo usa o schema eu-roteirizo/roteiro/v1 e identidade própria. Variantes/execuções não substituem referências manuais. Reimportar o MESMO arquivo atualiza essa cópia e pode substituir edições feitas nela; exporte sua cópia editada antes de reimportar.",
       "",
-      "**INSPEÇÃO ESPACIAL: A SEQUÊNCIA NÃO FOI OTIMIZADA.** As âncoras e grupos são resultados do motor; os caminhos de veículo e a pé são recalculados pelo app com sua malha atual, que pode diferir do snapshot do teste. Sem malha/caminho, o app pode desenhar trechos retos. Não interprete esses percursos como qualidade de roteirização já validada.",
+      "**INSPEÇÃO ESPACIAL: A SEQUÊNCIA NÃO FOI OTIMIZADA.** Os caminhos de veículo e a pé são recalculados pelo app com sua malha atual, que pode diferir do snapshot do teste. Sem malha/caminho, o app pode desenhar trechos retos. Não interprete esses percursos como qualidade de roteirização já validada.",
+      "",
+      anchorGuide,
       "",
       "O início da referência é preservado quando existe; sem referência ele permanece não definido. A ordem interna dos membros usa o padrão atual do app, sem mudar a âncora ou o grupo. Pontos pendentes permanecem livres; não viram ignorados.",
       "",
