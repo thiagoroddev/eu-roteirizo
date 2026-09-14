@@ -51,11 +51,29 @@ describe("RoteiroPanelHeader (TASK-RF-006.2/.3/.4.1; concise since RF-006.8)", (
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
-  it("has no stop steppers (stepping over built stops arrives with .6)", () => {
+  it("has no stop steppers without the handlers (nothing firmed to step over)", () => {
     renderHeader();
 
     expect(screen.queryByRole("button", { name: UI_LABELS.MAP_PANEL.PREV_STOP })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: UI_LABELS.MAP_PANEL.NEXT_STOP })).not.toBeInTheDocument();
+  });
+
+  it("mostra o stepper so com os dois handlers (TASK-RF-044, RF-58)", () => {
+    const onPrevStop = vi.fn();
+    const onNextStop = vi.fn();
+    renderHeader({ onPrevStop, onNextStop });
+
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.PREV_STOP }));
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.NEXT_STOP }));
+    expect(onPrevStop).toHaveBeenCalledTimes(1);
+    expect(onNextStop).toHaveBeenCalledTimes(1);
+  });
+
+  it("repassa stepDisabled: as duas setas desativadas", () => {
+    renderHeader({ onPrevStop: vi.fn(), onNextStop: vi.fn(), stepDisabled: true });
+
+    expect(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.PREV_STOP })).toBeDisabled();
+    expect(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.NEXT_STOP })).toBeDisabled();
   });
 
   it("exibe botao Recomecar quando ha paradas e confirma limpeza", () => {

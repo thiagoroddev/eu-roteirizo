@@ -53,7 +53,7 @@ import { getRoteiro, saveRoteiro, deleteRoteiro } from "../services/routeStorage
 import { createRouteExportPayload, downloadRouteJson } from "../services/routeExport";
 import { routeProgress, nextStopSuggestion, suggestedNextSeed } from "../utils/routing/overview";
 import { stopWalkEstimate, plannedRouteTotals, stopLegs } from "../utils/routing/estimates";
-import { assignedPointIds, pointsWithinRadius } from "../utils/routing/selectors";
+import { adjacentStopId, assignedPointIds, pointsWithinRadius } from "../utils/routing/selectors";
 import { indexPointsById, nearestStopTo } from "../utils/routing/selectors";
 import { suggestVehicleStop, defaultVehicleStop } from "../utils/routing/vehicleStop";
 import { streetNameOf } from "../utils/routing/streets";
@@ -508,6 +508,15 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
     setPanelView("selected");
     setPanelSnap("collapsed");
   };
+
+  /** Header StopStepper ‹ › (TASK-RF-044, RF-58): the neighbouring firmed stop,
+      circular (the roteiro is viewed, not executed — execution won't wrap), shown
+      exactly as "Ver no mapa" shows it. One stop → arrows disabled; none → hidden. */
+  const handleStepRoteiroStop = (direction: 1 | -1) => {
+    const nextId = adjacentStopId(builderState.stops, selectedStopId, direction);
+    if (nextId !== null) handleShowRoteiroStopOnMap(nextId);
+  };
+  const roteiroStepper = builderState.stops.length > 0 ? { onPrevStop: () => handleStepRoteiroStop(-1), onNextStop: () => handleStepRoteiroStop(1), stepDisabled: builderState.stops.length < 2 } : {};
 
   /** Suggestion card's map icon (RF-006.11): selects the SEED on the map — the
       tela 8 preview (radius, incorporation) opens exactly as a manual tap would. */
@@ -1484,6 +1493,7 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
                   onToggleDetails={handleHideOverview}
                   stopsCount={builderState.stops.length}
                   onResetRoute={handleResetRoute}
+                  {...roteiroStepper}
                 />
               </div>
             ) : startSelected && overviewStart ? (
@@ -1497,6 +1507,7 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
                   onToggleDetails={handleShowOverview}
                   stopsCount={builderState.stops.length}
                   onResetRoute={handleResetRoute}
+                  {...roteiroStepper}
                 />
                 <PanelSection label={UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.SECTION_START}>
                   <StartRow start={overviewStart} onDelete={handleDeleteStart} onReposition={handleRepositionStart} />
@@ -1514,6 +1525,7 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
                   onToggleDetails={handleShowOverview}
                   stopsCount={builderState.stops.length}
                   onResetRoute={handleResetRoute}
+                  {...roteiroStepper}
                 />
                 <RoteiroStopSection
                   stopOrder={selectedStop.order}
@@ -1546,6 +1558,7 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
                   onToggleDetails={handleShowOverview}
                   stopsCount={builderState.stops.length}
                   onResetRoute={handleResetRoute}
+                  {...roteiroStepper}
                 />
                 <RoteiroPointSection
                   key={selectedPointItem.addressKey} // key-reset: the select re-anchors per point
@@ -1581,6 +1594,7 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
                   onToggleDetails={handleShowOverview}
                   stopsCount={builderState.stops.length}
                   onResetRoute={handleResetRoute}
+                  {...roteiroStepper}
                 />
                 {/* The definition FLOW only (RF-006.11): the settled "Início
                     definido | Redefinir" row left the idle header — the start

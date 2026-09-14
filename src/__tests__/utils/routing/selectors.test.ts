@@ -10,6 +10,7 @@ import {
   stopCentroid,
   pointsWithinRadius,
   nearestStopTo,
+  adjacentStopId,
 } from "../../../utils/routing/selectors";
 import type { DeliveryPoint, RouteStop } from "../../../types/routing";
 
@@ -65,5 +66,26 @@ describe("routing selectors", () => {
     expect(c).not.toBeNull();
     expect(c!.lat).toBeCloseTo(-22.955);
     expect(c!.lng).toBeCloseTo(-43.195);
+  });
+});
+
+describe("adjacentStopId (TASK-RF-044, RF-58)", () => {
+  const firmed = (id: string, order: number): RouteStop => ({ id, order, vehicleStop: { lat: -22.95, lng: -43.19 }, pointIds: [], radiusMeters: 30 });
+  // Stored out of order on purpose: a reorder (RF-006.17) renumbers `order` without sorting the array.
+  const stops = [firmed("s3", 3), firmed("s1", 1), firmed("s2", 2)];
+
+  it("cicla nas duas pontas", () => {
+    expect(adjacentStopId(stops, "s3", 1)).toBe("s1");
+    expect(adjacentStopId(stops, "s1", -1)).toBe("s3");
+  });
+
+  it("bordas e ordem por order", () => {
+    expect(adjacentStopId([], "s1", 1)).toBeNull();
+    expect(adjacentStopId(stops, null, 1)).toBe("s1");
+    expect(adjacentStopId(stops, "desconhecida", -1)).toBe("s1");
+    // The neighbour follows `order`, not the array position.
+    expect(adjacentStopId(stops, "s1", 1)).toBe("s2");
+    expect(adjacentStopId(stops, "s2", 1)).toBe("s3");
+    expect(adjacentStopId(stops, "s2", -1)).toBe("s1");
   });
 });

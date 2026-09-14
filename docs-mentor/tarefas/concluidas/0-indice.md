@@ -35,3 +35,4 @@
 | 13/09/26 05:54 | [`TASK-CHORE-019`](./2026-09-13--05h54--TASK-CHORE-019.md) | CHORE | Atualizar mentor-agent para v0.7.0 | - | concluida | dispensado |
 | 13/09/26 17:56 | [`TASK-CHORE-020`](./2026-09-13--17h56--TASK-CHORE-020.md) | CHORE | Atualizar mentor-agent para v0.8.1 | - | concluida | dispensado |
 | 13/09/26 18:51 | [`TASK-CHORE-021`](./2026-09-13--18h51--TASK-CHORE-021.md) | CHORE | Atualizar mentor-agent para v0.9.0 | - | concluida | dispensado |
+| 13/09/26 21:53 | [`TASK-RF-044`](./2026-09-13--21h53--TASK-RF-044.md) | RF | Avancar e retroceder entre paradas do Meu roteiro em ciclo | - | concluida | aprovado |

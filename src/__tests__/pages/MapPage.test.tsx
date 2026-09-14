@@ -863,6 +863,53 @@ describe("MapPage (focus screen)", () => {
     expect(screen.queryByText(START_LABELS.SECTION)).not.toBeInTheDocument();
   });
 
+  // ------- Navegação ‹ › entre paradas firmadas (TASK-RF-044, RF-58) -------
+
+  const savedRoute = (stops: PlannedRoute["stops"]): PlannedRoute => ({
+    id: "route_saved",
+    startPoint: { lat: -22.9, lng: -43.2 },
+    stops,
+    config: DEFAULT_ROUTING_CONFIG,
+    createdAt: "2026-07-10T10:00:00.000Z",
+  });
+  const P1 = { id: "stop_1", order: 1, vehicleStop: { lat: -22.9, lng: -43.2 }, pointIds: ["pt_-22.90000,-43.20000", "pt_-22.90015,-43.20000"], radiusMeters: 30 };
+  const P2 = { id: "stop_2", order: 2, vehicleStop: { lat: -22.905, lng: -43.2 }, pointIds: ["pt_-22.90500,-43.20000"], radiusMeters: 30 };
+
+  it("Meu roteiro: parada anterior/proxima percorre as paradas firmadas em ciclo", async () => {
+    uploaderState.routes = { "A-1": rowsThreePoints };
+    routeStorageState.saved = savedRoute([P1, P2]);
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+    await waitFor(() => expect(screen.getByTestId("route-map-stub").getAttribute("data-models-summary")).toContain("stop"));
+
+    const stub = screen.getByTestId("route-map-stub");
+    const next = () => fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.NEXT_STOP }));
+    const prev = () => fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.PREV_STOP }));
+
+    // Nothing selected yet: › goes to the FIRST stop, and the map frames its two addresses.
+    next();
+    expect(stub).toHaveAttribute("data-focus-bounds", "2");
+    next(); // P2: one address
+    expect(stub).toHaveAttribute("data-focus-bounds", "1");
+    next(); // last → P1 (visualização cicla)
+    expect(stub).toHaveAttribute("data-focus-bounds", "2");
+    prev(); // P1 → last
+    expect(stub).toHaveAttribute("data-focus-bounds", "1");
+  });
+
+  it("Meu roteiro: com uma parada so as setas ficam desativadas", async () => {
+    uploaderState.routes = { "A-1": rowsThreePoints };
+    // No firmed stop: no arrows at all.
+    const semParada = renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+    expect(screen.queryByRole("button", { name: UI_LABELS.MAP_PANEL.NEXT_STOP })).not.toBeInTheDocument();
+    semParada.unmount();
+
+    routeStorageState.saved = savedRoute([P1]);
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+    await waitFor(() => expect(screen.getByTestId("route-map-stub").getAttribute("data-models-summary")).toContain("stop"));
+    expect(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.PREV_STOP })).toBeDisabled();
+    expect(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.NEXT_STOP })).toBeDisabled();
+  });
+
   it("auto-save: firma da parada persiste (debounce); a EDIÇÃO aberta pausa o save (o snapshot pré-edição fica)", async () => {
     startRoteiroFlow();
     fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
