@@ -162,7 +162,8 @@ vi.mock("../../components/RouteMap", () => ({
       suggestionPath: LatLng[] | null;
       radiusCircle?: { center: LatLng; meters: number } | null;
       anchor?: LatLng | null;
-      vehicleRoute?: LatLng[] | null;
+      vehicleRoute?: LatLng[][] | null;
+      vehicleRouteHighlight?: LatLng[] | null;
       footCircuit?: LatLng[] | null;
       suggestionFaded?: boolean;
     };
@@ -170,6 +171,11 @@ vi.mock("../../components/RouteMap", () => ({
     <div
       data-testid="route-map-stub"
       data-vehicle-route={String(roteiroOverlay?.vehicleRoute?.length ?? "none")}
+      data-vehicle-highlight={
+        roteiroOverlay?.vehicleRouteHighlight?.length
+          ? [roteiroOverlay.vehicleRouteHighlight[0], roteiroOverlay.vehicleRouteHighlight[roteiroOverlay.vehicleRouteHighlight.length - 1]].map((p) => `${p.lat},${p.lng}`).join(">")
+          : "none"
+      }
       data-foot-circuit={String(roteiroOverlay?.footCircuit?.length ?? "none")}
       data-suggestion-faded={String(roteiroOverlay?.suggestionFaded ?? false)}
       data-controlled={String(!!onInteractionChange)}
@@ -894,6 +900,32 @@ describe("MapPage (focus screen)", () => {
     expect(stub).toHaveAttribute("data-focus-bounds", "2");
     prev(); // P1 → last
     expect(stub).toHaveAttribute("data-focus-bounds", "1");
+  });
+
+  it("Meu roteiro: a parada selecionada destaca a perna que sai dela; a última fica sem destaque (RF-043)", async () => {
+    uploaderState.routes = { "A-1": rowsThreePoints };
+    routeStorageState.saved = savedRoute([P1, P2]);
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+    await waitFor(() => expect(screen.getByTestId("route-map-stub").getAttribute("data-models-summary")).toContain("stop"));
+
+    const stub = screen.getByTestId("route-map-stub");
+    const next = () => fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.NEXT_STOP }));
+    const prev = () => fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.PREV_STOP }));
+
+    // Start → P1 and P1 → P2 are separate legs; with no stop selected nothing is highlighted.
+    expect(stub).toHaveAttribute("data-vehicle-route", "2");
+    expect(stub).toHaveAttribute("data-vehicle-highlight", "none");
+
+    next(); // P1: the leg that LEAVES it, towards P2
+    expect(stub).toHaveAttribute("data-vehicle-highlight", "-22.9,-43.2>-22.905,-43.2");
+    next(); // P2 is the last stop: no leg leaves it
+    expect(stub).toHaveAttribute("data-vehicle-highlight", "none");
+    prev(); // back to P1
+    expect(stub).toHaveAttribute("data-vehicle-highlight", "-22.9,-43.2>-22.905,-43.2");
+
+    // Editing opens a draft: the foot circuit follows the draft and the highlight steps aside.
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.EDIT }));
+    expect(stub).toHaveAttribute("data-vehicle-highlight", "none");
   });
 
   it("Meu roteiro: com uma parada so as setas ficam desativadas", async () => {

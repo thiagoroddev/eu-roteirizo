@@ -24,22 +24,48 @@ export interface RoutePathResult {
   distanceMeters: number;
 }
 
-/**
- * Stitches consecutive legs into one polyline. Each leg from `suggestionPath`
- * includes both endpoints, so the shared junction (leg k's `to` === leg k+1's
- * `from`) is dropped with `slice(1)` on every leg after the first.
- */
-const chain = (graph: RoadGraph | null, waypoints: LatLng[]): RoutePathResult => {
-  if (waypoints.length < 2) return { path: waypoints.slice(), distanceMeters: 0 };
+/** One vehicle leg, kept apart so the map can draw it as its own stroke (TASK-RF-043). */
+export interface VehicleRouteLeg extends RoutePathResult {
+  /** Index (in `anchors`) of the stop this leg LEAVES; `null` for the start → first stop leg. */
+  fromStopIndex: number | null;
+}
 
-  let path: LatLng[] = [];
-  let distanceMeters = 0;
-  for (let i = 0; i < waypoints.length - 1; i++) {
-    const leg = suggestionPath(graph, waypoints[i], waypoints[i + 1]);
-    distanceMeters += leg.distanceMeters;
-    path = i === 0 ? leg.path.slice() : path.concat(leg.path.slice(1));
-  }
-  return { path, distanceMeters };
+/** One `suggestionPath` per consecutive pair of waypoints (each leg carries both endpoints). */
+const legsBetween = (graph: RoadGraph | null, waypoints: LatLng[]): RoutePathResult[] =>
+  waypoints.slice(1).map((to, i) => {
+    const leg = suggestionPath(graph, waypoints[i], to);
+    return { path: leg.path, distanceMeters: leg.distanceMeters };
+  });
+
+/**
+ * Stitches consecutive legs into one polyline. Each leg includes both endpoints,
+ * so the shared junction (leg k's `to` === leg k+1's `from`) is dropped with
+ * `slice(1)` on every leg after the first.
+ */
+const stitch = (waypoints: LatLng[], legs: RoutePathResult[]): RoutePathResult =>
+  legs.length === 0
+    ? { path: waypoints.slice(), distanceMeters: 0 }
+    : {
+        path: legs.flatMap((leg, i) => (i === 0 ? leg.path : leg.path.slice(1))),
+        distanceMeters: legs.reduce((sum, leg) => sum + leg.distanceMeters, 0),
+      };
+
+const chain = (graph: RoadGraph | null, waypoints: LatLng[]): RoutePathResult => stitch(waypoints, legsBetween(graph, waypoints));
+
+/**
+ * The vehicle route as SEPARATE legs (start → P1, P1 → P2, …), over the DIRECTED
+ * graph. The map draws one stroke per leg: canvas only adds opacity up between
+ * separate strokes, so a street driven in two legs reads darker (TASK-RF-043).
+ * A leg that doubles back on itself does not darken: known limitation.
+ *
+ * @param graph - The directed vehicle graph, or null while unavailable.
+ * @param startPoint - The route's start (the first leg leaves it), or null.
+ * @param anchors - The vehicle stops (`RouteStop.vehicleStop`), in route order.
+ * @returns One leg per consecutive pair, tagged with the stop it leaves.
+ */
+export const vehicleRouteLegs = (graph: RoadGraph | null, startPoint: LatLng | null, anchors: LatLng[]): VehicleRouteLeg[] => {
+  const offset = startPoint ? 1 : 0;
+  return legsBetween(graph, startPoint ? [startPoint, ...anchors] : anchors).map((leg, i) => ({ ...leg, fromStopIndex: i - offset < 0 ? null : i - offset }));
 };
 
 /**

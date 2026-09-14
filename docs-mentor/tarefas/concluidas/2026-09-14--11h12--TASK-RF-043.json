@@ -1,0 +1,248 @@
+{
+  "id": "TASK-RF-043",
+  "tipo": "RF",
+  "titulo": "Alternar tracado do roteiro e tornar passagens repetidas visiveis por opacidade",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "M",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "RF-57",
+  "requisitos": [
+    "RF-57"
+  ],
+  "sem_requisito_motivo": null,
+  "criada_em": "12/09/26 21:20",
+  "iniciada_em": "14/09/26 09:36",
+  "commit_base": "9261bbd8d299041dfaadcedb8a9963f194a7c952",
+  "concluida_em": "14/09/26 11:12",
+  "plano": {
+    "muda": [
+      "src/utils/routing/routePath.ts - novo vehicleRouteLegs (pernas sem costurar, cada uma com o indice da parada de origem; null = inicio); vehicleRoutePath passa a derivar dele, mesmo resultado",
+      "src/pages/MapPage.tsx - overlay leva vehicleRoute como uma lista por perna e vehicleRouteHighlight (perna que sai da parada em foco, fora do rascunho); km do veiculo na visao geral segue a mesma soma",
+      "src/components/RouteMap.tsx - uma polilinha por perna, continua e translucida em zinco (MANUAL KNOB); com destaque, o resto esmaece e a perna sai verde continua e grossa, acima das pernas e abaixo do circuito e da sugestao; o tracado do veiculo engrossa com o zoom perto (ajuste do smoke de 14/09/26)",
+      "src/__tests__/utils/routing/routePath.test.ts - testes de vehicleRouteLegs",
+      "src/__tests__/components/RouteMap.test.tsx - teste da RF-006.7 passa a pernas; teste novo do destaque",
+      "src/__tests__/pages/MapPage.test.tsx - stub conta pernas e expoe o destaque; teste novo do destaque pela parada selecionada"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "vehicleRouteLegs devolve uma perna por par consecutivo (N com inicio, N-1 sem), marcada com a parada de origem, e costurar as pernas da exatamente o vehicleRoutePath (caminho e distancia)",
+        "teste": "src/__tests__/utils/routing/routePath.test.ts > vehicleRouteLegs",
+        "evidencia": {
+          "comando": "npx vitest run src/__tests__/utils/routing/routePath.test.ts -t vehicleRouteLegs",
+          "codigo_saida": 0,
+          "saida": "RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  1 passed (1)\n      Tests  2 passed | 7 skipped (9)\n   Start at  09:49:52\n   Duration  1.11s (transform 107ms, setup 191ms, import 97ms, tests 9ms, environment 583ms)",
+          "executado_em": "14/09/26 09:49"
+        }
+      },
+      {
+        "texto": "O mapa desenha uma polilinha por perna, continua e com opacidade abaixo de 0,5",
+        "teste": "src/__tests__/components/RouteMap.test.tsx > desenha uma polilinha por perna (contínua e translúcida) e o circuito a pé, empilhados pernas→circuito→sugestão (RF-043)",
+        "evidencia": {
+          "comando": "npx vitest run src/__tests__/components/RouteMap.test.tsx -t \"desenha uma polilinha por perna\"",
+          "codigo_saida": 0,
+          "saida": "RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 33 skipped (34)\n   Start at  11:05:26\n   Duration  1.14s (transform 193ms, setup 179ms, import 202ms, tests 28ms, environment 548ms)",
+          "executado_em": "14/09/26 11:05"
+        }
+      },
+      {
+        "texto": "Com destaque, a perna sai verde continua acima das pernas (que esmaecem) e abaixo do circuito e da sugestao",
+        "teste": "src/__tests__/components/RouteMap.test.tsx > destaca a perna da parada em verde contínuo acima das pernas esmaecidas (RF-043)",
+        "evidencia": {
+          "comando": "npx vitest run src/__tests__/components/RouteMap.test.tsx -t \"destaca a perna da parada\"",
+          "codigo_saida": 0,
+          "saida": "RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 33 skipped (34)\n   Start at  11:05:30\n   Duration  1.24s (transform 213ms, setup 181ms, import 223ms, tests 24ms, environment 586ms)",
+          "executado_em": "14/09/26 11:05"
+        }
+      },
+      {
+        "texto": "Com parada selecionada, o destaque e a perna que sai dela ate a proxima; a ultima parada e o rascunho ficam sem destaque",
+        "teste": "src/__tests__/pages/MapPage.test.tsx > Meu roteiro: a parada selecionada destaca a perna que sai dela; a última fica sem destaque (RF-043)",
+        "evidencia": {
+          "comando": "npx vitest run src/__tests__/pages/MapPage.test.tsx -t \"destaca a perna que sai dela\"",
+          "codigo_saida": 0,
+          "saida": "RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 77 skipped (78)\n   Start at  09:50:03\n   Duration  2.77s (transform 831ms, setup 213ms, import 1.12s, tests 617ms, environment 593ms)",
+          "executado_em": "14/09/26 09:50"
+        }
+      },
+      {
+        "texto": "A distancia do veiculo no Sumario e na visao geral nao muda",
+        "teste": "src/__tests__/pages/SummaryPage.test.tsx e src/__tests__/pages/MapPage.test.tsx (testes existentes de km do veiculo seguem verdes)",
+        "evidencia": {
+          "comando": "npx vitest run src/__tests__/pages/SummaryPage.test.tsx src/__tests__/utils/routing/estimates.test.ts",
+          "codigo_saida": 0,
+          "saida": "RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  2 passed (2)\n      Tests  30 passed (30)\n   Start at  09:50:09\n   Duration  2.23s (transform 600ms, setup 416ms, import 873ms, tests 632ms, environment 1.17s)",
+          "executado_em": "14/09/26 09:50"
+        }
+      },
+      {
+        "texto": "O tracado do veiculo (pernas e destaque) engrossa com o zoom perto, e o destaque continua mais grosso que as pernas (ajuste pedido no smoke de 14/09/26)",
+        "teste": "src/__tests__/components/RouteMap.test.tsx > engrossa o traçado do veículo com o zoom perto, mantendo o destaque mais grosso (RF-043)",
+        "evidencia": {
+          "comando": "npx vitest run src/__tests__/components/RouteMap.test.tsx -t \"engrossa o tra\"",
+          "codigo_saida": 0,
+          "saida": "RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 33 skipped (34)\n   Start at  11:05:33\n   Duration  1.17s (transform 222ms, setup 180ms, import 231ms, tests 25ms, environment 538ms)",
+          "executado_em": "14/09/26 11:05"
+        }
+      },
+      {
+        "texto": "No aparelho: trecho percorrido 2x visivelmente mais escuro que 1x; com uma passagem, nome da rua e setas de mao legiveis; o trecho destacado se distingue dos dois tracejados",
+        "teste": "nao se aplica: validacao manual de UI no aparelho, registrada com task validar"
+      }
+    ],
+    "pedido_original": "12/09/26 (rascunho 2026-09-13--ui-investigacao-do-tracado-do-roteiro): 'esse monstro de linha no mapa fica em cima das setas que apontam a direcao da mao, e nao da pra ver o caminho ate a proxima rota'; 'o veiculo pode passar pela mesma rua sem ser possivel identificar visualmente no mapa'; 'opacidade - quando passa duas vezes no mesmo lugar, fica uma cor mais forte automaticamente'. 14/09/26: 'planeje a 043'",
+    "solucao_sugerida": "Acumulo de opacidade; alternar rota inteira/trecho selecionado numa opcao em Configuracoes; trecho em linha tracejada verde",
+    "alternativas_profissionais": [
+      {
+        "pratica": "Uma polilinha por perna com opacidade baixa: o canvas do Leaflet (globalAlpha + stroke por camada) soma as passagens",
+        "pegaria_o_caso": "Sim para repeticao entre pernas e para legibilidade de rua e setas; nao pega repeticao dentro da mesma perna nem o sentido",
+        "custo": "Nenhuma dependencia; Leaflet 1.9.4 ja instalado (conferido em Canvas.js _fillStroke)"
+      },
+      {
+        "pratica": "Contagem de passagens por aresta do grafo (espessura ou cor pelo numero de passagens)",
+        "pegaria_o_caso": "Sim, inclusive dentro da perna, com numero exato",
+        "custo": "Segmentar cada perna por aresta: muito mais objetos no canvas e calculo novo"
+      },
+      {
+        "pratica": "Linhas paralelas deslocadas (leaflet-polylineoffset, MIT)",
+        "pegaria_o_caso": "Sim, e pode indicar sentido",
+        "custo": "Dependencia nova, quebra em curvas e ao mudar o zoom; descartada pelo humano em 12/09"
+      },
+      {
+        "pratica": "Rotulos acima da rota (camada so de rotulos ou vetor com MapLibre GL JS, BSD-3)",
+        "pegaria_o_caso": "Sim, legibilidade definitiva com qualquer opacidade",
+        "custo": "XG: troca de tiles e de biblioteca de mapa (ADR-007, DT-004)"
+      },
+      {
+        "pratica": "Destaque contextual do trecho ativo (apps de navegacao com varias paradas): a parada selecionada destaca a perna de saida e o resto esmaece",
+        "pegaria_o_caso": "Sim, ver o caminho ate a proxima sem abrir configuracao; escolhido pelo humano em 14/09/26 no lugar da opcao global",
+        "custo": "Menor que a configuracao global: sem servico, contexto, provider, secao no dialogo nem rotulos"
+      }
+    ],
+    "problema_canonico": "legibilidade de rota sobre o mapa (hierarquia visual linha x rotulo), sobreposicao de trechos coincidentes (coincident polylines) e destaque do trecho ativo (active leg highlighting)",
+    "discordancia": {
+      "o_que_faria_diferente": "Destaque contextual pela parada selecionada no lugar da opcao global em Configuracoes, e trecho verde continuo no lugar do tracejado (ja ha dois tracejados na tela: sugestao ciano e circuito ambar). Humano aceitou os dois em 14/09/26",
+      "o_que_preocupa": "Pernas com ponta arredondada (lineCap round) somam opacidade na juncao e deixam uma bolinha mais escura em cada parada, quase sempre sob o marcador; decidir no smoke. A opacidade diz quantas passagens, nao o sentido; ida e volta dentro da mesma perna nao acumula (limitacao conhecida). MapPage.tsx tem 90 KB: diff contido",
+      "o_que_existe_pronto_80_porcento": "O proprio renderer de canvas do Leaflet (alpha por camada). Leaflet.PolylineDecorator (MIT) para setas de sentido fica para depois, se o smoke mostrar falta de sentido"
+    },
+    "estado_da_arte": {
+      "implementacoes_consolidadas": [
+        "Leaflet canvas renderer (BSD-2-Clause, ja instalado)",
+        "leaflet-polylineoffset (MIT)",
+        "Leaflet.PolylineDecorator (MIT)",
+        "MapLibre GL JS (BSD-3-Clause)"
+      ],
+      "motivo_descarte": "Canvas do Leaflet adotado: a soma de opacidade entre polilinhas vem pronta. polylineoffset: humano escolheu opacidade, e o offset quebra em curvas e zoom. PolylineDecorator: setas de sentido; as do tile voltam a aparecer com a linha translucida, so entra se o smoke pedir. MapLibre: rotulo acima da linha nativo, mas exige tiles vetoriais e reescrever o mapa (XG)",
+      "o_que_resta_construir": "Mesmo adotando qualquer uma: separar as pernas (vehicleRouteLegs), desenhar uma polilinha por perna e ligar o destaque a parada selecionada"
+    },
+    "custo_de_oportunidade": {
+      "o_que_existe_pronto": "Renderer de canvas do Leaflet 1.9.4 com alpha por camada; plugins MIT de offset e decorador de setas; MapLibre para rotulo acima da linha",
+      "custo_estimado": "Zero em licenca (todas abertas); MapLibre custaria a troca de tiles para vetoriais",
+      "dependencias_ou_infra": "Nenhuma para a solucao escolhida; plugins seriam dependencia nova; MapLibre exigiria tiles vetoriais (PMTiles/R2, DT-004)",
+      "tempo_substituido": "Nenhuma semana substituida: o que se constroi e uma funcao pura e um laco de desenho sobre o Leaflet ja instalado"
+    },
+    "impacto": "Tracado do veiculo no modo Meu roteiro (MapPage, RouteMap, routePath). Calculo de rota inalterado; muda so a entrega e o desenho",
+    "riscos": [
+      "Juncao entre pernas com lineCap round soma alpha e marca uma bolinha em cada parada (quase sempre sob o marcador P)",
+      "Destaque verde disputando atencao com a sugestao ciano e o circuito ambar",
+      "MapPage.tsx com 90 KB e MapPage.test.tsx com 98 KB: diff precisa ficar contido"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram passagens repetidas visiveis e o trecho ate a proxima parada; proponho 3 arquivos de codigo e os testes, sem arquivo novo. vehicleRouteLegs e o minimo para existir acumulo e e o que a TASK-RF-045 reutiliza; o destaque usa a selecao que ja existe (toque e setas da RF-044) no lugar de servico, contexto e secao nova em Configuracoes"
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "14/09/26 09:42",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  983 passed (983)\n   Start at  11:04:20\n   Duration  39.77s (transform 14.62s, setup 28.18s, import 32.21s, tests 73.44s, environment 112.41s)\n\n(node:33372) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "14/09/26 11:05",
+      "commit_execucao": "9261bbd8d299041dfaadcedb8a9963f194a7c952",
+      "arvore_hash": "801df628408c4f43ddef1c2f225fabb97dcac054",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "14/09/26 11:03",
+      "commit_execucao": "9261bbd8d299041dfaadcedb8a9963f194a7c952",
+      "arvore_hash": "801df628408c4f43ddef1c2f225fabb97dcac054",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "14/09/26 11:04",
+      "commit_execucao": "9261bbd8d299041dfaadcedb8a9963f194a7c952",
+      "arvore_hash": "801df628408c4f43ddef1c2f225fabb97dcac054",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1999 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-Bykvp3d9.css   \u001b[39m\u001b[1m\u001b[2m 28.26 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-F9x0g0n1.js    \u001b[39m\u001b[1m\u001b[33m541.27 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 104.35 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-BH0bsWaq.js   \u001b[39m\u001b[1m\u001b[33m808.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 263.08 kB\u001b[22m\n\u001b[32m✓ built in 6.38s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1800.00 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "14/09/26 11:05",
+      "commit_execucao": "9261bbd8d299041dfaadcedb8a9963f194a7c952",
+      "arvore_hash": "801df628408c4f43ddef1c2f225fabb97dcac054",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "APROVADO",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": "Humano validou no Samsung M35 (14/09/26) pelo dev server na rede local, roteiro L-30, com capturas no chat: tracado translucido com trechos repetidos mais escuros e nome de rua e setas de mao legiveis; parada selecionada destaca em verde a perna ate a proxima (P2 e P5), resto esmaecido. Calibrou a mao os knobs em RouteMap.tsx (tracado weight 6, opacidade 0,45, zinc-700; esmaecido 0,3; verde weight 7, opacidade 0,5; engrossa ate 2x no zoom 19) e declarou 'razoavel pra poder saber o trajeto' e 'validacao feita'.",
+      "executado_em": "14/09/26 11:05",
+      "commit_execucao": "9261bbd8d299041dfaadcedb8a9963f194a7c952",
+      "arvore_hash": "801df628408c4f43ddef1c2f225fabb97dcac054",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "aprovado",
+  "validado_em": "14/09/26 11:05",
+  "validacao_motivo": "Humano validou no Samsung M35 (14/09/26) pelo dev server na rede local, roteiro L-30, com capturas no chat: tracado translucido com trechos repetidos mais escuros e nome de rua e setas de mao legiveis; parada selecionada destaca em verde a perna ate a proxima (P2 e P5), resto esmaecido. Calibrou a mao os knobs em RouteMap.tsx (tracado weight 6, opacidade 0,45, zinc-700; esmaecido 0,3; verde weight 7, opacidade 0,5; engrossa ate 2x no zoom 19) e declarou 'razoavel pra poder saber o trajeto' e 'validacao feita'.",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-14--11h12--TASK-RF-043.md"
+}

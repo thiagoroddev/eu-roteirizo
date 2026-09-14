@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { vehicleRoutePath, footCircuitPath } from "../../../utils/routing/routePath";
+import { vehicleRoutePath, vehicleRouteLegs, footCircuitPath } from "../../../utils/routing/routePath";
 import { pedestrianGraph } from "../../../utils/routing/pedestrian";
 import { haversine } from "../../../utils/routing/geo";
 import { squareGraph, COORDS, A, B, C, D } from "./__fixtures__/syntheticGraph";
@@ -37,6 +37,32 @@ describe("vehicleRoutePath", () => {
     expect(result.path[result.path.length - 1]).toEqual(nearB);
     expect(result.path.length).toBeGreaterThan(2); // street nodes inserted
     expect(result.distanceMeters).toBeGreaterThan(0);
+  });
+});
+
+describe("vehicleRouteLegs", () => {
+  it("returns one leg per consecutive pair, tagged with the stop it leaves (null = the start)", () => {
+    const withStart = vehicleRouteLegs(null, START, [COORDS[A], COORDS[C]]);
+    expect(withStart.map((leg) => leg.fromStopIndex)).toEqual([null, 0]);
+    expect(withStart.map((leg) => leg.path)).toEqual([
+      [START, COORDS[A]],
+      [COORDS[A], COORDS[C]],
+    ]);
+
+    // Without a start the first leg already leaves stop 0; a lone stop has nowhere to go.
+    expect(vehicleRouteLegs(null, null, [COORDS[A], COORDS[C]]).map((leg) => leg.fromStopIndex)).toEqual([0]);
+    expect(vehicleRouteLegs(null, null, [COORDS[A]])).toEqual([]);
+  });
+
+  it("stitched back together, the legs are exactly vehicleRoutePath (path and distance)", () => {
+    const anchors = [near(COORDS[A]), near(COORDS[B]), near(COORDS[D])];
+    const legs = vehicleRouteLegs(squareGraph, START, anchors);
+    const stitched = legs.flatMap((leg, i) => (i === 0 ? leg.path : leg.path.slice(1)));
+    const whole = vehicleRoutePath(squareGraph, START, anchors);
+
+    expect(legs).toHaveLength(3);
+    expect(stitched).toEqual(whole.path);
+    expect(legs.reduce((sum, leg) => sum + leg.distanceMeters, 0)).toBeCloseTo(whole.distanceMeters, 6);
   });
 });
 

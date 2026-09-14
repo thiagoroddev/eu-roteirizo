@@ -13,7 +13,7 @@ import { MAP_CONFIG, FOCUS_MAX_ZOOM, UI_LABELS } from "../constants";
 import { createMarkerDivIcon } from "../utils/markers/markerIcon";
 import { MARKER_GEOMETRY } from "../utils/markers/markerSvg";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
-import { colorForLocationType, ROTEIRO_MARKER_COLORS, ROTEIRO_ACCENT } from "../utils/markers/markerColors";
+import { colorForLocationType, ROTEIRO_MARKER_COLORS, ROTEIRO_ACCENT, ROTEIRO_TYPE_COLORS } from "../utils/markers/markerColors";
 import { scaleForZoom, MARKER_MAX_SCALE } from "../utils/markers/markerScale";
 import { computeMarkerModels, nextInteraction, expandInteraction, regroupInteraction, type MarkerModel, type InteractionState } from "../utils/markers/markerModels";
 
@@ -64,9 +64,27 @@ const DOUBLE_TAP_MS = 220;
 const SUGGESTION_LINE_STYLE = { dashArray: "6 8", weight: 3, color: ROTEIRO_ACCENT, opacity: 0.55 } as const;
 /** The suggestion is FADED in a draft, STRONGER once the stop is firmed (fluxo §6). */
 const SUGGESTION_LINE_STRONG = { ...SUGGESTION_LINE_STYLE, weight: 4, opacity: 0.9 } as const;
-/** Vehicle route between anchors (RF-006.7): CONTINUOUS (no dashArray), in the
-    anchor's slate — reads as "the car's street path". ⚙️ MANUAL KNOB (color/weight). */
-const VEHICLE_ROUTE_STYLE = { weight: 4, color: ROTEIRO_MARKER_COLORS.vehicle.bottom, opacity: 0.9 } as const;
+/** Vehicle route between anchors (RF-006.7): CONTINUOUS (no dashArray), in ZINC
+    (Tailwind zinc-700, device smoke 14/09) — reads as "the car's street path". One
+    stroke PER LEG and TRANSLUCENT (RF-043): canvas adds opacity up where legs
+    overlap, so a street driven twice reads darker — 1 − (1 − α)^N — while the
+    tile's street names and one-way arrows stay readable under a single pass.
+    ⚙️ MANUAL KNOB (color/weight/opacity). */
+const VEHICLE_ROUTE_STYLE = { weight: 6, color: "#3F3F46", opacity: 0.45 } as const;
+/** The legs fade while one leg is highlighted (RF-043), still visible. ⚙️ MANUAL KNOB. */
+const VEHICLE_ROUTE_DIMMED_STYLE = { ...VEHICLE_ROUTE_STYLE, opacity: 0.3 } as const;
+/** The leg leaving the stop in focus (RF-043): CONTINUOUS roteiro green, thicker —
+    "continuous = where the car goes; dashed = hypothesis or walking". ⚙️ MANUAL KNOB. */
+const VEHICLE_LEG_HIGHLIGHT_STYLE = { weight: 7, color: ROTEIRO_TYPE_COLORS.residential.bottom, opacity: 0.5 } as const;
+/** The vehicle trace thickens when zoomed in (RF-043 smoke, 14/09): its base width up
+    to the default zoom, growing linearly to this factor at the closest zoom — a
+    4 px line looked thin against a street at street level. ⚙️ MANUAL KNOB. */
+const ROUTE_LINE_MAX_ZOOM_FACTOR = 2;
+const routeLineWeightForZoom = (weight: number, zoom: number): number => {
+  const { DEFAULT, MAX } = MAP_CONFIG.ZOOM;
+  const t = Math.min(1, Math.max(0, (zoom - DEFAULT) / (MAX - DEFAULT)));
+  return weight * (1 + t * (ROUTE_LINE_MAX_ZOOM_FACTOR - 1));
+};
 /** Foot circuit of a stop (RF-006.7): DASHED amber — distinct from the marker
     palette (green/blue/gray) and the cyan suggestion. ⚙️ MANUAL KNOB. */
 const FOOT_CIRCUIT_STYLE = { dashArray: "6 8", weight: 3, color: "#F59E0B", opacity: 0.85 } as const;
@@ -163,8 +181,10 @@ interface Props {
         expanded firmed stop SHOWS the car but doesn't let it move (editing the
         anchor means "Editar parada"). */
     anchorDraggable?: boolean;
-    /** Vehicle route (RF-006.7): the continuous line start → anchors (street path). */
-    vehicleRoute?: LatLng[] | null;
+    /** Vehicle route (RF-006.7): start → anchors (street path), one path PER LEG (RF-043). */
+    vehicleRoute?: LatLng[][] | null;
+    /** The leg leaving the stop in focus, highlighted over the faded legs (RF-043). */
+    vehicleRouteHighlight?: LatLng[] | null;
     /** Foot circuit (RF-006.7): the dashed loop of the selected/draft stop. */
     footCircuit?: LatLng[] | null;
     /** Fade the suggestion (RF-006.7): true in a draft, false when firmed. */
@@ -242,6 +262,7 @@ export const RouteMap: React.FC<Props> = ({
   const anchorLng = roteiroOverlay?.anchor?.lng;
   const anchorDraggable = roteiroOverlay?.anchorDraggable ?? false;
   const vehicleRoute = roteiroOverlay?.vehicleRoute ?? null;
+  const vehicleRouteHighlight = roteiroOverlay?.vehicleRouteHighlight ?? null;
   const footCircuit = roteiroOverlay?.footCircuit ?? null;
   const suggestionFaded = roteiroOverlay?.suggestionFaded ?? false;
   /** Bounds signature: refit ONLY when the framed set changes (markers appear/
@@ -576,13 +597,22 @@ export const RouteMap: React.FC<Props> = ({
     }
 
     // Route traces (RF-006.7). Canvas (`preferCanvas`) has no zIndexOffset, so
-    // ADD ORDER = stacking: vehicle route (bottom) → foot circuit → suggestion (top).
-    if (vehicleRoute && vehicleRoute.length >= 2) {
-      L.polyline(
-        vehicleRoute.map((p) => [p.lat, p.lng] as [number, number]),
-        VEHICLE_ROUTE_STYLE
-      ).addTo(overlayLayer);
-    }
+    // ADD ORDER = stacking: vehicle legs (bottom) → highlighted leg → foot circuit → suggestion (top).
+    /** Vehicle trace lines, kept to re-width them on zoom (RF-043). */
+    const traceLines: { line: L.Polyline; weight: number }[] = [];
+    const addTraceLine = (path: LatLng[], style: L.PolylineOptions & { weight: number }) => {
+      const line = L.polyline(
+        path.map((p) => [p.lat, p.lng] as [number, number]),
+        { ...style, weight: routeLineWeightForZoom(style.weight, safeZoom()) }
+      );
+      line.addTo(overlayLayer);
+      traceLines.push({ line, weight: style.weight });
+    };
+    const highlightedLeg = vehicleRouteHighlight && vehicleRouteHighlight.length >= 2 ? vehicleRouteHighlight : null;
+    vehicleRoute?.forEach((leg) => {
+      if (leg.length >= 2) addTraceLine(leg, highlightedLeg ? VEHICLE_ROUTE_DIMMED_STYLE : VEHICLE_ROUTE_STYLE);
+    });
+    if (highlightedLeg) addTraceLine(highlightedLeg, VEHICLE_LEG_HIGHLIGHT_STYLE);
     if (footCircuit && footCircuit.length >= 2) {
       L.polyline(
         footCircuit.map((p) => [p.lat, p.lng] as [number, number]),
@@ -596,22 +626,25 @@ export const RouteMap: React.FC<Props> = ({
       ).addTo(overlayLayer);
     }
 
-    if (overlayMarkers.length === 0) return;
+    if (overlayMarkers.length === 0 && traceLines.length === 0) return;
     /** Overlay markers scale with zoom like every other marker — with the same
-        skip-when-unchanged as the main layer (REF-015c). */
+        skip-when-unchanged as the main layer (REF-015c); the vehicle trace
+        re-widths with it (RF-043). */
     const rescaleOverlay = () => {
-      const nextScale = scaleForZoom(safeZoom());
+      const zoom = safeZoom();
+      const nextScale = scaleForZoom(zoom);
       overlayMarkers.forEach((entry) => {
         if (nextScale === entry.lastScale) return;
         entry.lastScale = nextScale;
         entry.marker.setIcon(createMarkerDivIcon({ ...entry.iconProps, scale: nextScale }));
       });
+      traceLines.forEach(({ line, weight }) => line.setStyle({ weight: routeLineWeightForZoom(weight, zoom) }));
     };
     map.on("zoomend", rescaleOverlay);
     return () => {
       map.off("zoomend", rescaleOverlay);
     };
-  }, [startLat, startLng, suggestionPath, radiusCircle, anchorLat, anchorLng, anchorDraggable, vehicleRoute, footCircuit, suggestionFaded]);
+  }, [startLat, startLng, suggestionPath, radiusCircle, anchorLat, anchorLng, anchorDraggable, vehicleRoute, vehicleRouteHighlight, footCircuit, suggestionFaded]);
 
   // Fills the parent (focus screen layout); leaving the screen is the shell's
   // header back arrow / the page's Escape handler (TASK-RF-023.5).
