@@ -88,8 +88,8 @@ export type EdgeTier = (edge: Edge, distance: number) => boolean;
 /**
  * Melhor projeção por NÍVEL de preferência, em UMA varredura do grafo
  * (TASK-BG-016). Existe porque escolher a parada padrão do veículo é uma
- * pergunta em camadas — "a rua do endereço, senão uma rua nomeada, senão
- * qualquer asfalto" — e responder cada camada com sua própria varredura
+ * pergunta em camadas — "a rua nomeada mais próxima, a do endereço se empatar,
+ * senão qualquer asfalto" — e responder cada camada com sua própria varredura
  * multiplicaria um laço que já é O(arestas) e roda por parada.
  *
  * @param graph - O grafo de ruas.

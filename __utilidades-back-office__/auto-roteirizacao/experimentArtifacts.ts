@@ -18,7 +18,25 @@ export interface ExperimentalArtifactInput {
   sourceRows: readonly RowData[];
   solution: FundamentalSolution;
   config?: Partial<FundamentalExperimentConfig>;
+  /** Where each stop's vehicle goes in the exported route. Defaults to "app-default" (INV-001). */
+  anchorPolicy?: AnchorPolicy;
 }
+
+/**
+ * Where the exported stops park the vehicle (TASK-BG-022, INV-001).
+ *
+ * - `app-default` (the default): each stop is flagged as the app's default anchor and starts on its
+ *   first pin; the app moves it onto the street in front of that pin once the road graph loads.
+ * - `experiment`: the optimizer's anchors, flagged as a manual choice so the app keeps them. Only on
+ *   explicit request (harness key `FUNDAMENTAL_ANCORAS_DO_EXPERIMENTO=1`), and the route name says so.
+ *
+ * ⚠️ Until BG-022 every export used the experiment's anchors flagged as the user's choice: imported
+ * into the app, they parked the vehicle halfway to the next stop and survived even stop edits.
+ */
+export type AnchorPolicy = "app-default" | "experiment";
+
+/** Route-name marker of experiment anchors: whoever imports the file sees it before trusting a stop. */
+export const EXPERIMENT_ANCHORS_MARKER = "ANCORAS DO EXPERIMENTO";
 
 const compare = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 const safeJson = (value: unknown): string => (JSON.stringify(value) ?? "null").replaceAll("<", "\\u003c");
@@ -29,9 +47,19 @@ export const createExperimentalRoutePayload = (input: ExperimentalArtifactInput)
   const config = { ...DEFAULT_ROUTING_CONFIG, ...(input.config ?? {}) };
   const searchRadiusMeters = input.config?.searchRadiusMeters ?? DEFAULT_ROUTING_CONFIG.autoRadiusMeters;
   const circuitLimitMeters = input.config?.circuitLimitMeters ?? 120;
-  const identity = hash(JSON.stringify(["auto-fundamentals", input.runId, input.caseId, input.variant, input.objective, searchRadiusMeters, circuitLimitMeters, config, input.solution.signature]));
+  const anchorPolicy: AnchorPolicy = input.anchorPolicy ?? "app-default";
+  const identity = hash(
+    JSON.stringify(["auto-fundamentals", input.runId, input.caseId, input.variant, input.objective, searchRadiusMeters, circuitLimitMeters, config, input.solution.signature, anchorPolicy])
+  );
   const manifestId = `auto-fundamentals-${identity}`;
-  const routeName = `EXPERIMENTO | ${input.caseId} | ${input.variant} | ${input.objective} | PROCURA ${searchRadiusMeters}m | CIRCUITO ${circuitLimitMeters}m | ${input.solution.status}`;
+  const policyLabel = anchorPolicy === "experiment" ? ` | ${EXPERIMENT_ANCHORS_MARKER}` : "";
+  const routeName = `EXPERIMENTO${policyLabel} | ${input.caseId} | ${input.variant} | ${input.objective} | PROCURA ${searchRadiusMeters}m | CIRCUITO ${circuitLimitMeters}m | ${input.solution.status}`;
+  const pointsById = new Map(input.sourcePoints.map((point) => [point.id, point]));
+  /** app-default: the first pin, which the app reprojects onto its street; experiment: the optimizer's spot. */
+  const vehicleStopOf = (group: FundamentalSolution["groups"][number]) => {
+    const firstPin = pointsById.get(group.orderedPointIds[0] ?? "");
+    return anchorPolicy === "app-default" && firstPin ? { lat: firstPin.lat, lng: firstPin.lng } : { ...group.anchor.position };
+  };
   const route: PlannedRoute = {
     id: `${manifestId}-route`,
     startPoint: null,
@@ -47,11 +75,11 @@ export const createExperimentalRoutePayload = (input: ExperimentalArtifactInput)
     stops: input.solution.groups.map((group, index) => ({
       id: `${manifestId}-stop-${index + 1}`,
       order: index + 1,
-      vehicleStop: { ...group.anchor.position },
+      vehicleStop: vehicleStopOf(group),
       pointIds: group.orderedPointIds.slice(),
       radiusMeters: DEFAULT_ROUTING_CONFIG.autoRadiusMeters,
       reversed: false,
-      vehicleStopIsDefault: false,
+      vehicleStopIsDefault: anchorPolicy === "app-default",
     })),
   };
   return createRouteExportPayload(
@@ -77,7 +105,10 @@ export const validateExperimentalPayload = (payload: ReturnType<typeof createExp
   const known = new Set(sourcePoints.map((point) => point.id));
   const members = payload.route.stops.flatMap((stop) => stop.pointIds);
   if (new Set(members).size !== members.length || members.length !== known.size || members.some((id) => !known.has(id))) return false;
-  if (payload.route.stops.some((stop, index) => stop.order !== index + 1 || stop.radiusMeters === 120 || stop.vehicleStopIsDefault !== false)) return false;
+  if (payload.route.stops.some((stop, index) => stop.order !== index + 1 || stop.radiusMeters === 120)) return false;
+  // One anchor policy per route, and experiment anchors only with the name saying so (INV-001).
+  const experimentAnchors = payload.routeName.includes(EXPERIMENT_ANCHORS_MARKER);
+  if (payload.route.stops.some((stop) => stop.vehicleStopIsDefault !== !experimentAnchors)) return false;
   return true;
 };
 

@@ -745,7 +745,8 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
 
   /**
    * O mesmo, para as paradas JÁ FIRMADAS (TASK-BG-016): quando o grafo chega,
-   * toda parada ainda no padrão é reancorada na rua do endereço. Sem isto, um
+   * toda parada ainda no padrão é reancorada pela regra atual (TASK-BG-022: via
+   * nomeada em frente ao pino). Sem isto, um
    * roteiro salvo (ou importado de um export antigo) ficaria para sempre com a
    * âncora na via interna do condomínio, porque a regra do padrão mudou depois
    * de ele ter sido criado. Decisão do humano em 11/09: corrigir da raiz, já que

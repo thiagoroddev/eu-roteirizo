@@ -31,29 +31,33 @@ export const suggestVehicleStop = (graph: RoadGraph | null, point: LatLng): LatL
 };
 
 /**
- * ⚙️ MANUAL KNOB — até onde a rua do próprio endereço ainda vale como âncora.
- * Além disso, um logradouro de mesmo nome é outro trecho da cidade (ou o
- * geocódigo do romaneio está errado), e projetar lá seria pior que usar a rua
- * nomeada mais próxima. Generoso de propósito: condomínio fechado com recuo
- * grande ainda cabe.
+ * ⚙️ MANUAL KNOB — quanto a rua do próprio endereço pode estar MAIS LONGE do
+ * pino que a via nomeada mais próxima e ainda ficar com a âncora. Existe para a
+ * esquina: o pino cai entre a rua do endereço e a transversal, e a diferença é
+ * de poucos metros. Acima disso o pino manda — o carro para em frente a ele
+ * (TASK-BG-022: com um teto de 250 m, o carro ia para a rua do endereço a meio
+ * caminho da parada seguinte).
  */
-const STREET_NAME_MATCH_MAX_METERS = 250;
+const ADDRESS_STREET_TIE_METERS = 10;
 
 /**
- * A parada PADRÃO do veículo para um endereço (TASK-BG-016).
+ * A parada PADRÃO do veículo para um endereço (TASK-BG-016, TASK-BG-022).
  *
  * Diferente de `suggestVehicleStop`, que projeta no asfalto mais próximo e
  * serve ao ARRASTO manual (ali a posição é escolha do usuário), esta responde
- * "onde o carro para para entregar NESTE endereço" — e a resposta é a rua do
- * endereço. O asfalto mais próximo não serve: para um prédio recuado, ele é a
- * via interna do condomínio (`highway=service`, quase sempre sem `name` no
- * OSM), que não é endereço de ninguém e fazia o carro parar dentro do lote.
+ * "onde o carro para para entregar NESTE endereço" — e a resposta é a via
+ * nomeada em frente ao pino. O asfalto mais próximo não serve: para um prédio
+ * recuado, ele é a via interna do condomínio (`highway=service`, quase sempre
+ * sem `name` no OSM), que não é endereço de ninguém e fazia o carro parar
+ * dentro do lote. É o critério dos "routable points" dos provedores de
+ * geocodificação: o segmento viário mais próximo, filtrado por classe de via.
  *
- * Três níveis, resolvidos em UMA varredura (`nearestEdgeByTiers`):
- * 1. a via cujo nome casa com o logradouro, dentro de `STREET_NAME_MATCH_MAX_METERS`;
- * 2. senão, a via NOMEADA mais próxima (nome de verdade ⇒ não é acesso interno);
- * 3. senão, a aresta mais próxima — o comportamento antigo, para o caso em que
- *    só existe via de serviço por perto (galpão, condomínio industrial).
+ * Resolvida em UMA varredura (`nearestEdgeByTiers`):
+ * 1. a via NOMEADA mais próxima (nome de verdade ⇒ não é acesso interno);
+ * 2. a rua do logradouro fica com a âncora só se estiver até
+ *    `ADDRESS_STREET_TIE_METERS` mais longe que ela (desempate de esquina);
+ * 3. sem via nomeada, a aresta mais próxima — o comportamento antigo, para o
+ *    caso em que só existe via de serviço por perto (galpão, condomínio industrial).
  *
  * @param graph - O grafo de ruas, ou `null` enquanto indisponível (carregando/offline).
  * @param point - A coordenada do endereço.
@@ -65,15 +69,12 @@ export const defaultVehicleStop = (graph: RoadGraph | null, point: LatLng, addre
 
   // `isSameStreetName` responde `true` quando um dos lados é vazio (é o certo
   // para ROTULAR, não para DECIDIR): sem esta guarda, endereço sem logradouro
-  // casaria com a primeira via de serviço e o nível 1 viraria o bug de novo.
+  // casaria com qualquer via e ganharia o desempate sem ter nome para isso.
   const street = normalizeStreetName(addressStreet) ? addressStreet : "";
-  const tiers: EdgeTier[] = [
-    (edge, distance) => street !== "" && distance <= STREET_NAME_MATCH_MAX_METERS && hasRealStreetName(edge) && isSameStreetName(street, edge.wayName),
-    (edge) => hasRealStreetName(edge),
-    () => true,
-  ];
-  const [byName, namedStreet, anyEdge] = nearestEdgeByTiers(graph, point, tiers);
-  const match = byName ?? namedStreet ?? anyEdge;
+  const tiers: EdgeTier[] = [(edge) => street !== "" && hasRealStreetName(edge) && isSameStreetName(street, edge.wayName), (edge) => hasRealStreetName(edge), () => true];
+  const [addressStreetMatch, namedStreet, anyEdge] = nearestEdgeByTiers(graph, point, tiers);
+  const tieWon = addressStreetMatch && namedStreet && addressStreetMatch.distance <= namedStreet.distance + ADDRESS_STREET_TIE_METERS;
+  const match = (tieWon ? addressStreetMatch : namedStreet) ?? anyEdge;
   return match ? match.point : { lat: point.lat, lng: point.lng };
 };
 

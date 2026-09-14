@@ -6,7 +6,7 @@ import "fake-indexeddb/auto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { FundamentalObjective, FundamentalSolution, FundamentalVariant } from "./fundamentalExperiment";
 import { DEFAULT_FUNDAMENTAL_EXPERIMENT_CONFIG, clearFundamentalExperimentCaches, runFundamentalExperiment } from "./fundamentalExperiment";
-import { createExperimentalRoutePayload, renderExperimentMapHtml, validateExperimentalPayload } from "./experimentArtifacts";
+import { createExperimentalRoutePayload, renderExperimentMapHtml, validateExperimentalPayload, type AnchorPolicy } from "./experimentArtifacts";
 import { evaluateCompleteWalking, evaluateLimitedFundamentalCircuit, evaluateVehicleOrder, MAX_CACHED_STREET_PATHS, type PathCollection } from "./experimentPaths";
 import { buildFundamentalReferences } from "./fundamentals";
 import { hash, loadCorpus, loadSnapshots, type CorpusCase } from "./corpus";
@@ -32,6 +32,8 @@ const snapshots = loadSnapshots(corpus);
 const runId = new Date().toISOString().replaceAll(/[:.]/g, "-");
 const outputDir = resolve(".mentor-saidas/auto-fundamentals", runId);
 const importableDir = join(outputDir, "importaveis");
+/** INV-001 / TASK-BG-022: the app never receives the optimizer anchors unless this key is on. */
+const ANCHOR_POLICY: AnchorPolicy = process.env.FUNDAMENTAL_ANCORAS_DO_EXPERIMENTO === "1" ? "experiment" : "app-default";
 const mapDir = join(outputDir, "mapas");
 const metrics: Record<string, unknown>[] = [];
 const details: Record<string, unknown>[] = [];
@@ -379,7 +381,7 @@ const verifyArtifact = async (
   objective: FundamentalObjective
 ): Promise<void> => {
   const config = { ...DEFAULT_FUNDAMENTAL_EXPERIMENT_CONFIG, searchRadiusMeters, circuitLimitMeters };
-  const payload = createExperimentalRoutePayload({ runId, caseId: entry.id, variant, objective, sourcePoints: entry.points, sourceRows: entry.rows, solution, config });
+  const payload = createExperimentalRoutePayload({ runId, caseId: entry.id, variant, objective, sourcePoints: entry.points, sourceRows: entry.rows, solution, config, anchorPolicy: ANCHOR_POLICY });
   check(validateExperimentalPayload(payload, entry.points), `${entry.id}: artifact conservation`);
   const serialized = JSON.stringify(payload);
   const parsed = parseAndValidateRouteJson(serialized);
@@ -395,7 +397,7 @@ const verifyArtifact = async (
   const state = routeBuilderReducer(createInitialBuilderState(buildDeliveryPoints(savedRows)), { type: "HYDRATE", route: saved });
   check(hash(JSON.stringify(state.stops)) === hash(JSON.stringify(payload.route.stops)), `${entry.id}: artifact hydration changed stops`);
   check(!importableFiles.some((file) => file.manifestId === payload.manifestId), `${entry.id}: unique artifact identity`);
-  const file = `${entry.id}-r${searchRadiusMeters}m-c${circuitLimitMeters}m-${variant}-${objective}.json`;
+  const file = `${entry.id}-r${searchRadiusMeters}m-c${circuitLimitMeters}m-${variant}-${objective}${ANCHOR_POLICY === "experiment" ? "-ancoras-do-experimento" : ""}.json`;
   writeFileSync(join(importableDir, file), serialized, { flag: "wx" });
   importableFiles.push({ caseId: entry.id, file, sha256: hash(serialized), searchRadiusMeters, circuitLimitMeters, variant, objective, manifestId: payload.manifestId, status: solution.status });
 };

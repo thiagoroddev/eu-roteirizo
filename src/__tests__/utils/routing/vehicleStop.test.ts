@@ -67,19 +67,14 @@ describe("suggestVehicleStop", () => {
   });
 });
 
-describe("defaultVehicleStop (TASK-BG-016 — a parada PADRÃO fica na rua do endereço)", () => {
-  it("prefere a via cujo nome casa com o logradouro, ignorando a service mais próxima", () => {
+describe("defaultVehicleStop (TASK-BG-016, TASK-BG-022 — a parada PADRÃO fica na via nomeada em frente ao pino)", () => {
+  it("ignora a via de serviço mais próxima e fica na avenida nomeada", () => {
     const anchor = defaultVehicleStop(condoGraph, BUILDING, "Avenida Epitácio Pessoa");
     expect(anchor.lat).toBeCloseTo(AVENUE_LAT, 6); // a avenida, não a interna do condomínio
     expect(anchor.lng).toBeCloseTo(BUILDING.lng, 5);
   });
 
-  it("casa o logradouro por nome normalizado (abreviação do romaneio)", () => {
-    expect(defaultVehicleStop(condoGraph, BUILDING, "Av. Epitacio Pessoa").lat).toBeCloseTo(AVENUE_LAT, 6);
-  });
-
   it("sem casar o nome, evita a via de serviço e usa a via nomeada mais próxima", () => {
-    // Logradouro que não existe na malha: cai no nível (b) — nomeada não-service.
     expect(defaultVehicleStop(condoGraph, BUILDING, "Rua Que Não Existe Na Malha").lat).toBeCloseTo(AVENUE_LAT, 6);
   });
 
@@ -92,26 +87,49 @@ describe("defaultVehicleStop (TASK-BG-016 — a parada PADRÃO fica na rua do en
     expect(defaultVehicleStop(onlyService, BUILDING, "Avenida Epitácio Pessoa").lat).toBeCloseTo(SERVICE_LAT, 6);
   });
 
-  it("rua de mesmo nome longe demais não puxa a âncora (geocódigo ruim) — usa a nomeada perto", () => {
-    /** A "Epitácio Pessoa" a ~330 m; uma rua nomeada qualquer a ~44 m. */
-    const farAvenue = way(
-      [5, 6],
+  /** Rua horizontal na latitude dada, cobrindo a longitude do pino. */
+  const street = (id: number, lat: number, name: string): OsmElement =>
+    way(
+      [id, id + 1],
       [
-        { lat: -22.983, lon: -43.201 },
-        { lat: -22.983, lon: -43.199 },
+        { lat, lon: -43.201 },
+        { lat, lon: -43.199 },
       ],
-      { highway: "primary", name: "Avenida Epitácio Pessoa" }
+      { highway: "residential", name }
     );
-    const nearStreet = way(
-      [7, 8],
+
+  // TASK-BG-022, parada P3 do roteiro L-30: o pino fica a ~33 m de uma rua e a
+  // ~200 m da rua do endereço. O carro parava lá longe, a meio caminho da próxima.
+  it("rua do endereço longe do pino perde para a via nomeada em frente ao pino", () => {
+    const FRONT_LAT = -22.9801; // ~33 m ao norte do pino
+    const graph = buildGraph([street(10, FRONT_LAT, "Rua Prudente de Morais"), street(20, -22.9822, "Rua Barão da Torre"), CONDO_SERVICE]);
+    expect(defaultVehicleStop(graph, BUILDING, "Rua Barão da Torre").lat).toBeCloseTo(FRONT_LAT, 6);
+  });
+
+  // TASK-BG-022, parada P4 do roteiro L-30: ~47 m contra ~15 m passa da folga.
+  it("rua do endereço além da folga de desempate perde para a nomeada mais próxima", () => {
+    const FRONT_LAT = -22.98026; // ~15 m ao norte do pino
+    const graph = buildGraph([street(10, FRONT_LAT, "Rua Barão da Torre"), street(20, -22.98082, "Rua Garcia d'Ávila")]);
+    expect(defaultVehicleStop(graph, BUILDING, "Rua Garcia d'Ávila").lat).toBeCloseTo(FRONT_LAT, 6);
+  });
+
+  it("na esquina, a rua do endereço dentro da folga vence a transversal", () => {
+    const ADDRESS_LAT = -22.98055; // ~17 m ao sul do pino
+    /** Transversal a ~10 m a oeste: mais perto, mas por menos que a folga. */
+    const crossStreet = way(
+      [30, 31],
       [
-        { lat: AVENUE_LAT, lon: -43.201 },
-        { lat: AVENUE_LAT, lon: -43.199 },
+        { lat: -22.981, lon: -43.2001 },
+        { lat: -22.98, lon: -43.2001 },
       ],
-      { highway: "residential", name: "Rua Perto" }
+      { highway: "residential", name: "Rua Farme de Amoedo" }
     );
-    const graph = buildGraph([farAvenue, nearStreet, CONDO_SERVICE]);
-    expect(defaultVehicleStop(graph, BUILDING, "Avenida Epitácio Pessoa").lat).toBeCloseTo(AVENUE_LAT, 6);
+    const graph = buildGraph([street(10, ADDRESS_LAT, "Rua Visconde de Pirajá"), crossStreet]);
+    expect(defaultVehicleStop(graph, BUILDING, "Rua Visconde de Pirajá").lat).toBeCloseTo(ADDRESS_LAT, 6);
+    // o nome casa normalizado (abreviação do romaneio)
+    expect(defaultVehicleStop(graph, BUILDING, "R. Visconde de Piraja").lat).toBeCloseTo(ADDRESS_LAT, 6);
+    // sem a rua do endereço na malha, fica a transversal mais próxima
+    expect(defaultVehicleStop(graph, BUILDING, "Rua Qualquer").lng).toBeCloseTo(-43.2001, 6);
   });
 
   it("sem grafo devolve o próprio ponto, como hoje (app offline não trava)", () => {

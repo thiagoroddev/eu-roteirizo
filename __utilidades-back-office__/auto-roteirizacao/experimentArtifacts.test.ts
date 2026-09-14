@@ -101,4 +101,60 @@ describe("fundamental experiment artifacts", () => {
     missingStop.route.stops = [];
     expect(validateExperimentalPayload(missingStop, sourcePoints)).toBe(false);
   });
+
+  // ------- Politica de ancoras (TASK-BG-022, INV-001) -------
+  // The optimizer's anchor must never reach the app as the user's choice unless the lab asks for it.
+
+  /** A solution whose anchors sit visibly away from the pins, like the midway parking seen in the app. */
+  const solutionWithMovedAnchors = () => {
+    const sourcePoints = points();
+    const solution = structuredClone(runFundamentalExperiment({ points: sourcePoints, graph }).variants[0].bestByObjective.vehicleDistance);
+    for (const group of solution.groups) group.anchor.position = { lat: group.anchor.position.lat + 0.0005, lng: group.anchor.position.lng };
+    return { sourcePoints, solution };
+  };
+  const baseInput = { runId: "run-policy", caseId: "case-policy", variant: "individual" as const, objective: "vehicleDistance" as const, sourceRows: rows };
+
+  it("exporta com as ancoras padrao do app sem a chave", () => {
+    const { sourcePoints, solution } = solutionWithMovedAnchors();
+    const payload = createExperimentalRoutePayload({ ...baseInput, sourcePoints, solution });
+
+    const byId = new Map(sourcePoints.map((p) => [p.id, p]));
+    for (const stop of payload.route.stops) {
+      const firstPin = byId.get(stop.pointIds[0])!;
+      expect(stop.vehicleStopIsDefault).toBe(true);
+      expect(stop.vehicleStop).toEqual({ lat: firstPin.lat, lng: firstPin.lng });
+    }
+    expect(payload.routeName).not.toContain("ANCORAS DO EXPERIMENTO");
+    expect(validateExperimentalPayload(payload, sourcePoints)).toBe(true);
+  });
+
+  it("so a chave explicita exporta as ancoras do experimento", () => {
+    const { sourcePoints, solution } = solutionWithMovedAnchors();
+    const payload = createExperimentalRoutePayload({ ...baseInput, sourcePoints, solution, anchorPolicy: "experiment" });
+
+    payload.route.stops.forEach((stop, index) => {
+      expect(stop.vehicleStopIsDefault).toBe(false);
+      expect(stop.vehicleStop).toEqual(solution.groups[index].anchor.position);
+    });
+    expect(payload.routeName).toContain("ANCORAS DO EXPERIMENTO");
+    expect(payload.manifestId).not.toBe(createExperimentalRoutePayload({ ...baseInput, sourcePoints, solution }).manifestId);
+    expect(validateExperimentalPayload(payload, sourcePoints)).toBe(true);
+  });
+
+  it("recusa politica de ancoras misturada", () => {
+    const { sourcePoints, solution } = solutionWithMovedAnchors();
+    const padrao = createExperimentalRoutePayload({ ...baseInput, sourcePoints, solution });
+    const experimento = createExperimentalRoutePayload({ ...baseInput, sourcePoints, solution, anchorPolicy: "experiment" });
+    expect(padrao.route.stops.length).toBeGreaterThanOrEqual(2); // individual: one stop per address
+
+    // One stop carrying the optimizer's anchor inside a default route.
+    const misturado = structuredClone(padrao);
+    misturado.route.stops[0].vehicleStopIsDefault = false;
+    expect(validateExperimentalPayload(misturado, sourcePoints)).toBe(false);
+
+    // Experiment anchors without the name telling the human so.
+    const semAviso = structuredClone(experimento);
+    semAviso.routeName = padrao.routeName;
+    expect(validateExperimentalPayload(semAviso, sourcePoints)).toBe(false);
+  });
 });

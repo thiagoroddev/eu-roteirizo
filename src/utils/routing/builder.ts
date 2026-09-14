@@ -267,8 +267,8 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
     /**
      * Reancora as paradas ainda no PADRÃO nas posições recalculadas (TASK-BG-016).
      *
-     * Nasceu porque a regra do padrão mudou (a parada vai para a rua do endereço,
-     * não para a via interna do condomínio) e roteiro já salvo — inclusive
+     * Nasceu porque a regra do padrão mudou (a parada vai para a via nomeada em
+     * frente ao pino, não para a via interna do condomínio) e roteiro já salvo — inclusive
      * importado de um export antigo — ficaria com a âncora velha para sempre.
      * O reducer segue puro: quem tem o grafo calcula as posições e passa prontas,
      * como em RESET_VEHICLE_STOP.

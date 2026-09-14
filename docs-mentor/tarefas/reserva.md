@@ -9,7 +9,6 @@
 |---|---|---|---|---|---|---|
 | `TASK-BG-019` | Respeitar as restricoes de conversao do OSM (no_* e only_*) no roteamento veicular | - | BG | importante | M/G | titulo-autossuficiente |
 | `TASK-BG-020` | Sumario carregar a malha viaria com o ponto inicial, igual ao mapa | - | BG | importante | P/P | titulo-autossuficiente |
-| `TASK-BG-022` | Roteiro exportado pelo experimento entrava no app com as ancoras otimizadas marcadas como escolha do usuario | - | BG | importante | P/P | validacao manual da TASK-RF-044 (13/09/26): veiculo parado no meio do caminho ate a proxima parada |
 | `TASK-CHORE-008` | Remover service worker legado public/sw.js | - | CHORE | desejavel | P/P | titulo-autossuficiente |
 | `TASK-CHORE-009` | Comprimir capturas de docs/imagens | - | CHORE | desejavel | P/P | titulo-autossuficiente |
 | `TASK-CHORE-018` | Atualizar esbuild para 0.28.1 ou superior (alerta Dependabot 1: leitura de arquivos pelo servidor de desenvolvimento no Windows) | - | CHORE | importante | P/M | titulo-autossuficiente |
