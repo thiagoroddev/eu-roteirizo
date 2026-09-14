@@ -61,7 +61,7 @@ import { nearestWayName } from "../utils/routing/match";
 import { nearestFirstOrder } from "../utils/routing/walkOrder";
 import { pedestrianGraph } from "../utils/routing/pedestrian";
 import { suggestionPath } from "../utils/routing/suggestion";
-import { vehicleRoutePath, footCircuitPath } from "../utils/routing/routePath";
+import { vehicleRouteLegs, footCircuitPath } from "../utils/routing/routePath";
 import { haversine } from "../utils/routing/geo";
 import { isWithinRioBounds } from "../utils/coordinates";
 import { formatMeters } from "../utils/formatters";
@@ -803,12 +803,14 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
 
   // ------- Route traces (RF-006.7) -------
   /** Vehicle route: start → each anchor over the DIRECTED graph (respects one-
-      way; straight fallback without a graph). Drawn whenever a stop is firmed;
-      its distance is reused for the overview's real vehicle km. */
-  const vehicleRoute = useMemo(() => {
+      way; straight fallback without a graph), as SEPARATE legs so a street driven
+      twice reads darker on the map (RF-043). Drawn whenever a stop is firmed;
+      the legs' distance is reused for the overview's real vehicle km. */
+  const vehicleLegs = useMemo(() => {
     const anchors = builderState.stops.map((s) => s.vehicleStop);
-    return anchors.length > 0 ? vehicleRoutePath(graph, builderState.startPoint, anchors) : null;
+    return anchors.length > 0 ? vehicleRouteLegs(graph, builderState.startPoint, anchors) : null;
   }, [graph, builderState.startPoint, builderState.stops]);
+  const vehicleRouteMeters = vehicleLegs?.reduce((sum, leg) => sum + leg.distanceMeters, 0);
   /** Foot circuit (dashed loop) of the stop in FOCUS: the DRAFT while building/
       editing (follows the chosen points live), else the selected/expanded firmed
       stop — over the PEDESTRIAN graph (ignores one-way). */
@@ -822,6 +824,15 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
     const ordered = orderedStopPoints(stop, pointsById);
     return ordered.length > 0 ? footCircuitPath(pedGraph, stop.vehicleStop, ordered) : null;
   }, [draft, selectedStop, expandedStop, pedGraph, pointsById]);
+  /** The leg that LEAVES the firmed stop in focus, towards the next one (RF-043):
+      highlighted so "how do I get to the next stop" reads first. None in a draft
+      (the foot circuit follows the edit) nor on the last stop (no leg leaves it). */
+  const vehicleRouteHighlight = useMemo(() => {
+    const stop = draft ? null : (selectedStop ?? expandedStop);
+    if (!stop || !vehicleLegs) return null;
+    const stopIndex = builderState.stops.findIndex((s) => s.id === stop.id);
+    return vehicleLegs.find((leg) => leg.fromStopIndex === stopIndex)?.path ?? null;
+  }, [draft, selectedStop, expandedStop, vehicleLegs, builderState.stops]);
 
   const roteiroOverlay = useMemo(
     () => ({
@@ -829,7 +840,8 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
       suggestionPath: suggestion?.path ?? null,
       // Route traces (RF-006.7): vehicle backbone + the focused stop's foot loop;
       // the suggestion is faded while a draft is open, stronger once firmed (§6).
-      vehicleRoute: vehicleRoute?.path ?? null,
+      vehicleRoute: vehicleLegs?.map((leg) => leg.path) ?? null,
+      vehicleRouteHighlight,
       footCircuit: footCircuit?.path ?? null,
       suggestionFaded: draft !== null,
       // The radius circle also PREVIEWS on the selected orphan, before creating (U6).
@@ -844,7 +856,7 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
       anchor: draft?.vehicleStop ?? expandedStop?.vehicleStop ?? null,
       anchorDraggable: draft !== null,
     }),
-    [builderState.startPoint, previewRadiusMeters, suggestion, draft, draftSeed, selectedPoint, expandedStop, vehicleRoute, footCircuit]
+    [builderState.startPoint, previewRadiusMeters, suggestion, draft, draftSeed, selectedPoint, expandedStop, vehicleLegs, vehicleRouteHighlight, footCircuit]
   );
 
   /** Anchor drag (RF-006.5): street-project the dropped point (map matching
@@ -1133,14 +1145,10 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
           // consumer) — the vehicle A* chain is reused from the drawn route, so
           // opening the panel costs one pass of the foot circuits, not two.
           // Override the route's delivery times with the GLOBAL preference (RF-007.2).
-          plannedRouteTotals(
-            { ...toPlannedRoute(builderState), config: estimateConfig },
-            points,
-            panelView === "overview" ? { graph, pedGraph, vehicleMetersOverride: vehicleRoute?.distanceMeters } : undefined
-          )
+          plannedRouteTotals({ ...toPlannedRoute(builderState), config: estimateConfig }, points, panelView === "overview" ? { graph, pedGraph, vehicleMetersOverride: vehicleRouteMeters } : undefined)
         : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps -- toPlannedRoute reads only stops/startPoint/config (routeId/createdAt are stable); narrowing off the whole builderState keeps draft edits from recomputing the graph totals.
-    [mode, builderState.stops, builderState.startPoint, estimateConfig, points, panelView, graph, pedGraph, vehicleRoute]
+    [mode, builderState.stops, builderState.startPoint, estimateConfig, points, panelView, graph, pedGraph, vehicleRouteMeters]
   );
   /** Whether the shown totals came from the street graph (RF-006.7) — drives the
       honest "Detalhes" caption (streets vs the straight-line fallback). */

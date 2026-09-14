@@ -16,5 +16,6 @@
 | `RF-54` | RF | Nome unico para exportacao de roteiros em JSON composto por data do romaneio, 4 ultimos caracteres do AT e bairro predominante | importante | TASK-RF-039 |
 | `RF-55` | RF | Permitir ignorar enderecos perigosos ou fora de rota excluindo-os da conclusao do roteiro e agrupando-os no painel | importante | TASK-RF-040, TASK-RF-042 |
 | `RF-56` | RF | Inclusao do ponto inicial na malha viaria do mapa para roteirizacao completa ate a primeira parada | importante | TASK-RF-041 |
+| `RF-57` | RF | Alternar o tracado do roteiro no mapa entre rota inteira e trecho da parada selecionada, com passagens repetidas distinguiveis por acumulo de opacidade | importante | TASK-RF-043 |
 | `RF-58` | RF | Navegar entre paradas firmadas do Meu roteiro com avancar/retroceder ciclico no cabecalho do painel | importante | TASK-RF-044 |
 | `RN-23` | RN | A parada padrao do veiculo fica na via em frente ao pino de cada endereco, por projecao geometrica; o planejamento considera possivel parar junto a qualquer endereco e nao procura vaga, permissao nem disponibilidade de estacionamento. | essencial | TASK-BG-016, TASK-BG-022 |

@@ -14,6 +14,7 @@ import { RouteMap } from "../../components/RouteMap";
 import { COLUMN_NAMES, UI_LABELS, MAP_CONFIG } from "../../constants";
 import type { RowData } from "../../types";
 import type { InteractionState } from "../../utils/markers/markerModels";
+import { ROTEIRO_TYPE_COLORS } from "../../utils/markers/markerColors";
 
 // =============================================================================
 // 1. CRITICAL: MOCK LEAFLET
@@ -56,7 +57,7 @@ vi.mock("leaflet", () => ({
     Icon: vi.fn(),
     divIcon: vi.fn(() => ({})),
     DivIcon: vi.fn(),
-    polyline: vi.fn(() => ({ addTo: vi.fn() })),
+    polyline: vi.fn(() => ({ addTo: vi.fn(), setStyle: vi.fn() })),
     circle: vi.fn(() => ({ addTo: vi.fn() })),
     circleMarker: vi.fn(() => ({ addTo: vi.fn() })),
   },
@@ -433,10 +434,14 @@ describe("RouteMap (controlled embedded map)", () => {
     expect(L.polyline).not.toHaveBeenCalled();
   });
 
-  it("desenha a rota de veículo (contínua) e o circuito a pé (tracejado âmbar), empilhados veículo→circuito→sugestão (RF-006.7)", () => {
-    const vehicleRoute = [
+  describe("traçado do veículo por perna (RF-006.7, RF-043)", () => {
+    const legA = [
       { lat: -22.9, lng: -43.2 },
       { lat: -22.91, lng: -43.21 },
+    ];
+    const legB = [
+      { lat: -22.91, lng: -43.21 },
+      { lat: -22.92, lng: -43.2 },
     ];
     const footCircuit = [
       { lat: -22.9, lng: -43.2 },
@@ -447,21 +452,92 @@ describe("RouteMap (controlled embedded map)", () => {
       { lat: -22.9, lng: -43.2 },
       { lat: -22.95, lng: -43.15 },
     ];
-    renderRouteMap(mockRowsWithCoordinates, {
-      models: externalModels,
-      roteiroOverlay: { start: null, suggestionPath, vehicleRoute, footCircuit, suggestionFaded: false },
+    const pairs = (p: { lat: number; lng: number }[]) => p.map((q) => [q.lat, q.lng]);
+    /** Every add-order index of a drawn path (a leg can be drawn twice: as a leg and as the highlight). */
+    const indicesOf = (p: { lat: number; lng: number }[]) =>
+      vi
+        .mocked(L.polyline)
+        .mock.calls.map((call, index) => (JSON.stringify(call[0]) === JSON.stringify(pairs(p)) ? index : -1))
+        .filter((index) => index >= 0);
+    const styleAt = (index: number) => vi.mocked(L.polyline).mock.calls[index][1]!;
+
+    it("desenha uma polilinha por perna (contínua e translúcida) e o circuito a pé, empilhados pernas→circuito→sugestão (RF-043)", () => {
+      renderRouteMap(mockRowsWithCoordinates, {
+        models: externalModels,
+        roteiroOverlay: { start: null, suggestionPath, vehicleRoute: [legA, legB], footCircuit, suggestionFaded: false },
+      });
+
+      // One polyline PER LEG: canvas only adds opacity up between separate strokes, so a
+      // street driven twice darkens; translucent so the tile's names and one-way arrows show.
+      for (const leg of [legA, legB]) {
+        expect(indicesOf(leg)).toHaveLength(1);
+        expect(styleAt(indicesOf(leg)[0])).not.toHaveProperty("dashArray");
+        expect(styleAt(indicesOf(leg)[0]).opacity).toBeLessThan(0.5);
+      }
+      expect(L.polyline).toHaveBeenCalledWith(pairs(footCircuit), expect.objectContaining({ dashArray: "6 8", color: "#F59E0B" }));
+      // Stacking (canvas add order): legs < foot circuit < suggestion.
+      expect(indicesOf(legB)[0]).toBeLessThan(indicesOf(footCircuit)[0]);
+      expect(indicesOf(footCircuit)[0]).toBeLessThan(indicesOf(suggestionPath)[0]);
     });
 
-    const calls = vi.mocked(L.polyline).mock.calls;
-    const pairs = (p: { lat: number; lng: number }[]) => p.map((q) => [q.lat, q.lng]);
-    const indexOf = (p: { lat: number; lng: number }[]) => calls.findIndex((c) => JSON.stringify(c[0]) === JSON.stringify(pairs(p)));
+    it("destaca a perna da parada em verde contínuo acima das pernas esmaecidas (RF-043)", () => {
+      const { rerender } = renderRouteMap(mockRowsWithCoordinates, {
+        models: externalModels,
+        roteiroOverlay: { start: null, suggestionPath, vehicleRoute: [legA, legB], footCircuit, suggestionFaded: false },
+      });
+      const plainLegOpacity = styleAt(indicesOf(legA)[0]).opacity!;
 
-    // Veículo = CONTÍNUA (sem dashArray); circuito = tracejado âmbar.
-    expect(calls[indexOf(vehicleRoute)][1]).not.toHaveProperty("dashArray");
-    expect(L.polyline).toHaveBeenCalledWith(pairs(footCircuit), expect.objectContaining({ dashArray: "6 8", color: "#F59E0B" }));
-    // Empilhamento (ordem de add no canvas): veículo < circuito < sugestão.
-    expect(indexOf(vehicleRoute)).toBeLessThan(indexOf(footCircuit));
-    expect(indexOf(footCircuit)).toBeLessThan(indexOf(suggestionPath));
+      vi.mocked(L.polyline).mockClear();
+      rerender(
+        <RouteMap
+          rows={mockRowsWithCoordinates}
+          interaction={collapsed}
+          onInteractionChange={vi.fn()}
+          models={externalModels}
+          roteiroOverlay={{ start: null, suggestionPath, vehicleRoute: [legA, legB], vehicleRouteHighlight: legB, footCircuit, suggestionFaded: false }}
+        />
+      );
+
+      const [legBIndex, highlightIndex] = indicesOf(legB);
+      const highlight = styleAt(highlightIndex);
+      // The rest of the route fades so the highlighted leg reads first.
+      expect(styleAt(indicesOf(legA)[0]).opacity).toBeLessThan(plainLegOpacity);
+      // Continuous green, thicker than a leg ("continuous = where the car goes; dashed = hypothesis or walking").
+      expect(highlight).not.toHaveProperty("dashArray");
+      expect(highlight.color).toBe(ROTEIRO_TYPE_COLORS.residential.bottom);
+      expect(highlight.weight).toBeGreaterThan(styleAt(legBIndex).weight!);
+      // Above every leg, below the foot circuit and the suggestion.
+      expect(highlightIndex).toBeGreaterThan(legBIndex);
+      expect(highlightIndex).toBeLessThan(indicesOf(footCircuit)[0]);
+      expect(indicesOf(footCircuit)[0]).toBeLessThan(indicesOf(suggestionPath)[0]);
+    });
+
+    it("engrossa o traçado do veículo com o zoom perto, mantendo o destaque mais grosso (RF-043)", () => {
+      renderRouteMap(mockRowsWithCoordinates, {
+        models: externalModels,
+        roteiroOverlay: { start: null, suggestionPath: null, vehicleRoute: [legA, legB], vehicleRouteHighlight: legB, suggestionFaded: false },
+      });
+      const [legBIndex, highlightIndex] = indicesOf(legB);
+      const legAtDefault = styleAt(indicesOf(legA)[0]).weight!;
+      const highlightAtDefault = styleAt(highlightIndex).weight!;
+      const lineAt = (index: number) => vi.mocked(L.polyline).mock.results[index].value as { setStyle: ReturnType<typeof vi.fn> };
+
+      // Zooming to street level re-widths the drawn lines on `zoomend`.
+      mapMethods.getZoom.mockReturnValue(MAP_CONFIG.ZOOM.MAX);
+      try {
+        act(() => {
+          mapMethods.on.mock.calls.filter(([event]) => event === "zoomend").forEach(([, handler]) => (handler as () => void)());
+        });
+      } finally {
+        mapMethods.getZoom.mockReturnValue(16);
+      }
+
+      const legAtMax = lineAt(indicesOf(legA)[0]).setStyle.mock.lastCall![0].weight;
+      const highlightAtMax = lineAt(highlightIndex).setStyle.mock.lastCall![0].weight;
+      expect(legAtMax).toBeGreaterThan(legAtDefault);
+      expect(highlightAtMax).toBeGreaterThan(highlightAtDefault);
+      expect(highlightAtMax).toBeGreaterThan(lineAt(legBIndex).setStyle.mock.lastCall![0].weight);
+    });
   });
 
   it("a sugestão é FORTE fora do rascunho (RF-006.7)", () => {
