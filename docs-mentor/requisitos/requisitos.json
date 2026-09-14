@@ -89,7 +89,8 @@
       "Dado o botao Auto-roteirizar, quando calcular, entao informa progresso e permite cancelar sem perder trabalho; resultado confirmado e editavel e persistente, inclusive a ancora livre do veiculo."
     ],
     "regras_aplicaveis": [
-      "RN-14"
+      "RN-14",
+      "RN-23"
     ],
     "requisitos_relacionados": [
       "RF-37"
@@ -738,5 +739,32 @@
     "criado_em": "12/09/26 21:20",
     "implementado_em": null,
     "pendente_de_validacao": false
+  },
+  {
+    "id": "RN-23",
+    "tipo": "RN",
+    "enunciado": "A parada padrao do veiculo fica na via em frente ao pino de cada endereco, por projecao geometrica; o planejamento considera possivel parar junto a qualquer endereco e nao procura vaga, permissao nem disponibilidade de estacionamento.",
+    "historia": "Como entregador, quero planejar paradas mesmo em regioes com muita restricao de estacionamento e ajusta-las a mao, sem o roteiro ser bloqueado por esse criterio.",
+    "prioridade": "essencial",
+    "status": "implementado",
+    "criterios_aceite": [
+      "A parada padrao de cada endereco e a projecao do pino na via nomeada mais proxima; na esquina, a rua do endereco desempata; a coordenada original da entrega nao muda.",
+      "Sinalizacao, proibicao de parada, vagas e areas de carga e descarga nao sao filtro, penalidade nem condicao para criar parada, inclusive as geradas pelo Auto-roteirizar e ao longo do percurso desenhado.",
+      "Gerar rotas nao consulta servico nem dado de estacionamento.",
+      "O usuario pode mover a parada do veiculo, e a posicao movida a mao nao e recalculada.",
+      "Mao unica, conversoes e continuidade do percurso continuam valendo: a regra trata de parar, nao de circular."
+    ],
+    "tarefas": [
+      "TASK-BG-016",
+      "TASK-BG-022"
+    ],
+    "adr": null,
+    "criado_em": "13/09/26 23:26",
+    "implementado_em": "13/09/26 23:26",
+    "pendente_de_validacao": false,
+    "requisitos_relacionados": [
+      "RF-34",
+      "RF-52"
+    ]
   }
 ]

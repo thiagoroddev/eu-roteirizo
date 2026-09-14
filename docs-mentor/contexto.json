@@ -5,7 +5,7 @@
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-14T02:20:11.079Z",
+    "atualizado_em": "2026-09-14T02:27:18.748Z",
     "gerado_por": "script"
   },
   "projeto": {
@@ -621,8 +621,8 @@
     "tarefas_no_ciclo": 0,
     "tarefas_na_reserva": 24,
     "validacoes_pendentes": 0,
-    "requisitos_total": 32,
-    "requisitos_implementados": 13,
+    "requisitos_total": 33,
+    "requisitos_implementados": 14,
     "requisitos_pendentes": 19,
     "divida_tecnica_aberta": 2,
     "riscos_aceitos_ativos": 0,
