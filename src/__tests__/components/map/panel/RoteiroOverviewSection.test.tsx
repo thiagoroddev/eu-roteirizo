@@ -1,9 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { RoteiroOverviewSection } from "../../../../components/map/panel/RoteiroOverviewSection";
+import { render, screen, fireEvent, within } from "@testing-library/react";
+import { RoteiroOverviewSection, type OverviewStopView } from "../../../../components/map/panel/RoteiroOverviewSection";
 import { UI_LABELS } from "../../../../constants/uiLabels";
+import { ROTEIRO_TYPE_COLORS } from "../../../../utils/markers/markerColors";
 
 const OVERVIEW = UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW;
+const START = UI_LABELS.MAP_PANEL.ROTEIRO_START;
 
 const defaultProps = {
   progress: {
@@ -117,6 +119,69 @@ describe("RoteiroOverviewSection (TASK-RF-013 Exportar Roteiro)", () => {
 
     expect(screen.getByText("P1 - Rua Barão da Torre, 123")).toBeInTheDocument();
     expect(screen.getByText("Ipanema, 22410-000")).toBeInTheDocument();
+  });
+
+  // ------- Linha do tempo e distância do veículo entre paradas (TASK-RF-045, RF-59) -------
+
+  const stopView = (order: number, outgoingLeg: OverviewStopView["outgoingLeg"]): OverviewStopView => ({
+    id: `stop_${order}`,
+    order,
+    color: ROTEIRO_TYPE_COLORS.residential,
+    neighborhoods: ["Ipanema"],
+    zipcodes: ["22410-000"],
+    metrics: [{ label: "1 endereço" }],
+    items: [],
+    vehicleStopKey: null,
+    outgoingLeg,
+  });
+  const timelineItems = () => within(screen.getByRole("list", { name: OVERVIEW.TIMELINE_ARIA })).getAllByRole("listitem");
+  const driveLegsIn = (element: HTMLElement) => within(element).queryAllByLabelText(UI_LABELS.MAP_PANEL.DRIVE_LEG_ARIA);
+
+  it("linha do tempo: início e paradas em ordem, cada um com seu nó e as ações de hoje (RF-045)", () => {
+    const onShowStopOnMap = vi.fn();
+    render(<RoteiroOverviewSection {...defaultProps} stops={[stopView(1, null), stopView(2, null)]} onShowStopOnMap={onShowStopOnMap} />);
+
+    const [start, p1, p2] = timelineItems();
+    expect(timelineItems()).toHaveLength(3);
+    // The start keeps its two gestures (RF-006.14) — no reorder handle from the mockup.
+    expect(within(start).getByText("Ponto de Partida, 100")).toBeInTheDocument();
+    expect(within(start).getByRole("button", { name: START.REPOSITION_START })).toBeInTheDocument();
+    expect(within(start).getByRole("button", { name: START.DELETE_START })).toBeInTheDocument();
+    // Each stop's number sits on its node; the card keeps expand + "ver no mapa".
+    expect(within(p1).getByText("P1")).toBeInTheDocument();
+    expect(within(p2).getByText("P2")).toBeInTheDocument();
+    fireEvent.click(within(p2).getByRole("button", { name: UI_LABELS.MAP_PANEL.VIEW_ON_MAP }));
+    expect(onShowStopOnMap).toHaveBeenCalledWith("stop_2");
+    expect(within(p1).getByRole("button", { name: OVERVIEW.STOP_ARIA(1) })).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("mostra a distância do veículo no trilho entre paradas consecutivas; nenhuma depois da última (RF-045)", () => {
+    render(
+      <RoteiroOverviewSection
+        {...defaultProps}
+        start={{ addressLine: "Ponto de Partida, 100", outgoingLeg: { meters: 1300, viaStreets: true } }}
+        stops={[stopView(1, { meters: 850, viaStreets: true }), stopView(2, null)]}
+      />
+    );
+
+    const [start, p1, p2] = timelineItems();
+    expect(driveLegsIn(start)).toHaveLength(1);
+    expect(driveLegsIn(start)[0]).toHaveTextContent("1,3 km");
+    expect(driveLegsIn(p1)).toHaveLength(1);
+    expect(driveLegsIn(p1)[0]).toHaveTextContent("850 m");
+    expect(driveLegsIn(p2)).toHaveLength(0);
+  });
+
+  it("sem início a primeira distância é P1→P2; com uma parada só, nenhuma (RF-045)", () => {
+    const { unmount } = render(<RoteiroOverviewSection {...defaultProps} start={null} stops={[stopView(1, { meters: 850, viaStreets: false }), stopView(2, null)]} />);
+    const [p1, p2] = timelineItems();
+    expect(timelineItems()).toHaveLength(2);
+    expect(driveLegsIn(p1)[0]).toHaveTextContent(`850 m ${START.SUGGESTION_STRAIGHT}`);
+    expect(driveLegsIn(p2)).toHaveLength(0);
+    unmount();
+
+    render(<RoteiroOverviewSection {...defaultProps} start={null} stops={[stopView(1, null)]} />);
+    expect(screen.queryAllByLabelText(UI_LABELS.MAP_PANEL.DRIVE_LEG_ARIA)).toHaveLength(0);
   });
 
   it("renderiza a seção de endereços ignorados em último lugar com ações de restaurar e ver no mapa", () => {

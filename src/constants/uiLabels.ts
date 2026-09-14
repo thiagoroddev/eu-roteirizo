@@ -169,6 +169,8 @@ export const UI_LABELS = {
     LEG_METERS: (meters: number) => `${meters} metros`,
     /** aria-label do conector de perna (leitor de tela). */
     LEG_ARIA: "Distância a pé até o próximo endereço",
+    /** aria-label do conector de perna do VEÍCULO no trilho do "Ver detalhes" (RF-045). */
+    DRIVE_LEG_ARIA: "Distância de carro até a próxima parada",
     /** Aviso flutuante (RF-006.17): mover o veículo no mapa recalcula a ordem a
         pé (1º = mais próximo) — o toast avisa que os endereços foram reordenados. */
     REORDERED_NOTICE: "Endereços reordenados",
@@ -209,6 +211,8 @@ export const UI_LABELS = {
       PERCENT: (ratio: number) => `${Math.round(ratio * 100)}%`,
       PROGRESS_ARIA: "Progresso do roteiro (endereços atribuídos)",
       NO_STOPS: "Nenhuma parada confirmada ainda.",
+      /** aria-label da linha do tempo (início + paradas em ordem — RF-045). */
+      TIMELINE_ARIA: "Paradas do roteiro em ordem",
       STOP_ARIA: (order: number) => `Parada ${order} — ver endereços`,
       MOVE_UP: "Mover para cima",
       MOVE_DOWN: "Mover para baixo",

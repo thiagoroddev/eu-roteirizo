@@ -5,7 +5,6 @@ import { MapPin } from "lucide-react";
 import { RouteMap } from "../components/RouteMap";
 import { MapToast } from "../components/map/MapToast";
 import { Button } from "../components/ui/button";
-import { Badge } from "../components/ui/badge";
 import { MapModeToggle, MODE_QUERY_PARAM, MODE_QUERY_ROTEIRO, type MapMode } from "../components/map/MapModeToggle";
 import { MapPanel, PANEL_COLLAPSED_PX, type PanelSnap } from "../components/map/panel/MapPanel";
 import { ORIGINAL_PANEL_SIZING, ROTEIRO_PANEL_SIZING } from "../components/map/panel/panelSizing";
@@ -1073,30 +1072,26 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
       chips + walking estimate, with the address drill-down in visit order. */
   const overviewStops: OverviewStopView[] = useMemo(
     () =>
-      builderState.stops.map((stop) => {
+      builderState.stops.map((stop, stopIndex) => {
         const stopPts = orderedStopPoints(stop, pointsById);
         const estimate = stopPts.length > 0 ? stopWalkEstimate(stop.vehicleStop, stopPts, estimateConfig) : null;
         const legs = stopLegs(stopPts, pedGraph);
         const place = stopPlaceSummaryFromPoints(stopPts);
         const vehicleAddr = formatVehicleStopAddress(stop, pointsById, graph);
-        const color = stopColor(stop, pointsById);
-        const badgeStyle = {
-          background: `linear-gradient(to bottom, ${color.top}, ${color.bottom})`,
-          color: color.numberInk ?? "#FFFFFF",
-          border: "none",
-        };
         const streetNode = renderVehicleStreetNode(vehicleAddr);
+        // "P{N}" moved to the stop's node on the timeline rail (RF-045): the title keeps the street.
         const titleNode = (
           <span className="flex items-center gap-1.5 font-semibold truncate">
-            <Badge style={badgeStyle} className="px-1.5 py-0 text-[11px] font-bold shrink-0">
-              P{stop.order}
-            </Badge>
             <span className="truncate">{streetNode}</span>
           </span>
         );
+        const leg = vehicleLegs?.find((l) => l.fromStopIndex === stopIndex);
         return {
           id: stop.id,
           order: stop.order,
+          color: stopColor(stop, pointsById),
+          // The SAME legs the map draws (RF-043) — no extra A* (RF-045).
+          outgoingLeg: leg ? { meters: leg.distanceMeters, viaStreets: leg.viaStreets } : null,
           titleOverride: titleNode,
           neighborhoods: place.neighborhoods,
           zipcodes: place.zipcodes,
@@ -1111,7 +1106,7 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
           vehicleStopKey: stopPts[0]?.id ?? null,
         };
       }),
-    [builderState.stops, estimateConfig, pointsById, pedGraph, graph]
+    [builderState.stops, estimateConfig, pointsById, pedGraph, graph, vehicleLegs]
   );
 
   /** The would-be NEXT stop (RF-006.8 — numbered in sequence, stops.length + 1):
@@ -1169,8 +1164,13 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
     return points.find((p) => p.lat === start.lat && p.lng === start.lng) ?? null;
   }, [points, builderState.startPoint]);
   /** "Parada 0" (RF-006.11): the start row of the overview / start selection. */
+  /** The start → P1 vehicle leg (fromStopIndex null), shown on the overview rail (RF-045). */
+  const startLeg = vehicleLegs?.find((leg) => leg.fromStopIndex === null);
   const overviewStart: OverviewStartView | null = builderState.startPoint
-    ? { addressLine: startAddressPoint ? addressLineOf(startAddressPoint.address) : UI_LABELS.MAP_PANEL.ROTEIRO_START.DEFINED }
+    ? {
+        addressLine: startAddressPoint ? addressLineOf(startAddressPoint.address) : UI_LABELS.MAP_PANEL.ROTEIRO_START.DEFINED,
+        outgoingLeg: startLeg ? { meters: startLeg.distanceMeters, viaStreets: startLeg.viaStreets } : null,
+      }
     : null;
 
   /** Endereços ignorados pelo usuário (aparecem em último lugar no overview). */

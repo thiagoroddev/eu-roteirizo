@@ -18,4 +18,5 @@
 | `RF-56` | RF | Inclusao do ponto inicial na malha viaria do mapa para roteirizacao completa ate a primeira parada | importante | TASK-RF-041 |
 | `RF-57` | RF | Alternar o tracado do roteiro no mapa entre rota inteira e trecho da parada selecionada, com passagens repetidas distinguiveis por acumulo de opacidade | importante | TASK-RF-043 |
 | `RF-58` | RF | Navegar entre paradas firmadas do Meu roteiro com avancar/retroceder ciclico no cabecalho do painel | importante | TASK-RF-044 |
+| `RF-59` | RF | Exibir a distancia de deslocamento entre paradas consecutivas na lista completa do roteiro | importante | TASK-RF-045 |
 | `RN-23` | RN | A parada padrao do veiculo fica na via em frente ao pino de cada endereco, por projecao geometrica; o planejamento considera possivel parar junto a qualquer endereco e nao procura vaga, permissao nem disponibilidade de estacionamento. | essencial | TASK-BG-016, TASK-BG-022 |

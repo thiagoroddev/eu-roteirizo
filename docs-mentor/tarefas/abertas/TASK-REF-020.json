@@ -1,27 +1,23 @@
 {
-  "id": "TASK-RF-045",
-  "tipo": "RF",
-  "titulo": "Mostrar distancia entre paradas consecutivas na lista completa",
+  "id": "TASK-REF-020",
+  "tipo": "REF",
+  "titulo": "Redesenhar os enderecos da parada em cards aninhados (StopItemRow/StopItemDetail, usados em Ver detalhes, Ver parada e modo Original), no layout do Stitch aplicado na TASK-RF-045: card por endereco com ordinal, complemento em destaque, rotulo e codigo SPX, tipo e Abrir no Maps, com tokens do tema",
   "fatia_de": null,
   "estado": "aberta",
   "cerimonia": "Standard",
-  "valor": "importante",
+  "valor": "desejavel",
   "urgencia": "normal",
   "esforco": {
-    "humano": "P",
-    "ia": "M"
+    "humano": "M",
+    "ia": "G"
   },
-  "depende_de": [
-    "TASK-RF-043"
-  ],
+  "depende_de": [],
   "fila": "reserva",
   "ordem": null,
-  "origem": "RF-59",
-  "requisitos": [
-    "RF-59"
-  ],
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
   "sem_requisito_motivo": null,
-  "criada_em": "12/09/26 21:20",
+  "criada_em": "14/09/26 12:42",
   "iniciada_em": null,
   "commit_base": null,
   "concluida_em": null,
