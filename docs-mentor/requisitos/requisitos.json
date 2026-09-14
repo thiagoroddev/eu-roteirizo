@@ -715,12 +715,14 @@
     "enunciado": "Navegar entre paradas firmadas do Meu roteiro com avancar/retroceder ciclico no cabecalho do painel",
     "historia": null,
     "prioridade": "importante",
-    "status": "pendente",
+    "status": "implementado",
     "criterios_aceite": [],
-    "tarefas": [],
+    "tarefas": [
+      "TASK-RF-044"
+    ],
     "adr": null,
     "criado_em": "12/09/26 21:20",
-    "implementado_em": null,
+    "implementado_em": "13/09/26 21:53",
     "pendente_de_validacao": false
   },
   {

@@ -1,0 +1,171 @@
+{
+  "id": "TASK-RF-044",
+  "tipo": "RF",
+  "titulo": "Avancar e retroceder entre paradas do Meu roteiro em ciclo",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "RF-58",
+  "requisitos": [
+    "RF-58"
+  ],
+  "sem_requisito_motivo": null,
+  "criada_em": "12/09/26 21:20",
+  "iniciada_em": "13/09/26 19:36",
+  "commit_base": "940ccaff0fbceeec38768f6f23ff1bc9d2bd5b4b",
+  "concluida_em": "13/09/26 21:53",
+  "plano": {
+    "muda": [
+      "src/utils/routing/selectors.ts - adjacentStopId(stops, currentId, direction): id da parada firmada anterior/proxima pela ordem (order), em ciclo; espelho de adjacentStopKey do modo Original",
+      "src/__tests__/utils/routing/selectors.test.ts - casos de adjacentStopId",
+      "src/components/map/panel/PanelModeBar.tsx - prop opcional stepDisabled: as duas setas ficam desativadas e desbotadas (estilo disabled do Button); com progresso (Meu roteiro), os botoes vao para uma linha abaixo da barra, e o rotulo do modo fica com a primeira linha inteira",
+      "src/__tests__/components/map/panel/PanelModeBar.test.tsx - setas desativadas com stepDisabled; botoes abaixo da barra de progresso",
+      "src/components/map/panel/RoteiroPanelHeader.tsx - props opcionais onPrevStop/onNextStop/stepDisabled repassadas ao PanelModeBar, que ja desenha o StopStepper quando recebe as duas",
+      "src/__tests__/components/map/panel/RoteiroPanelHeader.test.tsx - stepper aparece com os handlers e continua ausente sem eles",
+      "src/pages/MapPage.tsx - handleStepRoteiroStop(direction): adjacentStopId sobre builderState.stops a partir de selectedStopId, e reusa handleShowRoteiroStopOnMap (seleciona a parada, o mapa enquadra, painel recolhido); handlers nos ramos do header do roteiro fora do rascunho, com parada firmada; setas desativadas com uma so",
+      "src/__tests__/pages/MapPage.test.tsx - navegacao pelo header do roteiro com roteiro salvo hidratado"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "adjacentStopId cicla nas duas pontas: da ultima parada avanca para a P1, e da P1 retrocede para a ultima",
+        "teste": "src/__tests__/utils/routing/selectors.test.ts > adjacentStopId > cicla nas duas pontas"
+      },
+      {
+        "texto": "lista vazia devolve null; id nulo ou desconhecido devolve a primeira parada pela ordem; a vizinha segue o campo order, nao a posicao no array",
+        "teste": "src/__tests__/utils/routing/selectors.test.ts > adjacentStopId > bordas e ordem por order"
+      },
+      {
+        "texto": "o header do roteiro mostra os botoes Parada anterior/Proxima parada quando recebe os handlers, e nao mostra sem eles; com stepDisabled as duas setas ficam desativadas",
+        "teste": "src/__tests__/components/map/panel/RoteiroPanelHeader.test.tsx > mostra o stepper so com os dois handlers; src/__tests__/components/map/panel/PanelModeBar.test.tsx > desativa as setas com stepDisabled"
+      },
+      {
+        "texto": "no Meu roteiro (visualizacao) com duas ou mais paradas firmadas, Proxima parada seleciona a vizinha e o mapa enquadra os enderecos dela; da ultima volta para a P1 e da P1 retrocede para a ultima",
+        "teste": "src/__tests__/pages/MapPage.test.tsx > Meu roteiro: parada anterior/proxima percorre as paradas firmadas em ciclo"
+      },
+      {
+        "texto": "com uma parada firmada as setas aparecem desativadas e desbotadas; sem parada firmada nao aparecem",
+        "teste": "src/__tests__/pages/MapPage.test.tsx > Meu roteiro: com uma parada so as setas ficam desativadas"
+      },
+      {
+        "texto": "no cabecalho do Meu roteiro, Recomecar, Ver detalhes e as setas ficam numa linha abaixo da barra de progresso, e o rotulo do modo deixa de truncar por causa deles (decisao do humano na validacao, 13/09/26)",
+        "teste": "src/__tests__/components/map/panel/PanelModeBar.test.tsx > com progresso, os botoes ficam numa linha abaixo da barra"
+      }
+    ],
+    "problema_canonico": "sem nome canonico",
+    "discordancia": {
+      "o_que_faria_diferente": "Com uma parada so as setas voltariam para a mesma parada. Decisao do humano no portao 1 (13/09/26): elas aparecem desativadas e desbotadas. O ciclo da ultima para a P1 vale no Meu roteiro de hoje, que e visualizacao; no estado de execucao, que ainda nao existe (RF-009), nao havera ciclo, e isso fica para quando ele nascer.",
+      "o_que_preocupa": "Largura do cabecalho no celular: rotulo + percentual + Recomecar + Ver detalhes + duas setas podem truncar o rotulo do modo em telas de 360 a 412 px. A validacao manual confere no Samsung M35; se apertar, a saida e outra tarefa (setas numa segunda linha ou botoes so com icone). E navegar a partir de Ver detalhes fecha a visao geral, como o Ver no mapa ja faz.",
+      "o_que_existe_pronto_80_porcento": "Nenhuma conhecida fora do projeto; dentro dele, StopStepper, PanelModeBar, a logica ciclica de adjacentStopKey e handleShowRoteiroStopOnMap ja fazem quase tudo, e a tarefa so os liga no modo roteiro"
+    },
+    "impacto": "Painel do modo Meu roteiro (cabecalho) e MapPage; nenhum modelo, persistencia ou calculo de rota",
+    "riscos": [
+      "cabecalho apertado no celular, truncando o rotulo do modo",
+      "a ordem das paradas vir do array e nao do campo order depois de uma reordenacao (RF-006.17); coberto pelo criterio 2"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram navegar entre as paradas do Meu roteiro com avancar/retroceder em ciclo (RF-58). Proponho uma funcao pura, duas props opcionais e um handler, reaproveitando o StopStepper, a regra ciclica e o Ver no mapa que ja existem; nenhum componente novo. E do tamanho do pedido."
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "13/09/26 19:48",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  972 passed (972)\n   Start at  20:34:05\n   Duration  39.27s (transform 12.17s, setup 38.45s, import 26.19s, tests 74.07s, environment 158.22s)\n\n(node:27700) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "13/09/26 20:34",
+      "commit_execucao": "940ccaff0fbceeec38768f6f23ff1bc9d2bd5b4b",
+      "arvore_hash": "0418620619ff6ef03da9fe4bf54ee96f4be01b69",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "13/09/26 20:33",
+      "commit_execucao": "940ccaff0fbceeec38768f6f23ff1bc9d2bd5b4b",
+      "arvore_hash": "0418620619ff6ef03da9fe4bf54ee96f4be01b69",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "13/09/26 20:34",
+      "commit_execucao": "940ccaff0fbceeec38768f6f23ff1bc9d2bd5b4b",
+      "arvore_hash": "0418620619ff6ef03da9fe4bf54ee96f4be01b69",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1999 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-Bykvp3d9.css   \u001b[39m\u001b[1m\u001b[2m 28.26 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-DsJ5ddJf.js    \u001b[39m\u001b[1m\u001b[33m540.39 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.96 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-BH0bsWaq.js   \u001b[39m\u001b[1m\u001b[33m808.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 263.08 kB\u001b[22m\n\u001b[32m✓ built in 6.75s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1799.15 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "13/09/26 20:35",
+      "commit_execucao": "940ccaff0fbceeec38768f6f23ff1bc9d2bd5b4b",
+      "arvore_hash": "0418620619ff6ef03da9fe4bf54ee96f4be01b69",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "APROVADO",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": "Humano validou no Samsung M35 pelo preview rf-044-navegar-paradas-rotei.teste-prototipo.pages.dev (13/09/26), com prints: no Meu roteiro as setas do cabecalho navegam entre as paradas firmadas e selecionam a parada no mapa; depois do ajuste, Recomecar, Ver detalhes e as setas ficaram numa linha abaixo da barra de progresso. Declarou: o botao funciona, tarefa finalizada.",
+      "executado_em": "13/09/26 21:53",
+      "commit_execucao": "940ccaff0fbceeec38768f6f23ff1bc9d2bd5b4b",
+      "arvore_hash": "0418620619ff6ef03da9fe4bf54ee96f4be01b69",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [
+    {
+      "classe": 4,
+      "descricao": "Na validacao no celular, paradas de um roteiro importado do experimento de auto-roteirizacao mostravam o veiculo longe da frente do pino, a caminho da parada seguinte. A regra padrao (defaultVehicleStop, via do proprio endereco) e contradita pelo dado: experimentArtifacts.ts exporta toda parada com vehicleStopIsDefault false, e o app trata a ancora otimizada como escolha do usuario e nunca reaplica o padrao.",
+      "destino": "tarefa",
+      "ref": "TASK-BG-022"
+    }
+  ],
+  "validacao": "aprovado",
+  "validado_em": "13/09/26 21:53",
+  "validacao_motivo": "Humano validou no Samsung M35 pelo preview rf-044-navegar-paradas-rotei.teste-prototipo.pages.dev (13/09/26), com prints: no Meu roteiro as setas do cabecalho navegam entre as paradas firmadas e selecionam a parada no mapa; depois do ajuste, Recomecar, Ver detalhes e as setas ficaram numa linha abaixo da barra de progresso. Declarou: o botao funciona, tarefa finalizada.",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-13--21h53--TASK-RF-044.md"
+}

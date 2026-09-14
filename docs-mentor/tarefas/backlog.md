@@ -9,4 +9,4 @@
 
 | # | ID | Titulo | Fatia | Valor | Urgencia | Esforco H/IA | Bloqueada por | Origem |
 |--:|---|---|---|---|---|---|---|---|
-| 1 | `TASK-RF-044` | Avancar e retroceder entre paradas do Meu roteiro em ciclo | - | importante | normal | P/M | - | RF-58 |
+| | | Nenhuma tarefa na fila | | | | | | |

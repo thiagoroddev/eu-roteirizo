@@ -29,9 +29,26 @@ interface Props {
   onToggleDetails: () => void;
   stopsCount?: number;
   onResetRoute?: () => void;
+  /** StopStepper ‹ › over the firmed stops (TASK-RF-044, RF-58); hidden unless both exist. */
+  onPrevStop?: () => void;
+  onNextStop?: () => void;
+  /** Arrows shown but disabled: a single firmed stop has nowhere to go. */
+  stepDisabled?: boolean;
 }
 
-export const RoteiroPanelHeader = ({ progress, modeLabel, statusHint = null, graphStatus = null, detailsOpen, onToggleDetails, stopsCount = 0, onResetRoute }: Props) => {
+export const RoteiroPanelHeader = ({
+  progress,
+  modeLabel,
+  statusHint = null,
+  graphStatus = null,
+  detailsOpen,
+  onToggleDetails,
+  stopsCount = 0,
+  onResetRoute,
+  onPrevStop,
+  onNextStop,
+  stepDisabled,
+}: Props) => {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const showReset = stopsCount > 0 && onResetRoute !== undefined;
 
@@ -41,6 +58,9 @@ export const RoteiroPanelHeader = ({ progress, modeLabel, statusHint = null, gra
       <PanelModeBar
         modeLabel={modeLabel}
         progress={progress}
+        onPrevStop={onPrevStop}
+        onNextStop={onNextStop}
+        stepDisabled={stepDisabled}
         actions={
           <>
             {showReset && (

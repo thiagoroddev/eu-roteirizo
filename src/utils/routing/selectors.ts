@@ -67,6 +67,21 @@ export const nearestStopTo = (point: LatLng, stops: RouteStop[]): RouteStop | nu
 };
 
 /**
+ * Id of the previous/next FIRMED stop from `currentId`, CIRCULAR over `order`
+ * (the Meu roteiro StopStepper ‹ › — TASK-RF-044, RF-58). Mirrors the Original's
+ * `adjacentStopKey`. Sorts by `order`, never by array position: a reorder
+ * (RF-006.17) renumbers `order` without sorting the array. Null/unknown
+ * `currentId` → the first stop; empty list → null.
+ */
+export const adjacentStopId = (stops: RouteStop[], currentId: string | null, direction: 1 | -1): string | null => {
+  const order = [...stops].sort((a, b) => a.order - b.order).map((s) => s.id);
+  if (order.length === 0) return null;
+  const position = currentId !== null ? order.indexOf(currentId) : -1;
+  if (position < 0) return order[0];
+  return order[(position + direction + order.length) % order.length];
+};
+
+/**
  * Geographic centroid (mean) of a stop's points. Useful as a fallback position
  * for the stop marker (the vehicle stop is a separate, own marker).
  */
