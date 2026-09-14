@@ -5,9 +5,12 @@ import type { RowData } from "../../src/types";
 import type { DeliveryPoint, PlannedRoute } from "../../src/types/routing";
 import { DEFAULT_ROUTING_CONFIG } from "../../src/types/routing";
 import { createRouteExportPayload } from "../../src/services/routeExport";
-import { hash } from "./corpus";
+import { EXPERIMENT_ANCHORS_MARKER, hash, type AnchorPolicy } from "./corpus";
 import type { FundamentalExperimentConfig, FundamentalObjective, FundamentalSolution, FundamentalVariant } from "./fundamentalExperiment";
 import type { FundamentalReference } from "./fundamentals";
+
+// The anchor policy is shared with the RF-030 inspection export and lives in ./corpus (TASK-BG-023).
+export { EXPERIMENT_ANCHORS_MARKER, type AnchorPolicy };
 
 export interface ExperimentalArtifactInput {
   runId: string;
@@ -21,22 +24,6 @@ export interface ExperimentalArtifactInput {
   /** Where each stop's vehicle goes in the exported route. Defaults to "app-default" (INV-001). */
   anchorPolicy?: AnchorPolicy;
 }
-
-/**
- * Where the exported stops park the vehicle (TASK-BG-022, INV-001).
- *
- * - `app-default` (the default): each stop is flagged as the app's default anchor and starts on its
- *   first pin; the app moves it onto the street in front of that pin once the road graph loads.
- * - `experiment`: the optimizer's anchors, flagged as a manual choice so the app keeps them. Only on
- *   explicit request (harness key `FUNDAMENTAL_ANCORAS_DO_EXPERIMENTO=1`), and the route name says so.
- *
- * ⚠️ Until BG-022 every export used the experiment's anchors flagged as the user's choice: imported
- * into the app, they parked the vehicle halfway to the next stop and survived even stop edits.
- */
-export type AnchorPolicy = "app-default" | "experiment";
-
-/** Route-name marker of experiment anchors: whoever imports the file sees it before trusting a stop. */
-export const EXPERIMENT_ANCHORS_MARKER = "ANCORAS DO EXPERIMENTO";
 
 const compare = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 const safeJson = (value: unknown): string => (JSON.stringify(value) ?? "null").replaceAll("<", "\\u003c");

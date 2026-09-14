@@ -3,7 +3,7 @@
 <!-- Gerado por `node mentor.mjs gerar`. Nao edite a mao: a proxima geracao sobrescreve. -->
 
 **Fase:** construcao · **Rigor:** N2
-**Respondido por voce:** 161 · **Padrao do pacote:** 25 · **Em aberto:** 17
+**Respondido por voce:** 160 · **Padrao do pacote:** 25 · **Em aberto:** 18
 
 Todos os portoes foram respondidos ou dispensados com motivo.
 
@@ -144,8 +144,8 @@ Todos os portoes foram respondidos ou dispensados com motivo.
 - `convencoes.nomes_de_arquivo`: src em ingles/kebab/camel conforme padrao existente; docs em portugues.
 - `laboratorio.caminhos`: 1 item(s)
 - `laboratorio.saidas`: 1 item(s)
-- `laboratorio.chaves`: 1 item(s)
-- `laboratorio.artefatos_importaveis`: 1 item(s)
+- `laboratorio.chaves`: 2 item(s)
+- `laboratorio.artefatos_importaveis`: 2 item(s)
 - `versionamento.ramo_principal`: main
 - `versionamento.estrategia_de_ramos`: PR obrigatorio; ramo pelo ID da tarefa. Uma tarefa por ramo, salvo tarefas inseparaveis com justificativa, conforme .mentor/processos/entrega.md.
 - `versionamento.revisao_antes_do_merge`: PR obrigatorio, 0 aprovacoes exigidas, merge so por squash. A autorizacao humana por ato do nucleo continua valendo por cima disso.
@@ -163,7 +163,6 @@ Todos os portoes foram respondidos ou dispensados com motivo.
 - `configuracoes_de_plataforma.segredos_do_ambiente_de_esteira`: GitHub API, 2026-09-06: 0 segredos e 0 environments. quality.yml nao os usa; contents: read. Evidencia em TASK-CHORE-012.
 - `revisao_geral.ultima_em`: 2026-06-22
 - `revisao_geral.ultima_na_tarefa`: REV-001
-- `lembretes`: 1 item(s)
 - `offsets_de_id.RF`: 28
 - `offsets_de_id.DOC`: 10
 - `offsets_de_id.REF`: 19

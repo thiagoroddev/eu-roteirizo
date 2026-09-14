@@ -82,7 +82,7 @@ describe("inspection exports", () => {
   it("uses the actual v1 parser and preserves points, anchors and source data", () => {
     const calculation = result();
     const original = structuredClone({ entry, calculation });
-    const payload = createInspectionPayload(entry, calculation, scenario);
+    const payload = createInspectionPayload(entry, calculation, { ...scenario, anchorPolicy: "experiment" });
     const parsed = parseAndValidateRouteJson(serializeRouteExport(payload));
 
     expect(parsed.ok).toBe(true);
@@ -151,6 +151,42 @@ describe("inspection exports", () => {
     expect(payload.route.stops[0].vehicleStopIsDefault).toBe(true);
     expect(payload.route.startPoint).toBeNull();
     expect(payload.route.config.walkingSpeedKmh).toBe(DEFAULT_ROUTING_CONFIG.walkingSpeedKmh);
+  });
+
+  // ------- Anchor policy (TASK-BG-023, INV-001) -------
+  // The generator's anchor must never reach the app as the user's choice unless the lab asks for it.
+
+  it("exports app default anchors without the key", () => {
+    const calculation = result(); // the generator moved this group's anchor away from the seed's default
+    const payload = createInspectionPayload(entry, calculation, scenario);
+    const [stop] = payload.route.stops;
+    const seed = sourcePoints[1];
+
+    expect(stop.vehicleStopIsDefault).toBe(true);
+    expect(stop.vehicleStop).toEqual({ lat: seed.lat, lng: seed.lng });
+    // The app reprojects a default anchor from pointIds[0], so the seed must lead.
+    expect(stop.pointIds[0]).toBe(calculation.groups[0].seedPointId);
+    expect(stop.pointIds.slice().sort()).toEqual(calculation.groups[0].pointIds.slice().sort());
+    expect(payload.routeName).not.toContain("ANCORAS DO EXPERIMENTO");
+    expect(parseAndValidateRouteJson(serializeRouteExport(payload)).ok).toBe(true);
+  });
+
+  it("only the explicit key exports the generator anchors", () => {
+    const calculation = result();
+    const payload = createInspectionPayload(entry, calculation, { ...scenario, anchorPolicy: "experiment" });
+    const [stop] = payload.route.stops;
+
+    expect(stop.vehicleStopIsDefault).toBe(false);
+    expect(stop.vehicleStop).toEqual(calculation.groups[0].vehicleStop);
+    expect(payload.routeName).toContain("ANCORAS DO EXPERIMENTO");
+    expect(payload.manifestId).not.toBe(createInspectionPayload(entry, calculation, scenario).manifestId);
+
+    // One policy per route: an anchor the generator left at its default is frozen too, or the app
+    // would reproject it with today's rule and the inspection would stop showing the generator.
+    const atDefault = result();
+    atDefault.groups[0].vehicleStopIsDefault = true;
+    atDefault.groups[0].vehicleStop = { ...atDefault.groups[0].defaultVehicleStop };
+    expect(createInspectionPayload(entry, atDefault, { ...scenario, anchorPolicy: "experiment" }).route.stops[0].vehicleStopIsDefault).toBe(false);
   });
 
   it("rejects broken conservation or invalid output instead of letting hydration hide it", () => {
