@@ -37,3 +37,4 @@
 | 13/09/26 18:51 | [`TASK-CHORE-021`](./2026-09-13--18h51--TASK-CHORE-021.md) | CHORE | Atualizar mentor-agent para v0.9.0 | - | concluida | dispensado |
 | 13/09/26 21:53 | [`TASK-RF-044`](./2026-09-13--21h53--TASK-RF-044.md) | RF | Avancar e retroceder entre paradas do Meu roteiro em ciclo | - | concluida | aprovado |
 | 13/09/26 23:20 | [`TASK-BG-022`](./2026-09-13--23h20--TASK-BG-022.md) | BG | Veiculo estacionava longe do pino: exportacao do experimento marcava ancoras otimizadas como escolha do usuario e a regra padrao preferia a rua do endereco a ate 250 m | - | concluida | aprovado |
+| 14/09/26 02:42 | [`TASK-CHORE-022`](./2026-09-14--02h42--TASK-CHORE-022.md) | CHORE | Atualizar mentor-agent para v0.10.0 | - | concluida | dispensado |

@@ -1,0 +1,177 @@
+{
+  "id": "TASK-CHORE-022",
+  "tipo": "CHORE",
+  "titulo": "Atualizar mentor-agent para v0.10.0",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "sem_requisito_motivo": null,
+  "criada_em": "14/09/26 02:10",
+  "iniciada_em": "14/09/26 02:11",
+  "commit_base": "192b034fa93265ec276efb116289f80e2bb94f41",
+  "concluida_em": "14/09/26 02:42",
+  "plano": {
+    "muda": [
+      "package.json - devDependency mentor-agent github:thiagoroddev/mentor-agent#v0.9.0 -> #v0.10.0",
+      "package-lock.json - lock atualizado para mentor-agent 0.10.0",
+      ".mentor/** - pacote reinstalado via npx mentor instalar --forcar (laboratorio.ts, processos/laboratorio.md, sugestao como hipotese)",
+      "docs-mentor/contexto.json - versao_do_pacote 0.10.0 via resolver-gerados, e o bloco laboratorio: caminhos __utilidades-back-office__/**, saidas .mentor-saidas/**, a chave FUNDAMENTAL_ANCORAS_DO_EXPERIMENTO e o JSON importavel do experimento, os dois presos ao teste de contrato da TASK-BG-022",
+      "docs-mentor/melhorias-do-pacote.md - sai a nota de 13/09/26 21:48, aplicada na 0.10.0"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "node mentor.mjs verificar aprova depois da atualizacao, inclusive o inventario do laboratorio (chave desligada e testes que resolvem)",
+        "teste": "nao se aplica: verificacao operacional via CLI; a saida fica registrada com task criterio",
+        "evidencia": {
+          "comando": "node mentor.mjs verificar",
+          "codigo_saida": 0,
+          "saida": "APROVADO. Tres familias: marcadores, tetos de texto, integridade referencial (ponteiros, links e inventario de regras).",
+          "executado_em": "14/09/26 02:16"
+        }
+      },
+      {
+        "texto": "o doctor mostra o laboratorio declarado e nao acusa saida do laboratorio exposta ao git",
+        "teste": "nao se aplica: verificacao operacional via CLI; a saida fica registrada com task criterio",
+        "evidencia": {
+          "comando": "node -e \"const r=require('child_process').spawnSync(process.execPath,['mentor.mjs','doctor'],{encoding:'utf8'});const o=r.stdout+r.stderr;const l=o.split('\\n').filter(x=>/laboratorio|exposta ao git/.test(x));console.log(l.join('\\n'));process.exit(l.some(x=>x.includes('laboratorio em __utilidades-back-office__/**'))&&!o.includes('exposta ao git')?0:1)\"",
+          "codigo_saida": 0,
+          "saida": "·  laboratorio em __utilidades-back-office__/**: 1 chave(s), 1 artefato(s) importavel(is)",
+          "executado_em": "14/09/26 02:17"
+        }
+      }
+    ],
+    "pedido_original": "Humano, 14/09/26, respondendo a \"Quer que eu comece essa tarefa de atualizacao do piloto?\" (atualizar o pacote, declarar o laboratorio do piloto, limpar melhorias-do-pacote.md, fechar): \"sim\"",
+    "solucao_sugerida": null,
+    "alternativas_profissionais": [],
+    "problema_canonico": "sem nome canonico",
+    "discordancia": {
+      "o_que_faria_diferente": "Nada a objetar",
+      "o_que_preocupa": "A TASK-SPIKE-003 pausada vai fechar sob a trava nova: se mexeu em src/, o finalizar recusa, e a parte do app vira tarefa propria ou --produto-tocado com motivo. A chave fica com remover_em null (chave permanente do laboratorio), entao o doctor nunca cobra prazo dela. E a varredura achou outro exportador do laboratorio (corpus.ts, variantes de inspecao da RF-030) que marca a ancora do motor como escolha do usuario por padrao, contra a INV-001: nao entra no inventario, virou achado.",
+      "o_que_existe_pronto_80_porcento": "Nenhuma conhecida"
+    },
+    "impacto": "Nenhum modulo de src/ afetado; pacote de processo (.mentor/), dependencia de desenvolvimento e documentos do projeto",
+    "riscos": [
+      "resolver-gerados pode reescrever blocos do contexto.json; conferir o diff contra o main antes de commitar",
+      "retomar a TASK-SPIKE-003 com o laboratorio declarado pode recusar o fechamento dela"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pedido explicito do humano (14/09/26). A 0.10.0 so protege o piloto com o laboratorio declarado; sem o bloco, a trava do spike e o inventario nao conferem nada. Nenhum arquivo de src/."
+  },
+  "gates": {
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "14/09/26 02:13",
+      "commit_execucao": "192b034fa93265ec276efb116289f80e2bb94f41",
+      "arvore_hash": "3778ff91aec4f8a3ad7c4ca2c1c2290ebe8c9794",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "14/09/26 02:14",
+      "commit_execucao": "192b034fa93265ec276efb116289f80e2bb94f41",
+      "arvore_hash": "3778ff91aec4f8a3ad7c4ca2c1c2290ebe8c9794",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1999 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-Bykvp3d9.css   \u001b[39m\u001b[1m\u001b[2m 28.26 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.22 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-DjO9vT5h.js    \u001b[39m\u001b[1m\u001b[33m540.41 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 103.96 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-BH0bsWaq.js   \u001b[39m\u001b[1m\u001b[33m808.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 263.08 kB\u001b[22m\n\u001b[32m✓ built in 8.20s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1799.17 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "14/09/26 02:15",
+      "commit_execucao": "192b034fa93265ec276efb116289f80e2bb94f41",
+      "arvore_hash": "3778ff91aec4f8a3ad7c4ca2c1c2290ebe8c9794",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  976 passed (976)\n   Start at  02:15:25\n   Duration  66.35s (transform 14.84s, setup 89.23s, import 36.67s, tests 72.57s, environment 353.27s)\n\n(node:37132) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "14/09/26 02:16",
+      "commit_execucao": "192b034fa93265ec276efb116289f80e2bb94f41",
+      "arvore_hash": "3778ff91aec4f8a3ad7c4ca2c1c2290ebe8c9794",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": {
+        "dispensado_em": "14/09/26 02:16",
+        "motivo": "Nao ha regra de negocio nem codigo de aplicacao (src/) alterado: e so a atualizacao da dependencia de processo mentor-agent e a declaracao do laboratorio no contexto. Sem codigo de producao para mutar, prova por mutacao nao se aplica; os testes existentes passam inalterados porque nada que eles cobrem mudou."
+      }
+    },
+    "validacao_manual": {
+      "rotulo": "não se aplica",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": null,
+      "executado_em": "14/09/26 02:17",
+      "commit_execucao": "192b034fa93265ec276efb116289f80e2bb94f41",
+      "arvore_hash": "3778ff91aec4f8a3ad7c4ca2c1c2290ebe8c9794",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": "Atualizacao mecanica de ferramenta de processo (mentor-agent) e declaracao do laboratorio no contexto, sem alteracao em src/; nenhum modulo de aplicacao ou UI tocado. Mesma operacao das TASK-CHORE-019 a 021.",
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [
+    {
+      "classe": 1,
+      "descricao": "npm audit: esbuild 0.27.3 a 0.28.0 com vulnerabilidade baixa GHSA-g7r4-m6w7-qqqr (leitura arbitraria de arquivo pelo servidor de desenvolvimento no Windows); e o alerta Dependabot #1 do repositorio. Correcao disponivel via npm audit fix",
+      "destino": "tarefa",
+      "ref": "TASK-CHORE-023"
+    },
+    {
+      "classe": 4,
+      "descricao": "__utilidades-back-office__/auto-roteirizacao/corpus.ts (variantes de inspecao da RF-030, .mentor-saidas/auto-anchors/importaveis/) exporta vehicleStopIsDefault false para toda ancora que o gerador moveu, sem chave: o app trata como escolha do usuario e nunca reaplica o padrao. Contradiz a INV-001 (artefato de laboratorio sai com o comportamento padrao; o do teste so com chave explicita). O teste corpus.test.ts prende esse comportamento, por isso o artefato nao entrou em artefatos_importaveis",
+      "destino": "tarefa",
+      "ref": "TASK-BG-023"
+    }
+  ],
+  "validacao": "dispensado",
+  "validado_em": "14/09/26 02:17",
+  "validacao_motivo": "Atualizacao mecanica de ferramenta de processo (mentor-agent) e declaracao do laboratorio no contexto, sem alteracao em src/; nenhum modulo de aplicacao ou UI tocado. Mesma operacao das TASK-CHORE-019 a 021.",
+  "tarefas_geradas": [
+    "TASK-CHORE-023",
+    "TASK-BG-023"
+  ],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-14--02h42--TASK-CHORE-022.md"
+}
