@@ -617,14 +617,14 @@
   "contagens": {
     "_gerado_por_script": true,
     "tarefas_concluidas": 39,
-    "tarefas_abertas": 28,
+    "tarefas_abertas": 29,
     "tarefas_no_ciclo": 0,
-    "tarefas_na_reserva": 28,
+    "tarefas_na_reserva": 29,
     "validacoes_pendentes": 0,
     "requisitos_total": 37,
     "requisitos_implementados": 17,
     "requisitos_pendentes": 20,
-    "divida_tecnica_aberta": 3,
+    "divida_tecnica_aberta": 4,
     "riscos_aceitos_ativos": 0,
     "riscos_aceitos_vencidos": 0,
     "tarefas_desde_revisao_geral": null,
@@ -636,10 +636,10 @@
   "auditoria": {
     "cadencia_em_tarefas": 10,
     "cadencia_nota": "A cada N tarefas concluidas com diff auditavel, 'mentor auditar preparar' monta o dossie do lote. Cada tarefa leva o proprio diff (os commits com o ID dela no titulo); registros, notas e atualizacao do pacote nao contam. O tamanho so decide como o dossie se divide. O auditor le o dossie: nunca o repositorio.",
-    "ultima_em": "15/09/26 05:37",
-    "ultima_na_tarefa": 33,
+    "ultima_em": "15/09/26 07:30",
+    "ultima_na_tarefa": 39,
     "ultimo_commit": "f39dc02f4f54f5e81660c30c9ca444b9c17e6d04",
-    "proxima_em_tarefa": 43,
+    "proxima_em_tarefa": 49,
     "pendencias_reportadas": []
   },
   "laboratorio": {

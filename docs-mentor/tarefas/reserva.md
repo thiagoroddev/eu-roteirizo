@@ -15,6 +15,7 @@
 | `TASK-DOC-005` | Decidir destino do status Carregando ruas do grafo OSM | - | DOC | desejavel | P/P | titulo-autossuficiente |
 | `TASK-DOC-006` | Aplicar correcoes de custo e backend do plano de infraestrutura | - | DOC | importante | P/M | titulo-autossuficiente |
 | `TASK-DOC-008` | Resolver divergencia entre UI_LABELS.SUMMARY.VIEW_MAP e texto renderizado | - | DOC | desejavel | P/P | titulo-autossuficiente |
+| `TASK-DOC-011` | Atualizar o RF-57 para o que a TASK-RF-043 entregou (tracado do veiculo por perna, translucido, com rua repetida entre pernas mais escura e destaque da perna que sai da parada selecionada, no lugar da alternancia entre rota inteira e trecho) e propor os criterios de aceite do RF-57 e do RF-59 com os testes da TASK-RF-043 e da TASK-RF-045 | - | DOC | importante | P/P | AUD-004-B01 |
 | `TASK-REF-014` | Ajustar radius do tema para 0.5rem conforme neonflux | - | REF | desejavel | P/P | titulo-autossuficiente |
 | `TASK-REF-020` | Redesenhar os enderecos da parada em cards aninhados (StopItemRow/StopItemDetail, usados em Ver detalhes, Ver parada e modo Original), no layout do Stitch aplicado na TASK-RF-045: card por endereco com ordinal, complemento em destaque, rotulo e codigo SPX, tipo e Abrir no Maps, com tokens do tema | - | REF | desejavel | M/G | titulo-autossuficiente |
 | `TASK-RF-009` | Modo execucao do Meu roteiro | epico, 5 fatias | RF | critico | XG/XG | RF-37, RF-47, RF-48, RF-49, RN-22 |

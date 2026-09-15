@@ -37,5 +37,18 @@
     "tarefa_origem": "TASK-RF-044",
     "paga_em": null,
     "tarefa_pagamento": null
+  },
+  {
+    "id": "DT-012",
+    "tipo": "codigo",
+    "o_que": "O tracado do veiculo da RF-043 (src/components/RouteMap.tsx, VEHICLE_ROUTE_STYLE com opacidade 0,45; uma polilinha por perna vinda de vehicleRouteLegs em src/utils/routing/routePath.ts) escurece pouco a rua percorrida duas vezes, e nao escurece repeticao dentro da mesma perna. Por composicao de opacidade, a diferenca entre duas passagens e uma e alfa*(1-alfa), que nunca passa de 0,25 (em alfa 0,5); com 0,45 ja e 0,2475, entao ajustar a opacidade nao resolve. A saida e contar as passagens por trecho de rua e mudar cor ou espessura pela contagem (alternativa 2 do plano da TASK-RF-043). Achados AUD-004-O06 e observacao do humano em 15/09/26: escurece bem pouco.",
+    "motivo": "Decisao do humano, 15/09/26: o frontend deste PWA e prototipo; ajuste de tela fica para quando nao houver nada com mais prioridade.",
+    "custo_futuro": "Rua percorrida mais de uma vez continua dificil de identificar no mapa, e a repeticao dentro de uma perna nao aparece.",
+    "gatilho": "Quando nao houver tarefa com mais prioridade na fila (decisao do humano, 15/09/26).",
+    "dono": "Thiago Rodrigues",
+    "criada_em": "15/09/26 08:04",
+    "tarefa_origem": "TASK-RF-043",
+    "paga_em": null,
+    "tarefa_pagamento": null
   }
 ]
