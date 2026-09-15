@@ -199,6 +199,36 @@ npm run typecheck    # tipos, roda `tsc -b` (o tsconfig da raiz usa project refe
 npm run build        # build de produção
 ```
 
+### Numa máquina nova
+
+O `git clone` traz o código, mas não traz a configuração local do git nem os arquivos que ficam
+fora do repositório de propósito.
+
+```bash
+npm ci                              # dependências
+node mentor.mjs hooks --instalar    # liga o pre-push, que roda os gates antes de cada push
+git config core.longpaths true      # só no Windows: aceita caminhos acima de 260 caracteres
+```
+
+O `mentor.mjs` precisa de Node 22.18 ou mais novo. A ligação do hook e o `core.longpaths` ficam no
+`.git/config` da máquina e não vão para o GitHub. Sem o `core.longpaths`, ferramentas de IA que
+criam referências de nome longo no git fazem o `git fetch` falhar no Windows.
+
+**Pastas locais fora do git:**
+
+| Pasta | O que guarda | Pode ir para o git? | Se faltar |
+|---|---|---|---|
+| `node_modules/` | dependências | não | `npm ci` |
+| `dist/` | build de produção | não | `npm run build` |
+| `__utilidades-back-office__/romaneios/` | romaneios **reais** (XLSX) que os arneses de auto-roteirização leem | **nunca**: são dados de entrega de clientes | copiar dos originais guardados fora do git. Sem eles os arneses não rodam; o app funciona normalmente |
+| `.mentor-saidas/` | saídas do mentor e dos arneses: relatórios, mapas HTML, GeoJSON e JSONs importáveis gerados dos romaneios reais | **nunca**: derivam dos romaneios reais | rodar o arnês de novo (`npm run test:auto-anchors`, `npm run test:auto-fundamentals`). O que valer guardar, copiar à mão |
+| `__utilidades-back-office__/auto-roteirizacao/.cache/` | malha do OpenStreetMap e grafos já montados para os arneses | não: é cache | nada. A próxima execução baixa de novo |
+| `__utilidades-back-office__/spike-conversoes/.cache/` | malha do OpenStreetMap da medição da SPIKE-001 | não: é cache | nada. A próxima execução baixa de novo |
+| `.claude/` | configuração local do Claude Code (preview no navegador) | não | a ferramenta recria |
+
+O app não lê `.env`. As únicas variáveis de ambiente são as chaves dos arneses de laboratório,
+listadas em `docs-mentor/contexto.json`, no bloco `laboratorio.chaves`.
+
 ---
 
 ## 📚 Documentação
