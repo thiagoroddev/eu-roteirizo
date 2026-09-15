@@ -1,0 +1,200 @@
+{
+  "id": "TASK-CHORE-024",
+  "tipo": "CHORE",
+  "titulo": "Atualizar mentor-agent para v0.12.0",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "sem_requisito_motivo": null,
+  "criada_em": "15/09/26 00:33",
+  "iniciada_em": "15/09/26 00:33",
+  "commit_base": "9aafccf3e2784c5f7f9fb9cf403d81f87da6a828",
+  "concluida_em": "15/09/26 00:45",
+  "plano": {
+    "muda": [
+      "package.json - devDependency mentor-agent github:thiagoroddev/mentor-agent#v0.10.0 -> #v0.12.0",
+      "package-lock.json - lock atualizado para mentor-agent 0.12.0",
+      ".mentor/** - pacote reinstalado via npx mentor instalar --forcar (instalador do node_modules) (entram casos.ts e restricoes.ts; mudam os processos entrega, inicializacao, rascunho e tarefa)",
+      "mentor.mjs - atalho reinstalado junto do pacote, se mudar",
+      ".gitattributes - requisitos/pendentes.md e implementados.md com merge=ours (vem da 0.12.0)",
+      "docs-mentor/contexto.json - versao_do_pacote 0.12.0 via resolver-gerados",
+      "docs-mentor/melhorias-do-pacote.md - saem as sete notas aplicadas na 0.12.0 (Frentes A a G) e entra a nota da checagem de caixa de caminho que sobe ate a raiz do disco"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "node mentor.mjs verificar aprova depois da atualizacao",
+        "teste": "nao se aplica: verificacao operacional via CLI; a saida fica registrada com task criterio",
+        "evidencia": {
+          "comando": "node mentor.mjs verificar",
+          "codigo_saida": 0,
+          "saida": "APROVADO. Tres familias: marcadores, tetos de texto, integridade referencial (ponteiros, links e inventario de regras).",
+          "executado_em": "15/09/26 00:43"
+        }
+      },
+      {
+        "texto": "node mentor.mjs doctor roda sem bloqueio depois da atualizacao",
+        "teste": "nao se aplica: verificacao operacional via CLI; a saida fica registrada com task criterio",
+        "evidencia": {
+          "comando": "node mentor.mjs doctor",
+          "codigo_saida": 0,
+          "saida": "SAUDE DO PROJETO — 15/09/26 00:43\n\nSEGURANCA\n  ✓  nenhum risco aceito vencido\n  ✓  analise de dependencias automatica\n\nQUALIDADE\n  ·  17 de 37 requisitos implementados\n  ✓  metodo de teste \"tdd\", todo criterio com teste nomeado\n  ✓  nenhum teto de texto estourado\n  ·  2 divida(s) tecnica(s) aberta(s)\n  ·  1 de 1 invariante(s) com mecanismo automatizado\n\n  Perfil ISO/IEC 25010, contra as metas do proprio projeto:\n    ⚠  adequacao funcional    Avaliacao parcial, TASK-CHORE-012. A suite passou, mas nao certifica todos os RFs. Contagem 44/49 retirada por rastreabilidade obsoleta: RF-35 ainda consta planejado apesar de routeStorage/TASK-RF-008. RF-009, RF-029 e RF-013 seguem pendentes.\n    ⚠  desempenho             Parcial, TASK-CHORE-012: upload/TTL conferidos no codigo; build com chunks acima de 500 kB, sem bloqueio. A* usa teste sintetico sem assercao temporal. Alvo ~150ms em bairro/celular segue sem medicao; doctor/gates nao aferem isso.\n    ⚠  compatibilidade        Parcial, TASK-CHORE-012: PWA, fallback SPA e teste de round-trip XLSX presentes. Faltam matriz de versoes/navegadores e validacao em Android. TWA/Play Store planejados.\n    ?  usabilidade            meta declarada, nunca aferida: Uso em rua/sol/celular; UI em portugues; smoke real obrigatorio para UI/gestos.\n    ⚠  confiabilidade         Relato Samsung M35 em TASK-CHORE-012: teste offline realizado, com reuso de tiles visitados entre romaneios, lacunas em zooms/areas e atraso durante arraste. Percursos fora das ruas offline e falha ao carregar malha tambem online. Validacao integral pendente com falhas; data do teste e versao nao informadas.\n    ⚠  seguranca              Parcial, TASK-CHORE-012: logs DEV, escapeHtml e XLSX fixado. Alertas e correcoes de seguranca GitHub ativados e reconferidos por API. Plano de incidente aberto; audit local anterior identificou 1 moderada (@humanfs/node) e 1 baixa (esbuild), ainda sem correcao local.\n    ⚠  manutenibilidade       Parcial, TASK-CHORE-012: strict, UI_LABELS, reducer e gates verdes. Docs de requisitos obsoletas; separacao utils/servicos incompleta, pois routing/osm.ts executa fetch.\n    ⚠  portabilidade          Parcial, TASK-CHORE-012: PWA e dados locais presentes. Isolamento de mapas incompleto: Worker em RouteMap.tsx, Overpass em routing/osm.ts. TWA/Capacitor e PMTiles/R2 planejados, sem teste de migracao.\n\n    avaliadas 7 de 8 · conformes 0 · ressalva 7 · reprovadas 0 · sem meta 0 · sem afericao 1\n    Caracteristica sem meta e \"–\", nunca conforme: ausencia de medicao nao e conformidade.\n\nPROCESSO\n  ✓  1 de 1 em execucao\n  ·  1 de 12 no ciclo, 27 na reserva\n  ✓  portoes exigidos pela fase \"construcao\" respondidos\n  ✓  versionado, 127 commit(s), remoto configurado\n  ·  1 ramo(s) WIP no remoto: origin/wip/spike-003. Entram no ramo principal so por PR, com a tarefa concluida\n  ✓  versionamento declarado\n  ·  laboratorio em __utilidades-back-office__/**: 2 chave(s), 2 artefato(s) importavel(is)\n  ✓  pontos de entrada apontam para o nucleo\n  ✓  auditoria em dia: ultima em 13/09/26 01:02, 7 de 10 tarefa(s) com codigo desde entao\n\nPRONTO PARA PUBLICO?  SIM — nenhum bloqueio",
+          "executado_em": "15/09/26 00:43"
+        }
+      },
+      {
+        "texto": "docs-mentor/contexto.json registra versao_do_pacote 0.12.0",
+        "teste": "nao se aplica: leitura do contexto registrada com task criterio",
+        "evidencia": {
+          "comando": "node -e \"console.log('versao_do_pacote', require('./docs-mentor/contexto.json')._meta.versao_do_pacote)\"",
+          "codigo_saida": 0,
+          "saida": "versao_do_pacote 0.12.0",
+          "executado_em": "15/09/26 00:43"
+        }
+      },
+      {
+        "texto": "melhorias-do-pacote.md fica sem as notas aplicadas na 0.12.0 e com a nota nova da checagem de caixa de caminho",
+        "teste": "nao se aplica: conteudo de documento, conferido no diff e registrado com task criterio",
+        "evidencia": {
+          "comando": "node -e \"const t=require('fs').readFileSync('docs-mentor/melhorias-do-pacote.md','utf8');const n=t.match(/^- \\*\\*/gm)||[];console.log('notas:',n.length,'| checagem de caixa anotada:',t.includes('existeComGrafiaExata'),'| cabecalho 0.12.0:',t.includes('0.4.0 a 0.12.0'))\"",
+          "codigo_saida": 0,
+          "saida": "notas: 1 | checagem de caixa anotada: true | cabecalho 0.12.0: true",
+          "executado_em": "15/09/26 00:43"
+        }
+      }
+    ],
+    "pedido_original": "15/09/26: roteiro de implantacao da v0.12.0 colado pelo humano (npm install github:thiagoroddev/mentor-agent#v0.12.0; node .mentor/scripts/instalar.mjs --forcar; mentor resolver-gerados; mentor verificar; mentor doctor; finalizar). Depois: \"o piloto hospedeiro e aqui, ve se ja da pra atualizar o mentor\" e \"faca\"",
+    "solucao_sugerida": "Seguir o roteiro colado: npm install da tag, node .mentor/scripts/instalar.mjs --forcar, resolver-gerados, verificar, doctor e finalizar",
+    "alternativas_profissionais": [
+      {
+        "pratica": "Roteiro oficial da propria 0.12.0 (processos/inicializacao.md): ramo a partir da main, task nova/puxar/iniciar, npm i -D da tag, node mentor.mjs instalar --forcar, diff das normas, resolver-gerados, verificar e gates",
+        "pegaria_o_caso": "Sim; e o adotado",
+        "custo": "Nenhum alem do roteiro"
+      },
+      {
+        "pratica": "Roteiro colado ao pe da letra, com node .mentor/scripts/instalar.mjs --forcar",
+        "pegaria_o_caso": "Nao: roda o instalador antigo ja copiado no projeto, que recopia o pacote velho sobre ele mesmo e passa sem erro sem atualizar nada",
+        "custo": "Atualizacao falsa silenciosa"
+      },
+      {
+        "pratica": "Bump automatico da dependencia por bot (Dependabot/Renovate)",
+        "pegaria_o_caso": "Nao: a dependencia do GitHub nao copia .mentor/ nem roda resolver-gerados",
+        "custo": "Metade da atualizacao"
+      }
+    ],
+    "problema_canonico": "sem nome canonico",
+    "discordancia": {
+      "o_que_faria_diferente": "Nada a objetar ao objetivo; o roteiro colado foi corrigido antes (instalador certo, --esforco, ramo proprio, portoes e gates)",
+      "o_que_preocupa": "A 0.12.0 troca leis que valem para o que esta aberto: fatias passam a nascer independentes e o epico RF-009 (fatias RF-024 a 028) exige plano_do_epico antes da primeira fatia; a validacao manual aprovada exige evidencia de 30 caracteres. O verificar novo confere a caixa de cada pasta ate a raiz do disco: terminal aberto com o caminho digitado em outra caixa reprova o projeto inteiro (medido no ensaio em clone de 14/09/26)",
+      "o_que_existe_pronto_80_porcento": "Nenhuma conhecida"
+    },
+    "impacto": "Nenhum modulo de src/ afetado; escopo restrito ao pacote de processo (.mentor/ e mentor.mjs), a dependencia de desenvolvimento, ao .gitattributes, ao contexto e as melhorias do pacote",
+    "riscos": [
+      "instalar --forcar troca leis (processos entrega, inicializacao, rascunho e tarefa): ler o aviso de normas e o git diff de .mentor/processos antes de fechar",
+      "resolver-gerados pode reescrever blocos do contexto.json: conferir o diff contra a main antes de commitar",
+      "Falso positivo de caixa de caminho no verificar se a sessao rodar com o caminho digitado em outra caixa"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pedido explicito do humano (roteiro de implantacao e \"faca\"). Dependencia de desenvolvimento; a tarefa existe porque a atualizacao troca leis e o hook exige ID em commit que toca package.json. A limpeza das melhorias repete o feito nas TASK-CHORE-019, 020 e 022, e a nota nova registra o que o ensaio mediu. Nada de src/."
+  },
+  "gates": {
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "15/09/26 00:40",
+      "commit_execucao": "9aafccf3e2784c5f7f9fb9cf403d81f87da6a828",
+      "arvore_hash": "99eb2364cd28efa333c25aea59e92ca607caa018",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "15/09/26 00:40",
+      "commit_execucao": "9aafccf3e2784c5f7f9fb9cf403d81f87da6a828",
+      "arvore_hash": "99eb2364cd28efa333c25aea59e92ca607caa018",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  989 passed (989)\n   Start at  00:41:10\n   Duration  57.77s (transform 14.56s, setup 80.82s, import 40.85s, tests 64.53s, environment 291.73s)\n\n(node:4812) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "15/09/26 00:42",
+      "commit_execucao": "9aafccf3e2784c5f7f9fb9cf403d81f87da6a828",
+      "arvore_hash": "99eb2364cd28efa333c25aea59e92ca607caa018",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": {
+        "dispensado_em": "15/09/26 00:42",
+        "motivo": "Atualizacao de ferramenta de processo (mentor-agent 0.10.0 -> 0.12.0) sem regra de negocio nem codigo de src/: nao ha comportamento novo do app para ver vermelho. Prova por mutacao nao se aplica; a suite roda inteira contra a arvore atualizada para mostrar que nada do app regrediu."
+      }
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 2001 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-PRFVi4ZE.css   \u001b[39m\u001b[1m\u001b[2m 28.81 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.27 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-CbAmWFBD.js    \u001b[39m\u001b[1m\u001b[33m543.48 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 104.97 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-CSdyhtLd.js   \u001b[39m\u001b[1m\u001b[33m808.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 263.08 kB\u001b[22m\n\u001b[32m✓ built in 6.10s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1802.69 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "15/09/26 00:42",
+      "commit_execucao": "9aafccf3e2784c5f7f9fb9cf403d81f87da6a828",
+      "arvore_hash": "99eb2364cd28efa333c25aea59e92ca607caa018",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "não se aplica",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": null,
+      "executado_em": "15/09/26 00:42",
+      "commit_execucao": "9aafccf3e2784c5f7f9fb9cf403d81f87da6a828",
+      "arvore_hash": "99eb2364cd28efa333c25aea59e92ca607caa018",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": "Atualizacao da ferramenta de processo mentor-agent (0.10.0 -> 0.12.0), sem alteracao em src/ nem em UI, persistencia ou calculo do app; verificada por verificar, doctor e pelos quatro gates. Mesma operacao das TASK-CHORE-015 a 022.",
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "dispensado",
+  "validado_em": "15/09/26 00:42",
+  "validacao_motivo": "Atualizacao da ferramenta de processo mentor-agent (0.10.0 -> 0.12.0), sem alteracao em src/ nem em UI, persistencia ou calculo do app; verificada por verificar, doctor e pelos quatro gates. Mesma operacao das TASK-CHORE-015 a 022.",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-15--00h45--TASK-CHORE-024.md"
+}
