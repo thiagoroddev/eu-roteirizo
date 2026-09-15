@@ -19,3 +19,4 @@
 | `RF-57` | RF | Alternar o tracado do roteiro no mapa entre rota inteira e trecho da parada selecionada, com passagens repetidas distinguiveis por acumulo de opacidade | importante | TASK-RF-043 |
 | `RF-58` | RF | Navegar entre paradas firmadas do Meu roteiro com avancar/retroceder ciclico no cabecalho do painel | importante | TASK-RF-044 |
 | `RN-23` | RN | A parada padrao do veiculo fica na via em frente ao pino de cada endereco, por projecao geometrica; o planejamento considera possivel parar junto a qualquer endereco e nao procura vaga, permissao nem disponibilidade de estacionamento. | essencial | TASK-BG-016, TASK-BG-022 |
+| `RF-63` | RF | Pesquisar romaneios salvos por nome da rota ou codigo AT, mostrando dentro de cada card apenas as rotas correspondentes (X de N rotas) | importante | TASK-REF-013, TASK-RF-048 |

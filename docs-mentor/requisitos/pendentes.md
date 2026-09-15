@@ -22,3 +22,6 @@
 | `RNF-17` | RNF | Integrar Play Billing e entitlement premium com estrategia de validacao adequada ao MVP e ao risco de cobranca real. | importante | - |
 | `RNF-20` | RNF | Cumprir LGPD e consentimento de anuncios: dados de terceiros ficam locais e UMP/consentimento ocorre antes de carregar SDK de ads. | essencial | - |
 | `RF-59` | RF | Exibir a distancia de deslocamento entre paradas consecutivas na lista completa do roteiro | importante | TASK-RF-045 |
+| `RF-60` | RF | Ordenar a lista de romaneios salvos do uso mais recente para o mais antigo, independente da data de importacao | importante | TASK-RF-046, TASK-RF-048 |
+| `RF-61` | RF | Guardar o resumo de cada roteiro salvo (paradas, km do veiculo, km a pe, tempo total e progresso de construcao) para exibir e comparar roteiros na lista de romaneios salvos | importante | TASK-RF-047, TASK-RF-048 |
+| `RF-62` | RF | Exibir em cada rota da lista de romaneios salvos o nome do bairro com mais entregas, sem a contagem, reaproveitando o calculo de bairros do Sumario | desejavel | TASK-RF-048 |
