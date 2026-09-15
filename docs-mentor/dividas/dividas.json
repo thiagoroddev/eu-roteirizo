@@ -2,7 +2,7 @@
   {
     "id": "DT-009",
     "tipo": "codigo",
-    "o_que": "A classificacao comercial/residencial (inferLocationType) decide por palavra-chave solta no complemento, e checa a lista residencial antes da comercial. Palavra ambigua nao tem resposta certa nesse metodo, e nome proprio que contem palavra de uma lista vence o sinal real: \"Emporio da Vila\", nome de empresa, sai residencial por causa de \"vila\" (caso 18 de src/__tests__/utils/addressClassificationCases.ts). Na validacao da TASK-BG-021 o humano tambem reconsiderou o esperado de \"Ao lado do Teatro\" (caso 19). Plural sem entrada propria nao casa (caso 23). Os casos 18 e 19 seguem na tabela travando o comportamento atual, marcados com esta divida.",
+    "o_que": "A classificacao comercial/residencial (inferLocationType) decide por palavra-chave solta no complemento, e checa a lista residencial antes da comercial. Palavra ambigua nao tem resposta certa nesse metodo, e nome proprio que contem palavra de uma lista vence o sinal real: \"Emporio da Vila\", nome de empresa, sai residencial por causa de \"vila\" (caso 18 de src/__tests__/utils/addressClassificationCases.ts). Na validacao da TASK-BG-021 o humano tambem reconsiderou o esperado de \"Ao lado do Teatro\" (caso 19). Plural sem entrada propria nao casa (caso 23). Os casos 18 e 19 seguem na tabela travando o comportamento atual, marcados com esta divida. Ao pagar, inverter o esperado dos casos 18 e 19 em src/__tests__/utils/addressClassificationCases.ts: eles esperam o resultado errado de hoje, e sem a troca a suite reprova o conserto (AUD-003-O09).",
     "motivo": "A TASK-BG-021 existia para validar o que a TASK-BG-017 mudou. Consertar o metodo de inferencia estenderia a tarefa para outro problema; o humano decidiu adiar ate haver uma abordagem mais robusta.",
     "custo_futuro": "Toda palavra nova pode colidir com a lista oposta, como edificio e zelador colidiram na BG-017. A coluna Horario Comercial? e a contagem do Sumario erram em endereco com nome de empresa ou termo ambiguo, e cada ajuste pontual de lista aumenta o risco de regressao.",
     "gatilho": "Antes de acrescentar ou retirar a proxima palavra-chave em src/constants/keywords.ts, ou quando classificacao errada de endereco comercial aparecer em uso real.",
@@ -22,6 +22,19 @@
     "dono": "Thiago Rodrigues",
     "criada_em": "13/09/26 03:12",
     "tarefa_origem": "TASK-BG-021",
+    "paga_em": null,
+    "tarefa_pagamento": null
+  },
+  {
+    "id": "DT-011",
+    "tipo": "teste",
+    "o_que": "O teste de integracao da navegacao entre paradas do Meu roteiro (src/__tests__/pages/MapPage.test.tsx > Meu roteiro: parada anterior/proxima percorre as paradas firmadas em ciclo) usa duas paradas firmadas. Com duas, anterior e proxima sempre levam a mesma parada, entao trocar os botoes em src/pages/MapPage.tsx (onPrevStop com +1 e onNextStop com -1) passa na suite. A direcao so esta presa no teste unitario de adjacentStopId (src/__tests__/utils/routing/selectors.test.ts). Achado AUD-003-R01.",
+    "motivo": "Decisao do humano, 15/09/26: o frontend deste PWA e prototipo descartavel e nao vai para o produto final; ajuste de teste de tela fica para quando nao houver nada com mais prioridade.",
+    "custo_futuro": "Uma troca dos botoes anterior/proxima no cabecalho do Meu roteiro nao seria pega pela suite; so apareceria usando a tela com tres ou mais paradas firmadas.",
+    "gatilho": "Quando nao houver tarefa com mais prioridade na fila (decisao do humano, 15/09/26).",
+    "dono": "Thiago Rodrigues",
+    "criada_em": "15/09/26 06:43",
+    "tarefa_origem": "TASK-RF-044",
     "paga_em": null,
     "tarefa_pagamento": null
   }

@@ -1,0 +1,22 @@
+{
+  "id": "AUD-004",
+  "lote": [
+    "TASK-BG-023",
+    "TASK-RF-043",
+    "TASK-RF-045",
+    "TASK-CHORE-024",
+    "TASK-CHORE-025",
+    "TASK-CHORE-026"
+  ],
+  "commit_base": "f39dc02f4f54f5e81660c30c9ca444b9c17e6d04",
+  "commit_final": "f39dc02f4f54f5e81660c30c9ca444b9c17e6d04",
+  "preparada_em": "15/09/26 05:38",
+  "registrada_em": null,
+  "veredito": null,
+  "nao_verificado": [
+    "PREENCHER: o que voce NAO conseguiu verificar, e por que. Esta lista sustenta o veredito"
+  ],
+  "pendencias": [],
+  "sem_diff_auditavel": [],
+  "ficaram_para_depois": []
+}

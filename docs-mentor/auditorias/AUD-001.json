@@ -106,9 +106,9 @@
       "tarefas": [
         "TASK-SPIKE-002"
       ],
-      "destino": null,
-      "ref": null,
-      "resolvida_em": null,
+      "destino": "descartado",
+      "ref": "Decisao do humano, 15/09/26: o spike 002 foi conclusivo. Serviu para escolher o raio de agrupamento ideal inicial (nao otimizado) e mostrou que otimizar exige inicio e fim definidos no roteiro; nao ha validacao pendente que segure fatias de produto",
+      "resolvida_em": "15/09/26 07:02",
       "id": "AUD-001-R06"
     },
     {
@@ -120,9 +120,9 @@
         "TASK-CHORE-012",
         "TASK-SPIKE-001"
       ],
-      "destino": null,
-      "ref": null,
-      "resolvida_em": null,
+      "destino": "descartado",
+      "ref": "Decisao do humano, 15/09/26: nao se aplica; criterio 'nao se aplica' em tarefa CHORE e SPIKE ja entregue nao pede acao",
+      "resolvida_em": "15/09/26 07:02",
       "id": "AUD-001-O07"
     },
     {
@@ -132,9 +132,9 @@
         "TASK-BG-011",
         "TASK-CHORE-012"
       ],
-      "destino": null,
-      "ref": null,
-      "resolvida_em": null,
+      "destino": "descartado",
+      "ref": "Decisao do humano, 15/09/26: o PWA e prototipo e nao vai para o produto final; tamanho de chunk do build nao pede acao",
+      "resolvida_em": "15/09/26 07:02",
       "id": "AUD-001-O08"
     }
   ]
