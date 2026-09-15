@@ -19,12 +19,15 @@ export function prontoParaMerge(titulo: string | undefined, flags: Record<string
     return 1
   }
   const ids = [...new Set(titulo.match(new RegExp(ID_DE_TAREFA_NO_TITULO.source, 'g')) ?? [])]
-  if (ids.length === 0) {
-    if (MARCA_LIGHT_NO_TITULO.test(titulo)) {
+  const ehLight = MARCA_LIGHT_NO_TITULO.test(titulo)
+  const ehPlano = MARCA_PLANO_NO_TITULO.test(titulo)
+  // O escopo e' metadado estruturado. IDs no assunto podem ser apenas o que este PR registra ou cria.
+  if (ids.length === 0 || ehLight || ehPlano) {
+    if (ehLight) {
       console.log('Pronto para merge: PR Light, sem tarefa. A auditoria lista os commits Light para conferir se cabiam na lista.')
       return 0
     }
-    if (MARCA_PLANO_NO_TITULO.test(titulo)) {
+    if (ehPlano) {
       const c = caminhos()
       const base = flags.base || 'origin/main'
       let rDiff = spawnSync('git', ['diff', '--name-only', `${base}...HEAD`], { cwd: c.raiz, encoding: 'utf8' })
@@ -47,6 +50,10 @@ export function prontoParaMerge(titulo: string | undefined, flags: Record<string
         /^docs\/requisitos\//,
         /^docs-mentor\/rascunhos\//,
         /^docs\/rascunhos\//,
+        /^docs-mentor\/auditorias\//,
+        /^docs\/auditorias\//,
+        /^docs-mentor\/dividas\//,
+        /^docs\/dividas\//,
         /^docs-mentor\/tarefas\/abertas\//,
         /^docs\/tarefas\/abertas\//,
         /^docs-mentor\/tarefas\/reserva\.md$/,
