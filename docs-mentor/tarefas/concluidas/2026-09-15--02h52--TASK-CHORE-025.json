@@ -1,0 +1,188 @@
+{
+  "id": "TASK-CHORE-025",
+  "tipo": "CHORE",
+  "titulo": "Corrigir no .mentor local a marca (plano) do entrega.md e a checagem de caixa do verificar, registrando as correcoes para levar ao pacote",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "ordem_motivo": null,
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "sem_requisito_motivo": null,
+  "criada_em": "15/09/26 01:58",
+  "iniciada_em": "15/09/26 01:58",
+  "commit_base": "e8438b84ca2d330a30dbf5a16377da64c06dee5d",
+  "concluida_em": "15/09/26 02:52",
+  "plano": {
+    "muda": [
+      ".mentor/processos/entrega.md - o exemplo de titulo do PR de planejamento passa a docs(plano): novo fluxo de checkout, com a marca na posicao de escopo, como (light)",
+      ".mentor/scripts/cmd-verificar.ts - existeComGrafiaExata confere a caixa so das pastas abaixo da raiz do projeto; a raiz e as pastas acima dela ficam como vieram do terminal",
+      "docs-mentor/melhorias-do-pacote.md - cabecalho com a regra das correcoes locais (corrigir aqui, registrar, levar ao pacote antes de atualizar); as duas notas viram registros de correcao feita aqui, e a da caixa sai corrigida (o comportamento existe desde a 0.2.0)",
+      "docs-mentor/melhorias-do-pacote.test.ts - testes das duas correcoes locais, que tambem reprovam se uma atualizacao do pacote as desfizer",
+      "CLAUDE.md - uma linha apontando a regra das correcoes locais do mentor",
+      "AGENTS.md - uma linha apontando a regra das correcoes locais do mentor",
+      "GEMINI.md - uma linha apontando a regra das correcoes locais do mentor"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "O exemplo de titulo de PR de planejamento do entrega.md e aceito pela marca (plano) que o pronto-para-merge usa",
+        "teste": "docs-mentor/melhorias-do-pacote.test.ts > o exemplo de PR de planejamento do entrega.md passa na marca (plano)"
+      },
+      {
+        "texto": "Projeto aberto por um caminho com outra caixa acima da raiz nao gera falso positivo de link no verificar",
+        "teste": "docs-mentor/melhorias-do-pacote.test.ts > caixa diferente acima da raiz do projeto nao reprova link certo"
+      },
+      {
+        "texto": "Link com caixa errada dentro do projeto continua acusado pelo verificar",
+        "teste": "docs-mentor/melhorias-do-pacote.test.ts > caixa errada dentro do projeto continua acusada"
+      },
+      {
+        "texto": "melhorias-do-pacote.md explica a regra das correcoes locais e registra as duas correcoes com problema, o que mudou, arquivos, teste e estado, com texto completo",
+        "teste": "nao se aplica: conteudo de documento, lido e conferido pelo humano na validacao manual"
+      },
+      {
+        "texto": "CLAUDE.md, AGENTS.md e GEMINI.md apontam a regra para qualquer IA que abrir o projeto",
+        "teste": "nao se aplica: conteudo de documento, lido e conferido pelo humano na validacao manual"
+      }
+    ],
+    "pedido_original": "15/09/26: \"estou pensando em permitir ir melhorando no proprio hospedeiro, depois de um tempo, tudo que permaneceu vira oficial la no mentor, precisa ter textos completos sem ambiguidade, sem resumo\". Depois: \"eu so quero identificar problemas e resolver ja aqui, depois de um tempo vira melhoria oficial no agente, assim evita que eu tenha que recomecar tudo do zero mais uma vez la\". Aprovou o caminho simples com \"sim\".",
+    "solucao_sugerida": "Corrigir os problemas do pacote direto no .mentor/ deste projeto e, depois de um tempo, levar ao mentor-agent oficial o que permaneceu, com texto completo e sem resumo",
+    "alternativas_profissionais": [
+      {
+        "pratica": "Fila de patches catalogada fora da pasta do pacote (quilt com cabecalhos DEP-3 no Debian, patch-package no npm, pasta patches/ do Electron)",
+        "pegaria_o_caso": "Sim, e ainda avisaria da perda na atualizacao, mas exige comando novo, hashes e catalogo. Proposto em 15/09/26 e recusado pelo humano por complicar mais do que resolve",
+        "custo": "Quatro tarefas, um comando novo e testes extras"
+      },
+      {
+        "pratica": "Corrigir so no repositorio do pacote e publicar versao candidata para ensaiar no piloto antes da versao final",
+        "pegaria_o_caso": "Sim para os dois defeitos, mas cada correcao espera um ciclo de publicacao, e o humano quer resolver na hora sem recomecar la",
+        "custo": "Um ciclo de versao por defeito"
+      },
+      {
+        "pratica": "Correcao local no .mentor/ com o historico do git como texto integral e um registro em melhorias-do-pacote.md (adotada)",
+        "pegaria_o_caso": "Sim: o git guarda o texto exato de cada mudanca, o verificar ja acusa o que diverge do manifesto e o registro diz o motivo",
+        "custo": "Uma linha permanente de divergencia no verificar e a disciplina de levar ao pacote antes de atualizar"
+      }
+    ],
+    "problema_canonico": "patch mantido no projeto que usa o pacote (downstream patch), com envio posterior a origem (upstreaming)",
+    "discordancia": {
+      "o_que_faria_diferente": "Nada a objetar ao caminho simples. Na marca (plano), corrigir o exemplo do documento em vez de afrouxar a regex: (light) usa a mesma forma e o nucleo define o commit como <tipo>(<marca>): <descricao>",
+      "o_que_preocupa": "A protecao contra perda depende de disciplina: instalar --forcar sobrescreve as correcoes sem aviso. O teste da caixa so roda em sistema que ignora maiusculas (Windows) e e pulado na esteira Linux. O verificar passa a sair REPROVADO com uma linha de divergencia do pacote enquanto houver correcao local, e essa linha pode esconder achado novo se ninguem ler a lista",
+      "o_que_existe_pronto_80_porcento": "git (historico e diff) e o manifesto do proprio verificar, ambos usados"
+    },
+    "impacto": "Nenhum modulo de src/. No pacote local: um exemplo em processos/entrega.md e a funcao existeComGrafiaExata de scripts/cmd-verificar.ts, usada pela checagem de links e de referencias. Registro em docs-mentor e ponteiro nos arquivos de instrucao das IAs",
+    "riscos": [
+      "O verificar passa a sair REPROVADO com a linha de divergencia do pacote listando entrega.md e cmd-verificar.ts: esperado, explicado no registro",
+      "Atualizar o mentor antes de levar as correcoes ao pacote as apaga; mitigacao: regra no cabecalho do registro, ponteiro nos arquivos de instrucao e testes que reprovam; o git preserva o historico",
+      "Parar a subida na raiz deixa de acusar caixa errada na propria raiz, que vem do terminal e nao do repositorio: nao e defeito de link",
+      "O teste da caixa usa a pasta temporaria do sistema com as letras trocadas; em sistema que diferencia maiusculas ele e pulado"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram corrigir aqui o que foi achado e registrar para levar ao pacote depois, sem complicar. Proponho duas correcoes pequenas no .mentor/, um arquivo de teste e o registro no arquivo que ja existe, mais uma linha nos arquivos de instrucao. A proposta maior (catalogo, comando novo, quatro tarefas) foi recusada pelo humano por complicar mais do que resolve.",
+    "restricoes_reavaliadas": [],
+    "meio_de_validacao": {
+      "tipo": "testes_automatizados",
+      "porque_nao_automatizado": null,
+      "roteiro": null,
+      "artefato": null,
+      "casos": null
+    },
+    "composicao": null
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "15/09/26 02:03",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo--mentor-local\n\n\n Test Files  81 passed (81)\n      Tests  992 passed (992)\n   Start at  02:07:44\n   Duration  42.70s (transform 16.33s, setup 30.78s, import 36.47s, tests 82.12s, environment 116.24s)\n\n(node:14488) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "15/09/26 02:08",
+      "commit_execucao": "e8438b84ca2d330a30dbf5a16377da64c06dee5d",
+      "arvore_hash": "20e19423cba0eb576063aa32b53e73090b1f8de0",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "15/09/26 02:07",
+      "commit_execucao": "e8438b84ca2d330a30dbf5a16377da64c06dee5d",
+      "arvore_hash": "20e19423cba0eb576063aa32b53e73090b1f8de0",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "15/09/26 02:07",
+      "commit_execucao": "e8438b84ca2d330a30dbf5a16377da64c06dee5d",
+      "arvore_hash": "20e19423cba0eb576063aa32b53e73090b1f8de0",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 2001 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-PRFVi4ZE.css   \u001b[39m\u001b[1m\u001b[2m 28.81 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.27 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-CbAmWFBD.js    \u001b[39m\u001b[1m\u001b[33m543.48 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 104.97 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-CSdyhtLd.js   \u001b[39m\u001b[1m\u001b[33m808.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 263.08 kB\u001b[22m\n\u001b[32m✓ built in 8.39s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1802.69 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "15/09/26 02:09",
+      "commit_execucao": "e8438b84ca2d330a30dbf5a16377da64c06dee5d",
+      "arvore_hash": "20e19423cba0eb576063aa32b53e73090b1f8de0",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "APROVADO",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": "Humano leu docs-mentor/melhorias-do-pacote.md da pasta da tarefa (secao Regra e correcoes 1 e 2) e confirmou que o texto esta claro e aplicavel no pacote sem voltar para perguntar: 'ok, claro, prossiga' (15/09/26)",
+      "executado_em": "15/09/26 02:51",
+      "commit_execucao": "e8438b84ca2d330a30dbf5a16377da64c06dee5d",
+      "arvore_hash": "20e19423cba0eb576063aa32b53e73090b1f8de0",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "aprovado",
+  "validado_em": "15/09/26 02:51",
+  "validacao_motivo": "Humano leu docs-mentor/melhorias-do-pacote.md da pasta da tarefa (secao Regra e correcoes 1 e 2) e confirmou que o texto esta claro e aplicavel no pacote sem voltar para perguntar: 'ok, claro, prossiga' (15/09/26)",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-15--02h52--TASK-CHORE-025.md"
+}

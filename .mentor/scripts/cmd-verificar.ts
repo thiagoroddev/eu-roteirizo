@@ -1,5 +1,5 @@
 import { readdirSync } from 'node:fs'
-import { basename, dirname, join, resolve } from 'node:path'
+import { basename, dirname, join, resolve, sep } from 'node:path'
 import { caminhos, existe, lerJson, lerTexto, listar, raizPacote, relativo } from './arquivos.ts'
 import { comparar } from './cmd-regras.ts'
 import { conferirManifesto } from './cmd-pacote.ts'
@@ -95,13 +95,19 @@ export function tetos(): Achado[] {
  * Existe **com a grafia exata**. O Windows tem sistema de arquivos insensivel a maiusculas, entao um
  * link para `32-adr.md` apontando para o arquivo `32-ADR.md` funciona na maquina do autor e quebra
  * no GitHub e no Linux. Aqui a comparacao e' byte a byte, segmento por segmento.
+ *
+ * Confere so' as pastas **abaixo da raiz do projeto**. A raiz e o que fica acima dela vem de como o
+ * terminal foi aberto (`cd e:\Repositorios\...`), nao do repositorio: subir ate' o disco acusava
+ * todo link como quebrado quando o caminho digitado tinha outra caixa. Correcao local da
+ * TASK-CHORE-025, registrada em `docs-mentor/melhorias-do-pacote.md`.
  */
-function existeComGrafiaExata(caminho: string): boolean {
+function existeComGrafiaExata(caminho: string, raiz: string): boolean {
   if (!existe(caminho)) return false
+  const topo = resolve(raiz)
   let atual = resolve(caminho)
   for (;;) {
     const pai = dirname(atual)
-    if (pai === atual) return true
+    if (pai === atual || atual === topo || topo.startsWith(atual + sep)) return true
     if (!readdirSync(pai).includes(basename(atual))) return false
     atual = pai
   }
@@ -128,7 +134,7 @@ function links(): Achado[] {
       const semAncora = bruto.split('#')[0]
       if (!semAncora) continue
       const alvo = join(dirname(arquivo), decodeURI(semAncora))
-      if (!existeComGrafiaExata(alvo)) {
+      if (!existeComGrafiaExata(alvo, c.raiz)) {
         const existeIgnorandoCaixa = existe(alvo)
         achados.push({
           familia: 'referencia',
@@ -198,7 +204,7 @@ function referencias(): Achado[] {
       continue
     }
     const alvo = join(c.raiz, ref.onde)
-    if (!existeComGrafiaExata(alvo)) {
+    if (!existeComGrafiaExata(alvo, c.raiz)) {
       achados.push({
         familia: 'referencia',
         onde: 'docs-mentor/referencias.json',
