@@ -42,3 +42,4 @@
 | 14/09/26 11:12 | [`TASK-RF-043`](./2026-09-14--11h12--TASK-RF-043.md) | RF | Alternar tracado do roteiro e tornar passagens repetidas visiveis por opacidade | - | concluida | aprovado |
 | 14/09/26 12:48 | [`TASK-RF-045`](./2026-09-14--12h48--TASK-RF-045.md) | RF | Mostrar distancia entre paradas consecutivas na lista completa | - | concluida | aprovado |
 | 15/09/26 00:45 | [`TASK-CHORE-024`](./2026-09-15--00h45--TASK-CHORE-024.md) | CHORE | Atualizar mentor-agent para v0.12.0 | - | concluida | dispensado |
+| 15/09/26 02:52 | [`TASK-CHORE-025`](./2026-09-15--02h52--TASK-CHORE-025.md) | CHORE | Corrigir no .mentor local a marca (plano) do entrega.md e a checagem de caixa do verificar, registrando as correcoes para levar ao pacote | - | concluida | aprovado |

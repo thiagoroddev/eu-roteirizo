@@ -60,7 +60,7 @@ Para permitir que requisitos, ideias, tarefas na reserva e anotações sejam reg
 1. **Destino do planejamento:**
    - O código, narrativa, achados e gates de uma tarefa pertencem exclusivamente ao ramo dela.
    - Planejamento independente vai para um ramo curto `plan/<data>-<tema>` criado a partir da `main` atualizada.
-   - O PR de planejamento usa a marca explícita `(plano)` no título (ex.: `docs: novo fluxo de checkout (plano)`).
+   - O PR de planejamento leva a marca `(plano)` na posição de escopo do título, como `(light)` (ex.: `docs(plano): novo fluxo de checkout`).
 
 2. **Worktrees do Git (uma pasta por sessão):**
    - Para rodar sessões paralelas ou registrar planejamento com a `main` protegida, use `git worktree add ../<pasta-da-sessao> <branch>`.

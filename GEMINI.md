@@ -14,6 +14,8 @@ Tres coisas valem antes mesmo dessa leitura, porque as duas primeiras sao irreve
 
 Sem argumento, `node mentor.mjs` lista os comandos.
 
+Problema no proprio mentor-agent: corrija no `.mentor/` deste projeto e registre em `docs-mentor/melhorias-do-pacote.md`, seguindo a regra do topo desse arquivo.
+
 ---
 
 *Criado por `mentor instalar`. Se voce editar, ele nao sobrescreve: reinstalar preserva este arquivo.*
