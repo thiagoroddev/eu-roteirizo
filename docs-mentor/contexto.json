@@ -5,7 +5,7 @@
     "versao_nota": "Gravada no init a partir de .mentor/manifesto.json. Sem ela, o relatorio de campo nao consegue atribuir nada a uma versao.",
     "leia_antes": "Campo null = decisao que o guia exige e ninguem tomou ainda. Nao e' erro: e' a pauta do mentor. Nunca preencher por deducao; perguntar ao humano ou marcar dispensado com motivo.",
     "gerado_em": "2026-09-01T01:32:23.662Z",
-    "atualizado_em": "2026-09-15T03:45:34.401Z",
+    "atualizado_em": "2026-09-15T06:22:46.779Z",
     "gerado_por": "script"
   },
   "projeto": {
@@ -680,7 +680,7 @@
   },
   "versionamento": {
     "ramo_principal": "main",
-    "estrategia_de_ramos": "PR obrigatorio; ramo pelo ID da tarefa. Uma tarefa por ramo, salvo tarefas inseparaveis com justificativa, conforme .mentor/processos/entrega.md.",
+    "estrategia_de_ramos": "PR obrigatorio; ramo pelo ID da tarefa. Uma tarefa por ramo, salvo tarefas inseparaveis com justificativa, conforme .mentor/processos/entrega.md. Tarefa em ramo na pasta principal: varias IAs em sequencia abrem a mesma pasta. Worktree so para plan/ com tarefa sem commit.",
     "revisao_antes_do_merge": "PR obrigatorio, 0 aprovacoes exigidas, merge so por squash. A autorizacao humana por ato do nucleo continua valendo por cima disso.",
     "quem_aprova": "Thiago Silva / humano dono do projeto.",
     "protecao_do_ramo_principal": "Ruleset 'protect-main' ativo: PR obrigatorio, status check 'Typecheck, lint, test, build, and audit', delete e force-push bloqueados.",

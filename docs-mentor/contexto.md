@@ -147,7 +147,7 @@ Todos os portoes foram respondidos ou dispensados com motivo.
 - `laboratorio.chaves`: 2 item(s)
 - `laboratorio.artefatos_importaveis`: 2 item(s)
 - `versionamento.ramo_principal`: main
-- `versionamento.estrategia_de_ramos`: PR obrigatorio; ramo pelo ID da tarefa. Uma tarefa por ramo, salvo tarefas inseparaveis com justificativa, conforme .mentor/processos/entrega.md.
+- `versionamento.estrategia_de_ramos`: PR obrigatorio; ramo pelo ID da tarefa. Uma tarefa por ramo, salvo tarefas inseparaveis com justificativa, conforme .mentor/processos/entrega.md. Tarefa em ramo na pasta principal: varias IAs em sequencia abrem a mesma pasta. Worktree so para plan/ com tarefa sem commit.
 - `versionamento.revisao_antes_do_merge`: PR obrigatorio, 0 aprovacoes exigidas, merge so por squash. A autorizacao humana por ato do nucleo continua valendo por cima disso.
 - `versionamento.quem_aprova`: Thiago Silva / humano dono do projeto.
 - `versionamento.protecao_do_ramo_principal`: Ruleset 'protect-main' ativo: PR obrigatorio, status check 'Typecheck, lint, test, build, and audit', delete e force-push bloqueados.
