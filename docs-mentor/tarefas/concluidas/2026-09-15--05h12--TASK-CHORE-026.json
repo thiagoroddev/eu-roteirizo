@@ -1,0 +1,165 @@
+{
+  "id": "TASK-CHORE-026",
+  "tipo": "CHORE",
+  "titulo": "Parar a regravacao automatica de atualizado_em e lembretes no contexto.json do .mentor local, que faz PRs paralelos conflitarem sem mudanca real",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "ordem_motivo": null,
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "sem_requisito_motivo": null,
+  "criada_em": "15/09/26 04:54",
+  "iniciada_em": "15/09/26 04:55",
+  "commit_base": "8fd2adbfcad3651aa3e68f3e20fc26edbfcd29de",
+  "concluida_em": "15/09/26 05:12",
+  "plano": {
+    "muda": [
+      ".mentor/scripts/vistas.ts - atualizarContagens deixa de regravar _meta.atualizado_em a cada comando (nenhum codigo le o campo; a data sai do git log)",
+      ".mentor/scripts/cmd-doctor.ts - o doctor deixa de gravar lembretes no contexto.json; eles continuam na saida do comando",
+      "docs-mentor/contexto.json - _meta.atualizado_em passa a null, para nao ficar uma data congelada que parece atual",
+      "docs-mentor/melhorias-do-pacote.test.ts - testes: gerar duas vezes e doctor duas vezes nao mudam o contexto.json; doctor nao grava lembretes",
+      "docs-mentor/melhorias-do-pacote.md - correcao 3 registrada com problema, mudanca, arquivos, teste e o que fazer no pacote"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Rodar gerar duas vezes seguidas sem mudanca real deixa o contexto.json identico",
+        "teste": "docs-mentor/melhorias-do-pacote.test.ts > gerar duas vezes sem mudanca real nao muda o contexto.json"
+      },
+      {
+        "texto": "Rodar doctor duas vezes seguidas deixa o contexto.json identico",
+        "teste": "docs-mentor/melhorias-do-pacote.test.ts > doctor duas vezes nao muda o contexto.json"
+      },
+      {
+        "texto": "O doctor mostra os lembretes na tela e nao os grava no contexto.json",
+        "teste": "docs-mentor/melhorias-do-pacote.test.ts > doctor mostra lembretes sem grava-los no contexto.json"
+      },
+      {
+        "texto": "melhorias-do-pacote.md registra a correcao 3 com texto completo",
+        "teste": "nao se aplica: conteudo de documento, conferido no diff e pelo humano"
+      }
+    ],
+    "pedido_original": "15/09/26: \"alteracao no contexto e feito automaticamente pra atualizar hora? Vai ficar fazendo isso sempre? Remover isso quebra o que do mentor? como contornar?\". Aprovou com \"sim\" a proposta de corrigir aqui: parar de regravar atualizado_em, parar de gravar lembretes, manter as contagens, teste e registro como correcao 3.",
+    "solucao_sugerida": null,
+    "alternativas_profissionais": [],
+    "problema_canonico": "conflito de merge em metadado volatil versionado (arquivo gerado com carimbo de tempo)",
+    "discordancia": {
+      "o_que_faria_diferente": "No pacote, o certo e tirar tambem as contagens do arquivo versionado (anotado no #51). Aqui fica so o que nao exige mexer no gerador do contexto.md",
+      "o_que_preocupa": "As contagens continuam no arquivo: dois PRs que mudam a mesma contagem ainda conflitam, e o resolver-gerados resolve. A linha de divergencia do verificar passa de 2 para 4 arquivos. Quem abrir o contexto.json deixa de ver lembretes sem rodar o doctor, o que o nucleo ja manda fazer no inicio da sessao",
+      "o_que_existe_pronto_80_porcento": "Nenhuma conhecida: merge=ours no .gitattributes descartaria mudanca real do outro ramo, como a frase do #50"
+    },
+    "impacto": "Nenhum modulo de src/. No pacote local: atualizarContagens (chamada por regenerarTudo em task, req, ref, fila, riscos, auditar, init, gerar e resolver-gerados) e o fim do doctor. Nenhum codigo le atualizado_em nem lembretes",
+    "riscos": [
+      "O campo lembretes vazio segue contando como campo em aberto no contexto.md, como ja acontece depois de cada resolver-gerados",
+      "Se um qualidade.perfil do doctor mudar de verdade, o contexto.json muda, e isso e esperado",
+      "Os testes usam o mentor.mjs real com MENTOR_RAIZ numa pasta temporaria; nenhum roda manifesto"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram como contornar a regravacao automatica do contexto.json. Proponho duas linhas a menos em dois scripts, um campo zerado, tres testes e o registro. E o menor corte que acaba com o conflito sem mudanca real; tirar as contagens fica para o pacote.",
+    "restricoes_reavaliadas": [],
+    "meio_de_validacao": {
+      "tipo": "testes_automatizados",
+      "porque_nao_automatizado": null,
+      "roteiro": null,
+      "artefato": null,
+      "casos": null
+    },
+    "composicao": null
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "15/09/26 04:57",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  81 passed (81)\n      Tests  995 passed (995)\n   Start at  04:59:45\n   Duration  52.55s (transform 18.80s, setup 37.88s, import 39.41s, tests 116.97s, environment 144.31s)\n\n(node:34420) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "15/09/26 05:00",
+      "commit_execucao": "8fd2adbfcad3651aa3e68f3e20fc26edbfcd29de",
+      "arvore_hash": "08803884e4556907641ef60c8b1debf740b8ed2c",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "15/09/26 04:58",
+      "commit_execucao": "8fd2adbfcad3651aa3e68f3e20fc26edbfcd29de",
+      "arvore_hash": "08803884e4556907641ef60c8b1debf740b8ed2c",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "15/09/26 04:59",
+      "commit_execucao": "8fd2adbfcad3651aa3e68f3e20fc26edbfcd29de",
+      "arvore_hash": "08803884e4556907641ef60c8b1debf740b8ed2c",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 2001 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-PRFVi4ZE.css   \u001b[39m\u001b[1m\u001b[2m 28.81 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.27 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-CbAmWFBD.js    \u001b[39m\u001b[1m\u001b[33m543.48 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 104.97 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-CSdyhtLd.js   \u001b[39m\u001b[1m\u001b[33m808.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 263.08 kB\u001b[22m\n\u001b[32m✓ built in 5.95s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1802.69 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "15/09/26 05:00",
+      "commit_execucao": "8fd2adbfcad3651aa3e68f3e20fc26edbfcd29de",
+      "arvore_hash": "08803884e4556907641ef60c8b1debf740b8ed2c",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "APROVADO",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": "Humano leu a correcao 3 em docs-mentor/melhorias-do-pacote.md (data e lembretes regravados no contexto.json) e confirmou que o texto basta para aplicar no pacote: 'texto ok suficiente' (15/09/26)",
+      "executado_em": "15/09/26 05:12",
+      "commit_execucao": "8fd2adbfcad3651aa3e68f3e20fc26edbfcd29de",
+      "arvore_hash": "08803884e4556907641ef60c8b1debf740b8ed2c",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "aprovado",
+  "validado_em": "15/09/26 05:12",
+  "validacao_motivo": "Humano leu a correcao 3 em docs-mentor/melhorias-do-pacote.md (data e lembretes regravados no contexto.json) e confirmou que o texto basta para aplicar no pacote: 'texto ok suficiente' (15/09/26)",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-15--05h12--TASK-CHORE-026.md"
+}

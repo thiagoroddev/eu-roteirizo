@@ -1,4 +1,4 @@
-import { agora, agoraIso, caminhos, escreverJson, escreverTexto, existe, lerData, lerJson, lerTexto, listar, relogioDoPacote } from './arquivos.ts'
+import { agora, caminhos, escreverJson, escreverTexto, existe, lerData, lerJson, lerTexto, listar, relogioDoPacote } from './arquivos.ts'
 import { join } from 'node:path'
 import type { Contexto, DividaTecnica, Invariante, Recusa, ReferenciaExterna, Requisito, RiscoAceito, Tarefa } from './tipos.ts'
 
@@ -485,7 +485,11 @@ export function atualizarContagens(): Contexto {
   if (existe(manifesto)) {
     ctx._meta['versao_do_pacote'] = lerJson<{ versao?: string }>(manifesto).versao ?? 'desconhecida'
   }
-  ctx._meta.atualizado_em = agoraIso()
+  // Sem carimbo de hora: regravar a data a cada comando fazia dois ramos sem mudanca real em comum
+  // conflitarem nessa linha. Nenhum codigo le o campo, e a data da ultima mudanca sai do `git log`.
+  // `null` tambem limpa a data congelada de quem vem de versao anterior. Correcao local da
+  // TASK-CHORE-026, registrada em `docs-mentor/melhorias-do-pacote.md`.
+  ctx._meta.atualizado_em = null
   escreverJson(c.contexto, ctx)
   return ctx
 }

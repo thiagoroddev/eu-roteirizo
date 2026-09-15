@@ -535,8 +535,11 @@ export function doctor(): number {
     ? 'PRONTO PARA PUBLICO?  SIM — nenhum bloqueio'
     : `PRONTO PARA PUBLICO?  NAO — ${bloqueios} bloqueio(s)`)
 
-  // Os lembretes sao SAIDA: o doctor os calcula e sobrescreve. Campo livre acumularia prosa.
-  ctx.lembretes = secoes.flatMap(([, l]) => l).filter((l) => l.estado !== 'ok' && l.estado !== 'neutro').map((l) => l.texto)
+  // Os lembretes sao SAIDA do doctor e ficam so' na tela. Grava-los no contexto versionado mudava o
+  // arquivo a cada execucao (e o `resolver-gerados` os zera), gerando diff e conflito sem mudanca
+  // real. `[]` limpa lembrete antigo de quem vem de versao anterior. Correcao local da
+  // TASK-CHORE-026, registrada em `docs-mentor/melhorias-do-pacote.md`.
+  ctx.lembretes = []
   const q = ctx['qualidade'] as Record<string, unknown>
   q['perfil'] = { _gerado_por_doctor: true, de: 8, ...p.resumo }
   escreverJson(caminhos().contexto, ctx)

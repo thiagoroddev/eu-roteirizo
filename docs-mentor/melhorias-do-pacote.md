@@ -41,6 +41,23 @@ Problema visto e ainda não corrigido continua indo para "Anotadas", pelo `mento
 - **Testes:** "caixa diferente acima da raiz do projeto nao reprova link certo" e "caixa errada dentro do projeto continua acusada". Os dois criam um projeto com `mentor init` na pasta temporária, com um link certo e um link com maiúscula errada, e rodam o `verificar` pelo caminho com as letras acima do projeto trocadas. Só rodam em sistema que ignora maiúsculas, como o Windows; no Linux são pulados.
 - **No pacote:** aplicar a mudança de `cmd-verificar.ts` e criar um cenário com o mesmo projeto e as mesmas duas verificações, rodando só em sistema que ignora maiúsculas.
 
+### 3 · Data e lembretes regravados no `contexto.json` a cada comando
+
+- **Estado:** aplicada aqui em 15/09/26, na TASK-CHORE-026, sobre o pacote 0.12.0. Falta levar ao pacote. Resolve em parte a anotação de 15/09/26 04:26, abaixo: as contagens continuam no arquivo.
+- **Problema:** dois campos do `docs-mentor/contexto.json` versionado mudavam sem mudança real no projeto.
+  - `_meta.atualizado_em`: `atualizarContagens`, em `.mentor/scripts/vistas.ts`, gravava a data e a hora atuais toda vez que rodava, mesmo sem nada ter mudado. Ela roda dentro de `regenerarTudo`, chamada por `task`, `req`, `ref`, `fila`, `riscos`, `auditar`, `init`, `gerar` e `resolver-gerados`.
+  - `lembretes`: o `doctor`, em `.mentor/scripts/cmd-doctor.ts`, gravava no arquivo a lista de avisos a cada execução, e o `resolver-gerados` a zerava em todo merge. A lista ficava indo e voltando entre vazia e preenchida.
+  - Com isso, qualquer ramo que rodasse um comando do mentor mudava o arquivo, e dois PRs abertos ao mesmo tempo conflitavam. Medido em 15/09/26: os PRs #49 e #50 deste projeto conflitaram só em `atualizado_em`, e no fechamento do #52 o `doctor` deixou o `contexto.json` alterado só com os lembretes.
+  - Nenhum código do pacote lê `atualizado_em` nem `lembretes`. A data da última mudança sai do `git log`, e os lembretes aparecem na tela do `doctor`, que o núcleo manda rodar no início de toda sessão.
+- **O que mudou:**
+  - `atualizarContagens` grava `_meta.atualizado_em` como `null`, e não mais a data atual.
+  - O `doctor` grava `lembretes` como lista vazia e continua mostrando os avisos na tela.
+  - Os dois valores fixos também limpam a data congelada e os lembretes antigos de quem vem de versão anterior.
+  - As contagens (`contagens.*`) continuam no arquivo: só mudam com mudança real, e o `resolver-gerados` resolve esses conflitos.
+- **Arquivos:** `.mentor/scripts/vistas.ts` (fim de `atualizarContagens` e o import de `agoraIso`, que ficou sem uso) e `.mentor/scripts/cmd-doctor.ts` (fim da função `doctor`).
+- **Testes:** "gerar duas vezes sem mudanca real nao muda o contexto.json", "doctor duas vezes nao muda o contexto.json" e "doctor mostra lembretes sem grava-los no contexto.json". Os três criam um projeto com `mentor init` na pasta temporária e comparam o `contexto.json` byte a byte entre as execuções.
+- **No pacote:** aplicar as duas mudanças e criar um cenário que rode `gerar` duas vezes e `doctor` duas vezes e compare o `contexto.json`. Avaliar também a sugestão da anotação de 15/09/26 04:26, que tira as contagens do arquivo versionado. Com as contagens fora, `atualizado_em` e `lembretes` podem sair do esquema de vez.
+
 ## Anotadas
 
 As versões 0.4.0 a 0.12.0 do mentor aplicaram as melhorias sugeridas por este arquivo. A 0.12.0 (TASK-CHORE-024) aplicou as sete notas de 12/09 a 14/09/26 (Frentes A a G). As duas notas de 15/09/26 viraram as correções 1 e 2 acima. Anotações novas entram abaixo desta linha.
