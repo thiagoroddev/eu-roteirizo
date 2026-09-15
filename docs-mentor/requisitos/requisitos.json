@@ -734,12 +734,14 @@
     "enunciado": "Exibir a distancia de deslocamento entre paradas consecutivas na lista completa do roteiro",
     "historia": null,
     "prioridade": "importante",
-    "status": "pendente",
+    "status": "implementado",
     "criterios_aceite": [],
-    "tarefas": [],
+    "tarefas": [
+      "TASK-RF-045"
+    ],
     "adr": null,
     "criado_em": "12/09/26 21:20",
-    "implementado_em": null,
+    "implementado_em": "14/09/26 12:48",
     "pendente_de_validacao": false
   },
   {

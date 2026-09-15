@@ -9,6 +9,7 @@ import {
   stopPlaceSummaryFromPoints,
   walkEstimateLabel,
   legLabel,
+  driveLegLabel,
   orderedStopPoints,
   formatRoteiroStopTitle,
   formatVehicleStopAddress,
@@ -336,6 +337,13 @@ describe("pure helpers (TASK-RF-006.4.2)", () => {
 
   it("legLabel: arredonda os metros (RF-006.10)", () => {
     expect(legLabel({ meters: 24.6, viaStreets: true })).toBe("25 metros");
+  });
+
+  it("driveLegLabel: distância do veículo em m ou km; sem grafo ganha '(linha reta)' (RF-045)", () => {
+    // The same "1,3 km" the vehicle distance uses elsewhere (formatMeters), not the walking "metros".
+    expect(driveLegLabel({ meters: 849.6, viaStreets: true })).toBe("850 m");
+    expect(driveLegLabel({ meters: 1300, viaStreets: true })).toBe("1,3 km");
+    expect(driveLegLabel({ meters: 1300, viaStreets: false })).toBe(`1,3 km ${UI_LABELS.MAP_PANEL.ROTEIRO_START.SUGGESTION_STRAIGHT}`);
   });
 
   it("walkEstimateLabel drops negligible meters (< 20 m)", () => {

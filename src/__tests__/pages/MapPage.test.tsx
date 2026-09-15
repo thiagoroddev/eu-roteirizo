@@ -6,6 +6,8 @@ import { UI_LABELS, COLUMN_NAMES, MAP_CONFIG, FOCUS_MAX_ZOOM, ADDRESS_MAX_ZOOM }
 import type { RowData } from "../../types";
 import { DEFAULT_ROUTING_CONFIG, type LatLng, type PlannedRoute } from "../../types/routing";
 import type { InteractionState, MarkerModel } from "../../utils/markers/markerModels";
+import { driveLegLabel } from "../../utils/markers/roteiroModels";
+import { haversine } from "../../utils/routing/geo";
 
 // routeStorage (RF-008) is mocked so the tests CONTROL what is persisted:
 // `saved` feeds the mount-time hydration; `saveCalls` records the auto-saves.
@@ -926,6 +928,21 @@ describe("MapPage (focus screen)", () => {
     // Editing opens a draft: the foot circuit follows the draft and the highlight steps aside.
     fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.EDIT }));
     expect(stub).toHaveAttribute("data-vehicle-highlight", "none");
+  });
+
+  it("Ver detalhes mostra no trilho a distância do veículo entre as paradas (RF-045)", async () => {
+    uploaderState.routes = { "A-1": rowsThreePoints };
+    routeStorageState.saved = savedRoute([P1, P2]);
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+    await waitFor(() => expect(screen.getByTestId("route-map-stub").getAttribute("data-models-summary")).toContain("stop"));
+
+    fireEvent.click(screen.getByRole("button", { name: OVERVIEW_LABELS.VIEW_DETAILS }));
+
+    // Start → P1 and P1 → P2: the SAME legs the map draws (no graph here → straight lines).
+    const legs = screen.getAllByLabelText(UI_LABELS.MAP_PANEL.DRIVE_LEG_ARIA);
+    expect(legs).toHaveLength(2);
+    expect(legs[0]).toHaveTextContent(driveLegLabel({ meters: 0, viaStreets: false }));
+    expect(legs[1]).toHaveTextContent(driveLegLabel({ meters: haversine(P1.vehicleStop, P2.vehicleStop), viaStreets: false }));
   });
 
   it("Meu roteiro: com uma parada so as setas ficam desativadas", async () => {

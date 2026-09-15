@@ -54,6 +54,12 @@ describe("vehicleRouteLegs", () => {
     expect(vehicleRouteLegs(null, null, [COORDS[A]])).toEqual([]);
   });
 
+  it("each leg tells whether it followed the streets (TASK-RF-045)", () => {
+    // The overview's distance label warns "(linha reta)" exactly like the walking connector.
+    expect(vehicleRouteLegs(null, START, [COORDS[A]]).map((leg) => leg.viaStreets)).toEqual([false]);
+    expect(vehicleRouteLegs(squareGraph, null, [near(COORDS[A]), near(COORDS[B])]).map((leg) => leg.viaStreets)).toEqual([true]);
+  });
+
   it("stitched back together, the legs are exactly vehicleRoutePath (path and distance)", () => {
     const anchors = [near(COORDS[A]), near(COORDS[B]), near(COORDS[D])];
     const legs = vehicleRouteLegs(squareGraph, START, anchors);

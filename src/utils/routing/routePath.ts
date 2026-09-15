@@ -28,13 +28,15 @@ export interface RoutePathResult {
 export interface VehicleRouteLeg extends RoutePathResult {
   /** Index (in `anchors`) of the stop this leg LEAVES; `null` for the start → first stop leg. */
   fromStopIndex: number | null;
+  /** False for the straight-line fallback — the overview labels it "(linha reta)" (TASK-RF-045). */
+  viaStreets: boolean;
 }
 
 /** One `suggestionPath` per consecutive pair of waypoints (each leg carries both endpoints). */
-const legsBetween = (graph: RoadGraph | null, waypoints: LatLng[]): RoutePathResult[] =>
+const legsBetween = (graph: RoadGraph | null, waypoints: LatLng[]): (RoutePathResult & { viaStreets: boolean })[] =>
   waypoints.slice(1).map((to, i) => {
     const leg = suggestionPath(graph, waypoints[i], to);
-    return { path: leg.path, distanceMeters: leg.distanceMeters };
+    return { path: leg.path, distanceMeters: leg.distanceMeters, viaStreets: leg.viaStreets };
   });
 
 /**
