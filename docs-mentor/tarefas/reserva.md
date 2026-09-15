@@ -17,6 +17,7 @@
 | `TASK-DOC-006` | Aplicar correcoes de custo e backend do plano de infraestrutura | - | DOC | importante | P/M | titulo-autossuficiente |
 | `TASK-DOC-008` | Resolver divergencia entre UI_LABELS.SUMMARY.VIEW_MAP e texto renderizado | - | DOC | desejavel | P/P | titulo-autossuficiente |
 | `TASK-REF-014` | Ajustar radius do tema para 0.5rem conforme neonflux | - | REF | desejavel | P/P | titulo-autossuficiente |
+| `TASK-REF-020` | Redesenhar os enderecos da parada em cards aninhados (StopItemRow/StopItemDetail, usados em Ver detalhes, Ver parada e modo Original), no layout do Stitch aplicado na TASK-RF-045: card por endereco com ordinal, complemento em destaque, rotulo e codigo SPX, tipo e Abrir no Maps, com tokens do tema | - | REF | desejavel | M/G | titulo-autossuficiente |
 | `TASK-RF-009` | Modo execucao do Meu roteiro | epico, 5 fatias | RF | critico | XG/XG | RF-37, RF-47, RF-48, RF-49, RN-22 |
 | `TASK-RF-024` | [fatia de TASK-RF-009] Modelo e persistencia da execucao | 1/5 de TASK-RF-009 | RF | critico | M/G | RF-37, RN-22 |
 | `TASK-RF-025` | [fatia de TASK-RF-009] Shell de execucao e roteiro somente leitura | 2/5 de TASK-RF-009 | RF | critico | M/M | RF-37, RF-33, RN-22 |
@@ -28,6 +29,5 @@
 | `TASK-RF-032` | Montar o roteiro automatico completo e tratar trechos inviaveis | 3/6 de TASK-RF-029 | RF | importante | M/G | RF-34 |
 | `TASK-RF-033` | Adicionar botao Auto-roteirizar e validar a experiencia no celular | 4/6 de TASK-RF-029 | RF | importante | M/G | RF-34 |
 | `TASK-RF-034` | Integrar o motor em worker e preservar o roteiro editavel | 5/6 de TASK-RF-029 | RF | importante | M/G | RF-34 |
-| `TASK-RF-045` | Mostrar distancia entre paradas consecutivas na lista completa | - | RF | importante | P/M | RF-59 |
 | `TASK-TEST-002` | Testar zoom minimo do mapa para detalhe de rua a pe | - | TEST | importante | P/M | RNF-15 |
 | `TASK-TEST-004` | Validar o motor com corpus sintetico e romaneios reais locais | 6/6 de TASK-RF-029 | TEST | importante | M/G | RF-34 |

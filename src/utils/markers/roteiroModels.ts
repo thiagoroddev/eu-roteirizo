@@ -435,6 +435,17 @@ export const legLabel = (leg: StopLeg): string => {
   return leg.viaStreets ? distance : `${distance} ${UI_LABELS.MAP_PANEL.ROTEIRO_START.SUGGESTION_STRAIGHT}`;
 };
 
+/**
+ * Label of one VEHICLE leg to the next stop (TASK-RF-045): "850 m" / "1,3 km" —
+ * the same `formatMeters` the vehicle distance uses elsewhere (a car leg reaches
+ * km, unlike the walking "metros") — with the same "(linha reta)" suffix while
+ * there is no graph.
+ */
+export const driveLegLabel = (leg: StopLeg): string => {
+  const distance = formatMeters(leg.meters);
+  return leg.viaStreets ? distance : `${distance} ${UI_LABELS.MAP_PANEL.ROTEIRO_START.SUGGESTION_STRAIGHT}`;
+};
+
 /** "~12 min · 850 m a pé", or time-only for negligible circuits (RF-006.4.2).
  *  Needs only the totals (meters + combined minutes), not the RF-007.1 split. */
 export const walkEstimateLabel = (estimate: Pick<StopWalkEstimate, "meters" | "minutes">): string =>

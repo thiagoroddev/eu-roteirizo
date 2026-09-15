@@ -40,3 +40,4 @@
 | 14/09/26 02:42 | [`TASK-CHORE-022`](./2026-09-14--02h42--TASK-CHORE-022.md) | CHORE | Atualizar mentor-agent para v0.10.0 | - | concluida | dispensado |
 | 14/09/26 08:02 | [`TASK-BG-023`](./2026-09-14--08h02--TASK-BG-023.md) | BG | Variantes de inspecao da RF-030 (corpus.ts) exportam a ancora movida pelo gerador como escolha do usuario, sem chave, contra a INV-001 | - | concluida | aprovado |
 | 14/09/26 11:12 | [`TASK-RF-043`](./2026-09-14--11h12--TASK-RF-043.md) | RF | Alternar tracado do roteiro e tornar passagens repetidas visiveis por opacidade | - | concluida | aprovado |
+| 14/09/26 12:48 | [`TASK-RF-045`](./2026-09-14--12h48--TASK-RF-045.md) | RF | Mostrar distancia entre paradas consecutivas na lista completa | - | concluida | aprovado |

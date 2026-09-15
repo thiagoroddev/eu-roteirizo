@@ -1,0 +1,263 @@
+{
+  "id": "TASK-RF-045",
+  "tipo": "RF",
+  "titulo": "Mostrar distancia entre paradas consecutivas na lista completa",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "G"
+  },
+  "depende_de": [
+    "TASK-RF-043"
+  ],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "RF-59",
+  "requisitos": [
+    "RF-59"
+  ],
+  "sem_requisito_motivo": null,
+  "criada_em": "12/09/26 21:20",
+  "iniciada_em": "14/09/26 12:16",
+  "commit_base": "de865d0debca446695808af755eba12f1fbd6dcd",
+  "concluida_em": "14/09/26 12:48",
+  "plano": {
+    "muda": [
+      "src/components/map/panel/LegConnector.tsx - novo, extraido do StopItem: icone (a pe ou carro), distancia em texto vertical e seta; recebe rotulo e aria prontos",
+      "src/components/map/panel/StopItem.tsx - StopItemDetail usa o LegConnector extraido, sem mudar comportamento",
+      "src/components/map/panel/RouteTimeline.tsx - novo: RouteTimeline (lista ordenada com trilho) e RouteTimelineItem (no, conteudo e conector sobre o trilho, centralizado entre o no e o proximo); layout generico, sem regra de roteiro",
+      "src/components/map/panel/RoteiroOverviewSection.tsx - inicio e paradas confirmadas viram itens da linha do tempo em Card, com o no na cor da parada; OverviewStopView ganha color e outgoingLeg, OverviewStartView ganha outgoingLeg; StartRow ganha opcao de esconder o proprio marcador; totais, exportar, sugestao e ignorados seguem como estao",
+      "src/pages/MapPage.tsx - overviewStops e overviewStart recebem outgoingLeg das vehicleLegs ja calculadas para o mapa; o titulo da parada sai sem o selo P, que vai para o no",
+      "src/utils/routing/routePath.ts - VehicleRouteLeg passa a guardar viaStreets",
+      "src/utils/markers/roteiroModels.ts - novo driveLegLabel: distancia do veiculo em m ou km, com '(linha reta)' sem malha",
+      "src/constants/uiLabels.ts - aria do trecho do veiculo",
+      "src/__tests__/utils/routing/routePath.test.ts - viaStreets nas pernas",
+      "src/__tests__/utils/markers/roteiroModels.test.ts - driveLegLabel",
+      "src/__tests__/components/map/panel/RoteiroOverviewSection.test.tsx - linha do tempo e distancias entre paradas",
+      "src/__tests__/pages/MapPage.test.tsx - distancias do veiculo no Ver detalhes a partir das pernas do mapa"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Cada perna do veiculo diz se seguiu as ruas (viaStreets), para o rotulo avisar linha reta",
+        "teste": "src/__tests__/utils/routing/routePath.test.ts > each leg tells whether it followed the streets (TASK-RF-045)",
+        "evidencia": {
+          "comando": "npx vitest run src/__tests__/utils/routing/routePath.test.ts -t \"each leg tells whether\"",
+          "codigo_saida": 0,
+          "saida": "RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 9 skipped (10)\n   Start at  12:29:38\n   Duration  1.11s (transform 110ms, setup 196ms, import 98ms, tests 7ms, environment 609ms)",
+          "executado_em": "14/09/26 12:29"
+        }
+      },
+      {
+        "texto": "driveLegLabel escreve a distancia do veiculo em m ou km (formatMeters) e acrescenta '(linha reta)' sem malha",
+        "teste": "src/__tests__/utils/markers/roteiroModels.test.ts > driveLegLabel: distância do veículo em m ou km; sem grafo ganha '(linha reta)' (RF-045)",
+        "evidencia": {
+          "comando": "npx vitest run src/__tests__/utils/markers/roteiroModels.test.ts -t \"driveLegLabel\"",
+          "codigo_saida": 0,
+          "saida": "RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 41 skipped (42)\n   Start at  12:29:42\n   Duration  1.26s (transform 271ms, setup 192ms, import 289ms, tests 4ms, environment 578ms)",
+          "executado_em": "14/09/26 12:29"
+        }
+      },
+      {
+        "texto": "A lista do Ver detalhes vira linha do tempo: inicio e paradas em ordem, cada um com seu no, mantendo expandir, ver no mapa, mudar e apagar o inicio",
+        "teste": "src/__tests__/components/map/panel/RoteiroOverviewSection.test.tsx > linha do tempo: início e paradas em ordem, cada um com seu nó e as ações de hoje (RF-045)",
+        "evidencia": {
+          "comando": "npx vitest run src/__tests__/components/map/panel/RoteiroOverviewSection.test.tsx -t \"linha do tempo\"",
+          "codigo_saida": 0,
+          "saida": "RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 8 skipped (9)\n   Start at  12:29:46\n   Duration  1.93s (transform 366ms, setup 198ms, import 572ms, tests 387ms, environment 577ms)",
+          "executado_em": "14/09/26 12:29"
+        }
+      },
+      {
+        "texto": "Entre paradas consecutivas aparece o conector com carro e distancia no trilho; do inicio para P1 quando ha inicio; nenhum depois da ultima",
+        "teste": "src/__tests__/components/map/panel/RoteiroOverviewSection.test.tsx > mostra a distância do veículo no trilho entre paradas consecutivas; nenhuma depois da última (RF-045)",
+        "evidencia": {
+          "comando": "npx vitest run src/__tests__/components/map/panel/RoteiroOverviewSection.test.tsx -t \"entre paradas consecutivas\"",
+          "codigo_saida": 0,
+          "saida": "RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 8 skipped (9)\n   Start at  12:29:50\n   Duration  1.70s (transform 362ms, setup 177ms, import 554ms, tests 231ms, environment 547ms)",
+          "executado_em": "14/09/26 12:29"
+        }
+      },
+      {
+        "texto": "Sem inicio, a primeira distancia e a de P1 para P2; com uma parada so e sem inicio, nenhuma",
+        "teste": "src/__tests__/components/map/panel/RoteiroOverviewSection.test.tsx > sem início a primeira distância é P1→P2; com uma parada só, nenhuma (RF-045)",
+        "evidencia": {
+          "comando": "npx vitest run src/__tests__/components/map/panel/RoteiroOverviewSection.test.tsx -t \"primeira dist\"",
+          "codigo_saida": 0,
+          "saida": "RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 8 skipped (9)\n   Start at  12:29:54\n   Duration  1.72s (transform 394ms, setup 180ms, import 579ms, tests 237ms, environment 547ms)",
+          "executado_em": "14/09/26 12:29"
+        }
+      },
+      {
+        "texto": "O Ver detalhes do MapPage mostra as distancias das mesmas pernas que o mapa desenha, sem A* a mais",
+        "teste": "src/__tests__/pages/MapPage.test.tsx > Ver detalhes mostra no trilho a distância do veículo entre as paradas (RF-045)",
+        "evidencia": {
+          "comando": "npx vitest run src/__tests__/pages/MapPage.test.tsx -t \"no trilho a dist\"",
+          "codigo_saida": 0,
+          "saida": "RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 78 skipped (79)\n   Start at  12:29:58\n   Duration  2.26s (transform 754ms, setup 178ms, import 1.03s, tests 330ms, environment 539ms)",
+          "executado_em": "14/09/26 12:30"
+        }
+      },
+      {
+        "texto": "O conector a pe dentro da parada continua igual (agora pelo componente extraido)",
+        "teste": "src/__tests__/pages/MapPage.test.tsx > 'Ver detalhes' = estado dedicado LIMPO (RF-006.11): 3 seções com parada 0 e totais; 'Ver no mapa' volta à parada",
+        "evidencia": {
+          "comando": "npx vitest run src/__tests__/pages/MapPage.test.tsx -t \"estado dedicado LIMPO\"",
+          "codigo_saida": 0,
+          "saida": "RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 78 skipped (79)\n   Start at  12:30:03\n   Duration  2.86s (transform 721ms, setup 177ms, import 993ms, tests 977ms, environment 537ms)",
+          "executado_em": "14/09/26 12:30"
+        }
+      },
+      {
+        "texto": "No aparelho, em tema claro e escuro: distancia vertical legivel, trilho alinhado com uma parada aberta, totais, sugestao e ignorados presentes",
+        "teste": "nao se aplica: validacao manual de UI no aparelho, registrada com task validar"
+      }
+    ],
+    "pedido_original": "14/09/26: 'esse design facilita colocar a distancia, planeje aplica-lo com react e reutilizacao de components, shadcn. A distancia ficaria ao lado das linhas na esquerda que ligam as paradas, como ja e na lista de parada. Planeje, depois do merge' (mockup exportado do Stitch em F:/Baixados/stitch_modern_ux_redesign/code.html). Depois: 'manter o plano, sem mantine, prossiga'",
+    "solucao_sugerida": "Aplicar o layout do Stitch (linha do tempo com trilho a esquerda) e mostrar a distancia do veiculo no trilho, como o LegConnector da lista de enderecos",
+    "alternativas_profissionais": [
+      {
+        "pratica": "Linha do tempo vertical (itinerario do Google Maps e de apps de entregador com varias paradas) com a distancia de cada perna no trilho",
+        "pegaria_o_caso": "Sim; escolhida pelo humano",
+        "custo": "Trilho, nos e cards novos na lista do Ver detalhes, sem dependencia"
+      },
+      {
+        "pratica": "Distancia dentro do card, numa linha 'ate P2'",
+        "pegaria_o_caso": "Sim, mas le como dado da parada e nao do trecho entre elas",
+        "custo": "Menor, sem trilho"
+      },
+      {
+        "pratica": "Divisoria horizontal entre os cards com a distancia",
+        "pegaria_o_caso": "Sim, com texto horizontal",
+        "custo": "Pequeno, mas ignora o trilho pedido"
+      },
+      {
+        "pratica": "Mantine Timeline (MIT)",
+        "pegaria_o_caso": "So em parte: nao rende texto ao lado da linha entre dois itens; o conector seguiria feito a mao",
+        "custo": "Mantine 9 exige React 19.2 (app em 18.3.1, react-leaflet 4 so aceita 18); provider, tema, CSS global e PostCSS proprios; recusado pelo humano em 14/09/26"
+      }
+    ],
+    "problema_canonico": "lista de itinerario em linha do tempo vertical (vertical timeline/stepper) com a distancia de cada perna entre os nos",
+    "discordancia": {
+      "o_que_faria_diferente": "Nao copiar o HTML do Stitch (cores fixas slate/emerald, fonte Inter e Tailwind por CDN quebram o tema escuro e o offline do PWA): traduzir para tokens do tema, Card e Badge do shadcn e a paleta funcional dos marcadores. Deixar fora o que o mockup mostra sem funcao (aba Pendentes, Iniciar Navegacao, alca de reordenar, menu do inicio) e o que ele omite mas existe (totais, exportar, sugestao, ignorados) fica. Cards aninhados dos enderecos viram tarefa separada, porque StopItemRow/StopItemDetail servem tambem a Ver parada e ao modo Original",
+      "o_que_preocupa": "Legibilidade do texto vertical de km no sol; com uma parada aberta, o conector fica longe do proximo no; tudo o que e tocavel no drawer precisa de data-vaul-no-drag",
+      "o_que_existe_pronto_80_porcento": "O LegConnector e o Card/Badge do shadcn ja no projeto; nenhuma biblioteca de timeline entrega o rotulo no trilho"
+    },
+    "estado_da_arte": {
+      "implementacoes_consolidadas": [
+        "Mantine Timeline (MIT)",
+        "MUI Lab Timeline (MIT)",
+        "Blocos de timeline da comunidade shadcn (MIT, codigo copiado)"
+      ],
+      "motivo_descarte": "Mantine e MUI trazem um segundo sistema de design com tema e CSS proprios (Mantine 9 ainda exige React 19.2) e nenhuma rende texto sobre o trilho entre dois itens; os blocos da comunidade sao o mesmo layout que se escreve em Tailwind sobre o tema atual",
+      "o_que_resta_construir": "Mesmo adotando qualquer uma: o conector de distancia no trilho, a ligacao com as pernas do veiculo e a traducao dos cards para o tema do app"
+    },
+    "custo_de_oportunidade": {
+      "o_que_existe_pronto": "Timeline do Mantine e do MUI Lab; blocos de timeline shadcn da comunidade",
+      "custo_estimado": "Zero em licenca; Mantine 9 custaria a migracao para React 19 e react-leaflet 5",
+      "dependencias_ou_infra": "Nenhuma na solucao escolhida; Mantine ou MUI seriam dependencia e provider novos",
+      "tempo_substituido": "Nenhuma semana: o layout e cerca de 60 linhas de Tailwind sobre Card/Badge"
+    },
+    "impacto": "Lista do Ver detalhes do Meu roteiro (RoteiroOverviewSection) e dados que o MapPage passa a ela; o detalhamento de enderecos e as demais telas seguem como estao",
+    "riscos": [
+      "Texto vertical de distancia em km pouco legivel no aparelho",
+      "Conector centralizado fica longe do proximo no quando uma parada esta aberta",
+      "Tema escuro: trilho, nos e mascara do conector precisam de tokens, nao de cores fixas",
+      "MapPage.tsx com 90 KB e MapPage.test.tsx com 98 KB: diff contido"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram a distancia no trilho e o layout novo com componentes reutilizaveis; proponho 2 componentes pequenos (LegConnector extraido, que ganha o segundo uso, e RouteTimeline de layout) e mudancas em 6 arquivos, sem dependencia. O redesenho do detalhamento de enderecos e os elementos do mockup sem funcao ficam fora, porque mudariam tres telas e fingiriam recursos da RF-009"
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "14/09/26 12:22",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  80 passed (80)\n      Tests  989 passed (989)\n   Start at  12:28:16\n   Duration  40.21s (transform 15.29s, setup 29.27s, import 29.22s, tests 76.28s, environment 115.94s)\n\n(node:19664) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)",
+      "executado_em": "14/09/26 12:28",
+      "commit_execucao": "de865d0debca446695808af755eba12f1fbd6dcd",
+      "arvore_hash": "862bbab682c2d89fce07b3b265da84d90701721f",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "14/09/26 12:27",
+      "commit_execucao": "de865d0debca446695808af755eba12f1fbd6dcd",
+      "arvore_hash": "862bbab682c2d89fce07b3b265da84d90701721f",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "14/09/26 12:28",
+      "commit_execucao": "de865d0debca446695808af755eba12f1fbd6dcd",
+      "arvore_hash": "862bbab682c2d89fce07b3b265da84d90701721f",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n\u001b[36mvite v7.3.5 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 2001 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mregisterSW.js               \u001b[39m\u001b[1m\u001b[2m  0.13 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mmanifest.webmanifest        \u001b[39m\u001b[1m\u001b[2m  0.75 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                  \u001b[39m\u001b[1m\u001b[2m  2.79 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   1.15 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/vendor-Dgihpmma.css  \u001b[39m\u001b[1m\u001b[2m 15.04 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.38 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-PRFVi4ZE.css   \u001b[39m\u001b[1m\u001b[2m 28.81 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   6.27 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-CbAmWFBD.js    \u001b[39m\u001b[1m\u001b[33m543.48 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 104.97 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/vendor-CSdyhtLd.js   \u001b[39m\u001b[1m\u001b[33m808.69 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 263.08 kB\u001b[22m\n\u001b[32m✓ built in 6.81s\u001b[39m\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1802.69 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "14/09/26 12:29",
+      "commit_execucao": "de865d0debca446695808af755eba12f1fbd6dcd",
+      "arvore_hash": "862bbab682c2d89fce07b3b265da84d90701721f",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "APROVADO",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": "Humano validou no Samsung M35 (14/09/26) pelo dev server na rede local, roteiro L-30, com capturas no chat: Ver detalhes em linha do tempo com nos P2/P3/P4 na cor da parada, carro com distancia vertical no trilho entre as paradas (730 m, 805 m, 585 m), parada P3 aberta com os enderecos dentro do card e o trilho seguindo ate P4; no mapa, P2 selecionada destaca a perna P2->P3. Resposta: 'Perfeito'. Valores do layout sem ajuste.",
+      "executado_em": "14/09/26 12:42",
+      "commit_execucao": "de865d0debca446695808af755eba12f1fbd6dcd",
+      "arvore_hash": "862bbab682c2d89fce07b3b265da84d90701721f",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "aprovado",
+  "validado_em": "14/09/26 12:42",
+  "validacao_motivo": "Humano validou no Samsung M35 (14/09/26) pelo dev server na rede local, roteiro L-30, com capturas no chat: Ver detalhes em linha do tempo com nos P2/P3/P4 na cor da parada, carro com distancia vertical no trilho entre as paradas (730 m, 805 m, 585 m), parada P3 aberta com os enderecos dentro do card e o trilho seguindo ate P4; no mapa, P2 selecionada destaca a perna P2->P3. Resposta: 'Perfeito'. Valores do layout sem ajuste.",
+  "tarefas_geradas": [
+    "TASK-REF-020"
+  ],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-14--12h48--TASK-RF-045.md"
+}
