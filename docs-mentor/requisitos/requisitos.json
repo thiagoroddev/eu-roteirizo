@@ -770,5 +770,81 @@
       "RF-34",
       "RF-52"
     ]
+  },
+  {
+    "id": "RF-60",
+    "tipo": "RF",
+    "enunciado": "Ordenar a lista de romaneios salvos do uso mais recente para o mais antigo, independente da data de importacao",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [
+      "Importar um romaneio, abrir qualquer rota dele (Sumario ou mapa) ou editar o roteiro de uma rota atualiza o uso do romaneio",
+      "O romaneio usado por ultimo aparece primeiro; o segundo e o usado antes dele, e assim por diante",
+      "Romaneio nunca usado depois do registro de uso se ordena pela data de importacao",
+      "Reimportar o mesmo arquivo conta como uso"
+    ],
+    "tarefas": [],
+    "adr": null,
+    "criado_em": "14/09/26 19:56",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-61",
+    "tipo": "RF",
+    "enunciado": "Guardar o resumo de cada roteiro salvo (paradas, km do veiculo, km a pe, tempo total e progresso de construcao) para exibir e comparar roteiros na lista de romaneios salvos",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "pendente",
+    "criterios_aceite": [
+      "O resumo e gravado junto do roteiro quando o app ja calcula os totais com a malha (Sumario ou Ver detalhes), sem calculo extra",
+      "Os numeros do resumo sao os mesmos do Sumario no momento da gravacao",
+      "Roteiro sem resumo gravado aparece sem metricas, sem estimativa inventada",
+      "Cada rota com roteiro mostra na lista tempo, km e paradas, e o progresso de construcao"
+    ],
+    "tarefas": [],
+    "adr": null,
+    "criado_em": "14/09/26 19:56",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-62",
+    "tipo": "RF",
+    "enunciado": "Exibir em cada rota da lista de romaneios salvos o nome do bairro com mais entregas, sem a contagem, reaproveitando o calculo de bairros do Sumario",
+    "historia": null,
+    "prioridade": "desejavel",
+    "status": "pendente",
+    "criterios_aceite": [
+      "O bairro exibido e o de maior contagem no mesmo calculo que o Sumario Original usa (summarizeNeighborhoods)",
+      "So o nome aparece, sem numero",
+      "Rota sem bairro resolvivel nao mostra bairro"
+    ],
+    "tarefas": [],
+    "adr": null,
+    "criado_em": "14/09/26 19:56",
+    "implementado_em": null,
+    "pendente_de_validacao": false
+  },
+  {
+    "id": "RF-63",
+    "tipo": "RF",
+    "enunciado": "Pesquisar romaneios salvos por nome da rota ou codigo AT, mostrando dentro de cada card apenas as rotas correspondentes (X de N rotas)",
+    "historia": null,
+    "prioridade": "importante",
+    "status": "implementado",
+    "criterios_aceite": [
+      "A busca filtra por nome da rota e por codigo AT sem carregar os arquivos",
+      "Em card multi-rota recolhido, a busca abre as rotas que correspondem",
+      "O contador mostra X de N rotas enquanto a busca esta ativa"
+    ],
+    "tarefas": [
+      "TASK-REF-013"
+    ],
+    "adr": null,
+    "criado_em": "14/09/26 19:56",
+    "implementado_em": "07/07/26 18:16",
+    "pendente_de_validacao": false
   }
 ]
