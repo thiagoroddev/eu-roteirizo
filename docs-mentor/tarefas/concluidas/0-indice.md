@@ -43,3 +43,4 @@
 | 14/09/26 12:48 | [`TASK-RF-045`](./2026-09-14--12h48--TASK-RF-045.md) | RF | Mostrar distancia entre paradas consecutivas na lista completa | - | concluida | aprovado |
 | 15/09/26 00:45 | [`TASK-CHORE-024`](./2026-09-15--00h45--TASK-CHORE-024.md) | CHORE | Atualizar mentor-agent para v0.12.0 | - | concluida | dispensado |
 | 15/09/26 02:52 | [`TASK-CHORE-025`](./2026-09-15--02h52--TASK-CHORE-025.md) | CHORE | Corrigir no .mentor local a marca (plano) do entrega.md e a checagem de caixa do verificar, registrando as correcoes para levar ao pacote | - | concluida | aprovado |
+| 15/09/26 05:12 | [`TASK-CHORE-026`](./2026-09-15--05h12--TASK-CHORE-026.md) | CHORE | Parar a regravacao automatica de atualizado_em e lembretes no contexto.json do .mentor local, que faz PRs paralelos conflitarem sem mudanca real | - | concluida | aprovado |

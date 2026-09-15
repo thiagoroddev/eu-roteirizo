@@ -1,6 +1,6 @@
 /**
  * Testes das correcoes feitas no `.mentor/` deste projeto, registradas em
- * `melhorias-do-pacote.md` (TASK-CHORE-025).
+ * `melhorias-do-pacote.md` (TASK-CHORE-025 e TASK-CHORE-026).
  *
  * Cada teste protege uma correcao local: se uma atualizacao do mentor-agent sobrescrever a
  * correcao antes de ela chegar ao pacote oficial, o teste falha e avisa.
@@ -13,6 +13,16 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { MARCA_PLANO_NO_TITULO } from "../.mentor/scripts/tipos.ts";
 
 const RAIZ = resolve(__dirname, "..");
+
+/** Roda o mentor deste projeto sobre outra pasta de projeto, sem tocar no projeto real. */
+const mentor = (raiz: string, comando: string) => {
+  const r = spawnSync(process.execPath, [join(RAIZ, "mentor.mjs"), comando], {
+    cwd: RAIZ,
+    encoding: "utf8",
+    env: { ...process.env, MENTOR_RAIZ: raiz },
+  });
+  return `${r.stdout ?? ""}${r.stderr ?? ""}`;
+};
 
 describe("marca (plano) no titulo do PR de planejamento", () => {
   it("o exemplo de PR de planejamento do entrega.md passa na marca (plano)", () => {
@@ -34,14 +44,6 @@ describe.skipIf(!IGNORA_MAIUSCULAS)("verificar com o projeto aberto por outra ca
 
   beforeAll(() => {
     projeto = mkdtempSync(join(tmpdir(), "mentor-caixa-"));
-    const mentor = (raiz: string, comando: string) => {
-      const r = spawnSync(process.execPath, [join(RAIZ, "mentor.mjs"), comando], {
-        cwd: RAIZ,
-        encoding: "utf8",
-        env: { ...process.env, MENTOR_RAIZ: raiz },
-      });
-      return `${r.stdout ?? ""}${r.stderr ?? ""}`;
-    };
     mentor(projeto, "init");
     writeFileSync(join(projeto, "docs-mentor", "alvo.md"), "# Alvo\n");
     writeFileSync(join(projeto, "docs-mentor", "nota.md"), "[certo](alvo.md) e [errado](ALVO.md)\n");
@@ -58,5 +60,45 @@ describe.skipIf(!IGNORA_MAIUSCULAS)("verificar com o projeto aberto por outra ca
 
   it("caixa errada dentro do projeto continua acusada", () => {
     expect(saida).toContain('link "ALVO.md" so resolve porque este sistema de arquivos ignora maiusculas');
+  });
+});
+
+describe("contexto.json sem regravacao automatica", () => {
+  let projeto = "";
+  let depoisDoPrimeiroGerar = "";
+  let depoisDoSegundoGerar = "";
+  let saidaDoDoctor = "";
+  let depoisDoPrimeiroDoctor = "";
+  let depoisDoSegundoDoctor = "";
+
+  beforeAll(() => {
+    projeto = mkdtempSync(join(tmpdir(), "mentor-contexto-"));
+    const contexto = () => readFileSync(join(projeto, "docs-mentor", "contexto.json"), "utf8");
+    mentor(projeto, "init");
+    mentor(projeto, "gerar");
+    depoisDoPrimeiroGerar = contexto();
+    mentor(projeto, "gerar");
+    depoisDoSegundoGerar = contexto();
+    saidaDoDoctor = mentor(projeto, "doctor");
+    depoisDoPrimeiroDoctor = contexto();
+    mentor(projeto, "doctor");
+    depoisDoSegundoDoctor = contexto();
+  }, 90_000);
+
+  afterAll(() => {
+    if (projeto) rmSync(projeto, { recursive: true, force: true });
+  });
+
+  it("gerar duas vezes sem mudanca real nao muda o contexto.json", () => {
+    expect(depoisDoSegundoGerar).toBe(depoisDoPrimeiroGerar);
+  });
+
+  it("doctor duas vezes nao muda o contexto.json", () => {
+    expect(depoisDoSegundoDoctor).toBe(depoisDoPrimeiroDoctor);
+  });
+
+  it("doctor mostra lembretes sem grava-los no contexto.json", () => {
+    expect(saidaDoDoctor).toContain("⚠");
+    expect(JSON.parse(depoisDoPrimeiroDoctor).lembretes).toEqual([]);
   });
 });
