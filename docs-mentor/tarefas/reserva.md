@@ -11,7 +11,6 @@
 | `TASK-BG-020` | Sumario carregar a malha viaria com o ponto inicial, igual ao mapa | - | BG | importante | P/P | titulo-autossuficiente |
 | `TASK-CHORE-008` | Remover service worker legado public/sw.js | - | CHORE | desejavel | P/P | titulo-autossuficiente |
 | `TASK-CHORE-009` | Comprimir capturas de docs/imagens | - | CHORE | desejavel | P/P | titulo-autossuficiente |
-| `TASK-CHORE-018` | Atualizar esbuild para 0.28.1 ou superior (alerta Dependabot 1: leitura de arquivos pelo servidor de desenvolvimento no Windows) | - | CHORE | importante | P/M | titulo-autossuficiente |
 | `TASK-CHORE-023` | Atualizar esbuild para corrigir GHSA-g7r4-m6w7-qqqr (leitura de arquivo pelo servidor de desenvolvimento no Windows) | - | CHORE | importante | P/P | titulo-autossuficiente |
 | `TASK-DOC-005` | Decidir destino do status Carregando ruas do grafo OSM | - | DOC | desejavel | P/P | titulo-autossuficiente |
 | `TASK-DOC-006` | Aplicar correcoes de custo e backend do plano de infraestrutura | - | DOC | importante | P/M | titulo-autossuficiente |
@@ -34,3 +33,5 @@
 | `TASK-RF-048` | Nova tela de romaneios salvos no layout do Stitch: card por tipo de arquivo, rotas em linhas com busca interna, estado e resumo do roteiro, bairro principal e ordem por uso | - | RF | importante | M/G | RF-62 |
 | `TASK-TEST-002` | Testar zoom minimo do mapa para detalhe de rua a pe | - | TEST | importante | P/M | RNF-15 |
 | `TASK-TEST-004` | Validar o motor com corpus sintetico e romaneios reais locais | 6/6 de TASK-RF-029 | TEST | importante | M/G | RF-34 |
+| `TASK-TEST-005` | Cobrir na INV-001 todo exportador de roteiro importavel do laboratorio, a comecar pelo gerador de roteiro ficticio (gerar-roteiro-classificacao.ts), que nao tem teste de contrato nem entrada em laboratorio.artefatos_importaveis | - | TEST | importante | P/P | AUD-003-R04 |
+| `TASK-TEST-006` | Prender em teste a folga de desempate de 10 m (ADDRESS_STREET_TIE_METERS) da parada padrao do veiculo, com casos logo abaixo e logo acima do limite | - | TEST | importante | P/P | AUD-003-R06 |

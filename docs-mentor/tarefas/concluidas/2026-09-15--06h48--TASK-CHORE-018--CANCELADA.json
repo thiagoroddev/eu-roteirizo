@@ -3,7 +3,7 @@
   "tipo": "CHORE",
   "titulo": "Atualizar esbuild para 0.28.1 ou superior (alerta Dependabot 1: leitura de arquivos pelo servidor de desenvolvimento no Windows)",
   "fatia_de": null,
-  "estado": "aberta",
+  "estado": "cancelada",
   "cerimonia": "Standard",
   "valor": "importante",
   "urgencia": "normal",
@@ -20,7 +20,7 @@
   "criada_em": "13/09/26 00:25",
   "iniciada_em": null,
   "commit_base": null,
-  "concluida_em": null,
+  "concluida_em": "15/09/26 06:48",
   "plano": {
     "muda": [],
     "criterios_aceite": [],
@@ -39,6 +39,6 @@
   "divida_tecnica": [],
   "riscos_aceitos": [],
   "absorvida_por": null,
-  "cancelamento_motivo": null,
+  "cancelamento_motivo": "Duplicada da TASK-CHORE-023 (mesmo alerta Dependabot 1, esbuild GHSA-g7r4-m6w7-qqqr). Decisao do humano, 15/09/26: cancelar a mais antiga",
   "narrativa": null
 }

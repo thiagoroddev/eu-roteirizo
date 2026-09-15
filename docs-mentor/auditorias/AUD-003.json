@@ -1,0 +1,167 @@
+{
+  "id": "AUD-003",
+  "lote": [
+    "TASK-CHORE-017",
+    "TASK-BG-021",
+    "TASK-CHORE-019",
+    "TASK-CHORE-020",
+    "TASK-CHORE-021",
+    "TASK-RF-044",
+    "TASK-BG-022",
+    "TASK-CHORE-022"
+  ],
+  "commit_base": "00921b69123c37ae01c09f9f7728af26b10e747a",
+  "commit_final": "f39dc02f4f54f5e81660c30c9ca444b9c17e6d04",
+  "preparada_em": "15/09/26 05:25",
+  "registrada_em": "15/09/26 05:37",
+  "veredito": "APROVADO COM RESSALVAS",
+  "nao_verificado": [
+    "Saida dos gates: o dossie mostra rotulo e codigo de saida, nao o comando nem a saida gravados. Nao conferi que cada gate rodou o comando declarado em contexto.json.gates. Nas validacoes manuais da RF-044 e da BG-022 nao ha codigo de saida, so a declaracao do humano; os prints ficaram no chat, fora do repositorio.",
+    "Criterios 'nao se aplica' das CHORE-017, 019, 020, 021 e 022 (verificar aprova, doctor sem bloqueio, task pausar e task retomar respondem, hook chama hooks --pre-push, pronto-para-merge recusa tarefa aberta e fica verde no PR, git check-attr da fixture, doctor mostra o laboratorio): as saidas ficaram em task criterio e na narrativa, que nao entram no dossie. Nao verificados.",
+    "Bloco laboratorio e versao_do_pacote do contexto.json (CHORE-020 e CHORE-022): o arquivo aparece como vista gerada, sem diff. Nao conferi os caminhos declarados nem que a chave FUNDAMENTAL_ANCORAS_DO_EXPERIMENTO nasce desligada.",
+    "Arquivos de .mentor/ marcados 'pacote intacto': nao lidos. Confiei na comparacao do script com o manifesto.",
+    "Job pronto-para-merge (CHORE-021): se e check obrigatorio na protecao do main e como trata PR com titulo (light). Se nao for obrigatorio, avisa e nao barra.",
+    "RF-044: as condicoes dos cinco ramos do cabecalho que receberam {...roteiroStepper} estao fora do contexto do diff. Nao da para confirmar que sao so os da visualizacao fora do rascunho, nem o que as setas fazem com a edicao de parada aberta; nenhum teste do lote cobre esse caso.",
+    "RF-044: 'desbotadas' (estilo disabled do Button) e 'o rotulo deixa de truncar': jsdom nao mede layout, e o teste do PanelModeBar prova so a ordem no DOM. A declaracao do humano cita a linha abaixo da barra, mas nao o caso de uma parada so nem o de nenhuma.",
+    "BG-021: que getCommercialDisplayStatus(resolveLocationType(row)), usado no teste, e o mesmo caminho da coluna Horario Comercial?. O codigo da coluna nao esta no diff; a validacao humana (26 de 26 iguais ao esperado) cobre o resultado na tela.",
+    "BG-021: que retirar edificio e zelador de residentialRaw nao muda outro consumidor da lista alem dos 26 casos (o caso 25 cita a regra numerica residencial, que nao esta no diff).",
+    "BG-022: o trecho 'ao editar a parada' e o 'JSON regerado do experimento' do criterio de validacao manual. A declaracao do humano cita so o roteiro L-30 DEMO depois de a malha carregar.",
+    "BG-022: roteiros ja salvos com parada padrao mudam de rua com a regra nova (risco declarado). Nenhum teste do lote cobre a reancoragem de roteiro salvo com a regra nova; ha so a validacao no L-30 DEMO.",
+    "BG-022: criterios 2 a 5 da RN-23 (sem consulta de estacionamento, posicao movida a mao nao recalculada, mao unica e conversoes valendo) sem teste neste lote.",
+    "Estado da TASK-CHORE-023 (esbuild, GHSA-g7r4-m6w7-qqqr): nao esta neste lote nem entre as 6 que ficaram para depois.",
+    "Commit Light 8fd2adb: o dossie da so a contagem (30 linhas em .githooks/pre-push e README.md). Nao da para saber se mudou o conteudo do hook ou so a permissao dele e o README.",
+    "Registros de conclusao e narrativas das 8 tarefas: fora do dossie. Tudo o que as tarefas dizem ter 'registrado na narrativa' nao foi lido."
+  ],
+  "pendencias": [
+    {
+      "nivel": "recomendacao",
+      "descricao": "O teste de integracao da navegacao usa duas paradas. Com duas, anterior e proxima caem sempre na mesma parada, entao ligar onPrevStop a +1 e onNextStop a -1 passaria no teste 'Meu roteiro: parada anterior/proxima percorre as paradas firmadas em ciclo'. A direcao so esta presa no teste unitario de adjacentStopId, nao na ligacao dos botoes em MapPage.tsx. Com tres paradas firmadas, o mesmo teste prende a direcao.",
+      "tarefas": [
+        "TASK-RF-044"
+      ],
+      "destino": "divida_tecnica",
+      "ref": "DT-011",
+      "resolvida_em": "15/09/26 06:43",
+      "id": "AUD-003-R01"
+    },
+    {
+      "nivel": "recomendacao",
+      "descricao": "Requisito novo fora do plano e depois do fechamento. O commit da BG-022 altera docs-mentor/requisitos/requisitos.json, que nao consta no plano.muda: cria a RN-23 (prioridade essencial) com criado_em 13/09/26 23:26, seis minutos depois da conclusao (23h20), ja como implementado e com pendente_de_validacao false, e a acrescenta as regras_aplicaveis de outro requisito. Dos cinco criterios da RN-23, so o primeiro tem teste no lote. O fato mecanico do dossie nao listou o arquivo entre os de fora do plano. Sugestao: nomear o teste de cada criterio ou marcar pendente_de_validacao.",
+      "tarefas": [
+        "TASK-BG-022"
+      ],
+      "destino": "descartado",
+      "ref": "Sem acao neste projeto (decisao do humano, 15/09/26): a falha foi da IA, que gravou a RN-23 ja como implementado e so avisou que tinha criado. Sugestao ao pacote em docs-mentor/melhorias-do-pacote.md: nao deixar criterio de requisito sem teste",
+      "resolvida_em": "15/09/26 06:43",
+      "id": "AUD-003-R02"
+    },
+    {
+      "nivel": "recomendacao",
+      "descricao": "Validacao manual aprovada com evidencia parcial. O criterio pede o veiculo em frente ao pino no L-30 DEMO e no JSON regerado do experimento, 'inclusive depois que a malha carrega e ao editar a parada'. A declaracao do humano cobre o L-30 DEMO depois da malha (P3, P4, P8 e as demais) e nao menciona a edicao da parada nem o JSON regerado. A edicao importa porque o defeito original sobrevivia a ela. Pede so que o humano confirme se conferiu, ou complemente a evidencia.",
+      "tarefas": [
+        "TASK-BG-022"
+      ],
+      "destino": "descartado",
+      "ref": "Decisao do humano, 15/09/26: tarefa passada, evidencia de teste nao se refaz depois da entrega; o erro e auditar em lote. Sugestao ao pacote em docs-mentor/melhorias-do-pacote.md",
+      "resolvida_em": "15/09/26 06:43",
+      "id": "AUD-003-R03"
+    },
+    {
+      "nivel": "recomendacao",
+      "descricao": "O mecanismo da INV-001 cobre menos que o enunciado. A invariante vale para todo artefato de laboratorio que chega ao app e foi marcada conferida em 13/09/26, mas o mecanismo so testa experimentArtifacts.ts. Nessa data corpus.ts (importaveis de auto-anchors) ja a contradizia, e o proprio corpus.test.ts prendia o comportamento contrario; a CHORE-022 achou isso e mandou para a TASK-BG-023. Na proxima auditoria, conferir se o mecanismo passou a incluir o exportador do corpus. Se nao incluir, o enunciado precisa ficar mais estreito.",
+      "tarefas": [
+        "TASK-BG-022",
+        "TASK-CHORE-022"
+      ],
+      "destino": "tarefa",
+      "ref": "TASK-TEST-005",
+      "resolvida_em": "15/09/26 06:43",
+      "id": "AUD-003-R04"
+    },
+    {
+      "nivel": "recomendacao",
+      "descricao": "Ponto cego da auditoria no .gitattributes. O criterio pedia marcar como gerado so o roteiro-classificacao.json, mas a linha usa o glob __utilidades-back-office__/roteiros-ficticios/*.json. Todo JSON nessa pasta passa a sair do diff da auditoria ('gerado (.gitattributes)'), inclusive roteiro feito a mao ou romaneio real salvo ali por engano, e um dado pessoal nesse arquivo nao chegaria ao auditor. Sugestao: caminho exato do arquivo gerado.",
+      "tarefas": [
+        "TASK-CHORE-020"
+      ],
+      "destino": "descartado",
+      "ref": "Decisao do humano, 15/09/26: o nome da pasta (roteiros-ficticios) deixa claro que ali so entra roteiro ficticio; ninguem vai salvar romaneio real nela",
+      "resolvida_em": "15/09/26 06:48",
+      "id": "AUD-003-R05"
+    },
+    {
+      "nivel": "recomendacao",
+      "descricao": "O valor da folga de desempate nao esta preso por teste. Os casos exercitam diferencas de cerca de 7 m (a rua do endereco vence) e 32 m (perde), entao ADDRESS_STREET_TIE_METERS com qualquer valor entre uns 8 e 31 m passa na suite. Se 10 m e decisao, e nao so um chute inicial do MANUAL KNOB, um caso perto da borda (por exemplo 12 m de diferenca) a registra.",
+      "tarefas": [
+        "TASK-BG-022"
+      ],
+      "destino": "tarefa",
+      "ref": "TASK-TEST-006",
+      "resolvida_em": "15/09/26 06:43",
+      "id": "AUD-003-R06"
+    },
+    {
+      "nivel": "observacao",
+      "descricao": "Regra 4 assinalada, com revisao humana presente. A BG-021 muda a classificacao comercial/residencial, que alimenta a coluna Horario Comercial? e a contagem do Sumario. A BG-022 muda o calculo da parada padrao do veiculo, e isso reancora as paradas padrao de roteiros ja salvos quando a malha carrega. As duas tem validacao humana registrada. O detector do script chamou a BG-022 so de 'ui' e nao marcou a BG-021 como sensivel: ele nao reconhece calculo nesses arquivos.",
+      "tarefas": [
+        "TASK-BG-021",
+        "TASK-BG-022"
+      ],
+      "destino": "descartado",
+      "ref": "Sem acao neste projeto (decisao do humano, 15/09/26). Sugestao ao pacote em docs-mentor/melhorias-do-pacote.md: sensibilidade declarada no plano, regex so como alerta",
+      "resolvida_em": "15/09/26 06:43",
+      "id": "AUD-003-O07"
+    },
+    {
+      "nivel": "observacao",
+      "descricao": "Falso positivo do fato mecanico 'cmd-doctor.ts fora do plano.muda'. O plano declara o arquivo como 'doctor.ts (arquivo .mentor/scripts/cmd-doctor.ts)', escrito assim para escapar do parser antigo que cortava no hifen (AUD-002-R09). A checagem de hoje le o primeiro token, 'doctor.ts', e nao casa com o caminho. Nao ha arquivo fantasma.",
+      "tarefas": [
+        "TASK-CHORE-017"
+      ],
+      "destino": "descartado",
+      "ref": "Sem acao neste projeto (decisao do humano, 15/09/26). Sugestao ao pacote em docs-mentor/melhorias-do-pacote.md: caminho declarado em qualquer posicao da linha do plano.muda",
+      "resolvida_em": "15/09/26 06:43",
+      "id": "AUD-003-O08"
+    },
+    {
+      "nivel": "observacao",
+      "descricao": "Os casos 18 e 19 da tabela de classificacao prendem um comportamento que o humano considera errado (DT-009), e o comentario no codigo avisa. Ao pagar a DT-009, e preciso inverter os dois esperados, senao a suite passa a barrar o conserto. A DT-010 (tooltip com 'Sem dados' em rota unica) contradiz a decisao da RF-016/RF-017, mas ja tem destino decidido pelo humano.",
+      "tarefas": [
+        "TASK-BG-021"
+      ],
+      "destino": "divida_tecnica",
+      "ref": "DT-009 (inverter o esperado dos casos 18 e 19 ao pagar; a parte do tooltip ja e a DT-010)",
+      "resolvida_em": "15/09/26 06:43",
+      "id": "AUD-003-O09"
+    },
+    {
+      "nivel": "observacao",
+      "descricao": "RF-58 passou a implementado com criterios_aceite vazio. A unica referencia de aceite sao os seis criterios da tarefa.",
+      "tarefas": [
+        "TASK-RF-044"
+      ],
+      "destino": "descartado",
+      "ref": "Sem acao neste projeto (decisao do humano, 15/09/26): a IA criou e implementou a RF-58 sem propor criterio. Sugestao ao pacote em docs-mentor/melhorias-do-pacote.md",
+      "resolvida_em": "15/09/26 06:43",
+      "id": "AUD-003-O10"
+    },
+    {
+      "nivel": "observacao",
+      "descricao": "Fora do lote: o commit 8fd2adb, marcado Light, toca .githooks/pre-push. Se mudou o conteudo do hook que roda os gates, e nao so a permissao do arquivo, e codigo de gate sem tarefa, fora da lista fechada do Light (nucleo 5). O dossie nao traz o conteudo; o humano confere.",
+      "tarefas": [],
+      "destino": "descartado",
+      "ref": "Conferido: 8fd2adb so muda o modo de .githooks/pre-push (100644 -> 100755), conteudo identico (blob ade533e antes e depois). Permissao de execucao faz o hook existente rodar no Linux; nao e codigo sem tarefa.",
+      "resolvida_em": "15/09/26 06:31",
+      "id": "AUD-003-O11"
+    }
+  ],
+  "sem_diff_auditavel": [],
+  "ficaram_para_depois": [
+    "TASK-BG-023",
+    "TASK-RF-043",
+    "TASK-RF-045",
+    "TASK-CHORE-024",
+    "TASK-CHORE-025",
+    "TASK-CHORE-026"
+  ]
+}
