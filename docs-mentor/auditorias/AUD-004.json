@@ -11,12 +11,130 @@
   "commit_base": "f39dc02f4f54f5e81660c30c9ca444b9c17e6d04",
   "commit_final": "f39dc02f4f54f5e81660c30c9ca444b9c17e6d04",
   "preparada_em": "15/09/26 05:38",
-  "registrada_em": null,
-  "veredito": null,
+  "registrada_em": "15/09/26 07:30",
+  "veredito": "REPROVADO",
   "nao_verificado": [
-    "PREENCHER: o que voce NAO conseguiu verificar, e por que. Esta lista sustenta o veredito"
+    "Evidencia gravada por task criterio dos 8 criterios 'nao se aplica' que nao sao validacao manual (TASK-BG-023: 2; TASK-CHORE-024: 4; TASK-CHORE-025: 1; TASK-CHORE-026: 1): fica no registro da tarefa, fora do dossie. Inclui a bateria npm run test:auto-anchors da BG-023, que alem disso depende do corpus privado e nao se reproduz fora da maquina do humano.",
+    "Mudanca manual em docs-mentor/contexto.json na TASK-BG-023 (chave INSPECAO_ANCORAS_DO_EXPERIMENTO e artefato importavel da inspecao RF-030) e _meta.atualizado_em null na TASK-CHORE-026: o dossie esconde o arquivo inteiro como vista gerada.",
+    "Texto de docs-mentor/melhorias-do-pacote.md nas TASK-CHORE-024, 025 e 026: escondido como nota; so a leitura do humano registrada na validacao manual atesta o conteudo.",
+    "Comando e saida dos gates tipos, lint, testes e build: o dossie traz so rotulo e codigo de saida. Nao deu para ver se tipos e lint cobrem .mentor/scripts nem se o comando de testes inclui docs-mentor/melhorias-do-pacote.test.ts; o vermelho antes registrado na CHORE-025 e na CHORE-026 indica que a suite chegou a rodar esse arquivo.",
+    "Fixtures result() e sourcePoints de corpus.test.ts (TASK-BG-023), fora do diff: nao deu para confirmar que o fixture tem a ancora movida para longe da semente. Sem isso os dois testes da politica nao distinguem as coordenadas; o vermelho antes se explica so pelo vehicleStopIsDefault.",
+    "nearestFirstOrder com a semente forcada em primeiro (TASK-BG-023): implementacao fora do diff; so a assercao sobre pointIds[0] a prende.",
+    "19 arquivos marcados 'pacote intacto' na TASK-CHORE-024 (1.101 linhas): o script os conferiu contra o manifesto e eu nao os li. Ficaram de fora a mudanca de 5 linhas em .mentor/esquemas/tarefa.json, que mexe no esquema dos registros de tarefa (persistencia do proprio mentor, regra 4), e chaveDaRestricao em restricoes.ts, de que depende o casamento de ADR do doctor.",
+    "Valor de caminhos().adr e onde o driver merge.ours e configurado nos clones (TASK-CHORE-024): arquivos fora do diff.",
+    "Capturas das validacoes manuais da TASK-RF-043 e da TASK-RF-045 ficaram no chat, fora do repositorio: conferi so o texto da evidencia. Na RF-043 o texto nao diz que a perna destacada se distingue do circuito a pe ambar e da sugestao ciano, embora a tela com parada selecionada os mostre juntos. Na RF-045 nenhuma distancia validada passou de 1 km, e o risco declarado de legibilidade era o texto vertical em km.",
+    "Fundo do painel do Ver detalhes (TASK-RF-045): o componente do painel nao esta no diff, entao nao deu para conferir se ele usa bg-background, o token da mascara do conector e do anel dos nos da linha do tempo.",
+    "Corpo do teste \"'Ver detalhes' = estado dedicado LIMPO (RF-006.11)\", citado pelo criterio do conector a pe da TASK-RF-045: nao mudou e nao esta no dossie.",
+    "MARCA_PLANO_NO_TITULO em .mentor/scripts/tipos.ts e o formato da saida do verificar, de que dependem os testes da TASK-CHORE-025: fora do diff.",
+    "Efeito dos testes das TASK-CHORE-025 e 026 sobre o repositorio real: rodam mentor.mjs init, gerar, verificar e doctor com cwd na raiz do projeto e MENTOR_RAIZ numa pasta temporaria; nao deu para ver se algum desses comandos grava hook ou config do git a partir do cwd.",
+    "Teste 'doctor mostra lembretes sem grava-los no contexto.json' (TASK-CHORE-026): exige so um sinal de aviso em qualquer lugar da saida, nao o texto de um lembrete, e roda num projeto recem-criado, sem risco nem divida com data.",
+    "Destino dos JSONs de inspecao gerados pelo arnes da TASK-BG-023, que levam as linhas do romaneio do corpus privado: o .gitignore da pasta de saida nao esta no dossie."
   ],
-  "pendencias": [],
+  "pendencias": [
+    {
+      "nivel": "bloqueia",
+      "descricao": "RF-57 foi marcado implementado em docs-mentor/requisitos/requisitos.json com o enunciado intacto: 'Alternar o tracado do roteiro no mapa entre rota inteira e trecho da parada selecionada'. O codigo nao alterna nada: src/pages/MapPage.tsx desenha sempre todas as pernas, e a parada selecionada so ganha a perna de saida em verde sobre as outras esmaecidas (vehicleRouteHighlight; VEHICLE_LEG_HIGHLIGHT_STYLE em src/components/RouteMap.tsx). Trocar a opcao global pelo destaque contextual foi decisao do humano em 14/09/26 e esta no registro da tarefa, mas nao chegou ao requisito, que segue tambem com criterios_aceite vazio. O registro de requisitos afirma o que o codigo nao faz (lei 3 do nucleo). Texto que o codigo sustenta: tracado do veiculo por perna, translucido, com rua repetida entre pernas mais escura e a perna que sai da parada selecionada destacada.",
+      "tarefas": [
+        "TASK-RF-043"
+      ],
+      "destino": "tarefa",
+      "ref": "TASK-DOC-011",
+      "resolvida_em": "15/09/26 07:55",
+      "id": "AUD-004-B01"
+    },
+    {
+      "nivel": "bloqueia",
+      "descricao": "O criterio 'No aparelho, em tema claro e escuro: distancia vertical legivel, trilho alinhado com uma parada aberta, totais, sugestao e ignorados presentes' fechou com validacao_manual APROVADO, mas a evidencia descreve uma sessao so (Samsung M35, roteiro L-30): linha do tempo com P2, P3 e P4, distancias 730, 805 e 585 m e P3 aberta. Nao cita tema escuro, totais, sugestao nem ignorados. Tema escuro era risco declarado da propria tarefa ('trilho, nos e mascara do conector precisam de tokens'). No diff, a mascara do conector usa bg-background (src/components/map/panel/RouteTimeline.tsx) e o anel dos nos usa ring-background (RoteiroOverviewSection.tsx, TimelineNode): os dois so se confundem com o painel se o fundo dele for o mesmo token, e so a tela em tema escuro mostra isso. Nessa parte o gate equivale a NAO EXECUTADO e nao sustenta o criterio.",
+      "tarefas": [
+        "TASK-RF-045"
+      ],
+      "destino": "descartado",
+      "ref": "Decisao do humano, 15/09/26: validado. 'Tudo que depende de eu ver e usar o app eu valido dizendo esta tudo ok, isso e validacao de usuario, usabilidade'. Sugestao ao pacote em docs-mentor/melhorias-do-pacote.md (nota de 15/09/26 06:42 sobre auditoria em lote)",
+      "resolvida_em": "15/09/26 07:55",
+      "id": "AUD-004-B02"
+    },
+    {
+      "nivel": "recomendacao",
+      "descricao": "Defeito do pacote no comando auditar, na montagem do dossie: criterio 'nao se aplica' diz onde esta a evidencia, e o dossie esconde exatamente esse lugar. (a) A saida gravada por task criterio fica no registro da tarefa, listado como 'registro do mentor' e fora da revisao. (b) docs-mentor/contexto.json sai inteiro como 'vista gerada', mas na TASK-BG-023 a mudanca e manual (laboratorio.chaves ganha INSPECAO_ANCORAS_DO_EXPERIMENTO e artefatos_importaveis ganha o JSON da inspecao RF-030), justamente o que o criterio 3 dela pede; na TASK-CHORE-024 o criterio 3 e a versao_do_pacote dentro desse arquivo. (c) docs-mentor/melhorias-do-pacote.md sai como 'nota' e e objeto de criterio na CHORE-024, na CHORE-025 e na CHORE-026. Caso medido nesta auditoria (15/09/26): 8 criterios do lote nao puderam ser conferidos pelo dossie. Sugestao: para cada criterio 'nao se aplica', o dossie traz a evidencia gravada por task criterio e o diff dos arquivos que o criterio nomeia, mesmo os classificados como vista gerada, nota ou registro. Cenario de teste: tarefa com um criterio 'nao se aplica', evidencia gravada por task criterio e mudanca manual em contexto.json; o dossie precisa conter a evidencia e o trecho do contexto.json.",
+      "tarefas": [
+        "TASK-BG-023",
+        "TASK-CHORE-024",
+        "TASK-CHORE-025",
+        "TASK-CHORE-026"
+      ],
+      "destino": "descartado",
+      "ref": "Sem acao neste projeto (decisao do humano, 15/09/26): defeito do pacote, anotado em docs-mentor/melhorias-do-pacote.md (nota de 06:42 sobre a evidencia de task criterio e nota nova sobre vista gerada e nota no dossie)",
+      "resolvida_em": "15/09/26 07:55",
+      "id": "AUD-004-R03"
+    },
+    {
+      "nivel": "recomendacao",
+      "descricao": "Codigo novo da 0.12.0 em .mentor/scripts/cmd-doctor.ts, funcao processo, bloco das restricoes reconfirmadas: (a) procura ADR em join(c.docs, 'adrs'), enquanto atualizarContagens em vistas.ts conta ADR em c.adr; se caminhos().adr nao for docs-mentor/adrs, o doctor nunca acha ADR e acusa a falta dela para sempre. (b) arq.toUpperCase().includes(idAdr) faz 'ADR-1' casar com os arquivos de ADR-10 a ADR-19, e o doctor diz 'possui ADR vinculada' sem ela existir. Sugestao: usar c.adr e casar o ID como palavra inteira no nome do arquivo (numero seguido de nao-digito). Cenario de teste: pasta de ADRs so com ADR-12-x.md e uma restricao citando ADR-1 reconfirmada em 3 tarefas; o doctor tem de acusar a falta da ADR.",
+      "tarefas": [
+        "TASK-CHORE-024"
+      ],
+      "destino": "descartado",
+      "ref": "Sem acao neste projeto (decisao do humano, 15/09/26): defeito do pacote, anotado em docs-mentor/melhorias-do-pacote.md (ADR procurada em docs-mentor/adrs em vez de caminhos().adr)",
+      "resolvida_em": "15/09/26 07:55",
+      "id": "AUD-004-R04"
+    },
+    {
+      "nivel": "recomendacao",
+      "descricao": "O criterio 'O conector a pe dentro da parada continua igual (agora pelo componente extraido)' aponta para o teste \"'Ver detalhes' = estado dedicado LIMPO (RF-006.11): 3 secoes com parada 0 e totais; 'Ver no mapa' volta a parada\", cujo nome nao fala do conector. Conferi no diff que a extracao preserva as classes, o icone Footprints, o rotulo legLabel e o aria LEG_ARIA do conector antigo em StopItem.tsx. Falta um teste que prenda o conector a pe, por exemplo getAllByLabelText(LEG_ARIA) numa parada aberta com dois enderecos.",
+      "tarefas": [
+        "TASK-RF-045"
+      ],
+      "destino": "descartado",
+      "ref": "Decisao do humano, 15/09/26: o projeto web e prototipo apenas",
+      "resolvida_em": "15/09/26 08:04",
+      "id": "AUD-004-R05"
+    },
+    {
+      "nivel": "observacao",
+      "descricao": "O pedido original incluia 'o veiculo pode passar pela mesma rua sem ser possivel identificar visualmente'. A solucao escurece rua repetida entre pernas diferentes, nao dentro da mesma perna, nem mostra o sentido. A limitacao esta declarada no comentario de vehicleRouteLegs (src/utils/routing/routePath.ts) e nas alternativas do plano; o dossie nao a mostra registrada como divida tecnica nem como requisito.",
+      "tarefas": [
+        "TASK-RF-043"
+      ],
+      "destino": "divida_tecnica",
+      "ref": "DT-012",
+      "resolvida_em": "15/09/26 08:04",
+      "id": "AUD-004-O06"
+    },
+    {
+      "nivel": "observacao",
+      "descricao": "A 0.12.0 trouxe 'merge=ours' para docs-mentor/requisitos/pendentes.md e implementados.md no .gitattributes. 'ours' nao e driver embutido do git: sem 'git config merge.ours.driver true' no clone, o git volta em silencio ao merge de texto, e no merge de PR pelo GitHub driver customizado nunca e aplicado. Se o driver nao for configurado por algum passo do mentor, o atributo nao faz nada.",
+      "tarefas": [
+        "TASK-CHORE-024"
+      ],
+      "destino": "descartado",
+      "ref": "Decisao do humano, 15/09/26: sem nota no pacote; o driver merge.ours esta configurado neste clone pelo instalar, a premissa da observacao estava errada",
+      "resolvida_em": "15/09/26 08:04",
+      "id": "AUD-004-O07"
+    },
+    {
+      "nivel": "observacao",
+      "descricao": "O vermelho do gate testes foi dispensado sem prova por mutacao. A justificativa vale para o app (nada em src/), mas o gate verde nao conferiu o que a tarefa mudou: o pacote nao tinha teste neste projeto. O exemplo '(plano)' que a propria 0.12.0 trouxe no entrega.md contradizia a marca aceita pelo pronto-para-merge e so apareceu na TASK-CHORE-025. A conferencia real da atualizacao ficou nos criterios de verificar e doctor, cuja saida nao esta no dossie.",
+      "tarefas": [
+        "TASK-CHORE-024"
+      ],
+      "destino": "descartado",
+      "ref": "Sem acao neste projeto (decisao do humano, 15/09/26): o que faltou no pacote ja esta na correcao 1 de docs-mentor/melhorias-do-pacote.md (cenario do exemplo (plano))",
+      "resolvida_em": "15/09/26 07:55",
+      "id": "AUD-004-O08"
+    },
+    {
+      "nivel": "observacao",
+      "descricao": "Risco aceito no plano: com a correcao local no .mentor/, o verificar sai REPROVADO de proposito pela divergencia do manifesto. Efeito que o plano nao declarou: com o veredito ja vermelho, um problema novo achado pelo verificar nao muda o resultado, vira so mais uma linha na saida; e criterio no formato 'node mentor.mjs verificar aprova', usado na TASK-BG-023 e na TASK-CHORE-024, deixa de ser cumprivel enquanto houver correcao local. A TASK-CHORE-026 aumentou a divergencia (cmd-doctor.ts e vistas.ts).",
+      "tarefas": [
+        "TASK-CHORE-025",
+        "TASK-CHORE-026"
+      ],
+      "destino": "descartado",
+      "ref": "Sem acao neste projeto (decisao do humano, 15/09/26): anotado em docs-mentor/melhorias-do-pacote.md (verificar sempre REPROVADO com correcao local)",
+      "resolvida_em": "15/09/26 07:55",
+      "id": "AUD-004-O09"
+    }
+  ],
   "sem_diff_auditavel": [],
   "ficaram_para_depois": []
 }
