@@ -1,0 +1,157 @@
+{
+  "id": "TASK-CHORE-027",
+  "tipo": "CHORE",
+  "titulo": "Corrigir pronto-para-merge que confunde IDs citados em PRs de planejamento com tarefas entregues e bloqueia a triagem de auditoria",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "imediata",
+  "esforco": {
+    "humano": "P",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "ordem_motivo": null,
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "sem_requisito_motivo": null,
+  "criada_em": "15/09/26 18:40",
+  "iniciada_em": "15/09/26 18:41",
+  "commit_base": "620a0b277c39e0bac3b828d322a446cb528ba7a7",
+  "concluida_em": "15/09/26 19:01",
+  "plano": {
+    "muda": [
+      ".mentor/scripts/cmd-merge.ts - classificar o PR pelo escopo explicito (plano/light) antes de interpretar IDs citados no assunto e aceitar registros de auditoria e divida no escopo de planejamento",
+      "docs-mentor/melhorias-do-pacote.test.ts - cobrir o caso real do PR de triagem e preservar a recusa de tarefa aberta em PR de entrega",
+      "docs-mentor/melhorias-do-pacote.md - registrar a correcao local, o caso medido e o caminho para leva-la ao pacote"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "PR com escopo explicito (plano) ou (light) e TASK-DOC-011 apenas no assunto segue o escopo, sem exigir que a tarefa citada incidentalmente esteja concluida",
+        "teste": "docs-mentor/melhorias-do-pacote.test.ts > escopos explicitos prevalecem sobre IDs citados no assunto"
+      },
+      {
+        "texto": "Triagem de auditoria pode registrar auditoria, divida tecnica, tarefa aberta e vistas derivadas num PR (plano)",
+        "teste": "docs-mentor/melhorias-do-pacote.test.ts > PR de planejamento aceita os registros produzidos pela triagem de auditoria"
+      },
+      {
+        "texto": "PR de entrega que cita uma tarefa aberta sem escopo (plano) ou (light) continua reprovado",
+        "teste": "docs-mentor/melhorias-do-pacote.test.ts > PR de entrega continua exigindo a tarefa concluida"
+      }
+    ],
+    "pedido_original": "Corrigir a falha mostrada no check Tarefa concluida no ramo do PR de triagem da AUD-004, que mandou finalizar a TASK-DOC-011 criada aberta pelo proprio PR",
+    "solucao_sugerida": null,
+    "alternativas_profissionais": [],
+    "problema_canonico": "ambiguidade lexica por classificacao de texto livre com regex; metadado estruturado deve prevalecer sobre mencoes no assunto",
+    "discordancia": {
+      "o_que_faria_diferente": "Nao fecharia a TASK-DOC-011 nem esconderia seu ID do registro duravel; interpretaria primeiro o escopo estruturado do titulo e manteria a tarefa aberta como o planejamento exige",
+      "o_que_preocupa": "Priorizar a marca sem limitar o diff poderia transformar (plano) em desvio do gate; por isso o allowlist continua obrigatorio e ganha somente os registros que a triagem realmente produz",
+      "o_que_existe_pronto_80_porcento": "Parser de Conventional Commits ou label de PR resolveria a classificacao; para este CLI, ler os regex de escopo ja existentes e a opcao proporcional sem dependencia nova"
+    },
+    "impacto": "Somente o gate pronto-para-merge do mentor local, seu teste de regressao e o registro de melhoria; nenhum codigo do produto ou workflow do GitHub muda",
+    "riscos": [
+      "Um titulo rotulado incorretamente como (plano) continuara dependendo da revisao do allowlist; o ajuste nao pode permitir codigo, gates ou tarefas em execucao/concluidas"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram corrigir o falso bloqueio no PR de triagem; proponho ajustar um comando, acrescentar regressao e registrar a correcao, do tamanho do problema porque reutiliza os marcadores existentes e nao redesenha a esteira",
+    "restricoes_reavaliadas": [],
+    "meio_de_validacao": {
+      "tipo": "testes_automatizados",
+      "porque_nao_automatizado": null,
+      "roteiro": null,
+      "artefato": null,
+      "casos": null
+    },
+    "composicao": null
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "15/09/26 18:44",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n\n RUN  v4.1.11 E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\n\n\n Test Files  81 passed (81)\n      Tests  998 passed (998)\n   Start at  18:58:23\n   Duration  38.08s (transform 11.33s, setup 33.20s, import 23.98s, tests 81.93s, environment 123.83s)\n\n(node:16080) Warning: `--localstorage-file` was provided without a valid path\n(Use `node --trace-warnings ...` to show where the warning was created)\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "15/09/26 18:59",
+      "commit_execucao": "620a0b277c39e0bac3b828d322a446cb528ba7a7",
+      "arvore_hash": null,
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b\n\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "15/09/26 18:59",
+      "commit_execucao": "620a0b277c39e0bac3b828d322a446cb528ba7a7",
+      "arvore_hash": null,
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .\n\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "15/09/26 18:59",
+      "commit_execucao": "620a0b277c39e0bac3b828d322a446cb528ba7a7",
+      "arvore_hash": null,
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\nvite v7.3.5 building client environment for production...\ntransforming...\n✓ 2001 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/registerSW.js                 0.13 kB\ndist/manifest.webmanifest          0.75 kB\ndist/index.html                    2.79 kB │ gzip:   1.15 kB\ndist/assets/vendor-Dgihpmma.css   15.04 kB │ gzip:   6.38 kB\ndist/assets/index-PRFVi4ZE.css    28.81 kB │ gzip:   6.27 kB\ndist/assets/index-CbAmWFBD.js    543.48 kB │ gzip: 104.97 kB\ndist/assets/vendor-CSdyhtLd.js   808.69 kB │ gzip: 263.08 kB\n✓ built in 6.73s\n\nPWA v1.2.0\nmode      generateSW\nprecache  19 entries (1802.69 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js\n\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\nnpm notice\nnpm notice New minor version of npm available! 11.12.1 -> 11.19.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1\nnpm notice To update run: npm install -g npm@11.19.1\nnpm notice",
+      "executado_em": "15/09/26 19:00",
+      "commit_execucao": "620a0b277c39e0bac3b828d322a446cb528ba7a7",
+      "arvore_hash": null,
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "não se aplica",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": null,
+      "executado_em": "15/09/26 18:48",
+      "commit_execucao": "620a0b277c39e0bac3b828d322a446cb528ba7a7",
+      "arvore_hash": null,
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": "Chore interna de CI sem UI, persistencia ou algoritmo do produto; cobertura integral por testes automatizados.",
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "dispensado",
+  "validado_em": "15/09/26 18:48",
+  "validacao_motivo": "Chore interna de CI sem UI, persistencia ou algoritmo do produto; cobertura integral por testes automatizados.",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-15--19h01--TASK-CHORE-027.md"
+}
