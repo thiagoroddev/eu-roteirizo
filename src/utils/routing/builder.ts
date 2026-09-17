@@ -226,8 +226,46 @@ export const routeBuilderReducer = (state: RouteBuilderState, action: RouteBuild
     }
 
     case "SET_DRAFT_RADIUS": {
-      if (!state.draft) return state;
-      return { ...state, draft: { ...state.draft, radiusMeters: Math.max(0, action.radiusMeters) } };
+      const { draft } = state;
+      if (!draft) return state;
+      const newRadius = Math.max(0, action.radiusMeters);
+      const oldRadius = draft.radiusMeters;
+      const seed = state.points.find((p) => p.id === draft.seedPointId);
+      if (!seed) return { ...state, draft: { ...draft, radiusMeters: newRadius } };
+
+      const assignedElsewhere = idsAssignedElsewhere(state.stops, draft.stopId);
+      const ignoredSet = new Set(state.ignoredPointIds);
+
+      let updatedPointIds = [...draft.pointIds];
+
+      if (newRadius > oldRadius) {
+        // Engloba novos candidatos livres dentro do raio expandido
+        const inNewRadius = pointsWithinRadius(seed, state.points, newRadius).filter((p) => !assignedElsewhere.has(p.id) && !ignoredSet.has(p.id) && !updatedPointIds.includes(p.id));
+        updatedPointIds = [...updatedPointIds, ...inNewRadius.map((p) => p.id)];
+      } else if (newRadius < oldRadius) {
+        // Ao reduzir o raio, remove os pontos que estavam no raio anterior mas ficaram além do novo raio
+        updatedPointIds = updatedPointIds.filter((id) => {
+          if (id === draft.seedPointId) return true;
+          const point = state.points.find((p) => p.id === id);
+          if (!point) return false;
+          const dist = haversine(seed, point);
+          if (dist > newRadius && dist <= oldRadius) {
+            return false;
+          }
+          return true;
+        });
+      }
+
+      const updatedDraft: StopDraft = {
+        ...draft,
+        radiusMeters: newRadius,
+        pointIds: updatedPointIds,
+      };
+
+      return {
+        ...state,
+        draft: resweepDraft(state, updatedDraft),
+      };
     }
 
     case "TOGGLE_DRAFT_POINT": {

@@ -1,0 +1,171 @@
+{
+  "id": "TASK-BG-024",
+  "tipo": "BG",
+  "titulo": "Agrupar automaticamente enderecos no raio ao editar parada e salvar",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "perfil": "compacto",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "ordem_motivo": null,
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "sem_requisito_motivo": null,
+  "criada_em": "16/09/26 22:25",
+  "iniciada_em": "16/09/26 22:26",
+  "commit_base": "f80d78be492166c3bbb987a4f8cce10c45b3a309",
+  "concluida_em": "16/09/26 22:45",
+  "plano": {
+    "muda": [
+      "src/utils/routing/builder.ts - SET_DRAFT_RADIUS engloba automaticamente novos enderecos livres ao aumentar o raio e remove ao diminuir",
+      "src/__tests__/utils/routing/builder.test.ts - testes unitarios de inclusao automatica e reducao de raio em SET_DRAFT_RADIUS",
+      "src/__tests__/pages/MapPage.test.tsx - teste de integracao de edicao de parada com aumento de raio e salvamento"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Ao aumentar o raio em parada em edicao, novos enderecos livres dentro do raio sao incluidos no rascunho com ordem recalculada",
+        "teste": "src/__tests__/utils/routing/builder.test.ts > SET_DRAFT_RADIUS engloba automaticamente novos enderecos ao expandir e remove ao reduzir",
+        "evidencia": {
+          "comando": "npx vitest run src/__tests__/utils/routing/builder.test.ts -t SET_DRAFT_RADIUS",
+          "codigo_saida": 0,
+          "saida": "\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.11 \u001b[39m\u001b[90mE:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\u001b[39m\n\n \u001b[32m✓\u001b[39m src/__tests__/utils/routing/builder.test.ts \u001b[2m(\u001b[22m\u001b[2m52 tests\u001b[22m\u001b[2m | \u001b[22m\u001b[33m51 skipped\u001b[39m\u001b[2m)\u001b[22m\u001b[32m 7\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m1 passed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m1 passed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[33m51 skipped\u001b[39m\u001b[90m (52)\u001b[39m\n\u001b[2m   Start at \u001b[22m 22:38:30\n\u001b[2m   Duration \u001b[22m 1.12s\u001b[2m (transform 107ms, setup 221ms, import 89ms, tests 7ms, environment 613ms)\u001b[22m",
+          "executado_em": "16/09/26 22:38"
+        }
+      },
+      {
+        "texto": "Ao salvar a parada apos aumentar o raio na edicao, a parada persistida mantem os novos enderecos englobados no novo raio",
+        "teste": "src/__tests__/pages/MapPage.test.tsx > ao editar parada e aumentar raio salva novos enderecos englobados",
+        "evidencia": {
+          "comando": "npx vitest run src/__tests__/pages/MapPage.test.tsx -t ao",
+          "codigo_saida": 0,
+          "saida": "\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.11 \u001b[39m\u001b[90mE:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\u001b[39m\n\n \u001b[32m✓\u001b[39m src/__tests__/pages/MapPage.test.tsx \u001b[2m(\u001b[22m\u001b[2m80 tests\u001b[22m\u001b[2m | \u001b[22m\u001b[33m71 skipped\u001b[39m\u001b[2m)\u001b[22m\u001b[33m 3217\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m os candidatos do raio entram AUTOMATICAMENTE na parada ao criar (reverte §8 — RF-006.4.6) \u001b[33m 301\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m 'Ver lista completa' na parada firmada mostra os endereços por ordinal; 'Esconder lista' volta ao resumo (RF-006.4.7) \u001b[33m 418\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m 2 cliques no quadrado → desagrupa SÓ o mapa (painel fica no resumo); clicar fora DESELECIONA e volta ao ocioso (RF-006.11) \u001b[33m 368\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m editar a parada a partir do DESAGRUPADO mantém o zoom (MAX), sem zoom-out ao entrar na edição (RF-006.18) \u001b[33m 367\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m ao deletar uma parada seleciona automaticamente a ultima parada remanescente \u001b[33m 445\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m ponto selecionado pelo usuario e preservado como ancora e primeiro endereco ao criar parada com vizinhos englobados \u001b[33m 402\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m ao editar parada e aumentar raio salva novos enderecos englobados \u001b[33m 639\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m1 passed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m9 passed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[33m71 skipped\u001b[39m\u001b[90m (80)\u001b[39m\n\u001b[2m   Start at \u001b[22m 22:38:41\n\u001b[2m   Duration \u001b[22m 5.26s\u001b[2m (transform 758ms, setup 202ms, import 1.04s, tests 3.22s, environment 609ms)\u001b[22m\n\n\u001b[90mstderr\u001b[2m | src/__tests__/pages/MapPage.test.tsx\u001b[2m > \u001b[22m\u001b[2mMapPage (focus screen)\u001b[2m > \u001b[22m\u001b[2mBG-011: informa aproximacao sem ruas e permite tentar novamente\n\u001b[22m\u001b[39mWarning: An update to MapScreen inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() =\n[...recortado...]\n6.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)\n\n\u001b[90mstderr\u001b[2m | src/__tests__/pages/MapPage.test.tsx\u001b[2m > \u001b[22m\u001b[2mMapPage (focus screen)\u001b[2m > \u001b[22m\u001b[2mao editar parada e aumentar raio salva novos enderecos englobados\n\u001b[22m\u001b[39mWarning: An update to MapScreen inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\n    at MapScreen (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:199:22)\n    at div\n    at MapPage (E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/src/pages/MapPage.tsx:115:133)\n    at RenderedRoute (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:6309:26)\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)",
+          "executado_em": "16/09/26 22:38"
+        }
+      }
+    ],
+    "impacto": "Localizado no redutor do construtor de rotas (SET_DRAFT_RADIUS) e reflexo na interface de edicao de parada",
+    "riscos": [
+      "baixo risco local: alteracao delimitada no reducer puro, blindada por testes unitarios e de integracao"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Standard compacto: correcao cirurgica com causa raiz e solucao delimitadas",
+    "meio_de_validacao": {
+      "tipo": "testes_automatizados",
+      "porque_nao_automatizado": null,
+      "roteiro": null,
+      "artefato": null,
+      "casos": null
+    },
+    "composicao": null
+  },
+  "gates": {
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "16/09/26 22:35",
+      "commit_execucao": "f80d78be492166c3bbb987a4f8cce10c45b3a309",
+      "arvore_hash": "82dfd44f1dfe9d2b10fabebc3e46b0e732792d17",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-BG-024-tipos-1789608936808.log",
+      "chave_cache": "8a32936a4c1e905d90e06488ff522fb55191bd0fbd22e39450451dade2f5baaa",
+      "digest_insumos": "82dfd44f1dfe9d2b10fabebc3e46b0e732792d17",
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "16/09/26 22:35",
+      "commit_execucao": "f80d78be492166c3bbb987a4f8cce10c45b3a309",
+      "arvore_hash": "82dfd44f1dfe9d2b10fabebc3e46b0e732792d17",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-BG-024-lint-1789608952601.log",
+      "chave_cache": "fb70df334f9b151f7526b096eb2bacfff989e953679ac93acd5f58109f3e619e",
+      "digest_insumos": "82dfd44f1dfe9d2b10fabebc3e46b0e732792d17",
+      "vermelho_dispensado": null
+    },
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n... [1882 linhas omitidas] ...\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)",
+      "executado_em": "16/09/26 22:37",
+      "commit_execucao": "f80d78be492166c3bbb987a4f8cce10c45b3a309",
+      "arvore_hash": "82dfd44f1dfe9d2b10fabebc3e46b0e732792d17",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-BG-024-testes-1789609053473.log",
+      "chave_cache": "a35b2f95ae8e4554f9e9f5179f936d57d38be48cdde0610cdf5ce01dba2abd23",
+      "digest_insumos": "82dfd44f1dfe9d2b10fabebc3e46b0e732792d17",
+      "vermelho_dispensado": {
+        "dispensado_em": "16/09/26 22:45",
+        "motivo": "TDD executado com falha comprovada no teste unitario antes da correcao do reducer"
+      }
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n... [22 linhas omitidas] ...\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "16/09/26 22:38",
+      "commit_execucao": "f80d78be492166c3bbb987a4f8cce10c45b3a309",
+      "arvore_hash": "82dfd44f1dfe9d2b10fabebc3e46b0e732792d17",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-BG-024-build-1789609088271.log",
+      "chave_cache": "69c96bd1f02d7c4ba8aaa2be28bba04d6797ff5d747092965ba93306498b1d4b",
+      "digest_insumos": "82dfd44f1dfe9d2b10fabebc3e46b0e732792d17",
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "APROVADO",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": "Validado pelo usuario no mapa: ao editar parada e aumentar raio para 50m inclui 4 enderecos e ao reduzir para 30m remove, persistindo corretamente ao salvar",
+      "executado_em": "16/09/26 22:44",
+      "commit_execucao": "f80d78be492166c3bbb987a4f8cce10c45b3a309",
+      "arvore_hash": "82dfd44f1dfe9d2b10fabebc3e46b0e732792d17",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "aprovado",
+  "validado_em": "16/09/26 22:44",
+  "validacao_motivo": "Validado pelo usuario no mapa: ao editar parada e aumentar raio para 50m inclui 4 enderecos e ao reduzir para 30m remove, persistindo corretamente ao salvar",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-16--22h45--TASK-BG-024--estudo-humano.md"
+}

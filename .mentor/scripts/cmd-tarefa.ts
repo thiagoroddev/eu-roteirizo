@@ -1267,9 +1267,9 @@ export function finalizar(id: string, flags: Flags = {}): void {
   tarefa.concluida_em = agora().log
 
   const base = `${agora().nome}--${tarefa.id}`
-  tarefa.narrativa = `${base}.md`
+  tarefa.narrativa = `${base}--estudo-humano.md`
   escreverJson(`${c.concluidas}/${base}.json`, tarefa)
-  renameSync(narrativa, `${c.concluidas}/${base}.md`)
+  renameSync(narrativa, `${c.concluidas}/${base}--estudo-humano.md`)
   rmSync(caminho)
 
   // O vinculo requisito <-> tarefa e gravado aqui, nunca pela IA.

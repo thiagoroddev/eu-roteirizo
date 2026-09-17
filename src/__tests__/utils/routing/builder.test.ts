@@ -258,12 +258,26 @@ describe("stop draft lifecycle", () => {
     expect(run(committed, { type: "OPEN_STOP_DRAFT", seedPointId: "b", suggestedVehicleStop: { lat: b.lat, lng: b.lng } })).toBe(committed);
   });
 
-  it("the radius only derives candidates (they never join by themselves)", () => {
-    const state = openDraftOnA(initial());
-    expect(draftCandidateIds(state)).toEqual(["b", "e"]);
-    expect(state.draft?.pointIds).toEqual(["a"]);
-    const wider = run(state, { type: "SET_DRAFT_RADIUS", radiusMeters: 60 });
-    expect(draftCandidateIds(wider)).toEqual(["b", "c", "e"]);
+  it("SET_DRAFT_RADIUS engloba automaticamente novos enderecos ao expandir e remove ao reduzir", () => {
+    // Reabre uma parada existente com a e b (raio 30 m)
+    const withStop = withStopAB(initial());
+    const editing = run(withStop, { type: "REOPEN_STOP", stopId: "stop_a" });
+    expect(editing.draft?.pointIds).toEqual(["a", "b"]);
+
+    // Expandir para 60 m engloba c (~56 m) e e (~15 m), que estao livres
+    const wider = run(editing, { type: "SET_DRAFT_RADIUS", radiusMeters: 60 });
+    expect(wider.draft?.pointIds).toEqual(["a", "e", "c", "b"]);
+    expect(wider.draft?.radiusMeters).toBe(60);
+
+    // Reduzir de volta para 30 m remove c (que ficou alem dos 30 m)
+    const narrower = run(wider, { type: "SET_DRAFT_RADIUS", radiusMeters: 30 });
+    expect(narrower.draft?.pointIds).toEqual(["a", "e", "b"]);
+
+    // Ao salvar (COMMIT_STOP), a parada comitada mantem os pontos englobados
+    const committed = run(wider, { type: "COMMIT_STOP" });
+    const stopA = committed.stops.find((s) => s.id === "stop_a");
+    expect(stopA?.pointIds).toEqual(["a", "e", "c", "b"]);
+    expect(stopA?.radiusMeters).toBe(60);
   });
 
   it("TOGGLE_DRAFT_POINT opts a candidate in (re-sweeping the order) and out", () => {
