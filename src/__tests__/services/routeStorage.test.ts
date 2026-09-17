@@ -7,6 +7,7 @@ import "fake-indexeddb/auto";
 import { describe, it, expect, beforeEach } from "vitest";
 
 import { saveRoteiro, getRoteiro, deleteRoteiro, listRoteiroKeys, deleteManifestRoteiros, clearRoteiros } from "../../services/routeStorage";
+import { clearManifests, getManifestUsageMap } from "../../services/manifestStorage";
 import { DEFAULT_ROUTING_CONFIG, type PlannedRoute } from "../../types/routing";
 
 const route = (overrides: Partial<PlannedRoute> = {}): PlannedRoute => ({
@@ -20,6 +21,7 @@ const route = (overrides: Partial<PlannedRoute> = {}): PlannedRoute => ({
 
 beforeEach(async () => {
   await clearRoteiros();
+  await clearManifests();
 });
 
 describe("routeStorage (RF-008)", () => {
@@ -92,5 +94,14 @@ describe("routeStorage (RF-008)", () => {
     expect(await getRoteiro("m1", "A-1")).toBeNull();
     expect(await getRoteiro("m1", "B-2")).toBeNull();
     expect(await getRoteiro("m2", "A-1")).not.toBeNull();
+  });
+
+  it("saveRoteiro atualiza o timestamp de uso do romaneio pai", async () => {
+    const result = await saveRoteiro("m1", "A-1", route());
+    expect(result.status).toBe("saved");
+
+    const usageMap = await getManifestUsageMap();
+    expect(usageMap.has("m1")).toBe(true);
+    expect(Number.isNaN(Date.parse(usageMap.get("m1")!))).toBe(false);
   });
 });

@@ -1,7 +1,17 @@
 import { useState, useCallback } from "react";
 import { processExcelFile } from "../utils/excelProcessor";
 import { hasValidFileExtension } from "../utils/validators";
-import { saveManifest, getManifest, getRouteRows, backfillRouteRows, deriveAvailableColsFromRows, findRouteAt, saveStandaloneManifest, type SaveManifestResult } from "../services/manifestStorage";
+import {
+  saveManifest,
+  getManifest,
+  getRouteRows,
+  backfillRouteRows,
+  deriveAvailableColsFromRows,
+  findRouteAt,
+  saveStandaloneManifest,
+  touchManifestUsage,
+  type SaveManifestResult,
+} from "../services/manifestStorage";
 import { parseAndValidateRouteJson, extractAllRowsFromPayload } from "../services/routeExport";
 import type { RoutesMap } from "../types";
 import type { RouteUploaderReturn } from "../types/hooks";
@@ -79,6 +89,7 @@ export function useRouteUploader(): RouteUploaderReturn {
    * This is important for performance, especially when passed as a prop
    */
   const processAndSave = useCallback(async (file: File) => {
+    console.log(`[useRouteUploader] processAndSave iniciado para arquivo: '${file.name}' (${file.size} bytes)`);
     /**
      * ===== VALIDATION 1: File Extension =====
      * Check if file ends with .xlsx or .csv
@@ -86,6 +97,7 @@ export function useRouteUploader(): RouteUploaderReturn {
     const hasValidExtension = hasValidFileExtension(file.name, FILE_CONFIG.ACCEPTED_EXTENSIONS);
 
     if (!hasValidExtension) {
+      console.warn(`[useRouteUploader] extensão de arquivo inválida: ${file.name}`);
       setError(UI_LABELS.ERRORS.INVALID_FILE);
       /** Stop here if invalid type */
       return;
@@ -96,6 +108,7 @@ export function useRouteUploader(): RouteUploaderReturn {
      * Prevent huge files that could crash the browser
      */
     if (file.size > FILE_CONFIG.MAX_FILE_SIZE) {
+      console.warn(`[useRouteUploader] arquivo excede tamanho máximo (${file.size} bytes)`);
       setError(UI_LABELS.ERRORS.FILE_TOO_LARGE);
       return;
     }
@@ -109,39 +122,52 @@ export function useRouteUploader(): RouteUploaderReturn {
     setRoutes(null);
     setManifestSave(null);
 
-    /**
-     * ===== PROCESS THE FILE =====
-     * Call the utility function that does the heavy lifting
-     * This is async because reading files takes time
-     */
-    const result = await processExcelFile(file);
-
-    /** ===== HANDLE RESULT ===== */
-    if (result.error) {
-      /** Processing failed */
-      setError(result.error);
-    } else {
-      /** Success! Save all the extracted data */
-      setRoutes(result.routes);
-      setAvailableCols(result.availableCols);
-      setMissingCols(result.missingCols);
-      setIsSingleRoute(!!result.isSingleRoute);
-
+    try {
       /**
-       * Persist the manifest locally (RF-46) so it can be reopened without
-       * re-uploading. Never blocks viewing: a duplicate (RN-23) or a storage
-       * failure is only surfaced as a notice via `manifestSave`.
+       * ===== PROCESS THE FILE =====
+       * Call the utility function that does the heavy lifting
+       * This is async because reading files takes time
        */
-      const saveRes = await saveManifest(file, result);
-      setManifestSave(saveRes);
-      if (saveRes.status === "saved" || saveRes.status === "duplicate") {
-        setManifestMeta(saveRes.meta);
-      }
-    }
+      console.log(`[useRouteUploader] processAndSave: chamando processExcelFile...`);
+      const result = await processExcelFile(file);
+      console.log(`[useRouteUploader] processAndSave: processExcelFile concluído`, {
+        error: result.error,
+        routesCount: Object.keys(result.routes ?? {}).length,
+        isSingleRoute: result.isSingleRoute,
+      });
 
-    /** Turn off loading spinner */
-    setLoading(false);
-    /** Empty dependency array = function never changes */
+      /** ===== HANDLE RESULT ===== */
+      if (result.error) {
+        /** Processing failed */
+        setError(result.error);
+      } else {
+        /** Success! Save all the extracted data */
+        setRoutes(result.routes);
+        setAvailableCols(result.availableCols);
+        setMissingCols(result.missingCols);
+        setIsSingleRoute(!!result.isSingleRoute);
+
+        /**
+         * Persist the manifest locally (RF-46) so it can be reopened without
+         * re-uploading. Never blocks viewing: a duplicate (RN-23) or a storage
+         * failure is only surfaced as a notice via `manifestSave`.
+         */
+        console.log(`[useRouteUploader] processAndSave: chamando saveManifest...`);
+        const saveRes = await saveManifest(file, result);
+        console.log(`[useRouteUploader] processAndSave: saveManifest retornou`, saveRes.status);
+        setManifestSave(saveRes);
+        if (saveRes.status === "saved" || saveRes.status === "duplicate") {
+          setManifestMeta(saveRes.meta);
+        }
+      }
+    } catch (err) {
+      console.error(`[useRouteUploader] erro inesperado em processAndSave:`, err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      /** Turn off loading spinner */
+      console.log(`[useRouteUploader] processAndSave finalizado, desligando loading spinner (setLoading(false))`);
+      setLoading(false);
+    }
   }, []);
 
   /**
@@ -176,15 +202,19 @@ export function useRouteUploader(): RouteUploaderReturn {
    * (RN-23) recognises it and reopens the saved manifest.
    */
   const loadExampleManifest = useCallback(async () => {
+    console.log(`[useRouteUploader] loadExampleManifest disparado, buscando: ${EXAMPLE_MANIFEST.PATH}`);
     setLoading(true);
     setError(null);
 
     try {
       const response = await fetch(EXAMPLE_MANIFEST.PATH);
+      console.log(`[useRouteUploader] loadExampleManifest: resposta HTTP ${response.status}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const blob = await response.blob();
+      console.log(`[useRouteUploader] loadExampleManifest: blob obtido (${blob.size} bytes). Chamando processAndSave...`);
       await processAndSave(new File([blob], EXAMPLE_MANIFEST.FILE_NAME, { type: blob.type }));
-    } catch {
+    } catch (err) {
+      console.error(`[useRouteUploader] erro em loadExampleManifest:`, err);
       // Offline on a first visit (service worker has not cached it yet) or the
       // asset is missing from the build. Say so instead of failing silently.
       setError(UI_LABELS.ERRORS.EXAMPLE_UNAVAILABLE);
@@ -220,8 +250,11 @@ export function useRouteUploader(): RouteUploaderReturn {
       return false;
     }
 
-    const { id: mId, fileName, fileType, fileSize, kind, routes: rMetas, importedAt, availableCols, missingCols } = record;
-    setManifestMeta({ id: mId, fileName, fileType, fileSize, kind, routes: rMetas, importedAt, availableCols, missingCols });
+    // Opening any route of the manifest updates its usage timestamp (TASK-RF-046 / RF-60).
+    void touchManifestUsage(id);
+
+    const { id: mId, fileName, fileType, fileSize, kind, routes: rMetas, importedAt, lastUsedAt, availableCols, missingCols } = record;
+    setManifestMeta({ id: mId, fileName, fileType, fileSize, kind, routes: rMetas, importedAt, lastUsedAt, availableCols, missingCols });
 
     // Fast path: rows already grouped (REF-018).
     if (routeName) {

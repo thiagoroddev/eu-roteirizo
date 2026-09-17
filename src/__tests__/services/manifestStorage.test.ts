@@ -2,7 +2,7 @@ import "fake-indexeddb/auto";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import * as XLSX from "xlsx";
 
-import { saveManifest, listManifests, getManifest, getRouteRows, backfillRouteRows, deleteManifest, clearManifests, saveStandaloneManifest } from "../../services/manifestStorage";
+import { saveManifest, listManifests, getManifest, getRouteRows, backfillRouteRows, deleteManifest, clearManifests, saveStandaloneManifest, touchManifestUsage } from "../../services/manifestStorage";
 import { processExcelFile } from "../../utils/excelProcessor";
 import { sha256Hex } from "../../utils/hash";
 import { COLUMN_NAMES } from "../../constants";
@@ -214,5 +214,85 @@ describe("manifestStorage", () => {
 
     const storedRows = await getRouteRows("man_std_1", "Rota Standalone");
     expect(storedRows).toEqual(rows);
+  });
+
+  // ==========================================================================
+  // Ordenação por uso mais recente (TASK-RF-046 / RF-60)
+  // ==========================================================================
+
+  it("salva um romaneio e registra lastUsedAt no topo", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-17T10:00:00Z"));
+    const first = await saveManifest(fakeFile("romaneio-1"), processedFixture());
+    expect(first.status).toBe("saved");
+    if (first.status !== "saved") return;
+    expect(first.meta.lastUsedAt).toBe("2026-09-17T10:00:00.000Z");
+
+    vi.setSystemTime(new Date("2026-09-17T11:00:00Z"));
+    const second = await saveManifest(fakeFile("romaneio-2"), processedFixture());
+    expect(second.status).toBe("saved");
+    if (second.status !== "saved") return;
+    expect(second.meta.lastUsedAt).toBe("2026-09-17T11:00:00.000Z");
+
+    const metas = await listManifests();
+    expect(metas).toHaveLength(2);
+    expect(metas[0].id).toBe(second.meta.id);
+    expect(metas[1].id).toBe(first.meta.id);
+  });
+
+  it("reimportar duplicata atualiza lastUsedAt e reposiciona no topo", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-17T08:00:00Z"));
+    const first = await saveManifest(fakeFile("conteudo-duplicado", "arquivo-a.xlsx"), processedFixture());
+    expect(first.status).toBe("saved");
+    if (first.status !== "saved") return;
+
+    vi.setSystemTime(new Date("2026-09-17T09:00:00Z"));
+    const other = await saveManifest(fakeFile("outro-conteudo", "arquivo-b.xlsx"), processedFixture());
+    expect(other.status).toBe("saved");
+    if (other.status !== "saved") return;
+
+    // Before reimport: other (09:00) is at top, first (08:00) is second.
+    let metas = await listManifests();
+    expect(metas[0].id).toBe(other.meta.id);
+    expect(metas[1].id).toBe(first.meta.id);
+
+    // Reimport first at 10:00
+    vi.setSystemTime(new Date("2026-09-17T10:00:00Z"));
+    const reimported = await saveManifest(fakeFile("conteudo-duplicado", "arquivo-a-renomeado.xlsx"), processedFixture());
+    expect(reimported.status).toBe("duplicate");
+    if (reimported.status !== "duplicate") return;
+    expect(reimported.meta.id).toBe(first.meta.id);
+    expect(reimported.meta.lastUsedAt).toBe("2026-09-17T10:00:00.000Z");
+
+    // Now first must be at top!
+    metas = await listManifests();
+    expect(metas[0].id).toBe(first.meta.id);
+    expect(metas[1].id).toBe(other.meta.id);
+  });
+
+  it("lista ordenando por lastUsedAt desc com fallback para importedAt", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-17T01:00:00Z"));
+    const m1 = await saveManifest(fakeFile("m1"), processedFixture());
+    vi.setSystemTime(new Date("2026-09-17T02:00:00Z"));
+    const m2 = await saveManifest(fakeFile("m2"), processedFixture());
+    vi.setSystemTime(new Date("2026-09-17T03:00:00Z"));
+    const m3 = await saveManifest(fakeFile("m3"), processedFixture());
+
+    if (m1.status !== "saved" || m2.status !== "saved" || m3.status !== "saved") throw new Error("setup failed");
+
+    // Touch m1 usage at 04:00
+    await touchManifestUsage(m1.meta.id, "2026-09-17T04:00:00.000Z");
+
+    let metas = await listManifests();
+    // Order should be m1 (04:00), m3 (03:00), m2 (02:00)
+    expect(metas.map((m) => m.id)).toEqual([m1.meta.id, m3.meta.id, m2.meta.id]);
+
+    // Touch m2 usage at 05:00
+    await touchManifestUsage(m2.meta.id, "2026-09-17T05:00:00.000Z");
+    metas = await listManifests();
+    // Order should be m2 (05:00), m1 (04:00), m3 (03:00)
+    expect(metas.map((m) => m.id)).toEqual([m2.meta.id, m1.meta.id, m3.meta.id]);
   });
 });

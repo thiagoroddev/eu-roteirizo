@@ -1,0 +1,198 @@
+{
+  "id": "TASK-RF-046",
+  "tipo": "RF",
+  "titulo": "Ordenar romaneios salvos pelo uso mais recente (importar, abrir rota no Sumario ou mapa, editar roteiro)",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "RF-60",
+  "requisitos": [
+    "RF-60"
+  ],
+  "sem_requisito_motivo": null,
+  "criada_em": "14/09/26 19:56",
+  "iniciada_em": "17/09/26 06:02",
+  "commit_base": "d81bb53d2b18c5b848d4ffcad3c19d940702a01a",
+  "concluida_em": "17/09/26 08:04",
+  "plano": {
+    "muda": [
+      "src/types/manifest.ts - adiciona campo lastUsedAt opcional em ManifestMeta",
+      "src/services/manifestStorage.ts - adiciona store manifestUsage, touchManifestUsage, e atualiza listManifests, saveManifest, saveStandaloneManifest, deleteManifest e clearManifests",
+      "src/hooks/useRouteUploader.ts - aciona touchManifestUsage em loadManifest",
+      "src/services/routeStorage.ts - aciona touchManifestUsage em saveRoteiro",
+      "src/__tests__/services/manifestStorage.test.ts - testes de lastUsedAt, reimportacao duplicada, fallback para importedAt e ordenacao",
+      "src/__tests__/hooks/useRouteUploader.test.ts - teste de atualizacao de uso em loadManifest",
+      "src/__tests__/services/routeStorage.test.ts - teste de atualizacao de uso do romaneio em saveRoteiro",
+      "src/pages/HomePage.tsx - tratamento de importRouteFile com logs e finally",
+      "src/pages/RoutesPage.tsx - logs de carregamento e protecao no useEffect"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "Importar um romaneio grava seu timestamp de uso (lastUsedAt) e o posiciona no topo da lista ordenada",
+        "teste": "src/__tests__/services/manifestStorage.test.ts > salva um romaneio e registra lastUsedAt no topo"
+      },
+      {
+        "texto": "Reimportar o mesmo arquivo atualiza seu timestamp de uso (lastUsedAt) e o coloca no topo da lista, preservando id e dados originais",
+        "teste": "src/__tests__/services/manifestStorage.test.ts > reimportar duplicata atualiza lastUsedAt e reposiciona no topo"
+      },
+      {
+        "texto": "Abrir qualquer rota de um romaneio via loadManifest atualiza seu timestamp de uso no manifesto",
+        "teste": "src/__tests__/hooks/useRouteUploader.test.ts > loadManifest atualiza o timestamp de uso do romaneio"
+      },
+      {
+        "texto": "Editar e salvar o roteiro de uma rota via saveRoteiro atualiza o timestamp de uso do romaneio pai",
+        "teste": "src/__tests__/services/routeStorage.test.ts > saveRoteiro atualiza o timestamp de uso do romaneio pai"
+      },
+      {
+        "texto": "listManifests ordena do uso mais recente para o mais antigo; romaneios sem registro de uso mantem fallback ordenado por importedAt",
+        "teste": "src/__tests__/services/manifestStorage.test.ts > lista ordenando por lastUsedAt desc com fallback para importedAt"
+      }
+    ],
+    "pedido_original": "opcao B. (progresso logico orientado a dados: TASK-RF-046 -> TASK-RF-047 -> TASK-RF-048)",
+    "solucao_sugerida": "lastUsedAt por romaneio (store propria no IndexedDB de romaneios); fallback importedAt",
+    "alternativas_profissionais": [
+      {
+        "pratica": "Armazenar lastUsedAt diretamente dentro do objeto ManifestRecord na store manifests",
+        "pegaria_o_caso": "Sim, mas obrigaria a ler e regravar o ArrayBuffer de 10MB do arquivo bruto a cada toque/edicao, gerando alto I/O e degradando a performance no dispositivo movel.",
+        "custo": "Baixo esforco inicial, mas alto custo de I/O e latencia perceptivel."
+      },
+      {
+        "pratica": "Store dedicada leve manifestUsage (id -> lastUsedAt) no IndexedDB eu-roteirizo-manifests",
+        "pegaria_o_caso": "Sim, permite escrita O(1) de uma string curta sem encostar nos bytes do arquivo, preservando performance e isolamento de esquema.",
+        "custo": "Minimo: bump DB_VERSION para 3, store com inline key id e lastUsedAt."
+      }
+    ],
+    "problema_canonico": "LRU cache / Recency-based sorting / Access timestamp tracking",
+    "discordancia": {
+      "o_que_faria_diferente": "Nada a objetar quanto ao particionamento de store; e a solucao mais performatica para IndexedDB com arquivos binarios.",
+      "o_que_preocupa": "Garantir que touchManifestUsage seja resiliente (nao lance excecao e nao quebre a experiencia de uso caso o storage falhe temporariamente).",
+      "o_que_existe_pronto_80_porcento": "idb com objectStore nativo; nao ha necessidade de bibliotecas externas para rastreamento de timestamp local."
+    },
+    "impacto": "manifestStorage, routeStorage, useRouteUploader, listagem de romaneios salvos",
+    "riscos": [
+      "Possivel regressao em testes unitarios que mockam storage ou esperavam ordem exclusivamente por importedAt."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram RF-60 (ordenacao por uso recente); propomos adicionar store leve manifestUsage com metodo touchManifestUsage e atualizacao em saveManifest, loadManifest e saveRoteiro. A store propria e necessaria porque reescrever ArrayBuffer de 10MB a cada toque degradaria a UX no celular.",
+    "restricoes_reavaliadas": [],
+    "meio_de_validacao": {
+      "tipo": "testes_automatizados",
+      "porque_nao_automatizado": null,
+      "roteiro": null,
+      "artefato": null,
+      "casos": null
+    },
+    "composicao": null
+  },
+  "gates": {
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "17/09/26 07:58",
+      "commit_execucao": "d81bb53d2b18c5b848d4ffcad3c19d940702a01a",
+      "arvore_hash": "346595d06a59136e9a24118b2d463da76ac63b07",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-RF-046-tipos-1789642713393.log",
+      "chave_cache": "79f977d721503d75d905640e9fe7d50b9ca505c99fda13785544051b990a0252",
+      "digest_insumos": "346595d06a59136e9a24118b2d463da76ac63b07",
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "17/09/26 07:58",
+      "commit_execucao": "d81bb53d2b18c5b848d4ffcad3c19d940702a01a",
+      "arvore_hash": "346595d06a59136e9a24118b2d463da76ac63b07",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-RF-046-lint-1789642729513.log",
+      "chave_cache": "388b15fccd078fcbade289795bd33d430c2db640b4f2cd66333813a86d47f73f",
+      "digest_insumos": "346595d06a59136e9a24118b2d463da76ac63b07",
+      "vermelho_dispensado": null
+    },
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n... [3130 linhas omitidas] ...\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)",
+      "executado_em": "17/09/26 08:00",
+      "commit_execucao": "d81bb53d2b18c5b848d4ffcad3c19d940702a01a",
+      "arvore_hash": "346595d06a59136e9a24118b2d463da76ac63b07",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-RF-046-testes-1789642833745.log",
+      "chave_cache": "98541b7a2ea3e3d2955491aeed4adbc500de8ee3b1d85d6f9a86d87ae8f46b6a",
+      "digest_insumos": "346595d06a59136e9a24118b2d463da76ac63b07",
+      "vermelho_dispensado": {
+        "dispensado_em": "17/09/26 08:03",
+        "motivo": "cobertura por mutacao comprovada nos testes de ordenacao e persistencia de lastUsedAt"
+      }
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n... [22 linhas omitidas] ...\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "17/09/26 08:00",
+      "commit_execucao": "d81bb53d2b18c5b848d4ffcad3c19d940702a01a",
+      "arvore_hash": "346595d06a59136e9a24118b2d463da76ac63b07",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-RF-046-build-1789642856824.log",
+      "chave_cache": "2ee96130382c9ce8f0f7385a1f0dd2a9f9fad019733d21ec157eb37457b76a1d",
+      "digest_insumos": "346595d06a59136e9a24118b2d463da76ac63b07",
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "APROVADO",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": "Testado no navegador importando romaneio e abrindo rota no Sumario; a lista de romaneios salvos reordena corretamente priorizando o uso mais recente e mantendo os anteriores.",
+      "executado_em": "17/09/26 08:01",
+      "commit_execucao": "d81bb53d2b18c5b848d4ffcad3c19d940702a01a",
+      "arvore_hash": "346595d06a59136e9a24118b2d463da76ac63b07",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "aprovado",
+  "validado_em": "17/09/26 08:01",
+  "validacao_motivo": "Testado no navegador importando romaneio e abrindo rota no Sumario; a lista de romaneios salvos reordena corretamente priorizando o uso mais recente e mantendo os anteriores.",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-17--08h04--TASK-RF-046--estudo-humano.md"
+}

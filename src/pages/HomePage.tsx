@@ -29,26 +29,32 @@ function HomePage() {
 
   const handleImportRouteFile = useCallback(
     async (file: File) => {
+      console.log(`[HomePage] handleImportRouteFile iniciado para: '${file.name}'`);
       setImportLoading(true);
       setImportError(null);
       try {
         const text = await readFileAsText(file);
         const parseResult = parseAndValidateRouteJson(text);
         if (!parseResult.ok) {
+          console.warn(`[HomePage] parseAndValidateRouteJson falhou:`, parseResult.error);
           setImportError(parseResult.error);
           setImportLoading(false);
           return;
         }
         const bytes = await file.arrayBuffer();
+        console.log(`[HomePage] handleImportRouteFile: chamando importRoutePayload...`);
         const importResult = await importRoutePayload(parseResult.payload, bytes);
+        console.log(`[HomePage] handleImportRouteFile: importRoutePayload retornou`, importResult);
         if (!importResult.ok) {
           setImportError(importResult.error);
           setImportLoading(false);
           return;
         }
         navigate(`/mapa?romaneio=${encodeURIComponent(parseResult.payload.manifestId)}&rota=${encodeURIComponent(parseResult.payload.routeName)}&modo=roteiro`);
-      } catch {
+      } catch (err) {
+        console.error(`[HomePage] erro em handleImportRouteFile:`, err);
         setImportError(UI_LABELS.FILE_UPLOADER.IMPORT_JSON_ERROR);
+      } finally {
         setImportLoading(false);
       }
     },

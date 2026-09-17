@@ -31,26 +31,101 @@ import { COLUMN_NAMES } from "../constants";
 import { sha256Hex } from "../utils/hash";
 
 const DB_NAME = "eu-roteirizo-manifests";
-/** v2 (TASK-REF-018): added the `routeRows` store. Bump again with an upgrade path if a shape changes. */
-const DB_VERSION = 2;
+/** v3 (TASK-RF-046 / RF-60): added the `manifestUsage` store. Bump again with an upgrade path if a shape changes. */
+const DB_VERSION = 3;
 const STORE = "manifests";
 /** Rows grouped by route, keyed `[manifestId, routeName]` (TASK-REF-018). */
 const ROUTE_ROWS_STORE = "routeRows";
+/** Last usage timestamp per manifest, keyed `manifestId` (TASK-RF-046 / RF-60). */
+const MANIFEST_USAGE_STORE = "manifestUsage";
+
+export interface ManifestUsageRecord {
+  id: string;
+  lastUsedAt: string;
+}
 
 /** Lazily-opened DB connection, cached for the module's lifetime. */
+let activeDb: IDBPDatabase | null = null;
 let dbPromise: Promise<IDBPDatabase> | null = null;
+
+export const closeDb = (): void => {
+  if (activeDb) {
+    try {
+      activeDb.close();
+    } catch {
+      // ignore
+    }
+    activeDb = null;
+  }
+  dbPromise = null;
+};
+
+// Vite HMR: ao recarregar o módulo em desenvolvimento, fecha a conexão antiga para não travar o upgrade.
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    closeDb();
+  });
+}
 
 const getDb = (): Promise<IDBPDatabase> => {
   if (!dbPromise) {
-    // upgrade runs for a fresh install AND for the v1→v2 bump; both paths only
-    // ADD what's missing, so no existing manifest record is touched.
-    dbPromise = openDB(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: "id" });
+    console.log(`[manifestStorage] getDb: solicitando abertura do banco '${DB_NAME}' v${DB_VERSION}...`);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        const msg = `[manifestStorage] TIMEOUT (4s): openDB('${DB_NAME}', v${DB_VERSION}) não concluiu. Provável conexão bloqueada por outra aba ou transação pendente.`;
+        console.error(msg);
+        reject(new Error(msg));
+      }, 4000);
+    });
+
+    const openPromise = openDB(DB_NAME, DB_VERSION, {
+      upgrade(db, oldVersion, newVersion) {
+        console.log(`[manifestStorage] upgrade disparado: v${oldVersion} -> v${newVersion}`);
+        if (!db.objectStoreNames.contains(STORE)) {
+          console.log(`[manifestStorage] criando store '${STORE}'`);
+          db.createObjectStore(STORE, { keyPath: "id" });
+        }
         // Out-of-line keys: the value is a RowData[], so the key `[id, routeName]` is passed explicitly.
-        if (!db.objectStoreNames.contains(ROUTE_ROWS_STORE)) db.createObjectStore(ROUTE_ROWS_STORE);
+        if (!db.objectStoreNames.contains(ROUTE_ROWS_STORE)) {
+          console.log(`[manifestStorage] criando store '${ROUTE_ROWS_STORE}'`);
+          db.createObjectStore(ROUTE_ROWS_STORE);
+        }
+        if (!db.objectStoreNames.contains(MANIFEST_USAGE_STORE)) {
+          console.log(`[manifestStorage] criando store '${MANIFEST_USAGE_STORE}'`);
+          db.createObjectStore(MANIFEST_USAGE_STORE, { keyPath: "id" });
+        }
+        console.log(`[manifestStorage] upgrade de stores finalizado`);
+      },
+      blocked(currentVersion, blockedVersion) {
+        console.error(
+          `[manifestStorage] BLOQUEADO: Abertura do IndexedDB '${DB_NAME}' bloqueada (v${currentVersion} -> v${blockedVersion}). Se houver outra aba aberta do app, feche-a para que a atualização seja concluída.`
+        );
+      },
+      blocking(_currentVersion, blockedVersion) {
+        console.warn(`[manifestStorage] BLOCKING: Conexão '${DB_NAME}' recebeu solicitação de upgrade para v${blockedVersion}. Fechando conexão atual.`);
+        closeDb();
+      },
+      terminated() {
+        console.warn(`[manifestStorage] Conexão '${DB_NAME}' terminada.`);
+        activeDb = null;
+        dbPromise = null;
       },
     });
+
+    dbPromise = Promise.race([openPromise, timeoutPromise])
+      .then((db) => {
+        if (timer) clearTimeout(timer);
+        console.log(`[manifestStorage] Conectado a '${DB_NAME}' v${db.version}! Stores existentes:`, Array.from(db.objectStoreNames));
+        activeDb = db;
+        return db;
+      })
+      .catch((err) => {
+        if (timer) clearTimeout(timer);
+        console.error(`[manifestStorage] Erro ao conectar no IndexedDB:`, err);
+        closeDb();
+        throw err;
+      });
   }
   return dbPromise;
 };
@@ -85,9 +160,58 @@ export const findRouteAt = (rows: RowData[]): string | undefined => {
   return undefined;
 };
 
-const stripBytes = (record: ManifestRecord): ManifestMeta => {
+/**
+ * Updates the last-used timestamp of a saved manifest (TASK-RF-046 / RF-60).
+ * Never throws; failure degrades gracefully.
+ */
+export const touchManifestUsage = async (manifestId: string, timestamp?: string): Promise<void> => {
+  console.log(`[manifestStorage] touchManifestUsage iniciado para manifestId='${manifestId}'`);
+  try {
+    const db = await getDb();
+    const lastUsedAt = timestamp ?? new Date().toISOString();
+    await db.put(MANIFEST_USAGE_STORE, { id: manifestId, lastUsedAt });
+    console.log(`[manifestStorage] touchManifestUsage concluído com sucesso: lastUsedAt='${lastUsedAt}'`);
+  } catch (err) {
+    console.warn(`[manifestStorage] touchManifestUsage falhou (ignorado silenciosamente):`, err);
+    // best-effort: usage tracking should not break calling workflows
+  }
+};
+
+/** Loads the map of manifestId -> lastUsedAt for all manifests. Degrades to empty map. */
+export const getManifestUsageMap = async (): Promise<Map<string, string>> => {
+  const map = new Map<string, string>();
+  try {
+    console.log(`[manifestStorage] getManifestUsageMap iniciado...`);
+    const db = await getDb();
+    const records = (await db.getAll(MANIFEST_USAGE_STORE)) as ManifestUsageRecord[];
+    console.log(`[manifestStorage] getManifestUsageMap: ${records.length} registros encontrados em '${MANIFEST_USAGE_STORE}'`);
+    for (const record of records) {
+      if (record.id && record.lastUsedAt) {
+        map.set(record.id, record.lastUsedAt);
+      }
+    }
+  } catch (err) {
+    console.warn(`[manifestStorage] getManifestUsageMap falhou (fallback para mapa vazio):`, err);
+    // best-effort
+  }
+  return map;
+};
+
+const stripBytes = (record: ManifestRecord, lastUsedAt?: string): ManifestMeta => {
   const { id, fileName, fileType, fileSize, kind, routes, importedAt, availableCols, missingCols } = record;
-  return { id, fileName, fileType, fileSize, kind, routes, importedAt, availableCols, missingCols };
+  const effectiveLastUsedAt = lastUsedAt ?? record.lastUsedAt;
+  return {
+    id,
+    fileName,
+    fileType,
+    fileSize,
+    kind,
+    routes,
+    importedAt,
+    ...(effectiveLastUsedAt ? { lastUsedAt: effectiveLastUsedAt } : {}),
+    availableCols,
+    missingCols,
+  };
 };
 
 /**
@@ -98,17 +222,34 @@ const stripBytes = (record: ManifestRecord): ManifestMeta => {
  * @returns A discriminated result; never throws.
  */
 export const saveManifest = async (file: File, processed: ProcessedResult): Promise<SaveManifestResult> => {
-  if (processed.error) return { status: "invalid", reason: `processed result carries an error: ${processed.error}` };
-  if (!processed.routes || Object.keys(processed.routes).length === 0) return { status: "invalid", reason: "processed result has no routes to save" };
+  console.log(`[manifestStorage] saveManifest iniciado para arquivo '${file.name}', rotas:`, Object.keys(processed.routes ?? {}).length);
+  if (processed.error) {
+    console.warn(`[manifestStorage] saveManifest rejeitado: processed.error = ${processed.error}`);
+    return { status: "invalid", reason: `processed result carries an error: ${processed.error}` };
+  }
+  if (!processed.routes || Object.keys(processed.routes).length === 0) {
+    console.warn(`[manifestStorage] saveManifest rejeitado: processed sem rotas`);
+    return { status: "invalid", reason: "processed result has no routes to save" };
+  }
 
   try {
+    console.log(`[manifestStorage] saveManifest: gerando hash SHA-256 dos bytes...`);
     const bytes = await file.arrayBuffer();
     const id = await sha256Hex(bytes);
+    console.log(`[manifestStorage] saveManifest: hash = ${id}. Obtendo banco...`);
 
     const db = await getDb();
+    console.log(`[manifestStorage] saveManifest: banco obtido. Consultando se '${id}' já existe...`);
     const existing = (await db.get(STORE, id)) as ManifestRecord | undefined;
-    if (existing) return { status: "duplicate", meta: stripBytes(existing) };
+    const now = new Date().toISOString();
+    if (existing) {
+      console.log(`[manifestStorage] saveManifest: romaneio '${id}' já existe (duplicata). Atualizando lastUsedAt...`);
+      // Reimporting duplicate counts as usage (RF-60 criterion 4).
+      await touchManifestUsage(id, now);
+      return { status: "duplicate", meta: stripBytes(existing, now) };
+    }
 
+    console.log(`[manifestStorage] saveManifest: novo romaneio. Preparando gravação de ${Object.keys(processed.routes).length} rotas...`);
     const routes: ManifestRouteMeta[] = Object.entries(processed.routes).map(([name, rows]) => {
       const at = findRouteAt(rows);
       return { name, rowCount: rows.length, ...(at !== undefined ? { at } : {}) };
@@ -121,18 +262,23 @@ export const saveManifest = async (file: File, processed: ProcessedResult): Prom
       fileSize: bytes.byteLength,
       kind: processed.isSingleRoute ? "single" : "multi",
       routes,
-      importedAt: new Date().toISOString(),
+      importedAt: now,
+      lastUsedAt: now,
       // Persisted so a focus screen skips reprocessing (TASK-REF-018).
       availableCols: processed.availableCols ?? undefined,
       missingCols: processed.missingCols,
       bytes,
     };
     await db.put(STORE, record);
+    console.log(`[manifestStorage] saveManifest: registro principal gravado em '${STORE}'. Gravando linhas das rotas...`);
     // Grouped rows, so reopening reads one route instead of reparsing (TASK-REF-018).
     await writeRouteRows(db, id, processed.routes);
-    if (import.meta.env.DEV) console.info(`manifestStorage: romaneio salvo — rotas=${routes.length}`);
-    return { status: "saved", meta: stripBytes(record) };
+    console.log(`[manifestStorage] saveManifest: linhas gravadas em '${ROUTE_ROWS_STORE}'. Gravando usage...`);
+    await touchManifestUsage(id, now);
+    console.info(`[manifestStorage] romaneio salvo com sucesso — rotas=${routes.length}, id=${id}`);
+    return { status: "saved", meta: stripBytes(record, now) };
   } catch (err) {
+    console.error(`[manifestStorage] saveManifest falhou com erro:`, err);
     return { status: "error", reason: err instanceof Error ? err.message : String(err) };
   }
 };
@@ -180,15 +326,27 @@ export const backfillRouteRows = async (manifestId: string, processed: Processed
 };
 
 /**
- * Lists saved manifests (metadata only, newest first). Never throws — a
- * storage failure degrades to an empty list.
+ * Lists saved manifests (metadata only, newest usage first, fallback importedAt).
+ * Never throws — a storage failure degrades to an empty list.
  */
 export const listManifests = async (): Promise<ManifestMeta[]> => {
+  console.log(`[manifestStorage] listManifests iniciado...`);
   try {
     const db = await getDb();
-    const records = (await db.getAll(STORE)) as ManifestRecord[];
-    return records.map(stripBytes).sort((a, b) => b.importedAt.localeCompare(a.importedAt) || a.id.localeCompare(b.id));
-  } catch {
+    console.log(`[manifestStorage] listManifests: banco obtido, buscando registros em '${STORE}' e usageMap...`);
+    const [records, usageMap] = await Promise.all([db.getAll(STORE) as Promise<ManifestRecord[]>, getManifestUsageMap()]);
+    console.log(`[manifestStorage] listManifests: ${records.length} romaneios no store, ${usageMap.size} timestamps de uso`);
+    const result = records
+      .map((r) => stripBytes(r, usageMap.get(r.id)))
+      .sort((a, b) => {
+        const timeA = a.lastUsedAt ?? a.importedAt;
+        const timeB = b.lastUsedAt ?? b.importedAt;
+        return timeB.localeCompare(timeA) || a.id.localeCompare(b.id);
+      });
+    console.log(`[manifestStorage] listManifests: retornando ${result.length} manifestos ordenados por uso`);
+    return result;
+  } catch (err) {
+    console.error(`[manifestStorage] listManifests falhou com erro:`, err);
     return [];
   }
 };
@@ -200,13 +358,18 @@ export const listManifests = async (): Promise<ManifestMeta[]> => {
 export const getManifest = async (id: string): Promise<ManifestRecord | null> => {
   try {
     const db = await getDb();
-    return ((await db.get(STORE, id)) as ManifestRecord | undefined) ?? null;
+    const record = (await db.get(STORE, id)) as ManifestRecord | undefined;
+    if (!record) return null;
+    const usage = (await db.get(MANIFEST_USAGE_STORE, id)) as ManifestUsageRecord | undefined;
+    return {
+      ...record,
+      ...(usage?.lastUsedAt ? { lastUsedAt: usage.lastUsedAt } : {}),
+    };
   } catch {
     return null;
   }
 };
 
-/**
 /** Derives available column names present in the provided rows. */
 export const deriveAvailableColsFromRows = (rows: RowData[]): string[] => {
   const set = new Set<string>();
@@ -231,6 +394,7 @@ export const saveStandaloneManifest = async (manifestId: string, routeName: stri
     const effectiveAt = at ?? findRouteAt(rows);
     const effectiveCols = availableCols && availableCols.length > 0 ? availableCols : deriveAvailableColsFromRows(rows);
     const existing = (await db.get(STORE, manifestId)) as ManifestRecord | undefined;
+    const now = new Date().toISOString();
 
     const record: ManifestRecord = {
       id: manifestId,
@@ -239,7 +403,8 @@ export const saveStandaloneManifest = async (manifestId: string, routeName: stri
       fileSize: fileBytes ? fileBytes.byteLength : (existing?.fileSize ?? 0),
       kind: "single",
       routes: [{ name: routeName, rowCount: rows.length, ...(effectiveAt !== undefined ? { at: effectiveAt } : {}) }],
-      importedAt: existing?.importedAt ?? new Date().toISOString(),
+      importedAt: existing?.importedAt ?? now,
+      lastUsedAt: now,
       availableCols: effectiveCols,
       missingCols: [],
       bytes: fileBytes ?? existing?.bytes ?? new ArrayBuffer(0),
@@ -247,6 +412,7 @@ export const saveStandaloneManifest = async (manifestId: string, routeName: stri
 
     await db.put(STORE, record);
     await writeRouteRows(db, manifestId, { [routeName]: rows });
+    await touchManifestUsage(manifestId, now);
     return true;
   } catch {
     return false;
@@ -254,27 +420,29 @@ export const saveStandaloneManifest = async (manifestId: string, routeName: stri
 };
 
 /**
- * Deletes one manifest AND its grouped rows (TASK-REF-018 — no orphaned rows).
- * Best-effort; the list UI re-reads afterwards. Never throws. The roteiro
- * cascade lives in the page (RoutesPage → deleteManifestRoteiros), a separate DB.
+ * Deletes one manifest AND its grouped rows (TASK-REF-018 — no orphaned rows)
+ * and its usage timestamp (TASK-RF-046). Best-effort; the list UI re-reads afterwards.
+ * Never throws. The roteiro cascade lives in the page (RoutesPage → deleteManifestRoteiros), a separate DB.
  */
 export const deleteManifest = async (id: string): Promise<void> => {
   try {
     const db = await getDb();
     await db.delete(STORE, id);
     // All `[id, *]` rows — same range idiom as routeStorage.deleteManifestRoteiros.
-    await db.delete(ROUTE_ROWS_STORE, IDBKeyRange.bound([id, ""], [id, "￿"]));
+    await db.delete(ROUTE_ROWS_STORE, IDBKeyRange.bound([id, ""], [id, "\uffff"]));
+    await db.delete(MANIFEST_USAGE_STORE, id);
   } catch {
     // best-effort; the list reflects whatever actually happened
   }
 };
 
-/** Clears all saved manifests AND their grouped rows (maintenance / tests). Never throws. */
+/** Clears all saved manifests AND their grouped rows and usage records (maintenance / tests). Never throws. */
 export const clearManifests = async (): Promise<void> => {
   try {
     const db = await getDb();
     await db.clear(STORE);
     await db.clear(ROUTE_ROWS_STORE);
+    await db.clear(MANIFEST_USAGE_STORE);
   } catch {
     // ignore
   }

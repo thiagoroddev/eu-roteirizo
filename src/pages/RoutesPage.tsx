@@ -26,11 +26,18 @@ function RoutesPage() {
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([listManifests(), listRoteiroKeys()]).then(([metas, keys]) => {
-      if (cancelled) return;
-      setManifests(metas);
-      setRoteiroKeys(keys);
-    });
+    console.log("[RoutesPage] useEffect: disparando listManifests e listRoteiroKeys...");
+    void Promise.all([listManifests(), listRoteiroKeys()])
+      .then(([metas, keys]) => {
+        if (cancelled) return;
+        console.log(`[RoutesPage] listManifests + listRoteiroKeys concluídos com sucesso: ${metas.length} manifestos, ${keys.size} chaves de roteiro`);
+        setManifests(metas);
+        setRoteiroKeys(keys);
+      })
+      .catch((err) => {
+        console.error("[RoutesPage] Falha ao carregar manifestos ou chaves de roteiro:", err);
+        if (!cancelled) setManifests([]);
+      });
     return () => {
       cancelled = true;
     };

@@ -777,17 +777,19 @@
     "enunciado": "Ordenar a lista de romaneios salvos do uso mais recente para o mais antigo, independente da data de importacao",
     "historia": null,
     "prioridade": "importante",
-    "status": "pendente",
+    "status": "implementado",
     "criterios_aceite": [
       "Importar um romaneio, abrir qualquer rota dele (Sumario ou mapa) ou editar o roteiro de uma rota atualiza o uso do romaneio",
       "O romaneio usado por ultimo aparece primeiro; o segundo e o usado antes dele, e assim por diante",
       "Romaneio nunca usado depois do registro de uso se ordena pela data de importacao",
       "Reimportar o mesmo arquivo conta como uso"
     ],
-    "tarefas": [],
+    "tarefas": [
+      "TASK-RF-046"
+    ],
     "adr": null,
     "criado_em": "14/09/26 19:56",
-    "implementado_em": null,
+    "implementado_em": "17/09/26 08:04",
     "pendente_de_validacao": false
   },
   {
