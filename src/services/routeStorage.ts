@@ -20,6 +20,7 @@
 import { openDB, type IDBPDatabase } from "idb";
 import type { PlannedRoute } from "../types/routing";
 import { normalizeRoutingConfig } from "../types/routing";
+import { touchManifestUsage } from "./manifestStorage";
 
 const DB_NAME = "eu-roteirizo-roteiros";
 /** Bump (with an upgrade path) if the RoteiroRecord shape ever changes. */
@@ -58,6 +59,8 @@ export const saveRoteiro = async (manifestId: string, routeName: string, route: 
     const db = await getDb();
     const record: RoteiroRecord = { manifestId, routeName, route, updatedAt: new Date().toISOString() };
     await db.put(STORE, record);
+    // Editing a route updates the parent manifest's usage timestamp (TASK-RF-046 / RF-60).
+    void touchManifestUsage(manifestId);
     return { status: "saved" };
   } catch (err) {
     return { status: "error", reason: err instanceof Error ? err.message : String(err) };

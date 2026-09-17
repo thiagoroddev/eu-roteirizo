@@ -36,6 +36,8 @@ export interface ManifestMeta {
   routes: ManifestRouteMeta[];
   /** ISO 8601 timestamp of the import. */
   importedAt: string;
+  /** ISO 8601 timestamp of last usage (import, reopen, or roteiro edit) — TASK-RF-046 / RF-60. */
+  lastUsedAt?: string;
   /**
    * Columns found in the file (per-manifest, same for every route). Persisted
    * since TASK-REF-018 so a focus screen can gate the map / pick the vehicle type

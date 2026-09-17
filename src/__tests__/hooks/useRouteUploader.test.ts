@@ -17,7 +17,7 @@ import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vite
 import { renderHook, act } from "@testing-library/react";
 import { useRouteUploader } from "../../hooks/useRouteUploader";
 import { processExcelFile } from "../../utils/excelProcessor";
-import { saveManifest, getManifest, getRouteRows, backfillRouteRows } from "../../services/manifestStorage";
+import { saveManifest, getManifest, getRouteRows, backfillRouteRows, touchManifestUsage } from "../../services/manifestStorage";
 import { EXAMPLE_MANIFEST, FILE_CONFIG, UI_LABELS } from "../../constants";
 import type { RoutesMap } from "../../types";
 import type { ManifestMeta } from "../../types/manifest";
@@ -31,12 +31,13 @@ vi.mock("../../utils/excelProcessor", () => ({
   processExcelFile: vi.fn(),
 }));
 
-// Mock the local persistence (RF-022.2/.3 · REF-018) — the hook only forwards its results
+// Mock the local persistence (RF-022.2/.3 · REF-018 · RF-046) — the hook only forwards its results
 vi.mock("../../services/manifestStorage", () => ({
   saveManifest: vi.fn(),
   getManifest: vi.fn(),
   getRouteRows: vi.fn(),
   backfillRouteRows: vi.fn().mockResolvedValue(undefined),
+  touchManifestUsage: vi.fn().mockResolvedValue(undefined),
 }));
 
 const mockProcessExcel = processExcelFile as Mock;
@@ -44,6 +45,7 @@ const mockSaveManifest = saveManifest as Mock;
 const mockGetManifest = getManifest as Mock;
 const mockGetRouteRows = getRouteRows as Mock;
 const mockBackfillRouteRows = backfillRouteRows as Mock;
+const mockTouchManifestUsage = touchManifestUsage as Mock;
 
 // =============================================================================
 // 2. TEST FIXTURES (Helpers & Data)
@@ -377,6 +379,7 @@ describe("useRouteUploader Hook", () => {
 
     expect(ok).toBe(true);
     expect(mockGetManifest).toHaveBeenCalledWith("hash-abc");
+    expect(mockTouchManifestUsage).toHaveBeenCalledWith("hash-abc");
     // The rebuilt File carries the persisted name/type
     const fileArg = mockProcessExcel.mock.calls[0][0] as File;
     expect(fileArg.name).toBe(mockMeta.fileName);
@@ -455,6 +458,18 @@ describe("useRouteUploader Hook", () => {
     expect(ok).toBe(false);
     expect(result.current.error).toBe(mockErrorResult.error);
     expect(result.current.loading).toBe(false);
+  });
+
+  it("loadManifest atualiza o timestamp de uso do romaneio", async () => {
+    const { result } = renderHook(() => useRouteUploader());
+    mockGetManifest.mockResolvedValue(mockRecord);
+    mockProcessExcel.mockResolvedValue(mockSuccessResult);
+
+    await act(async () => {
+      await result.current.loadManifest("manifest-123");
+    });
+
+    expect(mockTouchManifestUsage).toHaveBeenCalledWith("manifest-123");
   });
 
   it("memoizes handleFileUpload function (Performance)", () => {

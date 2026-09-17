@@ -29,7 +29,6 @@
 | `TASK-RF-032` | Montar o roteiro automatico completo e tratar trechos inviaveis | 3/6 de TASK-RF-029 | RF | importante | M/G | RF-34 |
 | `TASK-RF-033` | Adicionar botao Auto-roteirizar e validar a experiencia no celular | 4/6 de TASK-RF-029 | RF | importante | M/G | RF-34 |
 | `TASK-RF-034` | Integrar o motor em worker e preservar o roteiro editavel | 5/6 de TASK-RF-029 | RF | importante | M/G | RF-34 |
-| `TASK-RF-046` | Ordenar romaneios salvos pelo uso mais recente (importar, abrir rota no Sumario ou mapa, editar roteiro) | - | RF | importante | P/M | RF-60 |
 | `TASK-RF-047` | Guardar o resumo do roteiro salvo (paradas, km, tempo, progresso) quando o app ja calcula os totais com malha | - | RF | importante | M/M | RF-61 |
 | `TASK-RF-048` | Nova tela de romaneios salvos no layout do Stitch: card por tipo de arquivo, rotas em linhas com busca interna, estado e resumo do roteiro, bairro principal e ordem por uso | - | RF | importante | M/G | RF-62 |
 | `TASK-TEST-002` | Testar zoom minimo do mapa para detalhe de rua a pe | - | TEST | importante | P/M | RNF-15 |

@@ -20,4 +20,5 @@
 | `RF-58` | RF | Navegar entre paradas firmadas do Meu roteiro com avancar/retroceder ciclico no cabecalho do painel | importante | TASK-RF-044 |
 | `RF-59` | RF | Exibir a distancia de deslocamento entre paradas consecutivas na lista completa do roteiro | importante | TASK-RF-045 |
 | `RN-23` | RN | A parada padrao do veiculo fica na via em frente ao pino de cada endereco, por projecao geometrica; o planejamento considera possivel parar junto a qualquer endereco e nao procura vaga, permissao nem disponibilidade de estacionamento. | essencial | TASK-BG-016, TASK-BG-022 |
+| `RF-60` | RF | Ordenar a lista de romaneios salvos do uso mais recente para o mais antigo, independente da data de importacao | importante | TASK-RF-046, TASK-RF-048 |
 | `RF-63` | RF | Pesquisar romaneios salvos por nome da rota ou codigo AT, mostrando dentro de cada card apenas as rotas correspondentes (X de N rotas) | importante | TASK-REF-013, TASK-RF-048 |
