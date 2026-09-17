@@ -37,6 +37,7 @@ explícita**. Nunca deduza intenção. **Termina, apresenta, aguarda.**
 - **Autorização vale por ato, nunca por sessão.** Aprovar o plano não autoriza fechar.
 - **Mérito técnico proporcional ao risco no Portão 1:** O plano avalia forma e substância. Exige alternativas profissionais (`alternativas_profissionais`), nome canônico e impacto quando há decisão arquitetural real, novas dependências ou esforço G/XG; dispensa ensaios teatrais de mercado para correções localizadas com causa e solução demonstradas. Solução sugerida pelo humano é hipótese, não especificação; quando o humano pede implementação de plano aprovado/identificado, isso autoriza a execução do escopo indicado sem confirmação redundante.
 - **Validação manual ativa antes do fechamento:** Em tarefas que alteram UI/Telas, Persistência/Esquema, Cálculos/Algoritmos ou Spikes, a IA deve apresentar o roteiro de testes manuais e obter a confirmação do humano antes de solicitar fechamento.
+- **Narrativa de Estudo Humano e Desfecho:** Antes do Portão 2, a narrativa da tarefa deve conter a seção `## Desfecho` (ex.: `## Desfecho e Validação Real`), documentando o comportamento observado nos testes, armadilhas técnicas/de ambiente (concorrência, cache, persistência, UX) e o resultado dos gates. O encerramento no CLI é bloqueado se a seção estiver ausente.
 - O `push` é pedido à parte (ou em conjunto se autorizado explicitamente): é o ato que sai da máquina e alcança outras pessoas.
 - Depois do push, conferir o resultado da integração. Não é portão, e o poder dele é avisar.
 - Vale em qualquer modo de cerimônia, inclusive Light.
@@ -81,7 +82,7 @@ módulo, template, script, tarefa, dependência): *pediram X, proponho Y, e Y é
 porque…*. Declarar não proíbe crescer. Impede o crescimento **silencioso**, que é o único tipo que
 ninguém tem chance de recusar.
 
-Se descobrir algo que exija mudar o plano, volte a PLANEJAR. Nunca execute sem aprovação explícita.
+Se descobrir algo que exija mudar o plano, volte a PLANEJAR. Nunca execute sem aprovação explícita. Ao concluir a execução, a memória de engenharia é registrada na seção `## Desfecho` da narrativa antes da finalização.
 
 ## 5 · Cerimônia
 

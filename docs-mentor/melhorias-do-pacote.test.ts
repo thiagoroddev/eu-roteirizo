@@ -6,7 +6,7 @@
  * correcao antes de ela chegar ao pacote oficial, o teste falha e avisa.
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve, sep } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -861,7 +861,9 @@ describe("Etapa 06: Processo compacto, migracao e piloto", () => {
 
     // Limpa marcador na narrativa compacta
     const camNarrativa = join(projeto, "docs-mentor", "tarefas", "abertas", "TASK-BG-001.md");
-    const narr = readFileSync(camNarrativa, "utf8").replace("PREENCHER: causa identificada e correcao aplicada", "bug corrigido na condicao");
+    const narr = readFileSync(camNarrativa, "utf8")
+      .replace("PREENCHER: causa identificada e correcao aplicada", "bug corrigido na condicao")
+      .replace(/PREENCHER: resultado da validacao[^\n]*/, "validado e gates concluidos");
     writeFileSync(camNarrativa, narr, "utf8");
 
     // Executa gates
@@ -911,7 +913,11 @@ describe("Etapa 06: Processo compacto, migracao e piloto", () => {
     writeFileSync(camTarefa, JSON.stringify(t, null, 2) + "\n", "utf8");
 
     const camNarrativa = join(projeto, "docs-mentor", "tarefas", "abertas", "TASK-CHORE-002.md");
-    writeFileSync(camNarrativa, "# TASK-CHORE-002 · Teste Sensivel\n\n## Resumo da correcao\nCorrecao aplicada.\n\n## Aprendizados ou armadilhas\nNenhum.\n", "utf8");
+    writeFileSync(
+      camNarrativa,
+      "# TASK-CHORE-002 · Teste Sensivel\n\n## Resumo da correcao\nCorrecao aplicada.\n\n## Aprendizados ou armadilhas\nNenhum.\n\n## Desfecho e Validacao Real\nValidado com sucesso nos testes automatizados e gates concluidos.\n",
+      "utf8"
+    );
     mentor(projeto, "task", "gates", "TASK-CHORE-002");
 
     // Tenta dispensar com motivo trivial (< 30 chars) -> deve falhar
@@ -961,5 +967,82 @@ describe("Etapa 06: Processo compacto, migracao e piloto", () => {
     });
     expect(resSemCache.status).toBe(0);
     expect(resSemCache.stdout).not.toContain("[reutilizado]");
+  }, 25_000);
+});
+
+describe("F07: secao de desfecho obrigatoria na narrativa de estudo humano (TASK-CHORE-028)", () => {
+  let projeto = "";
+
+  beforeAll(() => {
+    projeto = mkdtempSync(join(tmpdir(), "mentor-desfecho-estudo-"));
+    mentor(projeto, "init");
+    git(projeto, "init", "-b", "main");
+    git(projeto, "config", "user.name", "Teste Mentor");
+    git(projeto, "config", "user.email", "teste@mentor.invalid");
+    git(projeto, "add", ".");
+    git(projeto, "commit", "-m", "docs: estado inicial");
+
+    mentor(projeto, "task", "nova", "--tipo", "CHORE", "--titulo", "Teste trava desfecho", "--esforco", "P/P", "--origem", "titulo-autossuficiente", "--cerimonia", "Standard", "--perfil", "compacto");
+    mentor(projeto, "task", "puxar", "TASK-CHORE-001");
+    mentor(projeto, "task", "iniciar", "TASK-CHORE-001");
+
+    const camTarefa = join(projeto, "docs-mentor", "tarefas", "abertas", "TASK-CHORE-001.json");
+    const t = JSON.parse(readFileSync(camTarefa, "utf8"));
+    t.plano.muda = ["docs-mentor/tarefas/abertas/TASK-CHORE-001.md - teste"];
+    t.plano.criterios_aceite = [{ texto: "crit 1", teste: 'node -e "process.exit(0)"' }];
+    t.plano.impacto = "nenhum";
+    t.plano.riscos = ["nenhum"];
+    writeFileSync(camTarefa, JSON.stringify(t, null, 2) + "\n", "utf8");
+    mentor(projeto, "task", "gates", "TASK-CHORE-001");
+  });
+
+  afterAll(() => {
+    try {
+      rmSync(projeto, { recursive: true, force: true });
+    } catch {
+      // noop
+    }
+  });
+
+  it("F07-1: recusa finalizar se a narrativa nao contiver a secao Desfecho", () => {
+    const camNarrativa = join(projeto, "docs-mentor", "tarefas", "abertas", "TASK-CHORE-001.md");
+    // Narrativa sem a secao Desfecho
+    writeFileSync(camNarrativa, "# TASK-CHORE-001 · Teste trava desfecho\n\n## Resumo da correcao\nCausa identificada.\n\n## Aprendizados ou armadilhas\nNenhum.\n", "utf8");
+
+    const resSemDesfecho = mentorComStatus(projeto, "task", "finalizar", "TASK-CHORE-001", "--validacao-dispensada");
+    expect(resSemDesfecho.status).not.toBe(0);
+    expect(resSemDesfecho.saida).toContain("A narrativa da tarefa ainda nao contem a secao '## Desfecho'");
+  }, 25_000);
+
+  it("F07-2: recusa finalizar se a secao Desfecho estiver vazia", () => {
+    const camNarrativa = join(projeto, "docs-mentor", "tarefas", "abertas", "TASK-CHORE-001.md");
+    writeFileSync(camNarrativa, "# TASK-CHORE-001 · Teste trava desfecho\n\n## Resumo da correcao\nCausa identificada.\n\n## Aprendizados ou armadilhas\nNenhum.\n\n## Desfecho\n", "utf8");
+
+    const resDesfechoVazio = mentorComStatus(projeto, "task", "finalizar", "TASK-CHORE-001", "--validacao-dispensada");
+    expect(resDesfechoVazio.status).not.toBe(0);
+    expect(resDesfechoVazio.saida).toContain("A secao '## Desfecho' da narrativa esta vazia");
+  }, 25_000);
+
+  it("F07-3: finaliza com sucesso quando Desfecho e Validacao Real esta preenchida e gera arquivo de estudo humano", () => {
+    const camNarrativa = join(projeto, "docs-mentor", "tarefas", "abertas", "TASK-CHORE-001.md");
+    writeFileSync(
+      camNarrativa,
+      "# TASK-CHORE-001 · Teste trava desfecho\n\n## Resumo da correcao\nCausa identificada.\n\n## Aprendizados ou armadilhas\nNenhum.\n\n## Desfecho e Validacao Real\nComportamento validado nos testes unitarios. Sem armadilhas identificadas. Gates concluidos com sucesso.\n",
+      "utf8"
+    );
+
+    const resSucesso = mentorComStatus(projeto, "task", "finalizar", "TASK-CHORE-001", "--validacao-dispensada");
+    expect(resSucesso.status).toBe(0);
+    expect(resSucesso.saida).toContain("TASK-CHORE-001 concluida");
+
+    // Verifica que o arquivo final foi salvo em concluidas com o sufixo --estudo-humano.md
+    const concluidas = join(projeto, "docs-mentor", "tarefas", "concluidas");
+    const arquivosConcluidos = readdirSync(concluidas);
+    const estudoHumano = arquivosConcluidos.find((f) => f.includes("TASK-CHORE-001") && f.endsWith("--estudo-humano.md"));
+    expect(estudoHumano).toBeDefined();
+
+    const conteudoEstudo = readFileSync(join(concluidas, estudoHumano!), "utf8");
+    expect(conteudoEstudo).toContain("## Desfecho e Validacao Real");
+    expect(conteudoEstudo).toContain("Comportamento validado nos testes unitarios");
   }, 25_000);
 });

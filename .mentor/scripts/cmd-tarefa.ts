@@ -500,6 +500,9 @@ export function iniciar(id: string, flags: Flags = {}): void {
           '',
           '## Aprendizados ou armadilhas',
           'Nenhum identificado alem do caso tratado.',
+          '',
+          '## Desfecho e Validacao Real',
+          `${MARCADOR} resultado da validacao manual e comportamento real observado no app, armadilhas tecnicas/ambiente e conclusao dos gates`,
         ].join('\n'),
       )
     } else {
@@ -513,6 +516,9 @@ export function iniciar(id: string, flags: Flags = {}): void {
             '',
             '## A tarefa que isto destrava',
             `${MARCADOR} o ID, ou "nenhuma: a resposta foi nao"`,
+            '',
+            '## Desfecho e Validacao Real',
+            `${MARCADOR} resultado da exploracao/validacao, armadilhas tecnicas/ambiente e conclusao`,
           ]
         : [
             '## Decisoes tomadas',
@@ -526,6 +532,9 @@ export function iniciar(id: string, flags: Flags = {}): void {
             '',
             '## Aprendizados',
             `${MARCADOR} o que a proxima tarefa deveria saber. "Nada" e resposta legitima`,
+            '',
+            '## Desfecho e Validacao Real',
+            `${MARCADOR} resultado da validacao manual e comportamento real observado no app, armadilhas de ambiente/concorrencia/UX e conclusao dos gates`,
           ]
       escreverTexto(narrativa, [`# ${tarefa.id} · ${tarefa.titulo}`, '', ...secoes].join('\n'))
     }
@@ -1082,8 +1091,21 @@ export function finalizar(id: string, flags: Flags = {}): void {
     } else {
       impedimentos.push('narrativa ausente')
     }
-  } else if (!tarefa.plano_ref && lerTexto(narrativa).includes(MARCADOR)) {
-    impedimentos.push(`marcador ${MARCADOR} nao preenchido na narrativa`)
+  }
+
+  if (existe(narrativa)) {
+    const conteudoNarrativa = lerTexto(narrativa)
+    if (!tarefa.plano_ref && conteudoNarrativa.includes(MARCADOR)) {
+      impedimentos.push(`marcador ${MARCADOR} nao preenchido na narrativa`)
+    }
+    const matchDesfecho = /(?:^|\n)#{1,3}\s*(?:\d+\.\s*)?Desfecho[^\n]*(?:\n([\s\S]*?))?(?=\n##?\s|$)/i.exec(conteudoNarrativa)
+    if (!matchDesfecho) {
+      impedimentos.push(
+        "A narrativa da tarefa ainda nao contem a secao '## Desfecho'. Conforme o processo de Fechamento, registre a secao antes de finalizar descrevendo: (1) resultado da validacao manual e comportamento real observado no app; (2) armadilhas tecnicas, peculiaridades de ambiente ou aprendizados da sessao (concorrencia, persistencia, cache, UX); (3) status final dos gates e conclusao.",
+      )
+    } else if (!matchDesfecho[1]?.trim()) {
+      impedimentos.push("A secao '## Desfecho' da narrativa esta vazia. Registre o comportamento observado, armadilhas tecnicas e conclusao.")
+    }
   }
 
   for (const [nome, decl] of Object.entries(ctx.gates)) {

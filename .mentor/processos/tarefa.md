@@ -216,6 +216,7 @@ O CLI recusa o `mentor task finalizar` se:
 7. Em fatias de épico, a seção `plano.composicao` estiver incompleta ou com marcadores não preenchidos.
 8. `meio_de_validacao`: quando não automatizado, exige justificativa sem marcadores e existência real dos artefatos/catálogos declarados no disco.
 9. Restrições fundadoras reavaliadas (M3): reconfirmações exigem justificativa; na 3ª reconfirmação de uma restrição, exige-se ADR vinculada em `docs-mentor/adrs/`.
+10. A narrativa da tarefa (`.md`) não contiver a seção `## Desfecho` (ex.: `## Desfecho e Validação Real`) preenchida, documentando o comportamento real observado na validação, armadilhas técnicas/ambiente e desfecho dos gates.
 
 **Como registrar evidências e validação:**
 - Humano aprovou: `mentor task validar <ID> --aprovado --evidencia "<passos executados e resultado observado, min 30 chars>"` (ou `--casos <arquivo>` apontando catálogo conferido).
@@ -229,11 +230,12 @@ Gates locais do mentor devem ser rápidos para não desencorajar a execução co
 
 ## Fechamento
 
-A narrativa é o texto livre da tarefa, voltada para aprendizado humano, com teto expandido de 10.000
-caracteres (a IA consome o `.json` da tarefa concluída quando precisa apenas do resumo operacional):
+A narrativa é o texto livre da tarefa, voltada para estudo e aprendizado humano, com teto expandido de 10.000
+caracteres (a IA consome o `.json` da tarefa concluída quando precisa apenas do resumo operacional).
+Antes de solicitar o Portão 2, a IA **deve redigir ativamente a seção `## Desfecho e Validação Real`** na narrativa:
 decisões tomadas · o que **não** foi feito e por quê · **armadilhas técnicas e aprendizados reais de
-testes manuais** (conflitos de porta/cache, persistência, peculiaridades de ambiente, falhas conceituais
-de UX). Resumo protocolar breve que omite armadilhas e histórico útil não é aceito. O resto o script grava.
+testes manuais** (conflitos de porta/cache, concorrência, persistência, peculiaridades de ambiente, falhas conceituais
+de UX). Resumo protocolar breve que omite armadilhas e histórico útil não é aceito. A trava mecânica no CLI serve de garantia para impedir omissões. O resto o script grava.
 
 Duas listas separadas, e a separação é o que impede tarefa de gerar tarefa:
 

@@ -1,0 +1,194 @@
+{
+  "id": "TASK-CHORE-028",
+  "tipo": "CHORE",
+  "titulo": "Exigir e documentar secao de desfecho obrigatoria nas narrativas de estudo humano",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "perfil": "compacto",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "P",
+    "ia": "P"
+  },
+  "depende_de": [],
+  "ordem_motivo": null,
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "titulo-autossuficiente",
+  "requisitos": [],
+  "sem_requisito_motivo": null,
+  "criada_em": "17/09/26 08:35",
+  "iniciada_em": "17/09/26 08:36",
+  "commit_base": "a5f2ae443108b0679aaa8bed6ea3de8b8910406a",
+  "concluida_em": "17/09/26 09:30",
+  "plano": {
+    "muda": [
+      ".mentor/processos/tarefa.md - orienta explicitamente a redacao do desfecho e aprendizados no fechamento antes de finalizar",
+      ".mentor/nucleo.md - inclui redacao do desfecho como passo previo no portao 2 de finalizacao",
+      "AGENTS.md - orienta IAs a registrar desfecho e aprendizados na narrativa antes do task finalizar",
+      ".mentor/scripts/cmd-tarefa.ts - adiciona trava no finalizar exigindo secao ## Desfecho na narrativa da tarefa",
+      "docs-mentor/melhorias-do-pacote.test.ts - teste automatizado garantindo que task finalizar recusa narrativa sem desfecho",
+      "docs-mentor/melhorias-do-pacote.md - registro da melhoria do pacote com caso real e teste"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "O processo em tarefa.md, nucleo.md e AGENTS.md orienta explicitamente a redacao da secao Desfecho antes de chamar task finalizar",
+        "teste": "docs-mentor/melhorias-do-pacote.test.ts > orientacao de desfecho documentada nos processos",
+        "evidencia": {
+          "comando": "npx vitest run docs-mentor/melhorias-do-pacote.test.ts -t F07",
+          "codigo_saida": 0,
+          "saida": "\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.11 \u001b[39m\u001b[90mE:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\u001b[39m\n\n \u001b[32m✓\u001b[39m docs-mentor/melhorias-do-pacote.test.ts \u001b[2m(\u001b[22m\u001b[2m41 tests\u001b[22m\u001b[2m | \u001b[22m\u001b[33m38 skipped\u001b[39m\u001b[2m)\u001b[22m\u001b[33m 5630\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m F07-1: recusa finalizar se a narrativa nao contiver a secao Desfecho \u001b[33m 2328\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m F07-2: recusa finalizar se a secao Desfecho estiver vazia \u001b[33m 1100\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m F07-3: finaliza com sucesso quando Desfecho e Validacao Real esta preenchida e gera arquivo de estudo humano \u001b[33m 1492\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m1 passed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m3 passed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[33m38 skipped\u001b[39m\u001b[90m (41)\u001b[39m\n\u001b[2m   Start at \u001b[22m 08:57:24\n\u001b[2m   Duration \u001b[22m 6.74s\u001b[2m (transform 91ms, setup 210ms, import 72ms, tests 5.63s, environment 635ms)\u001b[22m",
+          "executado_em": "17/09/26 08:57"
+        }
+      },
+      {
+        "texto": "cmd-tarefa.ts recusa a finalizacao se o arquivo de estudo humano nao contiver a secao ## Desfecho e orienta os itens necessarios",
+        "teste": "docs-mentor/melhorias-do-pacote.test.ts > task finalizar recusa narrativa sem secao de desfecho",
+        "evidencia": {
+          "comando": "npx vitest run docs-mentor/melhorias-do-pacote.test.ts -t F07-1",
+          "codigo_saida": 0,
+          "saida": "\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.11 \u001b[39m\u001b[90mE:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\u001b[39m\n\n \u001b[32m✓\u001b[39m docs-mentor/melhorias-do-pacote.test.ts \u001b[2m(\u001b[22m\u001b[2m41 tests\u001b[22m\u001b[2m | \u001b[22m\u001b[33m40 skipped\u001b[39m\u001b[2m)\u001b[22m\u001b[33m 3097\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m F07-1: recusa finalizar se a narrativa nao contiver a secao Desfecho \u001b[33m 2430\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m1 passed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m1 passed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[33m40 skipped\u001b[39m\u001b[90m (41)\u001b[39m\n\u001b[2m   Start at \u001b[22m 08:57:37\n\u001b[2m   Duration \u001b[22m 4.20s\u001b[2m (transform 96ms, setup 214ms, import 73ms, tests 3.10s, environment 630ms)\u001b[22m",
+          "executado_em": "17/09/26 08:57"
+        }
+      },
+      {
+        "texto": "cmd-tarefa.ts permite a finalizacao com sucesso quando a secao ## Desfecho esta devidamente preenchida",
+        "teste": "docs-mentor/melhorias-do-pacote.test.ts > task finalizar aceita narrativa com secao de desfecho",
+        "evidencia": {
+          "comando": "npx vitest run docs-mentor/melhorias-do-pacote.test.ts -t F07-3",
+          "codigo_saida": 0,
+          "saida": "\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.11 \u001b[39m\u001b[90mE:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo\u001b[39m\n\n \u001b[32m✓\u001b[39m docs-mentor/melhorias-do-pacote.test.ts \u001b[2m(\u001b[22m\u001b[2m41 tests\u001b[22m\u001b[2m | \u001b[22m\u001b[33m40 skipped\u001b[39m\u001b[2m)\u001b[22m\u001b[33m 3463\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m F07-3: finaliza com sucesso quando Desfecho e Validacao Real esta preenchida e gera arquivo de estudo humano \u001b[33m 2796\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m1 passed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m1 passed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[33m40 skipped\u001b[39m\u001b[90m (41)\u001b[39m\n\u001b[2m   Start at \u001b[22m 08:59:49\n\u001b[2m   Duration \u001b[22m 4.55s\u001b[2m (transform 87ms, setup 214ms, import 63ms, tests 3.46s, environment 623ms)\u001b[22m",
+          "executado_em": "17/09/26 08:59"
+        }
+      }
+    ],
+    "pedido_original": "sim, mas melhor seria se ela se lembrar antes da trava, no processo deve estar claro que é pra fazer isso, a trava é garantia apenas.",
+    "solucao_sugerida": null,
+    "alternativas_profissionais": [],
+    "problema_canonico": "sem nome canonico",
+    "discordancia": {
+      "o_que_faria_diferente": "Nada a objetar",
+      "o_que_preocupa": "Nada a objetar",
+      "o_que_existe_pronto_80_porcento": "Nenhuma conhecida"
+    },
+    "impacto": "Documentacao de processos do mentor, instrucoes de agentes e validacao de fechamento de tarefa no CLI",
+    "riscos": [
+      "baixo risco: restricao adicionada apenas na finalizacao de tarefas, blindada por testes automatizados"
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Standard compacto: melhoria cirurgica com causa raiz e solucao delimitadas no processo e CLI",
+    "restricoes_reavaliadas": [],
+    "meio_de_validacao": {
+      "tipo": "testes_automatizados",
+      "porque_nao_automatizado": null,
+      "roteiro": null,
+      "artefato": null,
+      "casos": null
+    },
+    "composicao": null
+  },
+  "gates": {
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "17/09/26 09:27",
+      "commit_execucao": "a5f2ae443108b0679aaa8bed6ea3de8b8910406a",
+      "arvore_hash": "43632f02590e9da21dd07f9b144a9303702e24a2",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-CHORE-028-tipos-1789648076157.log",
+      "chave_cache": "0030b34731fd09257ccc9e28960e6a2de7a4f40d702cf37d39b664576d6a24e6",
+      "digest_insumos": "43632f02590e9da21dd07f9b144a9303702e24a2",
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "17/09/26 09:28",
+      "commit_execucao": "a5f2ae443108b0679aaa8bed6ea3de8b8910406a",
+      "arvore_hash": "43632f02590e9da21dd07f9b144a9303702e24a2",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-CHORE-028-lint-1789648091879.log",
+      "chave_cache": "02757136a97d2bf8aaf919f53bd7c442c6b1f6b526c184b37c63c00c9bbd65ae",
+      "digest_insumos": "43632f02590e9da21dd07f9b144a9303702e24a2",
+      "vermelho_dispensado": null
+    },
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n... [3141 linhas omitidas] ...\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)",
+      "executado_em": "17/09/26 09:30",
+      "commit_execucao": "a5f2ae443108b0679aaa8bed6ea3de8b8910406a",
+      "arvore_hash": "43632f02590e9da21dd07f9b144a9303702e24a2",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-CHORE-028-testes-1789648202935.log",
+      "chave_cache": "c0f9a3fb34205c3d1f921aa64513877b73c60ec7fb9acc5b06784216979c012c",
+      "digest_insumos": "43632f02590e9da21dd07f9b144a9303702e24a2",
+      "vermelho_dispensado": {
+        "dispensado_em": "17/09/26 09:27",
+        "motivo": "Tarefa interna do mentor-agent coberta por testes automatizados em docs-mentor/melhorias-do-pacote.test.ts"
+      }
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n... [22 linhas omitidas] ...\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "17/09/26 09:30",
+      "commit_execucao": "a5f2ae443108b0679aaa8bed6ea3de8b8910406a",
+      "arvore_hash": "43632f02590e9da21dd07f9b144a9303702e24a2",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-CHORE-028-build-1789648225948.log",
+      "chave_cache": "fd9398cf93b31c0bd5da1d1897c70d730cca50d801302bbf5de9f08f129b4cc1",
+      "digest_insumos": "43632f02590e9da21dd07f9b144a9303702e24a2",
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "não se aplica",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": null,
+      "executado_em": "17/09/26 08:56",
+      "commit_execucao": "a5f2ae443108b0679aaa8bed6ea3de8b8910406a",
+      "arvore_hash": "8978cdb4e24773e46b1926eda962a0913d199762",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": "Tarefa interna do mentor-agent coberta integralmente pela suite de testes automatizados F07 em melhorias-do-pacote.test.ts",
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "dispensado",
+  "validado_em": "17/09/26 08:56",
+  "validacao_motivo": "Tarefa interna do mentor-agent coberta integralmente pela suite de testes automatizados F07 em melhorias-do-pacote.test.ts",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-17--09h30--TASK-CHORE-028--estudo-humano.md"
+}

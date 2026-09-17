@@ -81,6 +81,18 @@ Problema visto e ainda não corrigido continua indo para "Anotadas", pelo `mento
 - **Testes:** Suíte completa em `docs-mentor/melhorias-do-pacote.test.ts` (Etapas 00 a 06).
 - **No pacote:** Integrar a arquitetura V5 ao pacote upstream `mentor-agent`.
 
+### 6 · Seção de desfecho e validação real obrigatória nas narrativas de estudo humano
+
+- **Estado:** aplicada aqui em 17/09/26, na TASK-CHORE-028, sobre o pacote 0.12.0. Falta levar ao pacote.
+- **Problema:** Tarefas eram finalizadas gerando o arquivo `--estudo-humano.md` sem documentar o desfecho da execução nem os aprendizados e peculiaridades de validação observados em campo (como concorrência IndexedDB, armadilhas de cache, comportamento real nos testes manuais e resultado dos gates). Isso comprometia o objetivo do arquivo de estudo humano como memória viva de engenharia para aprendizado humano e investigações de regressão.
+- **O que mudou:**
+  - **Processo & Núcleo:** `.mentor/nucleo.md` (§ 2 e § 4), `.mentor/processos/tarefa.md` (Travas no Fechamento item 10 e Fechamento) e `AGENTS.md` instruem a IA a redigir ativamente a seção `## Desfecho e Validação Real` antes do Portão 2.
+  - **Templates de Início:** `task iniciar` em `.mentor/scripts/cmd-tarefa.ts` gera o esqueleto de `## Desfecho e Validação Real` nos modelos compacto, standard e spike.
+  - **Trava de Segurança:** `task finalizar` em `.mentor/scripts/cmd-tarefa.ts` verifica a presença e o preenchimento não vazio da seção `## Desfecho` (ou `## Desfecho e Validação Real`), bloqueando a finalização com mensagem orientadora caso esteja ausente ou vazia.
+- **Arquivos:** `.mentor/nucleo.md`, `.mentor/processos/tarefa.md`, `.mentor/scripts/cmd-tarefa.ts`, `AGENTS.md`.
+- **Testes:** Suíte F07 (`F07-1`, `F07-2`, `F07-3`) em `docs-mentor/melhorias-do-pacote.test.ts` garantindo recusa sem a seção, recusa com seção vazia, e aprovação quando preenchida com geração de `--estudo-humano.md`.
+- **No pacote:** Incorporar as regras de processo em `nucleo.md` e `processos/tarefa.md`, os templates em `cmd-tarefa.ts:iniciar` e a trava em `cmd-tarefa.ts:finalizar`.
+
 ## Anotadas
 
 As versões 0.4.0 a 0.12.0 do mentor aplicaram as melhorias sugeridas por este arquivo. A 0.12.0 (TASK-CHORE-024) aplicou as sete notas de 12/09 a 14/09/26 (Frentes A a G). As duas notas de 15/09/26 viraram as correções 1 e 2 acima. Anotações novas entram abaixo desta linha.
