@@ -83,6 +83,7 @@ export interface Achado {
   ref: string
 }
 export type Cerimonia = 'Light' | 'Standard' | 'Strict'
+export type PerfilTarefa = 'compacto' | 'completo'
 export type ValorTarefa = 'critico' | 'importante' | 'desejavel'
 export type Urgencia = 'imediata' | 'normal'
 
@@ -137,6 +138,10 @@ export interface RegistroGate {
   arvore_sem_documentos?: boolean
   motivo: string | null
   ressalva: string | null
+  log_ref?: string | null
+  chave_cache?: string | null
+  digest_insumos?: string | null
+  reutilizado?: boolean
   vermelho_dispensado?: VermelhoDispensado | null
   /** @deprecated Legado plano para retrocompatibilidade com TASK-RF-040/042 */
   vermelho_dispensado_em?: string | null
@@ -282,6 +287,13 @@ export interface PausaTarefa {
   commit_retomada: string | null
 }
 
+export interface PlanoRef {
+  arquivo: string
+  sha256: string
+  secao?: string | null
+  manifesto?: Record<string, string>
+}
+
 export interface Tarefa {
   id: string
   tipo: TipoTarefa
@@ -289,6 +301,7 @@ export interface Tarefa {
   fatia_de: string | null
   estado: EstadoTarefa
   cerimonia: Cerimonia
+  perfil?: PerfilTarefa | null
   valor: ValorTarefa
   urgencia: Urgencia
   esforco: { humano: Escala; ia: Escala }
@@ -310,6 +323,7 @@ export interface Tarefa {
   pausas?: PausaTarefa[]
   /** SPIKE que fechou mudando arquivo fora de `contexto.laboratorio.caminhos`, e por que (0.10.0). */
   produto_tocado_motivo?: string | null
+  plano_ref?: PlanoRef | null
   plano: Plano
   gates: Partial<Record<string, RegistroGate>>
   achados: Achado[]

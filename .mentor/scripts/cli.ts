@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { inicializar } from './cmd-init.ts'
-import { anexar, criterio, fila, finalizar, iniciar, nova, pausar, registrarGate, retomar, validar } from './cmd-tarefa.ts'
+import { anexar, criterio, fila, finalizar, iniciar, nova, pausar, retomar, validar } from './cmd-tarefa.ts'
 import { absorver, cancelar, fatiar, guardar, listarReserva, puxar } from './cmd-fila.ts'
 import { adicionarFerramenta } from './cmd-stack.ts'
 import { verificar } from './cmd-verificar.ts'
@@ -19,6 +19,9 @@ import { preparar as prepararAuditoria, registrar as registrarAuditoria, relatar
 import { novaReferencia, relatarReferencias } from './cmd-referencia.ts'
 import { novaInvariante, relatarInvariantes } from './cmd-invariante.ts'
 import { novoRequisito, relatarRequisitos } from './cmd-requisito.ts'
+import { importarPlano, listarPlanos, registrarPlano, vincularPlano } from './cmd-plano.ts'
+import { listarPatches, registrarPatch, registrarTodosPatches } from './cmd-patches.ts'
+import { executarGateDaTarefa, executarGatesDaTarefa } from './executor-gates.ts'
 import { regenerarTudo } from './vistas.ts'
 
 const AJUDA = `
@@ -53,12 +56,22 @@ mentor <comando>
        [--arquivo <caminho> [--codigo-saida <n>]] registra evidencia de saida capturada em arquivo
        [--rotulo "..." --motivo "..."] so para os rotulos que nao nascem de execucao
        [--ressalva "..." --url "..."]
+  task gates <ID>                      executa todos os gates automaticos da tarefa em sequencia
   task fila <ID> <n> | --soltar         fixa no topo da fila, ou devolve a ordem calculada
   task anexar <ID> --url "..." [--gate] anexa evidencia externa (CI/PR) mesmo se concluida
   task criterio <ID> <n> --comando "..." | --saida "..."
                                        registra evidencia em criterio do plano (n comeca em 0)
+  task vincular-plano <ID> --arquivo <path> [--secao <id>]
+                                       vincula plano a tarefa sem copiar narrativa
   task finalizar <ID>                  fecha, vincula requisito, regenera as vistas
        [--produto-tocado "..."]        spike que mudou arquivo fora do laboratorio, e por que
+  plano [registrar|importar|listar]    plano portatil (versao, revisao SHA-256 e contrato)
+       registrar --arquivo <caminho> [--secao <id>] [--titulo <titulo>]
+       importar --arquivo <origem> --destino <destino> [--forcar]
+  planos                               lista planos registrados e tarefas vinculadas
+  patch [listar|registrar|registrar-todos] rastreia e valida modificacoes locais em .mentor/
+       registrar <arquivo> --tarefa <ID> [--teste <evidencia>]
+       registrar-todos --tarefa <ID>   registra todos os arquivos divergentes do manifesto base
   stack <ferramenta> [--versao --papel] cria a convencao e registra no contexto
   regras [--sincronizar]               inventario das regras do pacote: quais viraram comando
   verificar                            marcadores, tetos de texto, integridade referencial
@@ -132,6 +145,30 @@ function principal(argv: string[]): number {
       if (sub === 'nova') { novaReferencia(flags); return 0 }
       throw new Error(`Subcomando de ref desconhecido: "${sub}". Use: mentor ref [listar|nova]`)
     }
+    case 'plano': {
+      const sub = posicionais[0]
+      if (!sub || sub === 'listar') { listarPlanos(); return 0 }
+      if (sub === 'registrar') { registrarPlano(flags); return 0 }
+      if (sub === 'importar') { importarPlano(flags); return 0 }
+      throw new Error(`Subcomando de plano desconhecido: "${sub}". Use: mentor plano [registrar|importar|listar]`)
+    }
+    case 'planos': {
+      listarPlanos(); return 0
+    }
+    case 'patch': {
+      const sub = posicionais[0]
+      if (!sub || sub === 'listar') return listarPatches()
+      if (sub === 'registrar') {
+        const arq = posicionais[1]
+        if (!arq) throw new Error('Falta o arquivo. Use: mentor patch registrar <arquivo> --tarefa <ID>')
+        return registrarPatch(arq, flags)
+      }
+      if (sub === 'registrar-todos') {
+        return registrarTodosPatches(flags)
+      }
+      if (sub === 'conferir') return listarPatches()
+      throw new Error(`Subcomando de patch desconhecido: "${sub}". Use: mentor patch [listar|registrar|registrar-todos|conferir]`)
+    }
     case 'gerar': regenerarTudo(); console.log('Vistas regeneradas.'); return 0
     case 'anotar': anotar(posicionais[0], flags.sobre); return 0
     case 'reserva': listarReserva(); return 0
@@ -141,7 +178,7 @@ function principal(argv: string[]): number {
       return 0
     case 'verificar': return verificar()
     case 'resolver-gerados': return resolverGerados()
-    case 'gates': return gates()
+    case 'gates': return gates(flags)
     case 'hooks':
       if (flags['pre-push']) return prePush()
       if (!flags.instalar) throw new Error('Use: mentor hooks --instalar ou mentor hooks --pre-push')
@@ -197,6 +234,7 @@ function principal(argv: string[]): number {
       if (sub === 'absorver') { absorver(id, flags.por); return 0 }
       if (sub === 'validar') { validar(id, flags); return 0 }
       if (sub === 'anexar') { anexar(id, flags); return 0 }
+      if (sub === 'vincular-plano') { vincularPlano(id, flags); return 0 }
       if (sub === 'criterio') {
         const indice = posicionais[2]
         if (!indice) throw new Error('Falta o indice do criterio. Use: mentor task criterio <ID> <indice> [--comando "..."] [--saida "..."]')
@@ -209,10 +247,13 @@ function principal(argv: string[]): number {
         fila(id, posicao, liberar); return 0
       }
       if (sub === 'finalizar') { finalizar(id, flags); return process.exitCode === 1 ? 1 : 0 }
+      if (sub === 'gates') {
+        return executarGatesDaTarefa(id, flags)
+      }
       if (sub === 'gate') {
         const gate = posicionais[2]
-        if (!gate) throw new Error('Falta o nome do gate.')
-        registrarGate(id, gate, flags); return 0
+        if (!gate) throw new Error('Falta o nome do gate. Use: mentor task gate <ID> <gate>')
+        return executarGateDaTarefa(id, gate, flags)
       }
       throw new Error(`Subcomando de task desconhecido: "${sub}".`)
     }

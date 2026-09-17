@@ -35,9 +35,9 @@ explícita**. Nunca deduza intenção. **Termina, apresenta, aguarda.**
 - A tarefa termina aberta e espera ali. Escrever o registro de conclusão antes do portão 2
   transforma a pergunta em aviso: o humano recebe fato consumado com aparência de consulta.
 - **Autorização vale por ato, nunca por sessão.** Aprovar o plano não autoriza fechar.
-- **Mérito técnico obrigatório no Portão 1:** O plano não avalia apenas a forma: exige nome canônico (`problema_canonico`), exercício explícito de discordância (`discordancia`), estado da arte e custo de oportunidade para motores ou esforço G/XG, e três réguas (piso, teto, padrão) para spikes. O silêncio sobre alternativas de mercado invalida a aprovação. **Solução sugerida pelo humano é hipótese, não especificação:** o plano guarda o pedido original e compara ao menos duas práticas profissionais (`alternativas_profissionais`).
-- **Validação manual ativa antes do fechamento:** Em tarefas que alteram UI/Telas, Persistência/Esquema, Cálculos/Algoritmos ou Spikes, a IA é **proibida de pedir fechamento (Portão 2) ou push (Portão 3) sem antes apresentar o roteiro de testes manuais e aguardar a confirmação explícita do humano**. Finalizar sem registrar evidência no gate `validacao_manual` quebra a auditoria (Regra 4 e Bloqueios AUD-001-B01/B02/B04).
-- O `push` é sempre pedido à parte: é o único ato que sai da máquina e alcança outras pessoas.
+- **Mérito técnico proporcional ao risco no Portão 1:** O plano avalia forma e substância. Exige alternativas profissionais (`alternativas_profissionais`), nome canônico e impacto quando há decisão arquitetural real, novas dependências ou esforço G/XG; dispensa ensaios teatrais de mercado para correções localizadas com causa e solução demonstradas. Solução sugerida pelo humano é hipótese, não especificação; quando o humano pede implementação de plano aprovado/identificado, isso autoriza a execução do escopo indicado sem confirmação redundante.
+- **Validação manual ativa antes do fechamento:** Em tarefas que alteram UI/Telas, Persistência/Esquema, Cálculos/Algoritmos ou Spikes, a IA deve apresentar o roteiro de testes manuais e obter a confirmação do humano antes de solicitar fechamento.
+- O `push` é pedido à parte (ou em conjunto se autorizado explicitamente): é o ato que sai da máquina e alcança outras pessoas.
 - Depois do push, conferir o resultado da integração. Não é portão, e o poder dele é avisar.
 - Vale em qualquer modo de cerimônia, inclusive Light.
 
@@ -130,8 +130,8 @@ O comando de cada um vive em `contexto.json → gates`. Gate que o projeto não 
 para ele, e declará-lo é a primeira coisa a resolver, não um detalhe a contornar.
 
 ⚠️ **Rode o comando declarado, nunca um montado de memória.** Comando digitado de cabeça sai com
-código 0 tendo lido zero arquivo: verde que não checou nada. Use `task gate <ID> <gate>`, que executa e
-grava comando, saída e horário. Declaração escrita à mão não vale como evidência.
+código 0 tendo lido zero arquivo: verde que não checou nada. Use `task gate <ID> <gate>` ou `task gates <ID>`, que executa e
+grava comando, saída, evidências e reutiliza execuções compatíveis quando os insumos estão intactos. Declaração escrita à mão não vale como evidência.
 
 ## 8 · Quando parar e perguntar
 

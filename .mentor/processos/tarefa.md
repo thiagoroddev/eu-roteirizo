@@ -17,6 +17,8 @@ Nada que o script escreve é digitado ou conferido pela IA.
 ## Campos
 
 `tipo` RF · RN · RNF · BG · REF · DOC · CHORE · TEST · SPIKE
+`cerimonia` Light · Standard · Strict
+`perfil` compacto · completo (Standard compacto dispensa campos de ensaio em correções pontuais)
 `valor` crítico · importante · desejável
 `urgencia` imediata · normal
 `esforco` duplo, humano/IA, cada um P · M · G · XG
@@ -69,6 +71,10 @@ consideradas" de design doc, RFC e MADR. O `finalizar` recusa sugestão sem as d
 
 O plano não é apenas um formulário de procedimento: ele é a **defesa de mérito técnico** da tarefa.
 O `mentor-agent` recusa planos que constroem do zero sem pesquisar o estado da arte ou sem exercer o dever de contrariar.
+
+**Mérito técnico proporcional ao risco (V5):** em correções localizadas com causa e solução demonstradas, utilize o perfil **Standard compacto** (`--cerimonia Standard --perfil compacto` ou `--compacto`). Este perfil preserva critérios verificáveis, regressões e rastreabilidade, mas dispensa ensaio teatral de alternativas ou preenchimento artificial de discordância. Decisões arquiteturais, novos motores ou mudanças estruturais continuam exigindo análise comparativa completa de alternativas e mérito.
+
+**Planejamento portátil:** quando houver plano prévio aprovado ou importado (`mentor plano registrar` / `mentor plano importar`), vincule com `mentor task vincular-plano <ID> <PLANO-ID>` para reutilizar critérios e referências sem duplicar a narrativa.
 
 ### Campos Obrigatórios de Mérito no Plano
 

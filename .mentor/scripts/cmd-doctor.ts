@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process'
 import { join } from 'node:path'
-import { agora, caminhos, diasDesde, escreverJson, existe, lerTexto, listar } from './arquivos.ts'
+import { agora, caminhos, diasDesde, existe, lerTexto, listar } from './arquivos.ts'
 import { tetos } from './cmd-verificar.ts'
 import { rascunhosParados } from './cmd-anotar.ts'
 import { PONTOS_DE_ENTRADA, pontosDeEntradaSemNucleo } from './entrada.ts'
@@ -437,7 +437,7 @@ function processo(ctx: Contexto, tarefas: Tarefa[]): Linha[] {
     ? ` Maiores arquivos: ${maiores.map((m) => `${m.caminho} (${m.linhas} linhas)`).join(', ')}.`
     : ''
   if (cad.estado === 'atrasada') {
-    linhas.push({ estado: 'bloqueio', texto: `${resumo}: o dobro da cadencia.${deOndeVem} Rode: mentor auditar preparar` })
+    linhas.push({ estado: 'atencao', texto: `${resumo}: o dobro da cadencia.${deOndeVem} Recomendado rodar auditoria por risco: mentor auditar preparar` })
   } else if (cad.estado === 'vencida') {
     linhas.push({ estado: 'atencao', texto: `${resumo}.${deOndeVem} Rode: mentor auditar preparar` })
   } else if (au.ultima_em) {
@@ -535,13 +535,5 @@ export function doctor(): number {
     ? 'PRONTO PARA PUBLICO?  SIM — nenhum bloqueio'
     : `PRONTO PARA PUBLICO?  NAO — ${bloqueios} bloqueio(s)`)
 
-  // Os lembretes sao SAIDA do doctor e ficam so' na tela. Grava-los no contexto versionado mudava o
-  // arquivo a cada execucao (e o `resolver-gerados` os zera), gerando diff e conflito sem mudanca
-  // real. `[]` limpa lembrete antigo de quem vem de versao anterior. Correcao local da
-  // TASK-CHORE-026, registrada em `docs-mentor/melhorias-do-pacote.md`.
-  ctx.lembretes = []
-  const q = ctx['qualidade'] as Record<string, unknown>
-  q['perfil'] = { _gerado_por_doctor: true, de: 8, ...p.resumo }
-  escreverJson(caminhos().contexto, ctx)
   return 0
 }

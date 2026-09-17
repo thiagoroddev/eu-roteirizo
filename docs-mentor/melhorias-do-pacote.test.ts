@@ -24,6 +24,31 @@ const mentor = (raiz: string, ...comando: string[]) => {
   return `${r.stdout ?? ""}${r.stderr ?? ""}`;
 };
 
+const mentorComStatus = (raiz: string, ...comando: string[]) => {
+  const r = spawnSync(process.execPath, [join(RAIZ, "mentor.mjs"), ...comando], {
+    cwd: RAIZ,
+    encoding: "utf8",
+    env: { ...process.env, MENTOR_RAIZ: raiz },
+  });
+  return {
+    status: r.status,
+    saida: `${r.stdout ?? ""}${r.stderr ?? ""}`,
+  };
+};
+
+const mentorComInput = (raiz: string, input: string, ...comando: string[]) => {
+  const r = spawnSync(process.execPath, [join(RAIZ, "mentor.mjs"), ...comando], {
+    cwd: RAIZ,
+    encoding: "utf8",
+    env: { ...process.env, MENTOR_RAIZ: raiz },
+    input,
+  });
+  return {
+    status: r.status,
+    saida: `${r.stdout ?? ""}${r.stderr ?? ""}`,
+  };
+};
+
 const git = (raiz: string, ...args: string[]) => {
   const r = spawnSync("git", args, { cwd: raiz, encoding: "utf8" });
   if (r.status !== 0) {
@@ -164,4 +189,777 @@ describe("contexto.json sem regravacao automatica", () => {
     expect(saidaDoDoctor).toContain("⚠");
     expect(JSON.parse(depoisDoPrimeiroDoctor).lembretes).toEqual([]);
   });
+});
+
+describe("preservacao do indice git durante execucao do mentor", () => {
+  let projeto = "";
+
+  beforeAll(() => {
+    projeto = mkdtempSync(join(tmpdir(), "mentor-indice-git-"));
+    mentor(projeto, "init");
+    git(projeto, "init", "-b", "main");
+    git(projeto, "config", "user.name", "Teste Mentor");
+    git(projeto, "config", "user.email", "teste@mentor.invalid");
+    writeFileSync(join(projeto, "base.txt"), "base\n");
+    git(projeto, "add", ".");
+    git(projeto, "commit", "-m", "chore: base");
+  });
+
+  afterAll(() => {
+    if (projeto) rmSync(projeto, { recursive: true, force: true });
+  });
+
+  it("operacoes de leitura e hash nao alteram o staging area existente", () => {
+    // Cria mudanca em staging e mudanca no working tree
+    writeFileSync(join(projeto, "modificado.txt"), "staged\n");
+    git(projeto, "add", "modificado.txt");
+    writeFileSync(join(projeto, "modificado.txt"), "staged + working tree\n");
+
+    const diffStagedAntes = spawnSync("git", ["diff", "--staged"], { cwd: projeto, encoding: "utf8" }).stdout;
+    expect(diffStagedAntes).toContain("+staged");
+
+    // Executa comando do mentor
+    const saida = mentor(projeto, "gerar");
+    expect(saida).toContain("Vistas regeneradas.");
+
+    const diffStagedDepois = spawnSync("git", ["diff", "--staged"], { cwd: projeto, encoding: "utf8" }).stdout;
+    expect(diffStagedDepois).toBe(diffStagedAntes);
+
+    const diffWorkingTree = spawnSync("git", ["diff"], { cwd: projeto, encoding: "utf8" }).stdout;
+    expect(diffWorkingTree).toContain("+staged + working tree");
+  });
+});
+
+describe("resiliencia com tarefas legadas e hashes de arvore", () => {
+  let projeto = "";
+
+  beforeAll(() => {
+    projeto = mkdtempSync(join(tmpdir(), "mentor-legado-"));
+    mentor(projeto, "init");
+  });
+
+  afterAll(() => {
+    if (projeto) rmSync(projeto, { recursive: true, force: true });
+  });
+
+  it("carrega tarefa em formato legado sem campos opcionais novos", () => {
+    const tarefaLegada = {
+      id: "TASK-LEGADA-001",
+      tipo: "chore",
+      titulo: "Tarefa antiga de versao anterior",
+      estado: "aberta",
+      cerimonia: "Standard",
+      fila: "ciclo",
+      valor: "desejavel",
+      urgencia: "normal",
+      esforco: { humano: "P", ia: "P" },
+      depende_de: [],
+      requisitos: [],
+      origem: "manual",
+      criada_em: "2026-01-01T00:00:00.000Z",
+      plano: {
+        muda: ["codigo"],
+        criterios_aceite: [{ texto: "Funcionar", teste: "npm test" }],
+        impacto: "baixo",
+        riscos: [],
+        dependencias_novas: [],
+        proporcionalidade: "adequada",
+      },
+    };
+
+    mkdirSync(join(projeto, "docs-mentor", "tarefas", "abertas"), { recursive: true });
+    writeFileSync(join(projeto, "docs-mentor", "tarefas", "abertas", "TASK-LEGADA-001.json"), JSON.stringify(tarefaLegada, null, 2));
+
+    const saidaGerar = mentor(projeto, "gerar");
+    expect(saidaGerar).toContain("Vistas regeneradas.");
+    const backlog = readFileSync(join(projeto, "docs-mentor", "tarefas", "backlog.md"), "utf8");
+    expect(backlog).toContain("TASK-LEGADA-001");
+  });
+
+  it("ambiente sem git retorna hash nulo sem quebrar", () => {
+    // Projeto temporario sem git init
+    const pastaSemGit = mkdtempSync(join(tmpdir(), "mentor-sem-git-"));
+    try {
+      mentor(pastaSemGit, "init");
+      const saida = mentor(pastaSemGit, "gerar");
+      expect(saida).toContain("Vistas regeneradas.");
+    } finally {
+      rmSync(pastaSemGit, { recursive: true, force: true });
+    }
+  });
+
+  it("reconhece arquivos de teste executaveis sob docs-mentor", () => {
+    // docs-mentor/melhorias-do-pacote.test.ts e um arquivo executavel de teste sob docs-mentor
+    expect(existsSync(join(RAIZ, "docs-mentor", "melhorias-do-pacote.test.ts"))).toBe(true);
+  });
+});
+
+describe("planejamento portatil (Etapa 01)", () => {
+  let projeto = "";
+
+  beforeAll(() => {
+    projeto = mkdtempSync(join(tmpdir(), "mentor-plano-portatil-"));
+    mentor(projeto, "init");
+    git(projeto, "init", "-b", "main");
+    git(projeto, "config", "user.name", "Teste Mentor");
+    git(projeto, "config", "user.email", "teste@mentor.invalid");
+    writeFileSync(join(projeto, "base.txt"), "base\n");
+    git(projeto, "add", ".");
+    git(projeto, "commit", "-m", "chore: base");
+  });
+
+  afterAll(() => {
+    if (projeto) rmSync(projeto, { recursive: true, force: true });
+  });
+
+  it("P01-1 e P01-2: importa plano preservando SHA-256 exato e inicia tarefa sem alterar bytes da fonte", () => {
+    // Cria plano externo com texto livre, acentos e espacos
+    const pastaExterna = mkdtempSync(join(tmpdir(), "mentor-externo-"));
+    const conteudoOriginal = "# Plano de Migração V5\n\nEste é um plano com acentuação e formatação especial.\n\n## Seção 01\nDetalhes de execução.\n";
+    const arquivoExterno = join(pastaExterna, "plano original.md");
+    writeFileSync(arquivoExterno, conteudoOriginal, "utf8");
+
+    // Importa plano para o projeto
+    const destinoRel = "docs-mentor/rascunhos/plano-migracao.md";
+    const saidaImportar = mentor(projeto, "plano", "importar", "--arquivo", arquivoExterno, "--destino", destinoRel);
+    expect(saidaImportar).toContain("Plano importado literalmente");
+
+    // Confere preservação exata dos bytes
+    const conteudoImportado = readFileSync(join(projeto, destinoRel), "utf8");
+    expect(conteudoImportado).toBe(conteudoOriginal);
+
+    // Cria tarefa e vincula ao plano importado
+    mentor(projeto, "task", "nova", "--tipo", "CHORE", "--titulo", "Migrar para V5", "--esforco", "P/P", "--origem", "titulo-autossuficiente");
+    mentor(projeto, "task", "puxar", "TASK-CHORE-001");
+    const saidaVincular = mentor(projeto, "task", "vincular-plano", "TASK-CHORE-001", "--arquivo", destinoRel, "--secao", "Seção 01");
+    expect(saidaVincular).toContain("TASK-CHORE-001 vinculada ao plano");
+
+    // Inicia a tarefa
+    const bytesAntesIniciar = readFileSync(join(projeto, destinoRel));
+    const saidaIniciar = mentor(projeto, "task", "iniciar", "TASK-CHORE-001");
+    expect(saidaIniciar).toContain("TASK-CHORE-001 em execucao");
+
+    // Bytes do plano referenciado permanecem byte a byte intocados
+    const bytesDepoisIniciar = readFileSync(join(projeto, destinoRel));
+    expect(Buffer.compare(bytesAntesIniciar, bytesDepoisIniciar)).toBe(0);
+
+    // Listar planos exibe o plano e a tarefa vinculada
+    const saidaPlanos = mentor(projeto, "planos");
+    expect(saidaPlanos).toContain("Plano de Migração V5");
+    expect(saidaPlanos).toContain("TASK-CHORE-001");
+
+    rmSync(pastaExterna, { recursive: true, force: true });
+  });
+
+  it("P01-3: valida secao inexistente e suporta caminhos com espacos e caracteres acentuados", () => {
+    const planoComEspaco = "docs-mentor/rascunhos/plano com espaço e acentuação.md";
+    writeFileSync(join(projeto, planoComEspaco), "# Título do Plano\n\n## Seção Válida\nConteúdo\n", "utf8");
+
+    // Seção válida registra com sucesso
+    const saidaOk = mentor(projeto, "plano", "registrar", "--arquivo", planoComEspaco, "--secao", "Seção Válida");
+    expect(saidaOk).toContain("Plano registrado");
+
+    // Seção inexistente é recusada com mensagem útil
+    const saidaErroSecao = mentor(projeto, "plano", "registrar", "--arquivo", planoComEspaco, "--secao", "Seção Inexistente");
+    expect(saidaErroSecao).toContain('Secao "Seção Inexistente" nao encontrada');
+  });
+
+  it("P01-4: detecta revisao divergente quando plano referenciado e modificado", () => {
+    const caminhoPlano = "docs-mentor/rascunhos/plano-divergente.md";
+    writeFileSync(join(projeto, caminhoPlano), "# Plano Divergente\n\nConteúdo inicial\n", "utf8");
+
+    mentor(projeto, "task", "nova", "--tipo", "CHORE", "--titulo", "Teste Divergencia", "--esforco", "P/P", "--origem", "titulo-autossuficiente");
+    mentor(projeto, "task", "puxar", "TASK-CHORE-002");
+    mentor(projeto, "task", "vincular-plano", "TASK-CHORE-002", "--arquivo", caminhoPlano);
+    mentor(projeto, "task", "iniciar", "TASK-CHORE-002");
+
+    // Altera o plano sem atualizar o vínculo
+    writeFileSync(join(projeto, caminhoPlano), "# Plano Divergente\n\nConteúdo modificado clandestinamente\n", "utf8");
+
+    // Tentativa de finalizar detecta a revisão divergente
+    const saidaFinalizar = mentor(projeto, "task", "finalizar", "TASK-CHORE-002");
+    expect(saidaFinalizar).toContain("revisao divergente");
+  });
+});
+
+describe("executor unificado de gates (Etapa 02)", () => {
+  let projeto = "";
+
+  beforeAll(() => {
+    projeto = mkdtempSync(join(tmpdir(), "mentor-executor-gates-"));
+    mentor(projeto, "init");
+    git(projeto, "init", "-b", "main");
+    git(projeto, "config", "user.name", "Teste Mentor");
+    git(projeto, "config", "user.email", "teste@mentor.invalid");
+    writeFileSync(join(projeto, "base.txt"), "base\n");
+    git(projeto, "add", ".");
+    git(projeto, "commit", "-m", "chore: base");
+
+    // Configura gates de teste no contexto
+    const caminhoCtx = join(projeto, "docs-mentor", "contexto.json");
+    const ctx = JSON.parse(readFileSync(caminhoCtx, "utf8"));
+    ctx.gates = {
+      tipos: { comando: 'node -e "process.exit(0)"' },
+      lint: { comando: 'node -e "process.exit(1)"' },
+      testes: { comando: "node -e \"console.log('3 passed'); process.exit(0)\"" },
+      build: { comando: 'node -e "process.exit(0)"' },
+    };
+    writeFileSync(caminhoCtx, JSON.stringify(ctx, null, 2) + "\n", "utf8");
+
+    mentor(projeto, "task", "nova", "--tipo", "CHORE", "--titulo", "Teste Gates", "--esforco", "P/P", "--origem", "titulo-autossuficiente");
+    mentor(projeto, "task", "puxar", "TASK-CHORE-001");
+    mentor(projeto, "task", "iniciar", "TASK-CHORE-001");
+  });
+
+  afterAll(() => {
+    if (projeto) rmSync(projeto, { recursive: true, force: true });
+  });
+
+  it("G02-1: propaga codigo de saida nao-zero para gate falho e zero para silencioso valido", () => {
+    // Gate silencioso com exit 0 deve retornar status 0 (sucesso)
+    const resTipos = mentorComStatus(projeto, "task", "gate", "TASK-CHORE-001", "tipos");
+    expect(resTipos.status).toBe(0);
+    expect(resTipos.saida).toContain("APROVADO: tipos");
+
+    // Gate com exit 1 deve retornar status 1 (falha propagada para CLI)
+    const resLint = mentorComStatus(projeto, "task", "gate", "TASK-CHORE-001", "lint");
+    expect(resLint.status).not.toBe(0);
+    expect(resLint.saida).toContain("FALHOU: lint");
+  }, 25_000);
+
+  it("G02-2: task gates <ID> executa em sequencia e para no primeiro erro persistindo evidencias", () => {
+    const resBateria = mentorComStatus(projeto, "task", "gates", "TASK-CHORE-001");
+    expect(resBateria.status).not.toBe(0);
+    expect(resBateria.saida).toContain("APROVADO: tipos");
+    expect(resBateria.saida).toContain("FALHOU: lint");
+    expect(resBateria.saida).toContain("Bateria interrompida na primeira falha");
+
+    // Verifica que logs de evidencia foram criados
+    const pastaLogs = join(projeto, "docs-mentor", ".evidencias", "logs");
+    expect(existsSync(pastaLogs)).toBe(true);
+  }, 25_000);
+
+  it("G02-3: zero testes coletados reprova o gate de testes mesmo com exit code 0", () => {
+    const caminhoCtx = join(projeto, "docs-mentor", "contexto.json");
+    const ctx = JSON.parse(readFileSync(caminhoCtx, "utf8"));
+    ctx.gates.testes = { comando: "node -e \"console.log('No tests found'); process.exit(0)\"" };
+    writeFileSync(caminhoCtx, JSON.stringify(ctx, null, 2) + "\n", "utf8");
+
+    const resTestes = mentorComStatus(projeto, "task", "gate", "TASK-CHORE-001", "testes");
+    expect(resTestes.status).not.toBe(0);
+    expect(resTestes.saida).toContain("INVÁLIDO como gate: testes");
+    expect(resTestes.saida).toContain("Nenhum teste foi executado ou coletado");
+  }, 25_000);
+});
+
+describe("Etapa 03: Identidade dos insumos e cache conservador de gates", () => {
+  let projeto = "";
+
+  beforeAll(() => {
+    projeto = mkdtempSync(join(tmpdir(), "mentor-etapa03-cache-"));
+    mentor(projeto, "init");
+    git(projeto, "init", "-b", "main");
+    git(projeto, "config", "user.name", "Teste Mentor");
+    git(projeto, "config", "user.email", "teste@mentor.invalid");
+    writeFileSync(join(projeto, "base.txt"), "base\n");
+    git(projeto, "add", ".");
+    git(projeto, "commit", "-m", "chore: base");
+
+    // Configura gates de teste no contexto
+    const caminhoCtx = join(projeto, "docs-mentor", "contexto.json");
+    const ctx = JSON.parse(readFileSync(caminhoCtx, "utf8"));
+    ctx.gates = {
+      tipos: { comando: 'node -e "process.exit(0)"' },
+      testes: { comando: "node -e \"console.log('3 passed'); process.exit(0)\"" },
+    };
+    writeFileSync(caminhoCtx, JSON.stringify(ctx, null, 2) + "\n", "utf8");
+
+    mentor(projeto, "task", "nova", "--tipo", "CHORE", "--titulo", "Teste Cache", "--esforco", "P/P", "--origem", "titulo-autossuficiente");
+    mentor(projeto, "task", "puxar", "TASK-CHORE-001");
+    mentor(projeto, "task", "iniciar", "TASK-CHORE-001");
+  });
+
+  afterAll(() => {
+    if (projeto) rmSync(projeto, { recursive: true, force: true });
+  });
+
+  it("E03-1: executar gate duas vezes sem alteracoes reutiliza o resultado e nao causa invalidacao circular", () => {
+    const primeira = mentorComStatus(projeto, "task", "gate", "TASK-CHORE-001", "tipos");
+    expect(primeira.status).toBe(0);
+    expect(primeira.saida).toContain("✓ APROVADO: tipos");
+    expect(primeira.saida).not.toContain("[reutilizado]");
+
+    const segunda = mentorComStatus(projeto, "task", "gate", "TASK-CHORE-001", "tipos");
+    expect(segunda.status).toBe(0);
+    expect(segunda.saida).toContain("✓ [reutilizado] APROVADO: tipos");
+
+    // Com --forcar deve forcar reexecucao
+    const comForcar = mentorComStatus(projeto, "task", "gate", "TASK-CHORE-001", "tipos", "--forcar");
+    expect(comForcar.status).toBe(0);
+    expect(comForcar.saida).not.toContain("[reutilizado]");
+    expect(comForcar.saida).toContain("✓ APROVADO: tipos");
+  }, 25_000);
+
+  it("E03-2: mudar arquivo sob docs-mentor ou codigo invalida o cache", () => {
+    // Garante que esta em cache
+    mentor(projeto, "task", "gate", "TASK-CHORE-001", "tipos");
+
+    // Cria/modifica arquivo de teste em docs-mentor/
+    writeFileSync(join(projeto, "docs-mentor", "novo-teste.test.ts"), "// teste\n", "utf8");
+
+    const aposMudanca = mentorComStatus(projeto, "task", "gate", "TASK-CHORE-001", "tipos");
+    expect(aposMudanca.status).toBe(0);
+    expect(aposMudanca.saida).not.toContain("[reutilizado]");
+    expect(aposMudanca.saida).toContain("✓ APROVADO: tipos");
+
+    // Limpa o arquivo de teste para outros testes
+    rmSync(join(projeto, "docs-mentor", "novo-teste.test.ts"), { force: true });
+  }, 25_000);
+
+  it("E03-3: arquivos com acentos/espacos e staging parcial sao identificados e indice real fica intacto", () => {
+    const arqComEspaco = join(projeto, "arquivo com acentuação e espaço.txt");
+    writeFileSync(arqComEspaco, "conteudo\n", "utf8");
+    git(projeto, "add", "arquivo com acentuação e espaço.txt");
+
+    // Verifica que o staging area contem o arquivo
+    const statusAntes = spawnSync("git", ["status", "--porcelain"], { cwd: projeto, encoding: "utf8" }).stdout ?? "";
+    expect(statusAntes).toContain("arquivo com");
+
+    const resGate = mentorComStatus(projeto, "task", "gate", "TASK-CHORE-001", "tipos");
+    expect(resGate.status).toBe(0);
+
+    // O status e staging area continuam intactos apos o gate
+    const statusDepois = spawnSync("git", ["status", "--porcelain"], { cwd: projeto, encoding: "utf8" }).stdout ?? "";
+    expect(statusDepois).toBe(statusAntes);
+
+    // Limpa
+    git(projeto, "reset", "HEAD", "arquivo com acentuação e espaço.txt");
+    rmSync(arqComEspaco, { force: true });
+  }, 25_000);
+
+  it("E03-4: alterar prosa pura excluida nao invalida cache", () => {
+    // Garante que tipos esta em cache
+    mentor(projeto, "task", "gate", "TASK-CHORE-001", "tipos");
+
+    // Modifica backlog.md (vista excluida)
+    writeFileSync(join(projeto, "docs-mentor", "tarefas", "backlog.md"), "# Novo Backlog Derivado\n", "utf8");
+
+    const resReuso = mentorComStatus(projeto, "task", "gate", "TASK-CHORE-001", "tipos");
+    expect(resReuso.status).toBe(0);
+    expect(resReuso.saida).toContain("[reutilizado]");
+  }, 25_000);
+
+  it("E03-5: artefato de log ausente impede reuso e explica por que", () => {
+    // Garante que o gate tipos rodou e foi gravado
+    mentor(projeto, "task", "gate", "TASK-CHORE-001", "tipos");
+
+    // Localiza o log do gate tipos
+    const camTarefa = join(projeto, "docs-mentor", "tarefas", "abertas", "TASK-CHORE-001.json");
+    const t = JSON.parse(readFileSync(camTarefa, "utf8"));
+    const logRef = t.gates.tipos.log_ref;
+    expect(logRef).toBeDefined();
+
+    // Apaga o log de evidencia
+    rmSync(join(projeto, logRef), { force: true });
+
+    const resSemLog = mentorComStatus(projeto, "task", "gate", "TASK-CHORE-001", "tipos");
+    expect(resSemLog.status).toBe(0);
+    expect(resSemLog.saida).toContain("artefato de log ausente");
+    expect(resSemLog.saida).not.toContain("[reutilizado]");
+  }, 25_000);
+});
+
+describe("Etapa 04: Push e PR verificam o conteudo certo", () => {
+  let projeto = "";
+
+  beforeAll(() => {
+    projeto = mkdtempSync(join(tmpdir(), "mentor-etapa04-hooks-ci-"));
+    mentor(projeto, "init");
+    git(projeto, "init", "-b", "main");
+    git(projeto, "config", "user.name", "Teste Mentor");
+    git(projeto, "config", "user.email", "teste@mentor.invalid");
+    mkdirSync(join(projeto, "src"), { recursive: true });
+    writeFileSync(join(projeto, "src", "index.ts"), "export const a = 1;\n");
+    git(projeto, "add", ".");
+    git(projeto, "commit", "-m", "chore: base");
+
+    // Configura gates no contexto
+    const caminhoCtx = join(projeto, "docs-mentor", "contexto.json");
+    const ctx = JSON.parse(readFileSync(caminhoCtx, "utf8"));
+    ctx.gates = {
+      tipos: { comando: 'node -e "process.exit(0)"' },
+    };
+    ctx.versionamento = {
+      ramo_principal: "main",
+      revisao_antes_do_merge: "PR obrigatorio no GitHub",
+    };
+    writeFileSync(caminhoCtx, JSON.stringify(ctx, null, 2) + "\n", "utf8");
+    git(projeto, "add", ".");
+    git(projeto, "commit", "-m", "chore: configura gates e versionamento");
+  });
+
+  afterAll(() => {
+    if (projeto) rmSync(projeto, { recursive: true, force: true });
+  });
+
+  it("C04-1: pre-push trata exclusao de ramo remoto e envio exclusivo de WIP sem executar gates", () => {
+    // Exclusao de ramo remoto: shaLocal sao todos zeros
+    const inputExclusao = "refs/heads/feature-antiga 0000000000000000000000000000000000000000 refs/heads/feature-antiga 1111111111111111111111111111111111111111\n";
+    const resExclusao = mentorComInput(projeto, inputExclusao, "hooks", "--pre-push");
+    expect(resExclusao.status).toBe(0);
+    expect(resExclusao.saida).toContain("Exclusao de ramo remoto: sem gates");
+
+    // Envio exclusivo para wip/: pula gates
+    const inputWip = "refs/heads/wip/TASK-CHORE-001 1111111111111111111111111111111111111111 refs/heads/wip/TASK-CHORE-001 0000000000000000000000000000000000000000\n";
+    const resWip = mentorComInput(projeto, inputWip, "hooks", "--pre-push");
+    expect(resWip.status).toBe(0);
+    expect(resWip.saida).toContain("Envio de WIP");
+  }, 25_000);
+
+  it("C04-1: pre-push barra envio direto ao main protegido antes de executar gates", () => {
+    const head = spawnSync("git", ["rev-parse", "HEAD"], { cwd: projeto, encoding: "utf8" }).stdout.trim();
+    const inputMain = `refs/heads/main ${head} refs/heads/main 0000000000000000000000000000000000000000\n`;
+    const resMain = mentorComInput(projeto, inputMain, "hooks", "--pre-push");
+    expect(resMain.status).not.toBe(0);
+    expect(resMain.saida).toContain("Envio barrado: push direto no ramo principal");
+  }, 25_000);
+
+  it("C04-1: pre-push detecta working tree sujo em arquivo de codigo e barra", () => {
+    // Modifica src/index.ts sem commitar
+    writeFileSync(join(projeto, "src", "index.ts"), "export const a = 2;\n", "utf8");
+
+    const head = spawnSync("git", ["rev-parse", "HEAD"], { cwd: projeto, encoding: "utf8" }).stdout.trim();
+    const inputFeature = `refs/heads/feature-1 ${head} refs/heads/feature-1 0000000000000000000000000000000000000000\n`;
+    const resSujo = mentorComInput(projeto, inputFeature, "hooks", "--pre-push");
+    expect(resSujo.status).not.toBe(0);
+    expect(resSujo.saida).toContain("working tree possui alteracoes nao commitadas em arquivos de codigo");
+
+    // Restaura
+    git(projeto, "checkout", "--", "src/index.ts");
+  }, 25_000);
+
+  it("C04-2: pronto-para-merge valida PR de plano com tarefa aberta e recusa tarefas com gates concluidos sob (plano)", () => {
+    // Cria tarefa aberta
+    mentor(projeto, "task", "nova", "--tipo", "CHORE", "--titulo", "Tarefa Planejada", "--esforco", "P/P", "--origem", "titulo-autossuficiente");
+
+    // PR com (plano) citando tarefa aberta passa
+    const resPlano = mentorComStatus(projeto, "pronto-para-merge", "--titulo", "docs(plano): planejar TASK-CHORE-001");
+    expect(resPlano.status).toBe(0);
+    expect(resPlano.saida).toContain("Pronto para merge: PR de planejamento (plano) validado");
+
+    // PR de implementacao citando a mesma tarefa aberta falha
+    const resImpl = mentorComStatus(projeto, "pronto-para-merge", "--titulo", "chore(TASK-CHORE-001): implementacao em andamento");
+    expect(resImpl.status).not.toBe(0);
+    expect(resImpl.saida).toContain('esta "aberta"');
+  }, 25_000);
+
+  it("C04-2: (light) nao permite alteracao em scripts protegidos ou workflows", () => {
+    // Cria branch temporaria que toca arquivo em .mentor/
+    git(projeto, "checkout", "-b", "light-invalido");
+    mkdirSync(join(projeto, ".mentor", "scripts"), { recursive: true });
+    writeFileSync(join(projeto, ".mentor", "scripts", "teste-patch.ts"), "// script\n", "utf8");
+    git(projeto, "add", ".");
+    git(projeto, "commit", "-m", "fix(light): tenta burlar com script");
+
+    const resLight = mentorComStatus(projeto, "pronto-para-merge", "--titulo", "fix(light): alteracao de teste", "--base", "main", "--head", "light-invalido");
+    expect(resLight.status).not.toBe(0);
+    expect(resLight.saida).toContain("PR marcado como (light) contem alteracoes em arquivos protegidos");
+
+    git(projeto, "checkout", "main");
+    git(projeto, "branch", "-D", "light-invalido");
+  }, 25_000);
+
+  it("C04-3: ref base inexistente falha fechado com mensagem explicita", () => {
+    const resErroBase = mentorComStatus(projeto, "pronto-para-merge", "--titulo", "docs(plano): teste", "--base", "ref-totalmente-inexistente");
+    expect(resErroBase.status).not.toBe(0);
+    expect(resErroBase.saida).toContain("Falha ao resolver ref base");
+  }, 25_000);
+});
+
+describe("Etapa 05: Consultas sem escrita e patches locais reconhecidos", () => {
+  let projeto = "";
+
+  beforeAll(() => {
+    projeto = mkdtempSync(join(tmpdir(), "mentor-etapa05-patches-"));
+    mentor(projeto, "init");
+    mentor(projeto, "instalar", "--destino", projeto);
+    git(projeto, "init", "-b", "main");
+    git(projeto, "config", "user.name", "Teste Mentor");
+    git(projeto, "config", "user.email", "teste@mentor.invalid");
+    mkdirSync(join(projeto, "src"), { recursive: true });
+    writeFileSync(join(projeto, "src", "index.ts"), "export const a = 1;\n");
+    git(projeto, "add", ".");
+    git(projeto, "commit", "-m", "chore: base");
+  });
+
+  afterAll(() => {
+    if (projeto) rmSync(projeto, { recursive: true, force: true });
+  });
+
+  it("S05-1: doctor e verificar sao somente-leitura e nao alteram contexto.json nem lembretes", () => {
+    const caminhoCtx = join(projeto, "docs-mentor", "contexto.json");
+    const conteudoAntes = readFileSync(caminhoCtx, "utf8");
+
+    // Executa doctor e verificar
+    const resDoc = mentorComStatus(projeto, "doctor");
+    expect(resDoc.status).toBe(0);
+
+    mentorComStatus(projeto, "verificar");
+    const conteudoDepois = readFileSync(caminhoCtx, "utf8");
+    expect(conteudoDepois).toBe(conteudoAntes);
+  }, 25_000);
+
+  it("S05-2: geracao explicita com mentor gerar e idempotente", () => {
+    mentor(projeto, "gerar");
+    const caminhoCtx = join(projeto, "docs-mentor", "contexto.json");
+    const caminhoBacklog = join(projeto, "docs-mentor", "tarefas", "backlog.md");
+    const ctx1 = readFileSync(caminhoCtx, "utf8");
+    const backlog1 = readFileSync(caminhoBacklog, "utf8");
+
+    mentor(projeto, "gerar");
+    const ctx2 = readFileSync(caminhoCtx, "utf8");
+    const backlog2 = readFileSync(caminhoBacklog, "utf8");
+
+    expect(ctx2).toBe(ctx1);
+    expect(backlog2).toBe(backlog1);
+  }, 25_000);
+
+  it("S05-3: divergencia exata registrada e reconhecida; alterar alem do patch invalida", () => {
+    // Cria manifesto inicial em .mentor/
+    mentor(projeto, "manifesto");
+
+    // Edita um arquivo em .mentor/
+    const caminhoEntrega = join(projeto, ".mentor", "processos", "entrega.md");
+    const original = readFileSync(caminhoEntrega, "utf8");
+    writeFileSync(caminhoEntrega, original + "\n<!-- patch local 1 -->\n", "utf8");
+
+    // Antes de registrar patch, verificar acusa divergencia
+    const resVer1 = mentorComStatus(projeto, "verificar");
+    expect(resVer1.saida).toContain("arquivo diverge do pacote sem patch registrado");
+
+    // Registra o patch
+    const resReg = mentorComStatus(projeto, "patch", "registrar", "processos/entrega.md", "--tarefa", "TASK-CHORE-001");
+    expect(resReg.status).toBe(0);
+    expect(resReg.saida).toContain("Patch registrado");
+
+    // Agora o patch e reconhecido
+    const resListar = mentorComStatus(projeto, "patch", "listar");
+    expect(resListar.status).toBe(0);
+    expect(resListar.saida).toContain("Patches Reconhecidos e Validos (1)");
+
+    // Adiciona mais uma linha (divergencia alem do patch)
+    writeFileSync(caminhoEntrega, original + "\n<!-- patch local 1 -->\n<!-- alteracao nao autorizada -->\n", "utf8");
+    const resVer2 = mentorComStatus(projeto, "verificar");
+    expect(resVer2.saida).toContain("alterado alem do patch registrado");
+
+    // Restaura o arquivo
+    writeFileSync(caminhoEntrega, original, "utf8");
+  }, 25_000);
+});
+
+describe("Etapa 06: Processo compacto, migracao e piloto", () => {
+  let projeto = "";
+
+  beforeAll(() => {
+    projeto = mkdtempSync(join(tmpdir(), "mentor-etapa06-processo-"));
+    mentor(projeto, "init");
+    git(projeto, "init", "-b", "main");
+    git(projeto, "config", "user.name", "Teste Mentor");
+    git(projeto, "config", "user.email", "teste@mentor.invalid");
+    mkdirSync(join(projeto, "src"), { recursive: true });
+    writeFileSync(join(projeto, "src", "index.ts"), "export const a = 1;\n");
+    git(projeto, "add", ".");
+    git(projeto, "commit", "-m", "chore: base");
+
+    // Configura gates no contexto
+    const caminhoCtx = join(projeto, "docs-mentor", "contexto.json");
+    const ctx = JSON.parse(readFileSync(caminhoCtx, "utf8"));
+    ctx.qualidade = {
+      ...(ctx.qualidade ?? {}),
+      metodo_de_teste: "teste-depois",
+    };
+    ctx.gates = {
+      tipos: { comando: 'node -e "process.exit(0)"' },
+      testes: { comando: 'node -e "process.exit(0)"' },
+    };
+    writeFileSync(caminhoCtx, JSON.stringify(ctx, null, 2) + "\n", "utf8");
+    git(projeto, "add", ".");
+    git(projeto, "commit", "-m", "chore: gates configurados");
+  });
+
+  afterAll(() => {
+    if (projeto) rmSync(projeto, { recursive: true, force: true });
+  });
+
+  it("F06-1: planejamento portatil importado/registrado e vinculado sem duplicar narrativa nem exigir nova autorizacao", () => {
+    // Cria plano externo
+    const planoExterno = join(projeto, "plano-externo.md");
+    writeFileSync(planoExterno, "# Plano de Teste Portatil\n\n## 1. Escopo\nTeste portatil.\n", "utf8");
+
+    // Registra plano
+    const resReg = mentorComStatus(projeto, "plano", "registrar", "--arquivo", planoExterno, "--titulo", "Plano Externo");
+    expect(resReg.status).toBe(0);
+
+    // Cria tarefa e vincula plano
+    mentor(projeto, "task", "nova", "--tipo", "CHORE", "--titulo", "Tarefa com Plano", "--esforco", "P/P", "--origem", "titulo-autossuficiente");
+    mentor(projeto, "task", "puxar", "TASK-CHORE-001");
+    const resVinc = mentorComStatus(projeto, "task", "vincular-plano", "TASK-CHORE-001", "--arquivo", planoExterno);
+    expect(resVinc.status).toBe(0);
+
+    // Inicia tarefa
+    const resIniciar = mentorComStatus(projeto, "task", "iniciar", "TASK-CHORE-001");
+    expect(resIniciar.status).toBe(0);
+
+    // Verifica que narrativa referencia o plano sem duplicar
+    const camNarrativa = join(projeto, "docs-mentor", "tarefas", "abertas", "TASK-CHORE-001.md");
+    const narrativa = readFileSync(camNarrativa, "utf8");
+    expect(narrativa).toContain("Plano de referencia: plano-externo.md");
+
+    // Pausa para liberar o slot de execucao (WIP limit = 1)
+    mentor(projeto, "task", "pausar", "TASK-CHORE-001", "--motivo", "pausa para liberar slot", "--commit");
+  }, 25_000);
+
+  it("F06-2: correcao localizada percorre Standard compacto e finaliza com evidencia sem exigir alternativas teatrais", () => {
+    // Cria tarefa standard compacto
+    const resNova = mentorComStatus(
+      projeto,
+      "task",
+      "nova",
+      "--tipo",
+      "BG",
+      "--titulo",
+      "Correcao de Bug Pontual",
+      "--esforco",
+      "P/P",
+      "--origem",
+      "titulo-autossuficiente",
+      "--cerimonia",
+      "Standard",
+      "--perfil",
+      "compacto"
+    );
+    expect(resNova.status).toBe(0);
+
+    // Puxa para o ciclo e inicia
+    mentor(projeto, "task", "puxar", "TASK-BG-001");
+    const resIniciar = mentorComStatus(projeto, "task", "iniciar", "TASK-BG-001");
+    expect(resIniciar.status).toBe(0);
+
+    // Modifica o arquivo no git
+    writeFileSync(join(projeto, "src", "index.ts"), "export const a = 2;\n", "utf8");
+
+    // Configura plano sem marcadores e sem alternativas_profissionais / discordancia
+    const camTarefa = join(projeto, "docs-mentor", "tarefas", "abertas", "TASK-BG-001.json");
+    const t = JSON.parse(readFileSync(camTarefa, "utf8"));
+    t.plano.muda = ["src/index.ts - corrige bug"];
+    t.plano.criterios_aceite = [{ texto: "corrige bug", teste: 'node -e "process.exit(0)"' }];
+    t.plano.impacto = "apenas local";
+    t.plano.riscos = ["nenhum"];
+    t.plano.solucao_sugerida = "ajuste pontual na condicao";
+    // Nao preenche alternativas_profissionais nem problema_canonico nem discordancia
+    writeFileSync(camTarefa, JSON.stringify(t, null, 2) + "\n", "utf8");
+
+    // Limpa marcador na narrativa compacta
+    const camNarrativa = join(projeto, "docs-mentor", "tarefas", "abertas", "TASK-BG-001.md");
+    const narr = readFileSync(camNarrativa, "utf8").replace("PREENCHER: causa identificada e correcao aplicada", "bug corrigido na condicao");
+    writeFileSync(camNarrativa, narr, "utf8");
+
+    // Executa gates
+    const resGates = mentorComStatus(projeto, "task", "gates", "TASK-BG-001");
+    expect(resGates.status).toBe(0);
+
+    // Finaliza com validacao dispensada (nao e sensivel)
+    const resFin = mentorComStatus(projeto, "task", "finalizar", "TASK-BG-001", "--validacao-dispensada");
+    expect(resFin.status).toBe(0);
+    expect(resFin.saida).toContain("TASK-BG-001 concluida");
+
+    // Commita para deixar tree limpa
+    git(projeto, "add", ".");
+    git(projeto, "commit", "-m", "fix(TASK-BG-001): concluida");
+  }, 25_000);
+
+  it("F06-3: mudanca sensivel de autorizacao ou gates exige motivo substancial de dispensa", () => {
+    // Cria tarefa tocando gate/autorizacao no titulo
+    mentor(
+      projeto,
+      "task",
+      "nova",
+      "--tipo",
+      "CHORE",
+      "--titulo",
+      "Ajuste na autorizacao e seguranca",
+      "--esforco",
+      "P/P",
+      "--origem",
+      "titulo-autossuficiente",
+      "--cerimonia",
+      "Standard",
+      "--perfil",
+      "compacto"
+    );
+    mentor(projeto, "task", "puxar", "TASK-CHORE-002");
+    mentor(projeto, "task", "iniciar", "TASK-CHORE-002");
+
+    writeFileSync(join(projeto, "src", "index.ts"), "export const a = 3;\n", "utf8");
+
+    const camTarefa = join(projeto, "docs-mentor", "tarefas", "abertas", "TASK-CHORE-002.json");
+    const t = JSON.parse(readFileSync(camTarefa, "utf8"));
+    t.plano.muda = ["src/index.ts - ajusta autorizacao"];
+    t.plano.criterios_aceite = [{ texto: "valida autorizacao", teste: 'node -e "process.exit(0)"' }];
+    t.plano.impacto = "seguranca de acesso";
+    t.plano.riscos = ["risco de bypass"];
+    writeFileSync(camTarefa, JSON.stringify(t, null, 2) + "\n", "utf8");
+
+    const camNarrativa = join(projeto, "docs-mentor", "tarefas", "abertas", "TASK-CHORE-002.md");
+    writeFileSync(camNarrativa, "# TASK-CHORE-002 · Teste Sensivel\n\n## Resumo da correcao\nCorrecao aplicada.\n\n## Aprendizados ou armadilhas\nNenhum.\n", "utf8");
+    mentor(projeto, "task", "gates", "TASK-CHORE-002");
+
+    // Tenta dispensar com motivo trivial (< 30 chars) -> deve falhar
+    const resDispCurto = mentorComStatus(projeto, "task", "finalizar", "TASK-CHORE-002", "--validacao-dispensada", "--motivo", "curto");
+    expect(resDispCurto.status).not.toBe(0);
+    expect(resDispCurto.saida).toContain("Dispensar validacao em tarefa sensivel");
+
+    // Com motivo substantivo (>= 30 chars) -> deve aceitar
+    const resDispLongo = mentorComStatus(
+      projeto,
+      "task",
+      "finalizar",
+      "TASK-CHORE-002",
+      "--validacao-dispensada",
+      "--motivo",
+      "Validacao manual dispensada porque a mudanca foi verificada por testes automatizados do hook"
+    );
+    expect(resDispLongo.status).toBe(0);
+
+    // Commita para deixar tree limpa
+    git(projeto, "add", ".");
+    git(projeto, "commit", "-m", "chore(TASK-CHORE-002): concluida");
+  }, 25_000);
+
+  it("F06-4: tarefas legadas e novas coexistem sem alteracao historica", () => {
+    // Verifica que tarefas concluidas no projeto coexistem normalmente
+    const resGerar = mentorComStatus(projeto, "gerar");
+    expect(resGerar.status).toBe(0);
+
+    const resDoctor = mentorComStatus(projeto, "doctor");
+    expect(resDoctor.status).toBe(0);
+  }, 25_000);
+
+  it("F06-5: desligamento de cache via MENTOR_SEM_CACHE=1 forca execucao completa", () => {
+    mentor(projeto, "task", "nova", "--tipo", "CHORE", "--titulo", "Tarefa para teste de cache desligado", "--esforco", "P/P", "--origem", "titulo-autossuficiente");
+    mentor(projeto, "task", "puxar", "TASK-CHORE-003");
+    mentor(projeto, "task", "iniciar", "TASK-CHORE-003");
+
+    // Executa tipos uma vez para gerar registro
+    mentor(projeto, "task", "gate", "TASK-CHORE-003", "tipos");
+
+    // Executa com MENTOR_SEM_CACHE=1
+    const resSemCache = spawnSync(process.execPath, [join(RAIZ, "mentor.mjs"), "task", "gate", "TASK-CHORE-003", "tipos"], {
+      cwd: RAIZ,
+      encoding: "utf8",
+      env: { ...process.env, MENTOR_RAIZ: projeto, MENTOR_SEM_CACHE: "1" },
+    });
+    expect(resSemCache.status).toBe(0);
+    expect(resSemCache.stdout).not.toContain("[reutilizado]");
+  }, 25_000);
 });

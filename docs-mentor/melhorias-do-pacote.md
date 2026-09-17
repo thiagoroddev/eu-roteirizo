@@ -65,7 +65,21 @@ Problema visto e ainda não corrigido continua indo para "Anotadas", pelo `mento
 - **O que mudou:** os escopos estruturados `(plano)` e `(light)` sao classificados antes de IDs mencionados no assunto. Sem uma dessas marcas, os IDs continuam exigindo tarefas concluidas. O allowlist de `(plano)` ganhou somente `auditorias/` e `dividas/`, nas pastas atual e legada; codigo, gates e transicoes de tarefa continuam barrados pelas regras existentes.
 - **Arquivos:** `.mentor/scripts/cmd-merge.ts`.
 - **Testes:** "escopos explicitos prevalecem sobre IDs citados no assunto", "PR de planejamento aceita os registros produzidos pela triagem de auditoria" e "PR de entrega continua exigindo a tarefa concluida". Os testes criam um repositorio temporario, fazem um commit de triagem com auditoria, divida, `TASK-DOC-011` aberta e a vista da reserva, usam os titulos `(plano)` recomendado e `(light)` visto no PR #55, ambos citando essa tarefa, e depois conferem separadamente que `fix(TASK-CHORE-999)` ainda reprova com a tarefa aberta.
-- **No pacote:** aplicar a precedencia dos escopos e os quatro padroes de auditoria/divida em `.mentor/scripts/cmd-merge.ts`; levar os tres cenarios para a suite do pacote. Considerar extrair a classificacao do titulo para uma funcao pura, se outros comandos passarem a precisar da mesma semantica.
+### 5 · Reestruturação Mentor V5 (Etapas 00 a 06)
+
+- **Estado:** aplicada aqui em 16/09/26, sobre o pacote 0.12.0.
+- **Problema:** O Mentor sofria de cerimônia excessiva, repetição de suítes completas e gates idênticos no hook de pre-push sem reaproveitamento de evidência, bloqueios por divergências locais no `verificar`, duplicação de planos narrativos entre ferramentas/sessões, e ausência de base verificável de tipos e lint para os scripts do próprio `.mentor/`.
+- **O que mudou:**
+  - **Etapa 00 (Base Verificável):** scripts `typecheck:mentor`, `lint:mentor`, `test:mentor`, `tsconfig.mentor.json` e `eslint.mentor.config.js`.
+  - **Etapa 01 (Planejamento Portátil):** `cmd-plano.ts` (`mentor plano registrar`, `importar`, `planos`, `mentor task vincular-plano <ID>`), permitindo que planos definidos em artefatos externos ou ferramentas distintas sejam reutilizados por referência e verificados por SHA-256 sem duplicação de narrativa.
+  - **Etapa 02 (Executor de Gates Unificado):** `executor-gates.ts` (`executarGateDaTarefa`, `executarGatesDaTarefa`, `executarGatesDoProjeto`) unificando a execução, parando no primeiro erro, salvando logs detalhados em `docs-mentor/.evidencias/logs/` e invalidando execuções com 0 testes.
+  - **Etapa 03 (Identidade dos Insumos e Cache Conservador):** `fingerprint.ts` calcula o hash da árvore de insumos isolando o index via `GIT_INDEX_FILE` temporário, incluindo testes sob `docs-mentor/` e excluindo apenas evidências efêmeras. Cache conservador grava `log_ref`, `chave_cache`, e só reaproveita gates válidos e idênticos.
+  - **Etapa 04 (Pre-push e Integração com CI):** `cmd-hooks.ts` executa verificações baratas primeiro (bypass de WIP, exclusão remota, push direto na main, branch suja em código), e `cmd-merge.ts` valida refs base/head via `git rev-parse` com matriz estrita para PRs `(light)` e `(plano)`.
+  - **Etapa 05 (Consultas Somente Leitura e Registro de Patches):** `cmd-doctor.ts` tornado 100% somente-leitura; `cmd-patches.ts` e `docs-mentor/patches-do-pacote.json` rastreiam patches locais determinísticos, fazendo `node mentor.mjs verificar` sair verde (APROVADO) com zero ruído.
+  - **Etapa 06 (Processo Compacto e Governança por Risco):** Suporte ao perfil `Standard compacto` (`--cerimonia Standard --perfil compacto`), dispensando ensaios de alternativas sem decisão arquitetural real; categorização sensível em `sensivel.ts` cobrindo segurança, persistência e execução de gates contra dispensas indevidas; convivência harmônica com tarefas legadas.
+- **Arquivos:** `.mentor/scripts/` (`executor-gates.ts`, `fingerprint.ts`, `cmd-plano.ts`, `cmd-patches.ts`, `sensivel.ts`, `tipos.ts`, `cmd-tarefa.ts`, `cmd-doctor.ts`, `cmd-hooks.ts`, `cmd-merge.ts`, `cmd-verificar.ts`, `cli.ts`), `.mentor/nucleo.md`, `.mentor/processos/tarefa.md`, `.mentor/esquemas/tarefa.json`, `docs-mentor/patches-do-pacote.json`, `package.json`, `tsconfig.mentor.json`, `eslint.mentor.config.js`.
+- **Testes:** Suíte completa em `docs-mentor/melhorias-do-pacote.test.ts` (Etapas 00 a 06).
+- **No pacote:** Integrar a arquitetura V5 ao pacote upstream `mentor-agent`.
 
 ## Anotadas
 

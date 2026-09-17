@@ -1,10 +1,9 @@
 import { spawnSync } from 'node:child_process'
-import { copyFileSync, renameSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { renameSync, rmSync } from 'node:fs'
 import { isAbsolute, join, resolve } from 'node:path'
 import {
   agora, caminhos, caminhoCorrespondeDeclaracao, extrairCaminhosDeclarados, escreverJson,
-  escreverTexto, existe, lerJson, lerTexto, listar, NOME_DOS_DOCUMENTOS, relativo,
+  escreverTexto, existe, lerJson, lerTexto, listar, NOME_DOS_DOCUMENTOS,
 } from './arquivos.ts'
 import { proximoIdDeTarefa } from './ids.ts'
 import { carregarContexto, carregarRequisitos, carregarTarefas, fixar, regenerarTudo, registrarRecusa, soltar } from './vistas.ts'
@@ -13,7 +12,7 @@ import {
   ROTULOS_QUE_EXIGEM_MOTIVO, ROTULOS_QUE_NAO_FECHAM, TIPOS_TAREFA,
 } from './tipos.ts'
 import type {
-  Cerimonia, Escala, MetodoDeTeste, Requisito, Rotulo, Tarefa, TipoTarefa, Urgencia, ValorTarefa,
+  Cerimonia, Escala, MetodoDeTeste, PerfilTarefa, Requisito, Rotulo, Tarefa, TipoTarefa, Urgencia, ValorTarefa,
 } from './tipos.ts'
 import { estadoDaCadencia } from './cmd-auditar.ts'
 import { arquivoIntactoDoPacote } from './cmd-pacote.ts'
@@ -21,6 +20,8 @@ import { categoriasSensiveis, MOTIVO_MINIMO_DE_DISPENSA } from './sensivel.ts'
 import { foraDoLaboratorio, laboratorioDe, problemasDaSaidaDoSpike } from './laboratorio.ts'
 import { lerCasosDeValidacao } from './casos.ts'
 import { coletarRestricoesReconfirmadas, validarRestricoesNoFechamento } from './restricoes.ts'
+import { resolverPlano } from './cmd-plano.ts'
+import { calcularFingerprintDosInsumos } from './fingerprint.ts'
 
 type Flags = Record<string, string | undefined>
 
@@ -66,23 +67,7 @@ function cabecaDoGit(): string | null {
  * repositorio inteiro, e o indice de verdade nao e' tocado. `null` sem git.
  */
 export function hashDaArvoreAtual(): string | null {
-  const c = caminhos()
-  const git = (args: string[], env?: NodeJS.ProcessEnv) => spawnSync('git', args, { cwd: c.raiz, encoding: 'utf8', env })
-  const onde = git(['rev-parse', '--git-path', 'index'])
-  if (onde.status !== 0) return null
-  const relativoAoIndice = (onde.stdout ?? '').trim()
-  const indiceReal = isAbsolute(relativoAoIndice) ? relativoAoIndice : join(c.raiz, relativoAoIndice)
-  const temporario = join(tmpdir(), `mentor-indice-${process.pid}-${Date.now()}`)
-  try {
-    if (existe(indiceReal)) copyFileSync(indiceReal, temporario)
-    const env = { ...process.env, GIT_INDEX_FILE: temporario }
-    if (git(['add', '-A', '--', '.'], env).status !== 0) return null
-    git(['rm', '-r', '-q', '--cached', '--ignore-unmatch', '--', relativo(c.docs)], env)
-    const arvore = git(['write-tree'], env)
-    return arvore.status === 0 ? (arvore.stdout ?? '').trim() || null : null
-  } finally {
-    rmSync(temporario, { force: true })
-  }
+  return calcularFingerprintDosInsumos()?.arvore_hash ?? null
 }
 
 /** O que todo registro de execucao grava para provar em que codigo rodou. */
@@ -163,6 +148,10 @@ export function nova(flags: Flags): void {
     // continua
   }
 
+  const perfil = flags.perfil
+    ? umDe<PerfilTarefa>(flags.perfil, ['compacto', 'completo'], 'perfil')
+    : (flags.compacto ? 'compacto' : null)
+
   const t: Tarefa = {
     id: proximoIdDeTarefa(tipo),
     tipo,
@@ -171,6 +160,7 @@ export function nova(flags: Flags): void {
     fatia_de: flags['fatia-de'] ?? null,
     estado: 'aberta',
     cerimonia: umDe<Cerimonia>(flags.cerimonia ?? 'Standard', ['Light', 'Standard', 'Strict'], 'cerimonia'),
+    perfil,
     valor: umDe<ValorTarefa>(flags.valor ?? 'importante', ['critico', 'importante', 'desejavel'], 'valor'),
     urgencia: umDe<Urgencia>(flags.urgencia ?? 'normal', ['imediata', 'normal'], 'urgencia'),
     esforco: {
@@ -370,111 +360,175 @@ export function iniciar(id: string, flags: Flags = {}): void {
     porque: `${MARCADOR} confirmada novamente nesta tarefa? Se nao, explique e aponte ADR`,
   }))
 
-  tarefa.plano = {
-    muda: [`${MARCADOR} caminho/arquivo.ext - o que muda nele, em uma linha`],
-    criterios_aceite: [
-      ehSpike
-        ? { texto: `${MARCADOR} a pergunta que este spike responde`, teste: 'nao se aplica: spike' }
-        : {
-            texto: `${MARCADOR} como saberemos que esta pronto`,
-            teste: `${MARCADOR} arquivo > nome do teste, ou "nao se aplica: <motivo>"`,
-          },
-    ],
-    pedido_original: `${MARCADOR} as palavras do humano, antes de qualquer reformulacao`,
-    solucao_sugerida: `${MARCADOR} a solucao que o humano sugeriu, ou null se ele so descreveu o problema`,
-    alternativas_profissionais: [1, 2].map((n) => ({
-      pratica: `${MARCADOR} pratica profissional consolidada ${n}, comparada a sugestao (ou [] se solucao_sugerida for null)`,
-      pegaria_o_caso: `${MARCADOR} resolveria o caso concreto do pedido? por que`,
-      custo: `${MARCADOR} custo de adotar`,
-    })),
-    ...(ehSpike
-      ? {
-          saida_do_laboratorio: {
-            tipo: `${MARCADOR} "relatorio" (fica no laboratorio) ou "importavel" (o produto consegue ler)`,
-            artefato: `${MARCADOR} o que o produto importa, ou null`,
-            teste_de_contrato: `${MARCADOR} arquivo > nome do teste de contrato, ou null`,
-          },
-        }
-      : {}),
-    problema_canonico: `${MARCADOR} nome canonico na literatura (ex: TSP, CRDT), ou "sem nome canonico"`,
-    discordancia: {
-      o_que_faria_diferente: `${MARCADOR} o que eu faria diferente, ou "Nada a objetar"`,
-      o_que_preocupa: `${MARCADOR} o que me preocupa neste plano, ou "Nada a objetar"`,
-      o_que_existe_pronto_80_porcento: `${MARCADOR} ferramenta/lib consolidada que resolve 80%, ou "Nenhuma conhecida"`,
-    },
-    ...(ehSpikeDeMedicao
-      ? {
-          reguas_de_medicao: {
-            piso: `${MARCADOR} baseline trivial a superar`,
-            teto: `${MARCADOR} otimo calculado ou melhor ref externa`,
-            padrao: `${MARCADOR} solucao consolidada da industria`,
-          },
-        }
-      : {}),
-    ...(ehGrande
-      ? {
-          estado_da_arte: {
-            implementacoes_consolidadas: [`${MARCADOR} alternativa 1`, `${MARCADOR} alternativa 2`],
-            motivo_descarte: `${MARCADOR} por que cada alternativa foi descartada`,
-            o_que_resta_construir: `${MARCADOR} o que ainda precisa ser feito mesmo adotando a solucao`,
-          },
-          custo_de_oportunidade: {
-            o_que_existe_pronto: `${MARCADOR} o que existe pronto no mercado`,
-            custo_estimado: `${MARCADOR} custo em dinheiro ou licenca`,
-            dependencias_ou_infra: `${MARCADOR} backend ou dependencias necessarias`,
-            tempo_substituido: `${MARCADOR} semanas de desenvolvimento substituidas`,
-          },
-        }
-      : {}),
-    impacto: `${MARCADOR} modulos afetados`,
-    riscos: [`${MARCADOR} o que pode dar errado, ou "nenhum identificado"`],
-    dependencias_novas: [],
-    proporcionalidade: `${MARCADOR} pediram X, proponho Y, e Y e do tamanho de X porque...`,
-    restricoes_reavaliadas: restricoesIniciais,
-    meio_de_validacao: {
-      tipo: 'testes_automatizados',
-      porque_nao_automatizado: null,
-      roteiro: null,
-      artefato: null,
-      casos: null,
-    },
-    composicao: tarefa.fatia_de
-      ? {
-          o_que_esta_fatia_entrega: `${MARCADOR} o que esta fatia entrega e como se integra ao todo`,
-          a_direcao_se_mantem: true,
-          porque: `${MARCADOR} por que a direcao do epico se mantem ou mudou`,
-        }
-      : null,
+  if (tarefa.plano_ref) {
+    const planoRes = resolverPlano(tarefa)
+    if (!planoRes.revisao_valida) {
+      throw new Error(`Revisao do plano invalida para ${id}: ${planoRes.diagnosticos.join(', ')}`)
+    }
+    if (!tarefa.plano) {
+      tarefa.plano = {
+        muda: planoRes.muda,
+        criterios_aceite: planoRes.criterios_aceite,
+        impacto: planoRes.impacto,
+        riscos: planoRes.riscos,
+        dependencias_novas: planoRes.dependencias_novas,
+        proporcionalidade: planoRes.proporcionalidade,
+      }
+    }
+  } else if (tarefa.perfil === 'compacto') {
+    tarefa.plano = {
+      muda: [`${MARCADOR} caminho/arquivo.ext - o que muda nele, em uma linha`],
+      criterios_aceite: [
+        ehSpike
+          ? { texto: `${MARCADOR} a pergunta que este spike responde`, teste: 'nao se aplica: spike' }
+          : {
+              texto: `${MARCADOR} como saberemos que esta pronto`,
+              teste: `${MARCADOR} arquivo > nome do teste, ou "nao se aplica: <motivo>"`,
+            },
+      ],
+      impacto: `${MARCADOR} modulos afetados ou impacto local`,
+      riscos: [`${MARCADOR} risco relevante ou "baixo risco local"`],
+      dependencias_novas: [],
+      proporcionalidade: 'Standard compacto: correcao delimitada com causa e solucao conhecidas',
+      meio_de_validacao: {
+        tipo: 'testes_automatizados',
+        porque_nao_automatizado: null,
+        roteiro: null,
+        artefato: null,
+        casos: null,
+      },
+      composicao: tarefa.fatia_de
+        ? {
+            o_que_esta_fatia_entrega: `${MARCADOR} o que esta fatia entrega e como se integra ao todo`,
+            a_direcao_se_mantem: true,
+            porque: `${MARCADOR} por que a direcao do epico se mantem ou mudou`,
+          }
+        : null,
+    }
+  } else {
+    tarefa.plano = {
+      muda: [`${MARCADOR} caminho/arquivo.ext - o que muda nele, em uma linha`],
+      criterios_aceite: [
+        ehSpike
+          ? { texto: `${MARCADOR} a pergunta que este spike responde`, teste: 'nao se aplica: spike' }
+          : {
+              texto: `${MARCADOR} como saberemos que esta pronto`,
+              teste: `${MARCADOR} arquivo > nome do teste, ou "nao se aplica: <motivo>"`,
+            },
+      ],
+      pedido_original: `${MARCADOR} as palavras do humano, antes de qualquer reformulacao`,
+      solucao_sugerida: `${MARCADOR} a solucao que o humano sugeriu, ou null se ele so descreveu o problema`,
+      alternativas_profissionais: [1, 2].map((n) => ({
+        pratica: `${MARCADOR} pratica profissional consolidada ${n}, comparada a sugestao (ou [] se solucao_sugerida for null)`,
+        pegaria_o_caso: `${MARCADOR} resolveria o caso concreto do pedido? por que`,
+        custo: `${MARCADOR} custo de adotar`,
+      })),
+      ...(ehSpike
+        ? {
+            saida_do_laboratorio: {
+              tipo: `${MARCADOR} "relatorio" (fica no laboratorio) ou "importavel" (o produto consegue ler)`,
+              artefato: `${MARCADOR} o que o produto importa, ou null`,
+              teste_de_contrato: `${MARCADOR} arquivo > nome do teste de contrato, ou null`,
+            },
+          }
+        : {}),
+      problema_canonico: `${MARCADOR} nome canonico na literatura (ex: TSP, CRDT), ou "sem nome canonico"`,
+      discordancia: {
+        o_que_faria_diferente: `${MARCADOR} o que eu faria diferente, ou "Nada a objetar"`,
+        o_que_preocupa: `${MARCADOR} o que me preocupa neste plano, ou "Nada a objetar"`,
+        o_que_existe_pronto_80_porcento: `${MARCADOR} ferramenta/lib consolidada que resolve 80%, ou "Nenhuma conhecida"`,
+      },
+      ...(ehSpikeDeMedicao
+        ? {
+            reguas_de_medicao: {
+              piso: `${MARCADOR} baseline trivial a superar`,
+              teto: `${MARCADOR} otimo calculado ou melhor ref externa`,
+              padrao: `${MARCADOR} solucao consolidada da industria`,
+            },
+          }
+        : {}),
+      ...(ehGrande
+        ? {
+            estado_da_arte: {
+              implementacoes_consolidadas: [`${MARCADOR} alternativa 1`, `${MARCADOR} alternativa 2`],
+              motivo_descarte: `${MARCADOR} por que cada alternativa foi descartada`,
+              o_que_resta_construir: `${MARCADOR} o que ainda precisa ser feito mesmo adotando a solucao`,
+            },
+            custo_de_oportunidade: {
+              o_que_existe_pronto: `${MARCADOR} o que existe pronto no mercado`,
+              custo_estimado: `${MARCADOR} custo em dinheiro ou licenca`,
+              dependencias_ou_infra: `${MARCADOR} backend ou dependencias necessarias`,
+              tempo_substituido: `${MARCADOR} semanas de desenvolvimento substituidas`,
+            },
+          }
+        : {}),
+      impacto: `${MARCADOR} modulos afetados`,
+      riscos: [`${MARCADOR} o que pode dar errado, ou "nenhum identificado"`],
+      dependencias_novas: [],
+      proporcionalidade: `${MARCADOR} pediram X, proponho Y, e Y e do tamanho de X porque...`,
+      restricoes_reavaliadas: restricoesIniciais,
+      meio_de_validacao: {
+        tipo: 'testes_automatizados',
+        porque_nao_automatizado: null,
+        roteiro: null,
+        artefato: null,
+        casos: null,
+      },
+      composicao: tarefa.fatia_de
+        ? {
+            o_que_esta_fatia_entrega: `${MARCADOR} o que esta fatia entrega e como se integra ao todo`,
+            a_direcao_se_mantem: true,
+            porque: `${MARCADOR} por que a direcao do epico se mantem ou mudou`,
+          }
+        : null,
+    }
   }
   escreverJson(caminho, tarefa)
 
   const narrativa = narrativaDe(caminho)
   if (!existe(narrativa)) {
-    const secoes = ehSpike
-      ? [
-          '## A resposta',
-          `${MARCADOR} o que a exploracao descobriu`,
+    if (tarefa.plano_ref) {
+      escreverTexto(narrativa, [`# ${tarefa.id} · ${tarefa.titulo}`, '', `Plano de referencia: ${tarefa.plano_ref.arquivo}`].join('\n'))
+    } else if (tarefa.perfil === 'compacto') {
+      escreverTexto(
+        narrativa,
+        [
+          `# ${tarefa.id} · ${tarefa.titulo}`,
           '',
-          '## O que foi descartado',
-          `${MARCADOR} spike e descartavel: o que sai daqui, e o que sobrevive e por que`,
+          '## Resumo da correcao',
+          `${MARCADOR} causa identificada e correcao aplicada`,
           '',
-          '## A tarefa que isto destrava',
-          `${MARCADOR} o ID, ou "nenhuma: a resposta foi nao"`,
-        ]
-      : [
-          '## Decisoes tomadas',
-          `${MARCADOR} o que foi decidido durante a execucao, e por que`,
-          '',
-          '## O que nao foi feito, e por que',
-          `${MARCADOR} escopo recusado, adiado, ou impossivel agora`,
-          '',
-          '## Testes de descoberta',
-          `${MARCADOR} bordas que so apareceram ao implementar e viraram teste. "Nenhuma" e' resposta`,
-          '',
-          '## Aprendizados',
-          `${MARCADOR} o que a proxima tarefa deveria saber. "Nada" e resposta legitima`,
-        ]
-    escreverTexto(narrativa, [`# ${tarefa.id} · ${tarefa.titulo}`, '', ...secoes].join('\n'))
+          '## Aprendizados ou armadilhas',
+          'Nenhum identificado alem do caso tratado.',
+        ].join('\n'),
+      )
+    } else {
+      const secoes = ehSpike
+        ? [
+            '## A resposta',
+            `${MARCADOR} o que a exploracao descobriu`,
+            '',
+            '## O que foi descartado',
+            `${MARCADOR} spike e descartavel: o que sai daqui, e o que sobrevive e por que`,
+            '',
+            '## A tarefa que isto destrava',
+            `${MARCADOR} o ID, ou "nenhuma: a resposta foi nao"`,
+          ]
+        : [
+            '## Decisoes tomadas',
+            `${MARCADOR} o que foi decidido durante a execucao, e por que`,
+            '',
+            '## O que nao foi feito, e por que',
+            `${MARCADOR} escopo recusado, adiado, ou impossivel agora`,
+            '',
+            '## Testes de descoberta',
+            `${MARCADOR} bordas que so apareceram ao implementar e viraram teste. "Nenhuma" e' resposta`,
+            '',
+            '## Aprendizados',
+            `${MARCADOR} o que a proxima tarefa deveria saber. "Nada" e resposta legitima`,
+          ]
+      escreverTexto(narrativa, [`# ${tarefa.id} · ${tarefa.titulo}`, '', ...secoes].join('\n'))
+    }
   }
   regenerarTudo()
   console.log(`${id} em execucao. Preencha o plano e apresente ao humano antes de executar (nucleo, portao 1).`)
@@ -783,18 +837,25 @@ export function finalizar(id: string, flags: Flags = {}): void {
   if (tarefa.estado !== 'em-execucao') impedimentos.push(`estado e "${tarefa.estado}", nao "em-execucao"`)
 
   const ehSpike = tarefa.tipo === 'SPIKE'
-  const temCriterioDeMedicao = tarefa.plano.criterios_aceite.some((c) =>
+  const planoResolvido = resolverPlano(tarefa)
+  const temCriterioDeMedicao = planoResolvido.criterios_aceite.some((c) =>
     /\b(melhor|ganh|otimiz|reduz|desempenho|latenci|taxa|bench|med)/i.test(c.texto || ''),
   )
 
-  const planoParaVerificar = { ...tarefa.plano }
-  if (ehSpike && !temCriterioDeMedicao) {
-    delete (planoParaVerificar as Record<string, unknown>).reguas_de_medicao
-  }
+  if (tarefa.plano_ref) {
+    if (!planoResolvido.revisao_valida) {
+      impedimentos.push(`plano referenciado com revisao divergente: ${planoResolvido.diagnosticos.join(', ')}`)
+    }
+  } else {
+    const planoParaVerificar = { ...tarefa.plano }
+    if (ehSpike && !temCriterioDeMedicao) {
+      delete (planoParaVerificar as Record<string, unknown>).reguas_de_medicao
+    }
 
-  const marcadores: string[] = []
-  marcadoresEm(planoParaVerificar, 'plano', marcadores)
-  if (marcadores.length) impedimentos.push(`marcador ${MARCADOR} nao preenchido em ${marcadores.join(', ')}`)
+    const marcadores: string[] = []
+    marcadoresEm(planoParaVerificar, 'plano', marcadores)
+    if (marcadores.length) impedimentos.push(`marcador ${MARCADOR} nao preenchido em ${marcadores.join(', ')}`)
+  }
 
   // Validação manual: atalho direto na finalização
   if (flags['validado-por-humano']) {
@@ -894,15 +955,15 @@ export function finalizar(id: string, flags: Flags = {}): void {
     })
   }
 
-  // M2: Problema canônico obrigatório no plano
-  if (tarefa.plano.problema_canonico !== undefined) {
+  // M2: Problema canônico obrigatório no plano (dispensado em perfil compacto)
+  if (tarefa.perfil !== 'compacto' && tarefa.plano.problema_canonico !== undefined) {
     if (!tarefa.plano.problema_canonico || !tarefa.plano.problema_canonico.trim()) {
       impedimentos.push('plano sem "problema_canonico": declare o nome canonico na literatura (ex: TSP, VRP, CRDT) ou "sem nome canonico"')
     }
   }
 
-  // M7: Seção de discordância obrigatória no plano
-  if (tarefa.plano.discordancia !== undefined) {
+  // M7: Seção de discordância obrigatória no plano (dispensado em perfil compacto)
+  if (tarefa.perfil !== 'compacto' && tarefa.plano.discordancia !== undefined) {
     const d = tarefa.plano.discordancia
     if (
       !d ||
@@ -916,11 +977,11 @@ export function finalizar(id: string, flags: Flags = {}): void {
     }
   }
 
-  // 0.10.0: a sugestao do humano e' hipotese. Plano iniciado antes da 0.10.0 nao tem os campos.
-  if (tarefa.plano.pedido_original !== undefined && !tarefa.plano.pedido_original?.trim()) {
+  // 0.10.0: a sugestao do humano e' hipotese. Em perfil compacto, dispensa comparar 2 alternativas de mercado
+  if (tarefa.perfil !== 'compacto' && tarefa.plano.pedido_original !== undefined && !tarefa.plano.pedido_original?.trim()) {
     impedimentos.push('plano sem "pedido_original": registre as palavras do humano antes da reformulacao')
   }
-  if (tarefa.plano.solucao_sugerida?.trim()) {
+  if (tarefa.perfil !== 'compacto' && tarefa.plano.solucao_sugerida?.trim()) {
     const completas = (tarefa.plano.alternativas_profissionais ?? []).filter((a) =>
       Boolean(a?.pratica?.trim() && a?.pegaria_o_caso?.trim() && a?.custo?.trim()))
     if (completas.length < 2) {
@@ -1015,8 +1076,15 @@ export function finalizar(id: string, flags: Flags = {}): void {
   })
 
   const narrativa = narrativaDe(caminho)
-  if (!existe(narrativa)) impedimentos.push('narrativa ausente')
-  else if (lerTexto(narrativa).includes(MARCADOR)) impedimentos.push(`marcador ${MARCADOR} nao preenchido na narrativa`)
+  if (!existe(narrativa)) {
+    if (tarefa.plano_ref) {
+      escreverTexto(narrativa, `# ${tarefa.id} · ${tarefa.titulo}\n\nPlano referenciado: ${tarefa.plano_ref.arquivo}\n`)
+    } else {
+      impedimentos.push('narrativa ausente')
+    }
+  } else if (!tarefa.plano_ref && lerTexto(narrativa).includes(MARCADOR)) {
+    impedimentos.push(`marcador ${MARCADOR} nao preenchido na narrativa`)
+  }
 
   for (const [nome, decl] of Object.entries(ctx.gates)) {
     if (!decl?.comando) continue
@@ -1069,7 +1137,7 @@ export function finalizar(id: string, flags: Flags = {}): void {
       rUntracked.stdout.split('\n').forEach((f) => arquivosSet.add(f.trim().replace(/\\/g, '/')))
     }
     const arquivosModificados = [...arquivosSet].filter(Boolean)
-    const declarados = extrairCaminhosDeclarados(tarefa.plano.muda)
+    const declarados = extrairCaminhosDeclarados(planoResolvido.muda)
     const ignorados = [
       `${NOME_DOS_DOCUMENTOS}/`,
       'docs/',
@@ -1166,7 +1234,7 @@ export function finalizar(id: string, flags: Flags = {}): void {
       (g.rotulo === 'APROVADO' || g.rotulo === 'APROVADO com ressalva'))
   const arvoreAtual = gatesComArvore.length ? hashDaArvoreAtual() : null
   if (arvoreAtual) {
-    const declarados = extrairCaminhosDeclarados(tarefa.plano.muda)
+    const declarados = extrairCaminhosDeclarados(planoResolvido.muda)
     const lsFiles = spawnSync('git', ['-c', 'core.quotepath=false', 'ls-files'], { cwd: caminhos().raiz, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
     const rastreados = new Set((lsFiles.stdout ?? '').split('\n').map((s) => s.trim()).filter(Boolean))
     for (const [nome, g] of gatesComArvore) {
@@ -1366,10 +1434,12 @@ export function anexar(id: string, flags: Flags): void {
  */
 export function criterio(id: string, indiceStr: string, flags: Flags): void {
   const { caminho, tarefa } = localizar(id)
+  const planoResolvido = resolverPlano(tarefa)
+  const criterios = tarefa.plano?.criterios_aceite?.length ? tarefa.plano.criterios_aceite : planoResolvido.criterios_aceite
   const idx = parseInt(indiceStr, 10)
-  if (isNaN(idx) || idx < 0 || idx >= tarefa.plano.criterios_aceite.length) {
+  if (isNaN(idx) || idx < 0 || idx >= criterios.length) {
     throw new Error(
-      `Indice de criterio invalido: "${indiceStr}". A tarefa possui ${tarefa.plano.criterios_aceite.length} criterios (0 a ${tarefa.plano.criterios_aceite.length - 1}).`,
+      `Indice de criterio invalido: "${indiceStr}". A tarefa possui ${criterios.length} criterios (0 a ${criterios.length - 1}).`,
     )
   }
   let comando: string | null = null
@@ -1387,6 +1457,18 @@ export function criterio(id: string, indiceStr: string, flags: Flags): void {
     codigoSaida = 0
   } else {
     throw new Error('mentor task criterio exige --comando "<cmd>" ou --saida "<texto>".')
+  }
+  if (!tarefa.plano) {
+    tarefa.plano = {
+      muda: planoResolvido.muda,
+      criterios_aceite: [...criterios],
+      impacto: planoResolvido.impacto,
+      riscos: planoResolvido.riscos,
+      dependencias_novas: planoResolvido.dependencias_novas,
+      proporcionalidade: planoResolvido.proporcionalidade,
+    }
+  } else if (!tarefa.plano.criterios_aceite || tarefa.plano.criterios_aceite.length === 0) {
+    tarefa.plano.criterios_aceite = [...criterios]
   }
   tarefa.plano.criterios_aceite[idx]!.evidencia = {
     comando,
