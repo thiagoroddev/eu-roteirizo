@@ -4,4 +4,6 @@ Regra de Contexto e Tokens: Arquivos com sufixo `--estudo-humano.md` (em `docs-m
 
 Fechamento de Tarefas e Desfecho: Antes de pedir o Portão 2 ou rodar `node mentor.mjs task finalizar`, preencha ativamente a seção `## Desfecho e Validação Real` na narrativa da tarefa (`docs-mentor/tarefas/abertas/<ID>.md`). O CLI possui uma trava que bloqueia o fechamento se a seção estiver ausente. Registre: (1) comportamento real observado nos testes manuais; (2) armadilhas técnicas, peculiaridades de ambiente ou aprendizados da sessão (concorrência, persistência, cache, UX); (3) desfecho dos gates e conclusão.
 
+Regra de Isolamento de Ramos e PR: Quando `revisao_antes_do_merge` exigir PR, a IA está terminantemente proibida de propor ou executar merge local na branch `main`. A `main` local é somente-leitura em relação a branches de trabalho e avança exclusivamente via `git pull` após o merge ter ocorrido na esteira remota do GitHub. O único fluxo pós-commit autorizado é subir o ramo da tarefa (`git push -u origin <ramo>`) e abrir Pull Request.
+
 Problema no proprio mentor-agent: corrija no `.mentor/` deste projeto e registre em `docs-mentor/melhorias-do-pacote.md`, seguindo a regra do topo desse arquivo.
