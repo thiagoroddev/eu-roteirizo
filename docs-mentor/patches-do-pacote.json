@@ -1,0 +1,185 @@
+{
+  "versao_pacote": "0.12.0",
+  "patches": [
+    {
+      "arquivo": "esquemas/tarefa.json",
+      "versao_base": "0.12.0",
+      "digest_base": "4185bb1608603a65",
+      "digest_local": "667023c555a83890",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "processos/entrega.md",
+      "versao_base": "0.12.0",
+      "digest_base": "cd4f10d62932cfb6",
+      "digest_local": "ca17f4623b922a0f",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/arquivos.ts",
+      "versao_base": "0.12.0",
+      "digest_base": "2ff60b0af6181757",
+      "digest_local": "ff6999d7ef6d3e3b",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/cli.ts",
+      "versao_base": "0.12.0",
+      "digest_base": "d5f2b2e9262b6e68",
+      "digest_local": "182297c13cdc2f9c",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/cmd-doctor.ts",
+      "versao_base": "0.12.0",
+      "digest_base": "c03c46f22e34b789",
+      "digest_local": "852acc9cc6942f8d",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/cmd-gates.ts",
+      "versao_base": "0.12.0",
+      "digest_base": "dc5b327389ce58c6",
+      "digest_local": "ecbf0201f121b7cb",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/cmd-hooks.ts",
+      "versao_base": "0.12.0",
+      "digest_base": "173633a8c8a3a195",
+      "digest_local": "81e483c7e36e51f1",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/cmd-merge.ts",
+      "versao_base": "0.12.0",
+      "digest_base": "038f6bf4e9edc3c7",
+      "digest_local": "50ec28b00f081d1a",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/cmd-pacote.ts",
+      "versao_base": "0.12.0",
+      "digest_base": "4748bbbfb950c9a8",
+      "digest_local": "e602b9689e8325ba",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/cmd-tarefa.ts",
+      "versao_base": "0.12.0",
+      "digest_base": "5ea2e9b95009767b",
+      "digest_local": "8365fbcbec3895f4",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/cmd-verificar.ts",
+      "versao_base": "0.12.0",
+      "digest_base": "f5238adff24c3fc6",
+      "digest_local": "a83ec9264c172dbb",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/tipos.ts",
+      "versao_base": "0.12.0",
+      "digest_base": "2f32c8345fbec535",
+      "digest_local": "fc55982e5b89e547",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/vistas.ts",
+      "versao_base": "0.12.0",
+      "digest_base": "6de2e1df47ed31ba",
+      "digest_local": "69420f976976a977",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/cmd-patches.ts",
+      "versao_base": "0.12.0",
+      "digest_base": null,
+      "digest_local": "67a40a0840557a64",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/cmd-plano.ts",
+      "versao_base": "0.12.0",
+      "digest_base": null,
+      "digest_local": "40cc73a77f2fcb3c",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/executor-gates.ts",
+      "versao_base": "0.12.0",
+      "digest_base": null,
+      "digest_local": "9dad0b885b20ca9d",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/fingerprint.ts",
+      "versao_base": "0.12.0",
+      "digest_base": null,
+      "digest_local": "b3e6b049597214d8",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "nucleo.md",
+      "versao_base": "0.12.0",
+      "digest_base": "18b7f8dd23e835e7",
+      "digest_local": "63116ecf9cb1925c",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "processos/tarefa.md",
+      "versao_base": "0.12.0",
+      "digest_base": "d2122d3ad6e504ee",
+      "digest_local": "aed85014f97075fd",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    },
+    {
+      "arquivo": "scripts/sensivel.ts",
+      "versao_base": "0.12.0",
+      "digest_base": "4cc2eb75d9862289",
+      "digest_local": "f9869fbed707492e",
+      "tarefa_ref": "TASK-CHORE-027",
+      "evidencia_teste": null,
+      "registrado_em": "16/09/26 21:46"
+    }
+  ]
+}
