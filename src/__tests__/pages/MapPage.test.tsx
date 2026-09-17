@@ -1706,6 +1706,35 @@ describe("MapPage (focus screen)", () => {
     expect(screen.queryByText(UI_LABELS.MAP_PANEL.VEHICLE_STOP_BADGE)).not.toBeInTheDocument();
   });
 
+  it("ao editar parada e aumentar raio salva novos enderecos englobados", () => {
+    startRoteiroFlow();
+    // Cria P1 reduzindo o raio para 10m para conter apenas p1 (Rua Mapa, 10); p2 (~17m) fica livre
+    fireEvent.click(screen.getByRole("button", { name: "stub-first-point-tap" }));
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.RADIUS_DECREASE }));
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.RADIUS_DECREASE }));
+    fireEvent.click(screen.getByRole("button", { name: POINT_LABELS.CREATE_STOP }));
+
+    expect(screen.getByText("P1")).toBeInTheDocument();
+    expect(screen.getByText("1 endereço")).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.PERCENT(1 / 3))).toBeInTheDocument();
+
+    // Clica em Editar para reabrir P1 como rascunho
+    fireEvent.click(screen.getByRole("button", { name: UI_LABELS.MAP_PANEL.ROTEIRO_STOP.EDIT }));
+    expect(screen.getByText("1 endereço")).toBeInTheDocument();
+
+    // Aumenta o raio de 10m para 20m: p2 (~17m) e englobado automaticamente
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.RADIUS_INCREASE }));
+    expect(screen.getByText("2 endereços")).toBeInTheDocument();
+
+    // Salva a parada comitada
+    fireEvent.click(screen.getByRole("button", { name: DRAFT_LABELS.SAVE }));
+
+    // A parada P1 persistida contem os 2 enderecos englobados e o progresso sobe para 67%
+    expect(screen.getByText("P1")).toBeInTheDocument();
+    expect(screen.getByText("2 endereços")).toBeInTheDocument();
+    expect(screen.getByText(OVERVIEW_LABELS.PERCENT(2 / 3))).toBeInTheDocument();
+  });
+
   it("shows the error state when the manifest cannot be reopened", () => {
     uploaderState.routes = null;
     uploaderState.error = UI_LABELS.FILE_UPLOADER.MANIFEST_NOT_FOUND;
