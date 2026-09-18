@@ -3,7 +3,7 @@
 <!-- Gerado por `node mentor.mjs gerar`. Nao edite a mao: a proxima geracao sobrescreve. -->
 
 **Fase:** construcao · **Rigor:** N2
-**Respondido por voce:** 160 · **Padrao do pacote:** 25 · **Em aberto:** 18
+**Respondido por voce:** 159 · **Padrao do pacote:** 25 · **Em aberto:** 19
 
 Todos os portoes foram respondidos ou dispensados com motivo.
 
@@ -147,14 +147,13 @@ Todos os portoes foram respondidos ou dispensados com motivo.
 - `laboratorio.chaves`: 2 item(s)
 - `laboratorio.artefatos_importaveis`: 2 item(s)
 - `versionamento.ramo_principal`: main
-- `versionamento.estrategia_de_ramos`: PR obrigatorio; ramo pelo ID da tarefa. Uma tarefa por ramo, salvo tarefas inseparaveis com justificativa, conforme .mentor/processos/entrega.md. Tarefa em ramo na pasta principal: varias IAs em sequencia abrem a mesma pasta. Worktree so para plan/ com tarefa sem commit.
-- `versionamento.revisao_antes_do_merge`: PR obrigatorio, 0 aprovacoes exigidas, merge so por squash. A autorizacao humana por ato do nucleo continua valendo por cima disso.
+- `versionamento.estrategia_de_ramos`: Trabalho direto no ramo principal (main) com gates locais obrigatorios no pre-push; ramos pontuais apenas se necessario.
 - `versionamento.quem_aprova`: Thiago Silva / humano dono do projeto.
-- `versionamento.protecao_do_ramo_principal`: Ruleset 'protect-main' ativo: PR obrigatorio, status check 'Typecheck, lint, test, build, and audit', delete e force-push bloqueados.
+- `versionamento.protecao_do_ramo_principal`: Sem restricao remota de PR; barreira de qualidade e integridade garantida pelo pre-push local do mentor.
 - `versionamento.esquema_de_versao`: package.json 0.1.0; sem release publico estavel.
 - `versionamento.release_automatizado`: false
 - `versionamento.esteira_barra`: 5 item(s)
-- `versionamento.uma_tarefa_por_ramo`: true
+- `versionamento.uma_tarefa_por_ramo`: false
 - `versionamento.apaga_ramo_no_merge`: true
 - `configuracoes_de_plataforma.protecao_do_ramo_principal`: GitHub ruleset 'protect-main' (id 22049629), ativo em refs/heads/main desde 01/09/26. Conferido por gh api em 02/09/26.
 - `configuracoes_de_plataforma.apagar_ramo_apos_merge`: Ligado em 02/09/26 (delete_branch_on_merge=true): o ramo de origem de um PR e apagado quando o PR e mergeado. Nao toca em main, ramo sem PR, PR fechado sem merge nem fork. Os commits seguem alcancaveis por refs/pull/<n>/head.

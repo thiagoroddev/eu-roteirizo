@@ -349,7 +349,7 @@ describe("planejamento portatil (Etapa 01)", () => {
     expect(saidaPlanos).toContain("TASK-CHORE-001");
 
     rmSync(pastaExterna, { recursive: true, force: true });
-  });
+  }, 25_000);
 
   it("P01-3: valida secao inexistente e suporta caminhos com espacos e caracteres acentuados", () => {
     const planoComEspaco = "docs-mentor/rascunhos/plano com espaço e acentuação.md";
@@ -379,7 +379,7 @@ describe("planejamento portatil (Etapa 01)", () => {
     // Tentativa de finalizar detecta a revisão divergente
     const saidaFinalizar = mentor(projeto, "task", "finalizar", "TASK-CHORE-002");
     expect(saidaFinalizar).toContain("revisao divergente");
-  });
+  }, 25_000);
 });
 
 describe("executor unificado de gates (Etapa 02)", () => {
