@@ -630,7 +630,7 @@
     "tarefas_desde_revisao_geral": null,
     "adrs": 0,
     "ferramentas_sem_padrao": 0,
-    "campos_nulos_do_contexto": 19,
+    "campos_nulos_do_contexto": 18,
     "divida_tecnica_com_gatilho_vencido": null
   },
   "auditoria": {
@@ -681,7 +681,7 @@
   "versionamento": {
     "ramo_principal": "main",
     "estrategia_de_ramos": "Trabalho direto no ramo principal (main) com gates locais obrigatorios no pre-push; ramos pontuais apenas se necessario.",
-    "revisao_antes_do_merge": null,
+    "revisao_antes_do_merge": "Dispensado: desenvolvimento solo com pre-push local cobrindo toda a suite de gates.",
     "quem_aprova": "Thiago Silva / humano dono do projeto.",
     "protecao_do_ramo_principal": "Sem restricao remota de PR; barreira de qualidade e integridade garantida pelo pre-push local do mentor.",
     "esquema_de_versao": "package.json 0.1.0; sem release publico estavel.",

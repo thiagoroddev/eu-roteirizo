@@ -3,7 +3,7 @@
 <!-- Gerado por `node mentor.mjs gerar`. Nao edite a mao: a proxima geracao sobrescreve. -->
 
 **Fase:** construcao · **Rigor:** N2
-**Respondido por voce:** 159 · **Padrao do pacote:** 25 · **Em aberto:** 19
+**Respondido por voce:** 160 · **Padrao do pacote:** 25 · **Em aberto:** 18
 
 Todos os portoes foram respondidos ou dispensados com motivo.
 
@@ -148,6 +148,7 @@ Todos os portoes foram respondidos ou dispensados com motivo.
 - `laboratorio.artefatos_importaveis`: 2 item(s)
 - `versionamento.ramo_principal`: main
 - `versionamento.estrategia_de_ramos`: Trabalho direto no ramo principal (main) com gates locais obrigatorios no pre-push; ramos pontuais apenas se necessario.
+- `versionamento.revisao_antes_do_merge`: Dispensado: desenvolvimento solo com pre-push local cobrindo toda a suite de gates.
 - `versionamento.quem_aprova`: Thiago Silva / humano dono do projeto.
 - `versionamento.protecao_do_ramo_principal`: Sem restricao remota de PR; barreira de qualidade e integridade garantida pelo pre-push local do mentor.
 - `versionamento.esquema_de_versao`: package.json 0.1.0; sem release publico estavel.
