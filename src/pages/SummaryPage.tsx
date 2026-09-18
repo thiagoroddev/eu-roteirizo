@@ -11,7 +11,7 @@ import { MapModeToggle, MODE_QUERY_PARAM, MODE_QUERY_ROTEIRO, type MapMode } fro
 import { useManifestFromUrl } from "../hooks/useManifestFromUrl";
 import { useDeliverySettings } from "../contexts/DeliverySettingsContext";
 import { useRoadGraph } from "../hooks/useRoadGraph";
-import { getRoteiro } from "../services/routeStorage";
+import { getRoteiro, saveRoteiroSummary } from "../services/routeStorage";
 import { buildDeliveryPoints } from "../utils/routing/points";
 import { pedestrianGraph } from "../utils/routing/pedestrian";
 import { plannedRouteTotals } from "../utils/routing/estimates";
@@ -20,7 +20,7 @@ import { assignedPointIds } from "../utils/routing/selectors";
 import { packagesByTypeFromPoints } from "../utils/markers/roteiroModels";
 import { getVehicleType } from "../utils/formatters";
 import type { RowData } from "../types";
-import type { PlannedRoute } from "../types/routing";
+import type { PlannedRoute, RoteiroSummary } from "../types/routing";
 import { COLUMN_NAMES } from "../constants";
 import { UI_LABELS } from "../constants/uiLabels";
 
@@ -107,6 +107,20 @@ function SummaryPage() {
       commercialPackages: packagesByTypeFromPoints(committed).commercial,
     };
   }, [savedRoteiro, points]);
+
+  /** Persiste o resumo do roteiro quando calculado com a malha viária real (RF-61 / TASK-RF-047). */
+  useEffect(() => {
+    if (!manifestId || !routeName || !savedRoteiro || !roteiroInfo || !viaStreets || !roteiroFacts) return;
+    const summary: RoteiroSummary = {
+      stops: roteiroInfo.vehicleStops,
+      vehicleMeters: Math.round(roteiroInfo.distanceVehicleKm * 1000),
+      walkMeters: Math.round(roteiroInfo.distanceWalkKm * 1000),
+      totalMinutes: Math.round(roteiroInfo.timeTotalMin),
+      progressRatio: roteiroFacts.status.ratio,
+      computedAt: new Date().toISOString(),
+    };
+    void saveRoteiroSummary(manifestId, routeName, summary);
+  }, [manifestId, routeName, savedRoteiro, roteiroInfo, viaStreets, roteiroFacts]);
 
   /** Linhas ordenadas pela sequência do roteiro planejado (ordem das paradas e entregas). */
   const roteiroRows = useMemo(() => {

@@ -1,0 +1,194 @@
+{
+  "id": "TASK-RF-047",
+  "tipo": "RF",
+  "titulo": "Guardar o resumo do roteiro salvo (paradas, km, tempo, progresso) quando o app ja calcula os totais com malha",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "M",
+    "ia": "M"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "RF-61",
+  "requisitos": [
+    "RF-61"
+  ],
+  "sem_requisito_motivo": null,
+  "criada_em": "14/09/26 19:56",
+  "iniciada_em": "17/09/26 11:37",
+  "commit_base": "010353c3098496774a6314dcd0342dcfd44d8769",
+  "concluida_em": "17/09/26 22:34",
+  "plano": {
+    "muda": [
+      "src/types/routing.ts - define interface RoteiroSummary com stops, vehicleMeters, walkMeters, totalMinutes, progressRatio e computedAt",
+      "src/services/routeStorage.ts - estende RoteiroRecord com summary opcional, implementa saveRoteiroSummary, getRoteiroSummary, listRoteiroSummaries e preservacao em saveRoteiro",
+      "src/pages/SummaryPage.tsx - grava resumo do roteiro via saveRoteiroSummary quando roteiroInfo e calculado com malha (viaStreets)",
+      "src/pages/MapPage.tsx - grava resumo do roteiro via saveRoteiroSummary quando overviewTotals e calculado com malha (overviewViaStreets) no painel de detalhes",
+      "src/__tests__/services/routeStorage.test.ts - testes unitarios para saveRoteiroSummary, getRoteiroSummary, listRoteiroSummaries e preservacao de summary",
+      "src/__tests__/pages/SummaryPage.test.tsx - teste de integracao garantindo chamada a saveRoteiroSummary com totais de malha",
+      "src/__tests__/pages/MapPage.test.tsx - teste de integracao garantindo chamada a saveRoteiroSummary ao abrir Ver detalhes com grafo viario"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "RoteiroRecord suporta o campo opcional summary com stops, vehicleMeters, walkMeters, totalMinutes, progressRatio e computedAt",
+        "teste": "src/__tests__/services/routeStorage.test.ts > saveRoteiroSummary persiste e recupera o resumo do roteiro"
+      },
+      {
+        "texto": "listRoteiroSummaries retorna mapa com todos os resumos agrupados por manifestId e routeName",
+        "teste": "src/__tests__/services/routeStorage.test.ts > listRoteiroSummaries lista os resumos indexados por manifesto e rota"
+      },
+      {
+        "texto": "saveRoteiro preserva o summary existente quando as paradas salvas forem equivalentes",
+        "teste": "src/__tests__/services/routeStorage.test.ts > saveRoteiro preserva summary existente quando as paradas nao mudaram"
+      },
+      {
+        "texto": "SummaryPage grava o resumo do roteiro no IndexedDB quando o grafo viário está presente e os totais foram calculados",
+        "teste": "src/__tests__/pages/SummaryPage.test.tsx > grava o resumo do roteiro salvo quando os totais com malha sao calculados"
+      },
+      {
+        "texto": "MapPage grava o resumo do roteiro no IndexedDB ao exibir Ver detalhes com totais calculados sobre a malha",
+        "teste": "src/__tests__/pages/MapPage.test.tsx > grava o resumo do roteiro ao abrir Ver detalhes com grafo viario"
+      }
+    ],
+    "pedido_original": "TASK-RF-047, inicie o planejamento dela (origem RF-61: Guardar o resumo de cada roteiro salvo)",
+    "solucao_sugerida": "RoteiroRecord.summary? = { stops, vehicleMeters, walkMeters, totalMinutes, progressRatio, computedAt }, gravado quando o Sumário ou o 'Ver detalhes' já calculam os totais com malha",
+    "alternativas_profissionais": [
+      {
+        "pratica": "Cálculo antecipado e síncrono no salvamento do roteiro (Eager Computation on Save): rodar A* viário e circuitos a pé em background ou worker a cada auto-save do roteiro",
+        "pegaria_o_caso": "Sim, garantiria que todo roteiro salvo sempre tivesse resumo atualizado imediatamente sem depender da navegação do usuário.",
+        "custo": "Alto custo de processamento e latência na UI móvel: rodar A* completo e Overpass/grafo a cada debounce de 800ms durante edição drena bateria e pode congelar dispositivos modestos como Android de entregadores."
+      },
+      {
+        "pratica": "Projeção sob demanda em memória (In-memory lazy projection): não persistir resumo no IndexedDB e calcular na hora em que a listagem de romaneios for aberta, ou manter cache apenas em memória da sessão",
+        "pegaria_o_caso": "Parcialmente: para rotas já visitadas na sessão funcionaria, mas ao reabrir o app na rua sem rede/cache de tela, a lista de romaneios teria que baixar grafos ou exibir números vazios/inconsistentes.",
+        "custo": "Inconsistência visual entre telas e perda de dados em reloads; violaria o objetivo da RF-61 e da tela de rotas de exibir cards comparativos instantaneamente offline."
+      }
+    ],
+    "problema_canonico": "Materialized View / CQRS Read Model Caching (cálculo preguiçoso e persistência de projeção desnormalizada para leitura rápida)",
+    "discordancia": {
+      "o_que_faria_diferente": "Nada a objetar quanto ao modelo lazy com malha. Minha única recomendação técnica preventiva é garantir idempotência na persistência (não disparar put no IndexedDB se os valores calculados forem idênticos ao summary já persistido) e preservar o summary existente durante auto-saves do builder caso os pontos e paradas da rota não tenham sofrido alteração de composição.",
+      "o_que_preocupa": "A possibilidade de rotas recém-criadas ou editadas exibirem resumo ligeiramente defasado ou nulo na tela de romaneios até que o usuário abra o Sumário ou Ver Detalhes. Contudo, isso é expressamente previsto pelo contrato da TASK-RF-048 ('consome os campos quando existem; sem eles, mostra o que já há').",
+      "o_que_existe_pronto_80_porcento": "Em bancos relacionais ou documentais modernos, chamam-se Materialized Views ou Generated Columns; no ambiente local-first do browser (IndexedDB puro), a projeção manual no registro RoteiroRecord é a prática padrão sem novas dependências."
+    },
+    "impacto": "Persistência local de roteiros (routeStorage), telas de Sumário (SummaryPage) e Mapa (MapPage); prepara contrato de consumo para TASK-RF-048 na tela de Rotas (RoutesPage).",
+    "riscos": [
+      "Loop de re-render ou I/O excessivo no IndexedDB se o salvamento do resumo não verificar igualdade prévia antes de gravar; mitigado com checagem de igualdade de valores antes de disparar o put.",
+      "Manter resumo defasado após modificação estrutural de paradas na rota; mitigado limpando ou invalidando o summary em saveRoteiro se as paradas tiverem sido alteradas."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "Pediram para guardar o resumo do roteiro salvo (paradas, km, tempo, progresso) quando o app já calcula totais com malha (RF-61). Proponho estender RoteiroRecord com summary opcional e métodos auxiliares em routeStorage, adicionando salvamento reativo em SummaryPage e MapPage (overview). Y é do tamanho de X porque reaproveita 100% dos cálculos e hooks já existentes sem introduzir novos motores ou bibliotecas.",
+    "restricoes_reavaliadas": [],
+    "meio_de_validacao": {
+      "tipo": "testes_automatizados",
+      "porque_nao_automatizado": null,
+      "roteiro": "1. Abrir romaneio com rota salva.\n2. Acessar o Sumário e aguardar o carregamento da malha ('Info Meu Roteiro' com ruas reais).\n3. No DevTools (Application > IndexedDB > eu-roteirizo-roteiros > roteiros), verificar que o registro da rota contém o campo summary preenchido com paradas, km, tempo, progressRatio e computedAt.\n4. Abrir a rota no Mapa, acessar 'Ver detalhes' e conferir que o resumo reflete fielmente os dados exibidos.",
+      "artefato": null,
+      "casos": null
+    },
+    "composicao": null
+  },
+  "gates": {
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": "17/09/26 21:15",
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n... [3159 linhas omitidas] ...\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)",
+      "executado_em": "17/09/26 21:26",
+      "commit_execucao": "010353c3098496774a6314dcd0342dcfd44d8769",
+      "arvore_hash": "58accfa77720e67c858be207ecdc1ec84f3ecb92",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-RF-047-testes-1789691170138.log",
+      "chave_cache": "ce15c5aee2106bbc3c9b76a88afe59c3284cd108cdc56753853326e5eb749f8e",
+      "digest_insumos": "58accfa77720e67c858be207ecdc1ec84f3ecb92",
+      "vermelho_dispensado": null
+    },
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "17/09/26 21:24",
+      "commit_execucao": "010353c3098496774a6314dcd0342dcfd44d8769",
+      "arvore_hash": "58accfa77720e67c858be207ecdc1ec84f3ecb92",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-RF-047-tipos-1789691044221.log",
+      "chave_cache": "b9394dfb54f9927a4155c0865987da9c830de6130e3f32c821a2438456867ae5",
+      "digest_insumos": "58accfa77720e67c858be207ecdc1ec84f3ecb92",
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "17/09/26 21:24",
+      "commit_execucao": "010353c3098496774a6314dcd0342dcfd44d8769",
+      "arvore_hash": "58accfa77720e67c858be207ecdc1ec84f3ecb92",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-RF-047-lint-1789691059722.log",
+      "chave_cache": "1c364ce7fab0b34873e4d13673f2dd4698918545ab1d8531236eebdccca4d2a2",
+      "digest_insumos": "58accfa77720e67c858be207ecdc1ec84f3ecb92",
+      "vermelho_dispensado": null
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n... [22 linhas omitidas] ...\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "17/09/26 21:26",
+      "commit_execucao": "010353c3098496774a6314dcd0342dcfd44d8769",
+      "arvore_hash": "58accfa77720e67c858be207ecdc1ec84f3ecb92",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-RF-047-build-1789691216931.log",
+      "chave_cache": "1fddd975f34ef01f8fe4e0e731cc0e4f0637d55f5b78fb4b6c3cc492d0a554e4",
+      "digest_insumos": "58accfa77720e67c858be207ecdc1ec84f3ecb92",
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "APROVADO",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": "Conferido no DevTools IndexedDB eu-roteirizo-roteiros > roteiros: registros com campo summary contendo stops, vehicleMeters, walkMeters, totalMinutes, progressRatio e computedAt persistidos com sucesso apos calculo dos totais com malha viaria no Sumario.",
+      "executado_em": "17/09/26 22:30",
+      "commit_execucao": "010353c3098496774a6314dcd0342dcfd44d8769",
+      "arvore_hash": "58accfa77720e67c858be207ecdc1ec84f3ecb92",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "aprovado",
+  "validado_em": "17/09/26 22:30",
+  "validacao_motivo": "Conferido no DevTools IndexedDB eu-roteirizo-roteiros > roteiros: registros com campo summary contendo stops, vehicleMeters, walkMeters, totalMinutes, progressRatio e computedAt persistidos com sucesso apos calculo dos totais com malha viaria no Sumario.",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-17--22h34--TASK-RF-047--estudo-humano.md"
+}

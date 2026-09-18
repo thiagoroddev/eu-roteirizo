@@ -798,17 +798,19 @@
     "enunciado": "Guardar o resumo de cada roteiro salvo (paradas, km do veiculo, km a pe, tempo total e progresso de construcao) para exibir e comparar roteiros na lista de romaneios salvos",
     "historia": null,
     "prioridade": "importante",
-    "status": "pendente",
+    "status": "implementado",
     "criterios_aceite": [
       "O resumo e gravado junto do roteiro quando o app ja calcula os totais com a malha (Sumario ou Ver detalhes), sem calculo extra",
       "Os numeros do resumo sao os mesmos do Sumario no momento da gravacao",
       "Roteiro sem resumo gravado aparece sem metricas, sem estimativa inventada",
       "Cada rota com roteiro mostra na lista tempo, km e paradas, e o progresso de construcao"
     ],
-    "tarefas": [],
+    "tarefas": [
+      "TASK-RF-047"
+    ],
     "adr": null,
     "criado_em": "14/09/26 19:56",
-    "implementado_em": null,
+    "implementado_em": "17/09/26 22:34",
     "pendente_de_validacao": false
   },
   {

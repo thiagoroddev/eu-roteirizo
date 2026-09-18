@@ -8,6 +8,7 @@ import { DEFAULT_ROUTING_CONFIG, type LatLng, type PlannedRoute } from "../../ty
 import type { InteractionState, MarkerModel } from "../../utils/markers/markerModels";
 import { driveLegLabel } from "../../utils/markers/roteiroModels";
 import { haversine } from "../../utils/routing/geo";
+import { squareGraph } from "../utils/routing/__fixtures__/syntheticGraph";
 
 // routeStorage (RF-008) is mocked so the tests CONTROL what is persisted:
 // `saved` feeds the mount-time hydration; `saveCalls` records the auto-saves.
@@ -15,6 +16,7 @@ const { routeStorageState } = vi.hoisted(() => ({
   routeStorageState: {
     saved: null as PlannedRoute | null,
     saveCalls: [] as PlannedRoute[],
+    saveSummaryCalls: [] as { manifestId: string; routeName: string; summary: import("../../types/routing").RoteiroSummary }[],
     deleteCalls: 0,
   },
 }));
@@ -22,6 +24,10 @@ vi.mock("../../services/routeStorage", () => ({
   getRoteiro: vi.fn(() => Promise.resolve(routeStorageState.saved)),
   saveRoteiro: vi.fn((_manifestId: string, _routeName: string, route: PlannedRoute) => {
     routeStorageState.saveCalls.push(route);
+    return Promise.resolve({ status: "saved" as const });
+  }),
+  saveRoteiroSummary: vi.fn((manifestId: string, routeName: string, summary: import("../../types/routing").RoteiroSummary) => {
+    routeStorageState.saveSummaryCalls.push({ manifestId, routeName, summary });
     return Promise.resolve({ status: "saved" as const });
   }),
   deleteRoteiro: vi.fn(() => {
@@ -278,6 +284,7 @@ describe("MapPage (focus screen)", () => {
     roadGraphState.graph = null;
     routeStorageState.saved = null;
     routeStorageState.saveCalls = [];
+    routeStorageState.saveSummaryCalls = [];
     routeStorageState.deleteCalls = 0;
   });
 
@@ -943,6 +950,30 @@ describe("MapPage (focus screen)", () => {
     expect(legs).toHaveLength(2);
     expect(legs[0]).toHaveTextContent(driveLegLabel({ meters: 0, viaStreets: false }));
     expect(legs[1]).toHaveTextContent(driveLegLabel({ meters: haversine(P1.vehicleStop, P2.vehicleStop), viaStreets: false }));
+  });
+
+  it("grava o resumo do roteiro ao abrir 'Ver detalhes' quando a malha viária está disponível (RF-61 / TASK-RF-047)", async () => {
+    roadGraphState.graph = squareGraph;
+    uploaderState.routes = { "A-1": rowsThreePoints };
+    routeStorageState.saved = savedRoute([P1, P2]);
+    renderPage("/mapa?romaneio=hash-1&rota=A-1&modo=roteiro");
+    await waitFor(() => expect(screen.getByTestId("route-map-stub").getAttribute("data-models-summary")).toContain("stop"));
+
+    fireEvent.click(screen.getByRole("button", { name: OVERVIEW_LABELS.VIEW_DETAILS }));
+
+    await waitFor(() => {
+      expect(routeStorageState.saveSummaryCalls.length).toBeGreaterThan(0);
+    });
+
+    const lastCall = routeStorageState.saveSummaryCalls[routeStorageState.saveSummaryCalls.length - 1];
+    expect(lastCall.manifestId).toBe("hash-1");
+    expect(lastCall.routeName).toBe("A-1");
+    expect(lastCall.summary.stops).toBe(2);
+    expect(typeof lastCall.summary.vehicleMeters).toBe("number");
+    expect(typeof lastCall.summary.walkMeters).toBe("number");
+    expect(typeof lastCall.summary.totalMinutes).toBe("number");
+    expect(typeof lastCall.summary.progressRatio).toBe("number");
+    expect(typeof lastCall.summary.computedAt).toBe("string");
   });
 
   it("Meu roteiro: com uma parada so as setas ficam desativadas", async () => {

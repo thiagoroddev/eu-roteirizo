@@ -49,3 +49,4 @@
 | 16/09/26 22:45 | [`TASK-BG-024`](./2026-09-16--22h45--TASK-BG-024--estudo-humano.md) | BG | Agrupar automaticamente enderecos no raio ao editar parada e salvar | - | concluida | aprovado |
 | 17/09/26 08:04 | [`TASK-RF-046`](./2026-09-17--08h04--TASK-RF-046--estudo-humano.md) | RF | Ordenar romaneios salvos pelo uso mais recente (importar, abrir rota no Sumario ou mapa, editar roteiro) | - | concluida | aprovado |
 | 17/09/26 09:30 | [`TASK-CHORE-028`](./2026-09-17--09h30--TASK-CHORE-028--estudo-humano.md) | CHORE | Exigir e documentar secao de desfecho obrigatoria nas narrativas de estudo humano | - | concluida | dispensado |
+| 17/09/26 22:34 | [`TASK-RF-047`](./2026-09-17--22h34--TASK-RF-047--estudo-humano.md) | RF | Guardar o resumo do roteiro salvo (paradas, km, tempo, progresso) quando o app ja calcula os totais com malha | - | concluida | aprovado |
