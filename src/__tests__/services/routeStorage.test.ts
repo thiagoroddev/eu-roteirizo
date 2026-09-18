@@ -6,9 +6,19 @@
 import "fake-indexeddb/auto";
 import { describe, it, expect, beforeEach } from "vitest";
 
-import { saveRoteiro, getRoteiro, deleteRoteiro, listRoteiroKeys, deleteManifestRoteiros, clearRoteiros } from "../../services/routeStorage";
+import {
+  saveRoteiro,
+  getRoteiro,
+  deleteRoteiro,
+  listRoteiroKeys,
+  deleteManifestRoteiros,
+  clearRoteiros,
+  saveRoteiroSummary,
+  getRoteiroSummary,
+  listRoteiroSummaries,
+} from "../../services/routeStorage";
 import { clearManifests, getManifestUsageMap } from "../../services/manifestStorage";
-import { DEFAULT_ROUTING_CONFIG, type PlannedRoute } from "../../types/routing";
+import { DEFAULT_ROUTING_CONFIG, type PlannedRoute, type RoteiroSummary } from "../../types/routing";
 
 const route = (overrides: Partial<PlannedRoute> = {}): PlannedRoute => ({
   id: "route_a",
@@ -103,5 +113,85 @@ describe("routeStorage (RF-008)", () => {
     const usageMap = await getManifestUsageMap();
     expect(usageMap.has("m1")).toBe(true);
     expect(Number.isNaN(Date.parse(usageMap.get("m1")!))).toBe(false);
+  });
+
+  it("saveRoteiroSummary persiste e recupera o resumo do roteiro", async () => {
+    await saveRoteiro("m1", "A-1", route());
+
+    const summary: RoteiroSummary = {
+      stops: 1,
+      vehicleMeters: 1200,
+      walkMeters: 350,
+      totalMinutes: 18,
+      progressRatio: 1,
+      computedAt: "2026-09-17T20:00:00.000Z",
+    };
+
+    const res = await saveRoteiroSummary("m1", "A-1", summary);
+    expect(res.status).toBe("saved");
+
+    const loaded = await getRoteiroSummary("m1", "A-1");
+    expect(loaded).toEqual(summary);
+
+    const missingRes = await saveRoteiroSummary("m1", "rota-inexistente", summary);
+    expect(missingRes.status).toBe("error");
+  });
+
+  it("listRoteiroSummaries lista os resumos indexados por manifesto e rota", async () => {
+    const s1: RoteiroSummary = {
+      stops: 1,
+      vehicleMeters: 1000,
+      walkMeters: 200,
+      totalMinutes: 15,
+      progressRatio: 0.5,
+      computedAt: "2026-09-17T20:01:00.000Z",
+    };
+    const s2: RoteiroSummary = {
+      stops: 3,
+      vehicleMeters: 4500,
+      walkMeters: 800,
+      totalMinutes: 42,
+      progressRatio: 1,
+      computedAt: "2026-09-17T20:02:00.000Z",
+    };
+
+    await saveRoteiro("m1", "A-1", route());
+    await saveRoteiroSummary("m1", "A-1", s1);
+
+    await saveRoteiro("m1", "B-2", route({ id: "route_b" })); // sem summary
+
+    await saveRoteiro("m2", "C-3", route({ id: "route_c" }));
+    await saveRoteiroSummary("m2", "C-3", s2);
+
+    const summaries = await listRoteiroSummaries();
+    expect(summaries.get("m1")?.get("A-1")).toEqual(s1);
+    expect(summaries.get("m1")?.has("B-2")).toBe(false);
+    expect(summaries.get("m2")?.get("C-3")).toEqual(s2);
+    expect(summaries.has("m3")).toBe(false);
+  });
+
+  it("saveRoteiro preserva summary existente quando as paradas nao mudaram", async () => {
+    await saveRoteiro("m1", "A-1", route());
+
+    const summary: RoteiroSummary = {
+      stops: 1,
+      vehicleMeters: 1200,
+      walkMeters: 350,
+      totalMinutes: 18,
+      progressRatio: 1,
+      computedAt: "2026-09-17T20:00:00.000Z",
+    };
+    await saveRoteiroSummary("m1", "A-1", summary);
+
+    // Salvar novamente com config alterada, mas paradas idênticas
+    await saveRoteiro("m1", "A-1", route({ config: { ...DEFAULT_ROUTING_CONFIG, vehicleSpeedKmh: 45 } }));
+
+    const preserved = await getRoteiroSummary("m1", "A-1");
+    expect(preserved).toEqual(summary);
+
+    // Salvar com paradas modificadas (ex: stops vazio) invalida o summary anterior
+    await saveRoteiro("m1", "A-1", route({ stops: [] }));
+    const invalidated = await getRoteiroSummary("m1", "A-1");
+    expect(invalidated).toBeNull();
   });
 });

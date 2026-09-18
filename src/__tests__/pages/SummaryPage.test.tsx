@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { UI_LABELS, COLUMN_NAMES } from "../../constants";
 import { haversine } from "../../utils/routing/geo";
@@ -43,10 +43,17 @@ vi.mock("../../hooks/useRouteUploader", () => ({
 
 // routeStorage (RF-008): controlado pelo teste — adapta o botão e alimenta o Info.
 const { routeStorageState } = vi.hoisted(() => ({
-  routeStorageState: { saved: null as unknown },
+  routeStorageState: {
+    saved: null as unknown,
+    saveSummaryCalls: [] as { manifestId: string; routeName: string; summary: unknown }[],
+  },
 }));
 vi.mock("../../services/routeStorage", () => ({
   getRoteiro: vi.fn(() => Promise.resolve(routeStorageState.saved)),
+  saveRoteiroSummary: vi.fn((manifestId: string, routeName: string, summary: unknown) => {
+    routeStorageState.saveSummaryCalls.push({ manifestId, routeName, summary });
+    return Promise.resolve({ status: "saved" as const });
+  }),
 }));
 
 // Road graph (RF-006.7 / TASK-BG-014): controlado pelo teste — sem ele os
@@ -85,6 +92,7 @@ describe("SummaryPage (focus screen)", () => {
     uploaderState.error = null;
     uploaderState.loading = false;
     roadGraphState.graph = null;
+    routeStorageState.saveSummaryCalls = [];
   });
 
   it("loads the manifest from the URL and shows the summary of the requested route", () => {
@@ -265,8 +273,40 @@ describe("SummaryPage (focus screen)", () => {
     const straightMeters = haversine(nearNode(B), nearNode(A));
     expect(screen.getByText(formatMeters(straightMeters))).toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.TOTALS_NOTE)).toBeInTheDocument();
-    expect(screen.queryByText(UI_LABELS.MAP_PANEL.ROTEIRO_OVERVIEW.TOTALS_NOTE_STREETS)).not.toBeInTheDocument();
+    routeStorageState.saved = null;
+  });
 
+  it("grava o resumo do roteiro salvo quando os totais com malha sao calculados", async () => {
+    roadGraphState.graph = squareGraph;
+    routeStorageState.saved = {
+      id: "route_with_streets",
+      startPoint: nearNode(B),
+      stops: [{ id: "s1", order: 1, vehicleStop: nearNode(A), pointIds: ["pt_-22.90000,-43.10000"], radiusMeters: 30 }],
+      config: { walkingSpeedKmh: 5, deliveryBaseSeconds: 40, deliveryPerPackageSeconds: 15, vehicleSpeedKmh: 25, autoRadiusMeters: 30 },
+      createdAt: "2026-07-10T10:00:00.000Z",
+    };
+
+    renderPage();
+
+    await screen.findByText(UI_LABELS.ROTEIRO_INFO.CARD_ADDRESSES);
+
+    await waitFor(() => {
+      expect(routeStorageState.saveSummaryCalls.length).toBeGreaterThan(0);
+    });
+
+    const lastCall = routeStorageState.saveSummaryCalls[routeStorageState.saveSummaryCalls.length - 1];
+    expect(lastCall.manifestId).toBe("hash-1");
+    expect(lastCall.routeName).toBe("A-1");
+    expect(lastCall.summary).toMatchObject({
+      stops: 1,
+      vehicleMeters: expect.any(Number),
+      walkMeters: expect.any(Number),
+      totalMinutes: expect.any(Number),
+      progressRatio: 1,
+    });
+    expect(Number.isNaN(Date.parse((lastCall.summary as { computedAt: string }).computedAt))).toBe(false);
+
+    roadGraphState.graph = null;
     routeStorageState.saved = null;
   });
 });

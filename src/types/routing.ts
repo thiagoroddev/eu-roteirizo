@@ -131,6 +131,22 @@ export interface PlannedRoute {
   ignoredPointIds?: string[];
 }
 
+/** Resumo calculado do roteiro quando processado com malha viária (RF-61 / TASK-RF-047). */
+export interface RoteiroSummary {
+  /** Quantidade de paradas do veículo. */
+  stops: number;
+  /** Distância total percorrida pelo veículo em metros. */
+  vehicleMeters: number;
+  /** Distância total a pé dos circuitos em metros. */
+  walkMeters: number;
+  /** Tempo total estimado em minutos (veículo + caminhada + entrega). */
+  totalMinutes: number;
+  /** 0..1 - Cobertura de construção do roteiro (endereços alocados / total de endereços ativos). */
+  progressRatio: number;
+  /** Timestamp ISO do momento em que os totais foram computados sobre a malha. */
+  computedAt: string;
+}
+
 /** Sensible defaults for a new route's config. The delivery times are
  *  ⚙️ MANUAL KNOBs — calibrate on the device smoke (RF-007.1). */
 export const DEFAULT_ROUTING_CONFIG: RoutingConfig = {

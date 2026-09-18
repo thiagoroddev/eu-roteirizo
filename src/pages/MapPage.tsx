@@ -27,7 +27,7 @@ import { useRouteBuilder } from "../hooks/useRouteBuilder";
 import { useDeliverySettings } from "../contexts/DeliverySettingsContext";
 import { useRoadGraph } from "../hooks/useRoadGraph";
 import type { RowData } from "../types";
-import type { DeliveryPoint, LatLng } from "../types/routing";
+import type { DeliveryPoint, LatLng, RoteiroSummary } from "../types/routing";
 import type { ManifestMeta } from "../types/manifest";
 import { groupRowsByStop } from "../utils/markers/stopGrouping";
 import { collapseInteraction, focusInteraction, regroupInteraction, type InteractionState, type MarkerModel } from "../utils/markers/markerModels";
@@ -48,7 +48,7 @@ import {
 import { Footprints } from "lucide-react";
 import { buildDeliveryPoints } from "../utils/routing/points";
 import { suggestionOrigin, draftCandidateIds, farChosenPointIds, isComplete, toPlannedRoute, FAR_POINT_RADIUS_FACTOR, FAR_POINT_MIN_METERS } from "../utils/routing/builder";
-import { getRoteiro, saveRoteiro, deleteRoteiro } from "../services/routeStorage";
+import { getRoteiro, saveRoteiro, deleteRoteiro, saveRoteiroSummary } from "../services/routeStorage";
 import { createRouteExportPayload, downloadRouteJson } from "../services/routeExport";
 import { routeProgress, nextStopSuggestion, suggestedNextSeed } from "../utils/routing/overview";
 import { stopWalkEstimate, plannedRouteTotals, stopLegs } from "../utils/routing/estimates";
@@ -1148,6 +1148,22 @@ function MapScreen({ rows, manifestId, routeName, manifestMeta }: { rows: RowDat
   /** Whether the shown totals came from the street graph (RF-006.7) — drives the
       honest "Detalhes" caption (streets vs the straight-line fallback). */
   const overviewViaStreets = graph !== null;
+
+  /** Persiste o resumo do roteiro quando "Ver detalhes" calcula os totais com a malha viária real (RF-61 / TASK-RF-047). */
+  useEffect(() => {
+    if (!manifestId || !routeName || mode !== "roteiro" || panelView !== "overview" || !overviewTotals || !overviewViaStreets) {
+      return;
+    }
+    const summary: RoteiroSummary = {
+      stops: overviewTotals.vehicleStops,
+      vehicleMeters: Math.round(overviewTotals.distanceVehicleKm * 1000),
+      walkMeters: Math.round(overviewTotals.distanceWalkKm * 1000),
+      totalMinutes: Math.round(overviewTotals.timeTotalMin),
+      progressRatio: progress.ratio,
+      computedAt: new Date().toISOString(),
+    };
+    void saveRoteiroSummary(manifestId, routeName, summary);
+  }, [manifestId, routeName, mode, panelView, overviewTotals, overviewViaStreets, progress.ratio]);
 
   /** Commercial-hours packages among the COMMITTED points — the overview's
       "Comercial" stat card (RF-006.20). Mirrors the typed chips' counting. */
