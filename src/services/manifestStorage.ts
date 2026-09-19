@@ -29,6 +29,7 @@ import type { ProcessedResult, RoutesMap, RowData } from "../types";
 import type { ManifestMeta, ManifestRecord, ManifestRouteMeta } from "../types/manifest";
 import { COLUMN_NAMES } from "../constants";
 import { sha256Hex } from "../utils/hash";
+import { getPrimaryNeighborhood } from "../utils/formatters";
 
 const DB_NAME = "eu-roteirizo-manifests";
 /** v3 (TASK-RF-046 / RF-60): added the `manifestUsage` store. Bump again with an upgrade path if a shape changes. */
@@ -252,7 +253,13 @@ export const saveManifest = async (file: File, processed: ProcessedResult): Prom
     console.log(`[manifestStorage] saveManifest: novo romaneio. Preparando gravação de ${Object.keys(processed.routes).length} rotas...`);
     const routes: ManifestRouteMeta[] = Object.entries(processed.routes).map(([name, rows]) => {
       const at = findRouteAt(rows);
-      return { name, rowCount: rows.length, ...(at !== undefined ? { at } : {}) };
+      const neighborhood = getPrimaryNeighborhood(rows, processed.availableCols ?? null);
+      return {
+        name,
+        rowCount: rows.length,
+        ...(at !== undefined ? { at } : {}),
+        ...(neighborhood !== undefined ? { neighborhood } : {}),
+      };
     });
 
     const record: ManifestRecord = {
@@ -316,8 +323,20 @@ export const backfillRouteRows = async (manifestId: string, processed: Processed
     const db = await getDb();
     const record = (await db.get(STORE, manifestId)) as ManifestRecord | undefined;
     if (record) {
-      // Re-put the record with the cols merged in (bytes already in hand — no rewrite of file data).
-      await db.put(STORE, { ...record, availableCols: processed.availableCols ?? undefined, missingCols: processed.missingCols });
+      const updatedRoutes = record.routes.map((r) => {
+        if (r.neighborhood) return r;
+        const rows = processed.routes?.[r.name];
+        if (!rows) return r;
+        const neighborhood = getPrimaryNeighborhood(rows, processed.availableCols ?? null);
+        return neighborhood ? { ...r, neighborhood } : r;
+      });
+      // Re-put the record with the cols and backfilled route neighborhoods merged in
+      await db.put(STORE, {
+        ...record,
+        routes: updatedRoutes,
+        availableCols: processed.availableCols ?? undefined,
+        missingCols: processed.missingCols,
+      });
     }
     await writeRouteRows(db, manifestId, processed.routes);
   } catch {
@@ -336,6 +355,35 @@ export const listManifests = async (): Promise<ManifestMeta[]> => {
     console.log(`[manifestStorage] listManifests: banco obtido, buscando registros em '${STORE}' e usageMap...`);
     const [records, usageMap] = await Promise.all([db.getAll(STORE) as Promise<ManifestRecord[]>, getManifestUsageMap()]);
     console.log(`[manifestStorage] listManifests: ${records.length} romaneios no store, ${usageMap.size} timestamps de uso`);
+
+    // Backfill neighborhood for any routes missing it (e.g. legacy records or single route manifests)
+    for (const record of records) {
+      let recordUpdated = false;
+      for (const route of record.routes) {
+        if (!route.neighborhood) {
+          try {
+            const rows = (await db.get(ROUTE_ROWS_STORE, routeRowsKey(record.id, route.name))) as RowData[] | undefined;
+            if (rows && rows.length > 0) {
+              const neighborhood = getPrimaryNeighborhood(rows, record.availableCols ?? null);
+              if (neighborhood) {
+                route.neighborhood = neighborhood;
+                recordUpdated = true;
+              }
+            }
+          } catch {
+            // best-effort
+          }
+        }
+      }
+      if (recordUpdated) {
+        try {
+          await db.put(STORE, record);
+        } catch {
+          // best-effort
+        }
+      }
+    }
+
     const result = records
       .map((r) => stripBytes(r, usageMap.get(r.id)))
       .sort((a, b) => {
@@ -388,11 +436,20 @@ export const deriveAvailableColsFromRows = (rows: RowData[]): string[] => {
  * Preserves available columns and route AT code so original view and summary function properly.
  * Never throws.
  */
-export const saveStandaloneManifest = async (manifestId: string, routeName: string, rows: RowData[], availableCols?: string[], at?: string, fileBytes?: ArrayBuffer): Promise<boolean> => {
+export const saveStandaloneManifest = async (
+  manifestId: string,
+  routeName: string,
+  rows: RowData[],
+  availableCols?: string[],
+  at?: string,
+  fileBytes?: ArrayBuffer,
+  neighborhood?: string
+): Promise<boolean> => {
   try {
     const db = await getDb();
     const effectiveAt = at ?? findRouteAt(rows);
     const effectiveCols = availableCols && availableCols.length > 0 ? availableCols : deriveAvailableColsFromRows(rows);
+    const effectiveNeighborhood = neighborhood ?? getPrimaryNeighborhood(rows, effectiveCols);
     const existing = (await db.get(STORE, manifestId)) as ManifestRecord | undefined;
     const now = new Date().toISOString();
 
@@ -402,7 +459,14 @@ export const saveStandaloneManifest = async (manifestId: string, routeName: stri
       fileType: "application/json",
       fileSize: fileBytes ? fileBytes.byteLength : (existing?.fileSize ?? 0),
       kind: "single",
-      routes: [{ name: routeName, rowCount: rows.length, ...(effectiveAt !== undefined ? { at: effectiveAt } : {}) }],
+      routes: [
+        {
+          name: routeName,
+          rowCount: rows.length,
+          ...(effectiveAt !== undefined ? { at: effectiveAt } : {}),
+          ...(effectiveNeighborhood !== undefined ? { neighborhood: effectiveNeighborhood } : {}),
+        },
+      ],
       importedAt: existing?.importedAt ?? now,
       lastUsedAt: now,
       availableCols: effectiveCols,

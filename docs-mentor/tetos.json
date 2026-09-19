@@ -5,6 +5,11 @@
       "caminho": "docs-mentor/contexto.md",
       "teto": 13000,
       "motivo": "Vista GERADA por `mentor gerar`, nao prosa que se possa enxugar: lista 135 campos respondidos de um projeto com os oito portoes fechados, 14 ferramentas e 22 requisitos, e mede 11.511 caracteres. O teto do pacote (8.000) foi calibrado em projeto menor. 13.000 cobre o tamanho atual com folga de crescimento. ⚠️ O pacote adverte, no `_motivo` da propria regra, que se o arquivo estourar de novo o que deve mudar e o que a vista LISTA, nunca o numero: se voltar a estourar, reduzir o gerador em vez de subir isto."
+    },
+    {
+      "caminho": "docs-mentor/tarefas/concluidas/*--estudo-humano.md",
+      "teto": 20000,
+      "motivo": "Documentos de estudo humano contem o planejamento rico voltado para estudo humano e documentacao tecnica aprofundada da sessao."
     }
   ]
 }

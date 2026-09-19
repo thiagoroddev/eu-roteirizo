@@ -10,6 +10,7 @@ import { saveRoteiro } from "./routeStorage";
 import { saveStandaloneManifest, deriveAvailableColsFromRows, findRouteAt } from "./manifestStorage";
 import { COLUMN_NAMES } from "../constants";
 import type { RowData } from "../types";
+import { getPrimaryNeighborhood } from "../utils/formatters";
 import zipcodeDataNeighborhood from "../data/CEPs-Hub_RJ_Ilha-do-Governador.json";
 
 const zipcodeMapNeighborhood = new Map(Object.entries(zipcodeDataNeighborhood));
@@ -64,6 +65,7 @@ export const createRouteExportPayload = (
     meta: {
       ...(effectiveMeta ?? {}),
       at: effectiveMeta?.at ?? findRouteAt(effectiveRows),
+      dominantNeighborhood: effectiveMeta?.dominantNeighborhood ?? getPrimaryNeighborhood(effectiveRows, effectiveCols) ?? getDominantNeighborhood(effectiveRows, points),
     },
   };
 };
@@ -359,9 +361,10 @@ export const importRoutePayload = async (payload: ExportedRoutePayloadV1, fileBy
     const availableCols = Array.isArray(payload.availableCols) && payload.availableCols.length > 0 ? payload.availableCols : deriveAvailableColsFromRows(rows);
 
     const at = payload.meta?.at ?? findRouteAt(rows);
+    const dominantNeighborhood = payload.meta?.dominantNeighborhood;
 
     // ALWAYS overwrite/update standalone manifest and grouped rows (RF-013)
-    await saveStandaloneManifest(payload.manifestId, payload.routeName, rows, availableCols, at, fileBytes);
+    await saveStandaloneManifest(payload.manifestId, payload.routeName, rows, availableCols, at, fileBytes, dominantNeighborhood);
 
     const saveResult = await saveRoteiro(payload.manifestId, payload.routeName, payload.route);
     if (saveResult.status === "error") {

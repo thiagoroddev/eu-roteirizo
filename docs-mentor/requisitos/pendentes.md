@@ -21,4 +21,3 @@
 | `RNF-16` | RNF | Preparar empacotamento TWA para distribuicao Android/Play Store mantendo origem web/PWA como base. | importante | - |
 | `RNF-17` | RNF | Integrar Play Billing e entitlement premium com estrategia de validacao adequada ao MVP e ao risco de cobranca real. | importante | - |
 | `RNF-20` | RNF | Cumprir LGPD e consentimento de anuncios: dados de terceiros ficam locais e UMP/consentimento ocorre antes de carregar SDK de ads. | essencial | - |
-| `RF-62` | RF | Exibir em cada rota da lista de romaneios salvos o nome do bairro com mais entregas, sem a contagem, reaproveitando o calculo de bairros do Sumario | desejavel | TASK-RF-048 |

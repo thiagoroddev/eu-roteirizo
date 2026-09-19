@@ -13,16 +13,18 @@ vi.mock("../../services/manifestStorage", () => ({
 vi.mock("../../services/routeStorage", () => ({
   listRoteiroKeys: vi.fn(),
   deleteManifestRoteiros: vi.fn().mockResolvedValue(undefined),
+  listRoteiroSummaries: vi.fn(),
 }));
 
 import { listManifests, deleteManifest } from "../../services/manifestStorage";
-import { listRoteiroKeys, deleteManifestRoteiros } from "../../services/routeStorage";
+import { listRoteiroKeys, deleteManifestRoteiros, listRoteiroSummaries } from "../../services/routeStorage";
 import RoutesPage from "../../pages/RoutesPage";
 
 const mockList = listManifests as Mock;
 const mockDelete = deleteManifest as Mock;
 const mockRoteiroKeys = listRoteiroKeys as Mock;
 const mockCascade = deleteManifestRoteiros as Mock;
+const mockSummaries = listRoteiroSummaries as Mock;
 
 const single: ManifestMeta = {
   id: "id-single",
@@ -79,19 +81,20 @@ describe("RoutesPage", () => {
     vi.clearAllMocks();
     mockList.mockResolvedValue([multi, single]);
     mockRoteiroKeys.mockResolvedValue(new Map());
+    mockSummaries.mockResolvedValue(new Map());
     mockCascade.mockResolvedValue(undefined);
   });
 
-  // RF-008: o chip da rota COM roteiro salvo acende (CircleCheck em text-primary);
-  // as demais seguem no tracejado neutro.
+  // RF-008: a linha da rota COM roteiro salvo acende com cor de estado ativa;
+  // as demais seguem no tracejado neutro (text-muted-foreground).
   it("acende o chip das rotas com roteiro salvo (RN-21)", async () => {
     mockRoteiroKeys.mockResolvedValue(new Map([["id-multi", new Set(["A-1"])]]));
     renderPage();
 
     const lit = await screen.findByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("A-1") });
-    await waitFor(() => expect(lit.querySelector("svg")?.classList.contains("text-primary")).toBe(true));
+    await waitFor(() => expect(lit.querySelector("svg")?.classList.contains("text-muted-foreground")).toBe(false));
     const unlit = screen.getByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("B-2") });
-    expect(unlit.querySelector("svg")?.classList.contains("text-primary")).toBe(false);
+    expect(unlit.querySelector("svg")?.classList.contains("text-muted-foreground")).toBe(true);
   });
 
   it("lists saved manifests as typed cards with their route chips", async () => {
@@ -100,10 +103,10 @@ describe("RoutesPage", () => {
     expect(await screen.findByText("romaneio-completo.xlsx")).toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.ROUTES_PAGE.KIND_MULTI)).toBeInTheDocument();
     expect(screen.getByText(UI_LABELS.ROUTES_PAGE.KIND_SINGLE)).toBeInTheDocument();
-    // Chips: all routes of the multi manifest + the single one, AT shown when present
+    // Chips: all routes of the multi manifest + the single one, AT shown as 4-char suffix when present
     expect(screen.getByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("A-1") })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("B-2") })).toBeInTheDocument();
-    expect(screen.getByText("AT20250001")).toBeInTheDocument();
+    expect(screen.getByText("0001")).toBeInTheDocument();
   });
 
   it("shows the friendly empty state when nothing is saved", async () => {
@@ -209,5 +212,104 @@ describe("RoutesPage", () => {
 
     expect(mockDelete).not.toHaveBeenCalled();
     expect(screen.getByText("minha-rota.xlsx")).toBeInTheDocument();
+  });
+
+  it("ordena por uso mais recente por padrão e altera para data de importação via seletor (RF-60)", async () => {
+    const m1: ManifestMeta = {
+      ...single,
+      id: "id-1",
+      fileName: "romaneio-1.xlsx",
+      importedAt: "2026-07-01T10:00:00Z",
+      lastUsedAt: "2026-07-05T10:00:00Z",
+    };
+    const m2: ManifestMeta = {
+      ...single,
+      id: "id-2",
+      fileName: "romaneio-2.xlsx",
+      importedAt: "2026-07-03T10:00:00Z",
+      lastUsedAt: "2026-07-04T10:00:00Z",
+    };
+
+    mockList.mockResolvedValue([m2, m1]);
+    renderPage();
+
+    await screen.findByText("romaneio-1.xlsx");
+    const headings = screen.getAllByRole("heading", { level: 3 });
+    // Por padrão (recent_use): m1 (05/07) vem antes de m2 (04/07)
+    expect(headings[0]).toHaveTextContent("romaneio-1.xlsx");
+    expect(headings[1]).toHaveTextContent("romaneio-2.xlsx");
+
+    // Altera o seletor para data de importação
+    fireEvent.change(screen.getByLabelText(UI_LABELS.ROUTES_PAGE.SORT_LABEL), {
+      target: { value: "import_date" },
+    });
+
+    const headingsAfter = screen.getAllByRole("heading", { level: 3 });
+    // import_date: m2 (03/07) vem antes de m1 (01/07)
+    expect(headingsAfter[0]).toHaveTextContent("romaneio-2.xlsx");
+    expect(headingsAfter[1]).toHaveTextContent("romaneio-1.xlsx");
+  });
+
+  it("exibe resumo do roteiro com paradas, tempo, km veículo e km a pé quando disponível (RF-61)", async () => {
+    mockRoteiroKeys.mockResolvedValue(new Map([["id-multi", new Set(["A-1"])]]));
+    mockSummaries.mockResolvedValue(
+      new Map([
+        [
+          "id-multi",
+          new Map([
+            [
+              "A-1",
+              {
+                stops: 12,
+                vehicleMeters: 14000,
+                walkMeters: 1500,
+                totalMinutes: 90,
+                progressRatio: 0.8,
+                computedAt: "2026-07-19T10:00:00Z",
+              },
+            ],
+          ]),
+        ],
+      ])
+    );
+
+    renderPage();
+    await screen.findByText("romaneio-completo.xlsx");
+
+    expect(screen.getByText("Em construção (80%)")).toBeInTheDocument();
+    expect(screen.getByText("12 paradas")).toBeInTheDocument();
+    expect(screen.getByText("~1 h 30 min")).toBeInTheDocument();
+    expect(screen.getByText("14,0 km")).toBeInTheDocument();
+    expect(screen.getByText("1,5 km a pé")).toBeInTheDocument();
+  });
+
+  it("exibe o bairro principal da rota sem contagem na linha (RF-62)", async () => {
+    const withNeighborhood: ManifestMeta = {
+      ...single,
+      routes: [{ name: "Rota Copacabana", at: "AT01", rowCount: 20, neighborhood: "Copacabana" }],
+    };
+    mockList.mockResolvedValue([withNeighborhood]);
+
+    renderPage();
+    await screen.findByText("minha-rota.xlsx");
+
+    expect(screen.getByText("Copacabana")).toBeInTheDocument();
+  });
+
+  it("permite busca interna no card auto-expandindo e exibindo contagem filtrada (RF-63)", async () => {
+    mockList.mockResolvedValue([big]);
+    renderPage();
+    await screen.findByText("romaneio-grande.xlsx");
+
+    // big tem 8 rotas (> 3), logo o input de busca interno no card está presente
+    const searchInputs = screen.getAllByPlaceholderText(UI_LABELS.ROUTES_PAGE.SEARCH_ROUTES_PLACEHOLDER);
+    expect(searchInputs.length).toBeGreaterThan(0);
+
+    fireEvent.change(searchInputs[0], { target: { value: "L-4" } });
+
+    // Auto-expande e mostra 1 de 8 rotas
+    expect(screen.getByText(UI_LABELS.ROUTES_PAGE.ROUTE_COUNT_FILTERED(1, 8))).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("L-4") })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: UI_LABELS.ROUTES_PAGE.CHIP_ARIA("L-1") })).not.toBeInTheDocument();
   });
 });

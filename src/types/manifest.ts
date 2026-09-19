@@ -17,6 +17,8 @@ export interface ManifestRouteMeta {
   at?: string;
   /** Number of delivery rows in the route. */
   rowCount: number;
+  /** Primary neighborhood with highest delivery count (without count), from summarizeNeighborhoods (RF-62 / TASK-RF-048). */
+  neighborhood?: string;
 }
 
 /** Whether the manifest is a single route (no "Corridor Cage") or a multi-route file. */

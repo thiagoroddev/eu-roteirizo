@@ -293,7 +293,7 @@ export function useRouteUploader(): RouteUploaderReturn {
           setMissingCols(payload.missingCols ?? []);
           setIsSingleRoute(payload.isSingleRoute ?? true);
           setLoading(false);
-          await saveStandaloneManifest(id, effectiveRouteName, rows, effectiveCols, payload.meta?.at, record.bytes);
+          await saveStandaloneManifest(id, effectiveRouteName, rows, effectiveCols, payload.meta?.at, record.bytes, payload.meta?.dominantNeighborhood);
           return true;
         }
       } catch {

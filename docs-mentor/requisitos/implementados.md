@@ -22,4 +22,5 @@
 | `RN-23` | RN | A parada padrao do veiculo fica na via em frente ao pino de cada endereco, por projecao geometrica; o planejamento considera possivel parar junto a qualquer endereco e nao procura vaga, permissao nem disponibilidade de estacionamento. | essencial | TASK-BG-016, TASK-BG-022 |
 | `RF-60` | RF | Ordenar a lista de romaneios salvos do uso mais recente para o mais antigo, independente da data de importacao | importante | TASK-RF-046, TASK-RF-048 |
 | `RF-61` | RF | Guardar o resumo de cada roteiro salvo (paradas, km do veiculo, km a pe, tempo total e progresso de construcao) para exibir e comparar roteiros na lista de romaneios salvos | importante | TASK-RF-047, TASK-RF-048 |
+| `RF-62` | RF | Exibir em cada rota da lista de romaneios salvos o nome do bairro com mais entregas, sem a contagem, reaproveitando o calculo de bairros do Sumario | desejavel | TASK-RF-048 |
 | `RF-63` | RF | Pesquisar romaneios salvos por nome da rota ou codigo AT, mostrando dentro de cada card apenas as rotas correspondentes (X de N rotas) | importante | TASK-REF-013, TASK-RF-048 |

@@ -15,10 +15,11 @@ import { getRoteiro, saveRoteiroSummary } from "../services/routeStorage";
 import { buildDeliveryPoints } from "../utils/routing/points";
 import { pedestrianGraph } from "../utils/routing/pedestrian";
 import { plannedRouteTotals } from "../utils/routing/estimates";
-import { plannedRouteStatus, type RoteiroStatus } from "../utils/routing/status";
+import { plannedRouteStatus, getRoteiroPresentation } from "../utils/routing/status";
 import { assignedPointIds } from "../utils/routing/selectors";
 import { packagesByTypeFromPoints } from "../utils/markers/roteiroModels";
 import { getVehicleType } from "../utils/formatters";
+import { cn } from "@/lib/utils";
 import type { RowData } from "../types";
 import type { PlannedRoute, RoteiroSummary } from "../types/routing";
 import { COLUMN_NAMES } from "../constants";
@@ -37,13 +38,6 @@ import { UI_LABELS } from "../constants/uiLabels";
  * e o CTA "Criar Roteiro" convida. "Ver no Mapa" SEGUE o toggle (leva
  * `&modo=roteiro` — TASK-RF-006.2 — quando se está vendo o roteiro).
  */
-/** Texto do badge de estado (REF-017 — vocabulário do humano 19/07). */
-const statusLabel = (status: RoteiroStatus): string => {
-  if (status.kind === "building") return UI_LABELS.ROTEIRO_INFO.STATUS_BUILDING;
-  if (status.kind === "finished") return UI_LABELS.ROTEIRO_INFO.STATUS_FINISHED;
-  return UI_LABELS.ROTEIRO_INFO.STATUS_EXECUTING(status.deliveredPercent);
-};
-
 function SummaryPage() {
   const navigate = useNavigate();
   const { manifestId, routeName, routes, loading, error, availableCols, isSingleRoute, currentRows } = useManifestFromUrl();
@@ -172,16 +166,26 @@ function SummaryPage() {
               o lugar certo; antes vazava um "Sem dados" do tipo de veículo). */}
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-semibold">{routeName}</h2>
-            {roteiroFacts ? (
-              <>
-                <Badge variant={roteiroFacts.status.kind === "building" ? "secondary" : "default"}>{statusLabel(roteiroFacts.status)}</Badge>
-                {roteiroFacts.status.kind === "building" && (
-                  <span className="text-xs text-muted-foreground">{UI_LABELS.ROTEIRO_INFO.STATUS_COVERAGE(roteiroFacts.status.assignedAddresses, roteiroFacts.status.totalAddresses)}</span>
-                )}
-              </>
-            ) : (
-              <Badge variant="outline">{UI_LABELS.ROTEIRO_INFO.STATUS_NONE}</Badge>
-            )}
+            {(() => {
+              const presentation = getRoteiroPresentation(roteiroFacts?.status);
+              if (presentation.kind === "none") {
+                return <Badge variant="outline">{presentation.label}</Badge>;
+              }
+              return (
+                <>
+                  <Badge
+                    variant={presentation.badgeVariant}
+                    className={cn(
+                      presentation.kind === "building" && "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
+                      presentation.kind === "executing" && "bg-primary/15 text-primary border-primary/30"
+                    )}
+                  >
+                    {presentation.label}
+                  </Badge>
+                  {presentation.kind === "building" && presentation.coverageText && <span className="text-xs text-muted-foreground">{presentation.coverageText}</span>}
+                </>
+              );
+            })()}
           </div>
 
           {/* Toggle Info Original × Info Meu Roteiro (REF-017) — o MESMO controle

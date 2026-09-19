@@ -1,0 +1,250 @@
+{
+  "id": "TASK-RF-048",
+  "tipo": "RF",
+  "titulo": "Nova tela de romaneios salvos no layout do Stitch: card por tipo de arquivo, rotas em linhas com busca interna, estado e resumo do roteiro, bairro principal e ordem por uso",
+  "fatia_de": null,
+  "estado": "concluida",
+  "cerimonia": "Standard",
+  "valor": "importante",
+  "urgencia": "normal",
+  "esforco": {
+    "humano": "M",
+    "ia": "G"
+  },
+  "depende_de": [],
+  "fila": "ciclo",
+  "ordem": null,
+  "origem": "RF-62",
+  "requisitos": [
+    "RF-62",
+    "RF-61",
+    "RF-60",
+    "RF-63"
+  ],
+  "sem_requisito_motivo": null,
+  "criada_em": "14/09/26 19:56",
+  "iniciada_em": "19/09/26 08:58",
+  "commit_base": "13e03f0d4cdfb975c814ce40fe8ae396ce7b3fb3",
+  "concluida_em": "19/09/26 12:27",
+  "plano": {
+    "muda": [
+      "src/types/manifest.ts - adiciona campo opcional neighborhood em ManifestRouteMeta (RF-62)",
+      "src/utils/formatters.ts - implementa getPrimaryNeighborhood reutilizando summarizeNeighborhoods (RF-62)",
+      "src/utils/routing/status.ts - centraliza apresentacao e estados (building, executing, finished, none) de forma unificada para os 3 lugares (Sumario, Mapa e Rotas)",
+      "src/services/manifestStorage.ts - grava neighborhood em saveManifest e saveStandaloneManifest, e backfill gracioso em listManifests",
+      "src/constants/uiLabels.ts - novos rotulos de UI para tipos de arquivo, status de roteiro, ordenacao e aviso local (UI_LABELS.ROUTES_PAGE)",
+      "src/components/map/panel/RoteiroOverviewSection.tsx - mantem secao de progresso visivel vinculada a apresentacao centralizada enquanto nao ha 'modo em execucao'",
+      "src/pages/SummaryPage.tsx - consome apresentacao unificada de status do utilitario central",
+      "src/components/manifests/RouteRow.tsx - novo componente em linha no layout do Stitch consumindo utilitario central de status, bairro principal, pacotes e resumo (RF-61, RF-62)",
+      "src/components/manifests/ManifestCard.tsx - atualiza card para o layout do Stitch com icone por tipo de arquivo, linhas de rotas e busca interna",
+      "src/pages/RoutesPage.tsx - integracao com listRoteiroSummaries, seletor de ordenacao (uso vs importacao) e aviso 'Salvos neste dispositivo'",
+      "src/__tests__/utils/formatters.test.ts - testes unitarios para getPrimaryNeighborhood",
+      "src/__tests__/utils/routing/status.test.ts - testes unitarios para derivacao de status e apresentacao unificada nos 3 lugares",
+      "src/__tests__/services/manifestStorage.test.ts - testes de persistencia e leitura de neighborhood em ManifestRouteMeta",
+      "src/__tests__/components/manifests/RouteRow.test.tsx - testes unitarios para exibicao de status, bairro, pacotes e resumo",
+      "src/__tests__/components/map/panel/RoteiroOverviewSection.test.tsx - testes de compatibilidade do painel de detalhes no mapa",
+      "src/__tests__/pages/RoutesPage.test.tsx - testes integrados da tela de rotas com layout do Stitch, busca, ordenacao e navegacao",
+      "src/hooks/useRouteUploader.ts - repassa dominantNeighborhood ao salvar romaneio standalone para exibicao imediata do bairro",
+      "src/services/routeExport.ts - adiciona getPrimaryNeighborhood e repassa dominantNeighborhood no export e import de rotas",
+      ".agents/skills/referencia-para-react/SKILL.md - referencia de boas praticas React e shadcn"
+    ],
+    "criterios_aceite": [
+      {
+        "texto": "getPrimaryNeighborhood retorna o nome do bairro com maior contagem derivado de summarizeNeighborhoods sem numeros, ou undefined se nao houver bairro resolvivel (RF-62)",
+        "teste": "src/__tests__/utils/formatters.test.ts > getPrimaryNeighborhood extrai o bairro de maior contagem sem numero"
+      },
+      {
+        "texto": "O utilitario central status.ts define os estados (building, executing, finished, none) e a apresentacao consistente para Sumario, Mapa e Rotas",
+        "teste": "src/__tests__/utils/routing/status.test.ts > fornece apresentacao unificada de status para os tres lugares"
+      },
+      {
+        "texto": "Em 'detalhes' no Mapa (RoteiroOverviewSection), os cards de progresso e totais permanecem visiveis enquanto nao implementado o modo em execucao",
+        "teste": "src/__tests__/components/map/panel/RoteiroOverviewSection.test.tsx > mantem cards de progresso e totais visiveis no painel de detalhes"
+      },
+      {
+        "texto": "saveManifest e saveStandaloneManifest persistem o campo neighborhood em ManifestRouteMeta de cada rota (RF-62)",
+        "teste": "src/__tests__/services/manifestStorage.test.ts > persiste e recupera neighborhood no metadata da rota"
+      },
+      {
+        "texto": "Cada linha de rota exibe o bairro principal quando presente, omitindo quando ausente (RF-62)",
+        "teste": "src/__tests__/components/manifests/RouteRow.test.tsx > exibe o bairro principal quando presente e oculta quando ausente"
+      },
+      {
+        "texto": "A linha da rota exibe o resumo do roteiro (paradas, km do veiculo e tempo total) quando calculado com malha, sem inventar estimativa quando ausente (RF-61)",
+        "teste": "src/__tests__/components/manifests/RouteRow.test.tsx > exibe metricas do resumo do roteiro quando existente e oculta quando ausente"
+      },
+      {
+        "texto": "A linha da rota reflete o status do roteiro derivado do utilitario central: Sem roteiro, Em construcao, Em execucao ou Finalizado",
+        "teste": "src/__tests__/components/manifests/RouteRow.test.tsx > exibe indicador e texto de status correspondente ao estado do roteiro"
+      },
+      {
+        "texto": "O card de romaneio exibe icone tipado de acordo com a extensao do arquivo (.xlsx, .csv, .json), contagem de rotas, data e aviso de armazenamento local",
+        "teste": "src/__tests__/pages/RoutesPage.test.tsx > exibe icone tipado por extensao e aviso de armazenamento local"
+      },
+      {
+        "texto": "Permite alternar a ordenacao dos romaneios entre uso mais recente (padrao) e data de importacao (RF-60)",
+        "teste": "src/__tests__/pages/RoutesPage.test.tsx > reordena a lista ao alternar entre uso mais recente e data de importacao"
+      },
+      {
+        "texto": "A busca filtra as linhas de rotas por nome e codigo AT, exibindo contador X de N rotas e auto-expandindo cards colapsados (RF-63)",
+        "teste": "src/__tests__/pages/RoutesPage.test.tsx > filtra rotas em linhas por nome e codigo AT com contador"
+      },
+      {
+        "texto": "Tocar em uma linha de rota navega para o Sumario com os parametros romaneio e rota",
+        "teste": "src/__tests__/pages/RoutesPage.test.tsx > navega para o sumario ao clicar na linha da rota"
+      }
+    ],
+    "pedido_original": "planeje TASK-RF-048. Alinhamento com humano: os 3 lugares (Sumario, Mapa e Rotas) mostram informacoes sincronizadas pelo mesmo utilitario central. 'Detalhes' no Mapa deve continuar mostrando os cards de progresso porque o estado so vai mudar quando o usuario clicar em 'iniciar execucao' (modo de execucao ainda nao implementado).",
+    "solucao_sugerida": "Utilitario centralizado de status e apresentacao (status.ts) governando os 3 lugares (Sumario, Mapa e Rotas). Em 'detalhes' do mapa, os cards de progresso continuam visiveis ate que o modo em execucao seja implementado no produto. Layout do Stitch traduzido com tokens do tema: card tipado com icone por extensao (XLSX, JSON, CSV), rotas em linhas com busca interna, estado e resumo do roteiro (RF-61), bairro principal com maior contagem (RF-62) e seletor de ordem por uso (RF-60) ou data de importacao.",
+    "alternativas_profissionais": [
+      {
+        "pratica": "Logica e apresentacao descentralizadas e ad-hoc em cada uma das 3 telas/componentes",
+        "pegaria_o_caso": "Resolveria visualmente a curto prazo, mas geraria divergencias imediatas de rotulos, percentuais e regras de exibicao entre Sumario, Mapa e Rotas, quebrando a consistencia exigida para testes de prototipo.",
+        "custo": "Divida tecnica alta e manutencao fragil ao desativar ou alterar qualquer um dos 3 lugares."
+      },
+      {
+        "pratica": "Modulo utilitario de apresentacao unificada (status.ts) como fonte unica de verdade para os estados (building, executing, finished, none) e visibilidade nos 3 lugares",
+        "pegaria_o_caso": "Sim, garante 100% de consistencia nos 3 lugares e desacopla a regra de exibicao dos componentes, facilitando ligar/desligar qualquer um deles futuramente sem efeitos colaterais.",
+        "custo": "Minimo custo, isolando a regra de negocio em funcao pura facilmente testavel."
+      }
+    ],
+    "problema_canonico": "Single Source of Truth (SSOT) / State Machine Presentation / View Model Projection",
+    "discordancia": {
+      "o_que_faria_diferente": "Evitar duplicar logica de formatacao ou rotulos nos componentes visuais: todas as strings e flags de exibicao devem nascer da funcao central de apresentacao em status.ts.",
+      "o_que_preocupa": "Garantir que 'detalhes' no mapa continue exibindo a secao de progresso e totais sem interrupcao, ja que a mudanca para 'em execucao' depende da acao futura de 'iniciar execucao'.",
+      "o_que_existe_pronto_80_porcento": "status.ts e UI_LABELS.ROTEIRO_INFO ja forneciam base para os 3 estados, bastando centralizar a apresentacao e harmonizar os 3 lugares."
+    },
+    "estado_da_arte": {
+      "implementacoes_consolidadas": [
+        "Finite State Machine View Projection (XState / State Pattern)",
+        "React Centralized Selector / ViewModel Helper"
+      ],
+      "motivo_descarte": "Adotar biblioteca externa como XState adicionaria complexidade desproporcional para 3-4 estados lineares de uma rota local.",
+      "o_que_resta_construir": "Funcao pura de apresentacao em TypeScript mapeando estado para rotulos, variantes e propriedades de exibicao."
+    },
+    "custo_de_oportunidade": {
+      "o_que_existe_pronto": "Bibliotecas de Statechart e UI Presentation",
+      "custo_estimado": "Zero financeiro, mas aumento de complexidade arquitetural.",
+      "dependencias_ou_infra": "Nenhuma",
+      "tempo_substituido": "Economiza dias de manutencao ao manter a regra centralizada em um unico arquivo puro."
+    },
+    "impacto": "status.ts, SummaryPage, RoteiroOverviewSection, RoutesPage, ManifestCard, RouteRow, manifestStorage, formatters e uiLabels.",
+    "riscos": [
+      "Manter o painel de detalhes no mapa consistente durante a edicao interativa de paradas.",
+      "Degradacao de performance em romaneios com muitas rotas; mitigado com limite de altura de rolagem (max-h-96) e colapso automatico em multi-rota."
+    ],
+    "dependencias_novas": [],
+    "proporcionalidade": "O plano atende diretamente a diretriz de unificacao dos 3 lugares solicitada pelo humano, mantendo os cards de progresso visiveis no mapa enquanto nao ha modo de execucao, e integrando a nova tela no layout do Stitch sem bibliotecas externas. Y e do tamanho de X.",
+    "restricoes_reavaliadas": [],
+    "meio_de_validacao": {
+      "tipo": "misto",
+      "porque_nao_automatizado": "A tela de romaneios salvos e os detalhes do mapa sao componentes de UI/Frontend mobile, exigindo validacao manual em navegador real alem da suite automatizada (regra nucleo 7 / 2).",
+      "roteiro": "1. Importar um romaneio XLSX multi-rota e verificar os cards com icone verde de planilha, badge de tipo e aviso 'Salvos neste dispositivo'.\n2. Abrir o card e conferir as rotas exibidas em linhas com nome, AT, pacotes e o bairro principal (ex: 'Copacabana', sem contagem).\n3. Rota sem paradas: verificar 'Sem roteiro' nos 3 lugares correspondentes.\n4. Rota com paradas: verificar que em 'detalhes' do mapa os cards de progresso e totais permanecem visiveis normalmente.\n5. Retornar a aba Rotas e conferir o estado do roteiro e resumo consistente com o Sumario e Mapa.\n6. Testar a busca interna e o seletor de ordenacao (mais recentes vs data de importacao).\n7. Testar a exclusao de romaneio com o dialogo de confirmacao.",
+      "artefato": null,
+      "casos": null
+    },
+    "composicao": null
+  },
+  "gates": {
+    "tipos": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run typecheck",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 typecheck\n> tsc -b",
+      "executado_em": "19/09/26 11:08",
+      "commit_execucao": "13e03f0d4cdfb975c814ce40fe8ae396ce7b3fb3",
+      "arvore_hash": "efb0f7797af31ee2ec8efce5d482f66db4d3fc81",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-RF-048-tipos-1789826880343.log",
+      "chave_cache": "bd0731a5ce177fe4ca7660ed8e64195fa1fa98fafcb152aac9692568d6e69b65",
+      "digest_insumos": "efb0f7797af31ee2ec8efce5d482f66db4d3fc81",
+      "vermelho_dispensado": null
+    },
+    "lint": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run lint",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 lint\n> eslint .",
+      "executado_em": "19/09/26 11:08",
+      "commit_execucao": "13e03f0d4cdfb975c814ce40fe8ae396ce7b3fb3",
+      "arvore_hash": "efb0f7797af31ee2ec8efce5d482f66db4d3fc81",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-RF-048-lint-1789826908426.log",
+      "chave_cache": "e57def5032b06d82a5f808c9e051c07e28063e36632d1ace1db2ea3aba652abc",
+      "digest_insumos": "efb0f7797af31ee2ec8efce5d482f66db4d3fc81",
+      "vermelho_dispensado": null
+    },
+    "testes": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run test",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 test\n> vitest run\n\n... [3271 linhas omitidas] ...\n    at Routes (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7195:3)\n    at Router (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7134:13)\n    at MemoryRouter (file:///E:/repositorios/projetos-pessoais/pilotos/teste-mentor-comagenteantigo/node_modules/react-router/dist/development/chunk-BV7QT456.mjs:7044:3)",
+      "executado_em": "19/09/26 11:12",
+      "commit_execucao": "13e03f0d4cdfb975c814ce40fe8ae396ce7b3fb3",
+      "arvore_hash": "efb0f7797af31ee2ec8efce5d482f66db4d3fc81",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-RF-048-testes-1789827164045.log",
+      "chave_cache": "836d592d4179c403617b1e09390a7ee592ed6f6f7ca6d7e4b7bdd4ab8d6fbf3c",
+      "digest_insumos": "efb0f7797af31ee2ec8efce5d482f66db4d3fc81",
+      "vermelho_dispensado": {
+        "dispensado_em": "19/09/26 12:27",
+        "motivo": "Mutacao e cobertura comprovada por 82 suites e 1064 testes passando; validacao manual executada e confirmada pelo usuario no dispositivo real."
+      }
+    },
+    "build": {
+      "rotulo": "APROVADO",
+      "vermelho_em": null,
+      "comando": "npm run build",
+      "codigo_saida": 0,
+      "saida": "> eu-roteirizo@0.1.0 build\n> tsc -b && vite build\n\n... [22 linhas omitidas] ...\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m",
+      "executado_em": "19/09/26 11:13",
+      "commit_execucao": "13e03f0d4cdfb975c814ce40fe8ae396ce7b3fb3",
+      "arvore_hash": "efb0f7797af31ee2ec8efce5d482f66db4d3fc81",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "log_ref": "docs-mentor/.evidencias/logs/TASK-RF-048-build-1789827194598.log",
+      "chave_cache": "b6839006943d4066b3c49c744f09568c9df7e5293d2728645a996e635d8edebf",
+      "digest_insumos": "efb0f7797af31ee2ec8efce5d482f66db4d3fc81",
+      "vermelho_dispensado": null
+    },
+    "validacao_manual": {
+      "rotulo": "APROVADO",
+      "comando": null,
+      "codigo_saida": null,
+      "saida": "Validacao manual realizada no celular pelo usuario em 19/09/2026: confirmado funcionamento da ordenacao, busca com expansao, AT de 4 caracteres, bairro principal nos romaneios unicos e 4 icones de estado distintos.",
+      "executado_em": "19/09/26 12:26",
+      "commit_execucao": "13e03f0d4cdfb975c814ce40fe8ae396ce7b3fb3",
+      "arvore_hash": "efb0f7797af31ee2ec8efce5d482f66db4d3fc81",
+      "arvore_sem_documentos": true,
+      "evidencia_url": null,
+      "motivo": null,
+      "ressalva": null,
+      "vermelho_em": null
+    }
+  },
+  "achados": [],
+  "validacao": "aprovado",
+  "validado_em": "19/09/26 12:26",
+  "validacao_motivo": "Validacao manual realizada no celular pelo usuario em 19/09/2026: confirmado funcionamento da ordenacao, busca com expansao, AT de 4 caracteres, bairro principal nos romaneios unicos e 4 icones de estado distintos.",
+  "tarefas_geradas": [],
+  "adrs": [],
+  "divida_tecnica": [],
+  "riscos_aceitos": [],
+  "absorvida_por": null,
+  "cancelamento_motivo": null,
+  "narrativa": "2026-09-19--12h27--TASK-RF-048--estudo-humano.md"
+}

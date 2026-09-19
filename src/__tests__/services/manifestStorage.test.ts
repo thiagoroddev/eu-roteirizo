@@ -295,4 +295,29 @@ describe("manifestStorage", () => {
     // Order should be m2 (05:00), m1 (04:00), m3 (03:00)
     expect(metas.map((m) => m.id)).toEqual([m2.meta.id, m1.meta.id, m3.meta.id]);
   });
+
+  it("persiste bairro principal (neighborhood) nos metadados de cada rota (RF-62)", async () => {
+    const fixtureWithNeighborhood: ProcessedResult = {
+      routes: {
+        "R-1": [{ [COLUMN_NAMES.NEIGHBORHOOD]: "Copacabana", [COLUMN_NAMES.PLANNED_AT]: "AT01" }, { [COLUMN_NAMES.NEIGHBORHOOD]: "Copacabana" }, { [COLUMN_NAMES.NEIGHBORHOOD]: "Ipanema" }],
+        "R-2": [{ [COLUMN_NAMES.NEIGHBORHOOD]: "Centro", [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Qualquer, Centro - RJ" }],
+      },
+      availableCols: [COLUMN_NAMES.NEIGHBORHOOD, COLUMN_NAMES.DESTINATION_ADDRESS],
+      missingCols: [],
+      isSingleRoute: false,
+    };
+
+    const saved = await saveManifest(fakeFile("com-bairros"), fixtureWithNeighborhood);
+    expect(saved.status).toBe("saved");
+    if (saved.status !== "saved") return;
+
+    const r1 = saved.meta.routes.find((r) => r.name === "R-1");
+    expect(r1?.neighborhood).toBe("Copacabana");
+
+    const r2 = saved.meta.routes.find((r) => r.name === "R-2");
+    expect(r2?.neighborhood).toBe("Centro");
+
+    const record = await getManifest(saved.meta.id);
+    expect(record?.routes.find((r) => r.name === "R-1")?.neighborhood).toBe("Copacabana");
+  });
 });

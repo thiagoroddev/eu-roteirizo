@@ -108,6 +108,42 @@ export function formatDistance(rows: RowData[], availableCols: string[] | null):
   return `${Math.round(numericValue)} m`;
 }
 
+const knownNeighborhoods: string[] = Array.from(
+  new Set(
+    Array.from(zipcodeMapNeighborhood.values())
+      .map((e) => (e as { bairro?: string })?.bairro?.trim())
+      .filter((b): b is string => Boolean(b))
+  )
+).sort((a, b) => b.length - a.length);
+
+/**
+ * Attempts to extract a neighborhood from a free-form address string.
+ * Checks for CEP (5 digits, optional dash, 3 digits) or known Rio de Janeiro neighborhoods.
+ */
+export function extractNeighborhoodFromAddress(address: string): string | undefined {
+  if (!address || typeof address !== "string") return undefined;
+
+  const cepMatch = address.match(/\b(\d{5})-?(\d{3})\b/);
+  if (cepMatch) {
+    const cleanZip = `${cepMatch[1]}${cepMatch[2]}`;
+    const entry = zipcodeMapNeighborhood.get(cleanZip) as { bairro?: string } | undefined;
+    if (entry?.bairro) {
+      return entry.bairro.trim();
+    }
+  }
+
+  const normAddr = normalizeString(address);
+  for (const bairro of knownNeighborhoods) {
+    const normBairro = normalizeString(bairro);
+    const regex = new RegExp(`(^|[^a-z0-9])${normBairro}([^a-z0-9]|$)`, "i");
+    if (regex.test(normAddr)) {
+      return bairro;
+    }
+  }
+
+  return undefined;
+}
+
 /**
  * Counts and displays neighborhoods in route
  *
@@ -118,13 +154,12 @@ export function formatDistance(rows: RowData[], availableCols: string[] | null):
 export function summarizeNeighborhoods(rows: RowData[], availableCols: string[] | null): string {
   const neighborhoodCounts: Record<string, number> = {};
 
-  /** Check columns before starting */
-  if (!availableCols?.includes(COLUMN_NAMES.ZIPCODE) && !availableCols?.includes(COLUMN_NAMES.NEIGHBORHOOD)) {
-    return presentStatus(DATA_STATUS.MISSING);
-  }
+  const hasZip = availableCols ? availableCols.includes(COLUMN_NAMES.ZIPCODE) : rows.some((r) => r[COLUMN_NAMES.ZIPCODE]);
+  const hasNeigh = availableCols ? availableCols.includes(COLUMN_NAMES.NEIGHBORHOOD) : rows.some((r) => r[COLUMN_NAMES.NEIGHBORHOOD]);
+  const hasAddr = availableCols ? availableCols.includes(COLUMN_NAMES.DESTINATION_ADDRESS) : rows.some((r) => r[COLUMN_NAMES.DESTINATION_ADDRESS]);
 
   /** Prefer Zipcode for official neighborhood lookup */
-  if (availableCols?.includes(COLUMN_NAMES.ZIPCODE)) {
+  if (hasZip) {
     rows.forEach((row) => {
       const rawZip = row[COLUMN_NAMES.ZIPCODE];
       if (rawZip) {
@@ -141,7 +176,7 @@ export function summarizeNeighborhoods(rows: RowData[], availableCols: string[] 
         }
       }
     });
-  } else if (availableCols?.includes(COLUMN_NAMES.NEIGHBORHOOD)) {
+  } else if (hasNeigh) {
     rows.forEach((row) => {
       const raw = row[COLUMN_NAMES.NEIGHBORHOOD];
       if (raw) {
@@ -154,13 +189,53 @@ export function summarizeNeighborhoods(rows: RowData[], availableCols: string[] 
     });
   }
 
+  // Fallback: if no counts resolved yet, try extracting from DESTINATION_ADDRESS
+  if (Object.keys(neighborhoodCounts).length === 0 && hasAddr) {
+    rows.forEach((row) => {
+      const rawAddr = row[COLUMN_NAMES.DESTINATION_ADDRESS];
+      if (rawAddr && typeof rawAddr === "string") {
+        const extracted = extractNeighborhoodFromAddress(rawAddr);
+        if (extracted) {
+          neighborhoodCounts[extracted] = (neighborhoodCounts[extracted] || 0) + 1;
+        }
+      }
+    });
+  }
+
   /** Standardization: No valid values found */
-  if (Object.keys(neighborhoodCounts).length === 0) return presentStatus(DATA_STATUS.EMPTY);
+  if (Object.keys(neighborhoodCounts).length === 0) {
+    if (!hasZip && !hasNeigh && !hasAddr) {
+      return presentStatus(DATA_STATUS.MISSING);
+    }
+    return presentStatus(DATA_STATUS.EMPTY);
+  }
 
   return Object.entries(neighborhoodCounts)
     .sort((a, b) => b[1] - a[1]) // Sort by count descending
     .map(([k, v]) => `${toTitleCase(k)}: ${v}`)
     .join(", ");
+}
+
+/**
+ * Gets the primary neighborhood (highest delivery count), without the count (RF-62 / TASK-RF-048).
+ * Reuses the exact output of summarizeNeighborhoods.
+ * Returns undefined if no neighborhood can be resolved.
+ *
+ * @param {RowData[]} rows - Array of delivery rows
+ * @param {string[] | null} availableCols - Available columns in the data
+ * @returns {string | undefined} Primary neighborhood name in Title Case, or undefined
+ */
+export function getPrimaryNeighborhood(rows: RowData[], availableCols: string[] | null): string | undefined {
+  const summary = summarizeNeighborhoods(rows, availableCols);
+  if (!summary || summary === presentStatus(DATA_STATUS.MISSING) || summary === presentStatus(DATA_STATUS.EMPTY)) {
+    return undefined;
+  }
+  const first = summary.split(",")[0]?.trim();
+  if (!first) return undefined;
+  const colonIndex = first.lastIndexOf(":");
+  if (colonIndex === -1) return undefined;
+  const name = first.slice(0, colonIndex).trim();
+  return name || undefined;
 }
 
 // ===========================================================================================

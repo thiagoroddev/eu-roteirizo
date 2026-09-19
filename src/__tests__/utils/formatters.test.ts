@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatDistance, formatDeliveryTime, formatMeters, normalizeString, toTitleCase, getDate, getTotalPacks, getNumberOfStops } from "../../utils/formatters";
+import { formatDistance, formatDeliveryTime, formatMeters, normalizeString, toTitleCase, getDate, getTotalPacks, getNumberOfStops, getPrimaryNeighborhood } from "../../utils/formatters";
 
 describe("formatMeters", () => {
   it("rounds meters below 1 km", () => {
@@ -207,5 +207,39 @@ describe("Text Utilities", () => {
     it("trims whitespace", () => {
       expect(normalizeString("  Teste  ")).toBe("teste");
     });
+  });
+});
+
+// =============================================================================
+// 8. PRIMARY NEIGHBORHOOD TESTS (getPrimaryNeighborhood - RF-62)
+// =============================================================================
+describe("getPrimaryNeighborhood (RF-62)", () => {
+  it("extracts the neighborhood with highest delivery count without numbers", () => {
+    const rows = [{ [COLUMN_NAMES.NEIGHBORHOOD]: "Copacabana" }, { [COLUMN_NAMES.NEIGHBORHOOD]: "Copacabana" }, { [COLUMN_NAMES.NEIGHBORHOOD]: "Ipanema" }];
+    expect(getPrimaryNeighborhood(rows, [COLUMN_NAMES.NEIGHBORHOOD])).toBe("Copacabana");
+  });
+
+  it("handles mixed case and normalizes to Title Case", () => {
+    const rows = [{ [COLUMN_NAMES.NEIGHBORHOOD]: "barra da tijuca" }, { [COLUMN_NAMES.NEIGHBORHOOD]: "BARRA DA TIJUCA" }];
+    expect(getPrimaryNeighborhood(rows, [COLUMN_NAMES.NEIGHBORHOOD])).toBe("Barra Da Tijuca");
+  });
+
+  it("returns undefined when no neighborhood column or data is present", () => {
+    expect(getPrimaryNeighborhood([], [])).toBeUndefined();
+    expect(getPrimaryNeighborhood([{ foo: "bar" }], ["foo"])).toBeUndefined();
+    expect(getPrimaryNeighborhood([{ [COLUMN_NAMES.NEIGHBORHOOD]: "" }], [COLUMN_NAMES.NEIGHBORHOOD])).toBeUndefined();
+  });
+
+  it("extracts neighborhood from DESTINATION_ADDRESS using CEP lookup", () => {
+    const rows = [
+      { [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Barata Ribeiro 200, Copacabana, Rio de Janeiro - RJ, 22040-030" },
+      { [COLUMN_NAMES.DESTINATION_ADDRESS]: "Avenida Atlântica 1500, Rio de Janeiro - RJ, 22040030" },
+    ];
+    expect(getPrimaryNeighborhood(rows, [COLUMN_NAMES.DESTINATION_ADDRESS])).toBe("Copacabana");
+  });
+
+  it("extracts neighborhood from DESTINATION_ADDRESS using known neighborhood text", () => {
+    const rows = [{ [COLUMN_NAMES.DESTINATION_ADDRESS]: "Estrada do Galeão 100, Portuguesa, Rio de Janeiro - RJ" }, { [COLUMN_NAMES.DESTINATION_ADDRESS]: "Rua Valdir Azevedo 50, Portuguesa, RJ" }];
+    expect(getPrimaryNeighborhood(rows, [COLUMN_NAMES.DESTINATION_ADDRESS])).toBe("Portuguesa");
   });
 });

@@ -50,3 +50,4 @@
 | 17/09/26 08:04 | [`TASK-RF-046`](./2026-09-17--08h04--TASK-RF-046--estudo-humano.md) | RF | Ordenar romaneios salvos pelo uso mais recente (importar, abrir rota no Sumario ou mapa, editar roteiro) | - | concluida | aprovado |
 | 17/09/26 09:30 | [`TASK-CHORE-028`](./2026-09-17--09h30--TASK-CHORE-028--estudo-humano.md) | CHORE | Exigir e documentar secao de desfecho obrigatoria nas narrativas de estudo humano | - | concluida | dispensado |
 | 17/09/26 22:34 | [`TASK-RF-047`](./2026-09-17--22h34--TASK-RF-047--estudo-humano.md) | RF | Guardar o resumo do roteiro salvo (paradas, km, tempo, progresso) quando o app ja calcula os totais com malha | - | concluida | aprovado |
+| 19/09/26 12:27 | [`TASK-RF-048`](./2026-09-19--12h27--TASK-RF-048--estudo-humano.md) | RF | Nova tela de romaneios salvos no layout do Stitch: card por tipo de arquivo, rotas em linhas com busca interna, estado e resumo do roteiro, bairro principal e ordem por uso | - | concluida | aprovado |
